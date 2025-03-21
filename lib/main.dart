@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/firebase_options.dart';
 import 'package:do_an/src/fire_base/firebase_auth_service.dart';
 import 'package:do_an/src/fire_base/notification_service.dart';
+import 'package:do_an/src/resources/home_page.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,14 +18,17 @@ import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/provider/resident_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 // Cấu hình Firebase
 const firebaseOptions = FirebaseOptions(
-  apiKey: "REDACTED_FIREBASE_API_KEY_1",
+  apiKey: "***REMOVED***",
   authDomain: "REDACTED_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com",
+  databaseURL: "https://REDACTED_PROJECT_ID-default-rtdb.***REMOVED***",
   projectId: "REDACTED_PROJECT_ID",
-  storageBucket: "REDACTED_PROJECT_ID.firebasestorage.app",
+  storageBucket: "REDACTED_PROJECT_ID.***REMOVED***",
   messagingSenderId: "REDACTED_MESSAGING_SENDER_ID",
   appId: "REDACTED_APP_ID",
   measurementId: "REDACTED_MEASUREMENT_ID",
@@ -87,27 +91,48 @@ void main() async {
   print("OAuth Token: $oauthToken");
   sendNotification(
       oauthToken,
-      "eKdyZuESR-y0nLJBsTXMeu:APA91bEAesnMI8FtpiKw0LcECqblkv475T13LwnYaKkRCe9zlx_YaMsOOT3IPa3uhoALBK7HSwcxSpULdAzFZRV2aQy-QP2m3YBMUK56D4KnKZg7F9CntJY", // FCM Token của thiết bị nhận
+      "eCJDF6G5TrG5AOe_pxLuEi:APA91bGSTpRd3MMQv3OElQAZKTOgr1w4xgQe3RtP7-JqyVv-B2LpZ_tM5x97l-yopvS5XcyB1bF5S4RJIIVtL60jxiIMPN_KxclC6qY2la_P205n6_9df30", // FCM Token của thiết bị nhận
       "Thông báo tiền nước!",
       "Hóa đơn tháng này là 500,000 VND."
   );
   // Khởi chạy ứng dụng
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ResidentProvider()),
-        ChangeNotifierProvider(create: (_) => UserDataProvider()),
-        ChangeNotifierProvider(create: (_) => UserImageProvider()),
+    ScreenUtilInit(
+      designSize: const Size(384, 856.1777777777778),
+      minTextAdapt: true,
+      builder: (context, child) {
+        return FutureBuilder<Map<String, dynamic>?>(
+          future: checkLoginState(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const MaterialApp(
+                home: Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            } else {
+              var userData = snapshot.data;
+              bool isLoggedIn = userData != null;
 
-      ],
-      child: MyApp(
-        AuthBloc(),
-        MaterialApp(
-          navigatorKey: navigatorKey,
-          home: LoginPage(),
-          debugShowCheckedModeBanner: false,
-        ),
-      ),
+              return MultiProvider(
+                providers: [
+                  ChangeNotifierProvider(create: (_) => ResidentProvider()),
+                  ChangeNotifierProvider(create: (_) => UserDataProvider()),
+                  ChangeNotifierProvider(create: (_) => UserImageProvider()),
+                ],
+                child: MyApp(
+                  AuthBloc(),
+                  MaterialApp(
+                    navigatorKey: navigatorKey,
+                    home: isLoggedIn ? HomePage(userData: userData) : LoginPage(),
+                    debugShowCheckedModeBanner: false,
+                  ),
+                ),
+              );
+            }
+          },
+        );
+      },
     ),
   );
 }
@@ -179,6 +204,20 @@ Future<void> _registerWithFCM() async {
     print("Sending token to server...");
     // TODO: Thay thế bằng API gọi server của bạn
   }
+}
+
+Future<Map<String, dynamic>?> checkLoginState() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+  if (isLoggedIn && FirebaseAuth.instance.currentUser != null) {
+    return {
+      'uid': prefs.getString('uid'),
+      'name': prefs.getString('name'),
+      'email': prefs.getString('email'),
+    };
+  }
+  return null;
 }
 
 Future<void> _handleInitialMessage() async {

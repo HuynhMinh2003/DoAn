@@ -9,8 +9,9 @@ import 'package:path/path.dart';
 import 'dart:typed_data';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final Map<String, dynamic> userData;
 
+  const HomePage({super.key, required this.userData});
   @override
   State<HomePage> createState() => _HomePageState();
 }
