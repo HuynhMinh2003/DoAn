@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -78,7 +79,7 @@ class _RegisterPageState extends State<RegisterPage> {
           child: KeyboardVisibilityBuilder(
               builder: (context, isKeyboardVisible){
                 return SingleChildScrollView(
-                    padding: EdgeInsets.only(bottom: isKeyboardVisible ? 210 : 20),
+                    padding: EdgeInsets.only(bottom: isKeyboardVisible ? 210.h : 20.h),
                     child: Stack(
                       children: [
                         Positioned.fill(
@@ -90,7 +91,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         Column(
                           children: [
                                 Padding(
-                                  padding: EdgeInsets.fromLTRB(20, 80, 0, 1),
+                                  padding: EdgeInsets.fromLTRB(20.w, 80.h, 0.w, 1.h),
                                   child: Align( // Căn trái
                                     alignment: Alignment.centerLeft,
                                     child: Row(
@@ -98,7 +99,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                         Text(
                                           'Sign up',
                                           style: GoogleFonts.pacifico(
-                                            fontSize: 45,
+                                            fontSize: 45.sp,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white,
                                           ),
@@ -108,14 +109,14 @@ class _RegisterPageState extends State<RegisterPage> {
                                     ),
                                   ),
                                 ),
-                                const Padding(
-                                  padding: EdgeInsets.fromLTRB(20, 20, 0, 0),
+                                Padding(
+                                  padding: EdgeInsets.fromLTRB(20.w, 20.h, 0.w, 0.h),
                                   child: Align( // Căn trái
                                     alignment: Alignment.centerLeft,
                                     child: Text(
                                       'Create a new account with simple steps',
                                       style: TextStyle(
-                                        fontSize: 15,
+                                        fontSize: 15.sp,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.grey,
                                       ),
@@ -126,19 +127,19 @@ class _RegisterPageState extends State<RegisterPage> {
                               mainAxisAlignment: MainAxisAlignment.center, // Căn giữa nội dung theo chiều dọc
                               children: [
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(35, 85, 35, 1),
+                                  padding: EdgeInsets.fromLTRB(35.w, 85.h, 35.w, 1.h),
                                   child: StreamBuilder(
                                     stream: authBloc.nameStream,
                                     builder: (context, snapshot) => TextField(
                                       controller: _nameController,
-                                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                                      style: TextStyle(fontSize: 16.sp, color: Colors.black),
                                       decoration: InputDecoration(
                                         errorText: snapshot.hasError
                                             ? snapshot.error.toString()
                                             : null,
                                         labelText: 'Name',
                                         prefixIcon: Container(
-                                          width: 50,
+                                          width: 50.w,
                                           alignment: Alignment.center,
                                           child: Icon(Icons.person),
                                         ),),
@@ -146,19 +147,19 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(35, 5, 35, 5),
+                                  padding: EdgeInsets.fromLTRB(35.w, 5.h, 35.w, 5.h),
                                   child: StreamBuilder(
                                     stream: authBloc.cccdStream,
                                     builder: (context, snapshot) => TextField(
                                       controller: _cccdController,
-                                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                                      style: TextStyle(fontSize: 16.sp, color: Colors.black),
                                       decoration: InputDecoration(
                                         errorText: snapshot.hasError
                                             ? snapshot.error.toString()
                                             : null,
                                         labelText: 'CCCD',
                                         prefixIcon: Container(
-                                          width: 50,
+                                          width: 50.w,
                                           alignment: Alignment.center,
                                           child: Icon(Icons.credit_card),
                                         ),
@@ -167,18 +168,18 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                 ),
                                 Padding(
-                                    padding: EdgeInsets.fromLTRB(35, 5, 35, 5),
+                                    padding: EdgeInsets.fromLTRB(35.w, 5.h, 35.w, 5.h),
                                     child:StreamBuilder(
                                       stream: authBloc.birthDateStream,
                                       builder: (context, snapshot) => TextField(
                                         controller: _birthDateController,
-                                        style: const TextStyle(fontSize: 18, color: Colors.black),
+                                        style: TextStyle(fontSize: 18.sp, color: Colors.black),
                                         decoration: InputDecoration(
                                           errorText:
                                           snapshot.hasError ? snapshot.error.toString() : null,
                                           labelText: 'BirthDate',
                                           prefixIcon: Container(
-                                            width: 50,
+                                            width: 50.w,
                                             alignment: Alignment.center,
                                             child: Icon(Icons.date_range_rounded),
                                           ),),
@@ -189,19 +190,19 @@ class _RegisterPageState extends State<RegisterPage> {
                                       ),
                                     )),
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(35, 5, 35, 5),
+                                  padding: EdgeInsets.fromLTRB(35.w, 5.h, 35.w, 5.h),
                                   child: StreamBuilder(
                                     stream: authBloc.emailStream,
                                     builder: (context, snapshot) => TextField(
                                       controller: _emailController,
-                                      style: const TextStyle(fontSize: 18, color: Colors.black),
+                                      style: TextStyle(fontSize: 18.sp, color: Colors.black),
                                       decoration: InputDecoration(
                                         errorText: snapshot.hasError
                                             ? snapshot.error.toString()
                                             : null,
                                         labelText: 'Email',
                                         prefixIcon: Container(
-                                          width: 50,
+                                          width: 50.w,
                                           alignment: Alignment.center,
                                           child: Icon(Icons.mail),
                                         ),),
@@ -209,25 +210,25 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.fromLTRB(35, 5, 35, 5),
+                                  padding: EdgeInsets.fromLTRB(35.w, 5.h, 35.w, 5.h),
                                   child: StreamBuilder(
                                     stream: authBloc.phoneStream,
                                     builder: (context, snapshot) => TextField(
                                       controller: _phoneController,
-                                      style: const TextStyle(fontSize: 18, color: Colors.black),
+                                      style: TextStyle(fontSize: 18.sp, color: Colors.black),
                                       decoration: InputDecoration(
                                         errorText:
                                         snapshot.hasError ? snapshot.error.toString() : null,
                                         labelText: 'Phone',
                                         prefixIcon: Container(
-                                          width: 50,
+                                          width: 50.w,
                                           alignment: Alignment.center,
                                           child: Icon(Icons.phone),
                                         ),),
                                     ),
                                   ),),
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(35, 5, 35, 2),
+                                  padding: EdgeInsets.fromLTRB(35.w, 5.h, 35.w, 2.h),
                                   child: StreamBuilder(
                                     stream: authBloc.nameHouseStream, // Luồng cho tên căn hộ
                                     builder: (context, snapshot) {
@@ -248,7 +249,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                         decoration: InputDecoration(
                                           labelText: 'Apartment Name',
                                           prefixIcon:
-                                          Container(width: 50, child: Icon(Icons.home)),
+                                          Container(width: 50.w, child: Icon(Icons.home)),
                                           errorText: snapshot.hasError
                                               ? snapshot.error.toString()
                                               : null,
@@ -258,12 +259,12 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(35, 1, 35, 10),
+                                  padding: EdgeInsets.fromLTRB(35.w, 1.h, 35.w, 10.h),
                                   child: StreamBuilder(
                                     stream: authBloc.passStream,
                                     builder: (context, snapshot) => TextField(
                                       controller: _passController,
-                                      style: const TextStyle(fontSize: 18, color: Colors.black),
+                                      style: TextStyle(fontSize: 18.sp, color: Colors.black),
                                       obscureText: true,
                                       decoration: InputDecoration(
                                         errorText: snapshot.hasError
@@ -271,7 +272,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                             : null,
                                         labelText: 'Password',
                                         prefixIcon: Container(
-                                          width: 50,
+                                          width: 50.w,
                                           alignment: Alignment.center,
                                           child: Icon(Icons.lock),
                                         ),),
@@ -279,7 +280,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(40, 15, 40, 20),
+                                  padding: EdgeInsets.fromLTRB(40.w, 15.h, 40.w, 20.h),
                                   child: GestureDetector(
                                     onTap: _onSignUpClicked,
                                     onTapDown: (_) =>
@@ -294,13 +295,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                     child: AnimatedContainer(
                                       duration: const Duration(milliseconds: 100),
                                       width: double.infinity,
-                                      height: 52,
+                                      height: 52.h,
                                       transform: isPressed2
-                                          ? Matrix4.translationValues(2, 2, 0)
+                                          ? Matrix4.translationValues(2.w, 2.h, 0)
                                           : Matrix4.identity(),
                                       // Hiệu ứng lún xuống
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(30),
+                                        borderRadius: BorderRadius.circular(30.r),
                                         gradient: const LinearGradient(
                                           colors: [
                                             Color(0xFF0D1F41),
@@ -316,25 +317,25 @@ class _RegisterPageState extends State<RegisterPage> {
                                             color:
                                             Colors.black.withOpacity(0.2),
                                             // Bóng mờ hơn khi nhấn
-                                            offset: const Offset(2, 2),
-                                            blurRadius: 3,
+                                            offset: Offset(2.w, 2.h),
+                                            blurRadius: 3.r,
                                           ),
                                         ]
                                             : [
                                           BoxShadow(
                                             color: Colors.black.withOpacity(
                                                 0.7), // Bóng đậm phía dưới
-                                            offset: const Offset(4, 4),
-                                            blurRadius: 5,
+                                            offset: Offset(4.w, 4.h),
+                                            blurRadius: 5.r,
                                           ),
                                         ],
                                       ),
-                                      child: const Center(
+                                      child: Center(
                                         child: Text(
                                           'SIGN UP',
                                           style: TextStyle(
                                               color: Colors.white,
-                                              fontSize: 18,
+                                              fontSize: 18.sp,
                                               fontWeight: FontWeight.bold),
                                         ),
                                       ),
@@ -343,18 +344,18 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
 
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(30, 0, 30, 40),
+                                  padding: EdgeInsets.fromLTRB(30.w, 0.h, 30.w, 40.h),
                                   child: RichText(
                                     text: TextSpan(
                                       text: 'Already a user?',
                                       style:
-                                      const TextStyle(color: Color(0xff606470), fontSize: 16),
+                                      TextStyle(color: Color(0xff606470), fontSize: 16.sp),
                                       children: <TextSpan>[
                                         TextSpan(
                                           text: " Login now",
                                           style: TextStyle(
                                             color: Colors.blue.withOpacity(_isLoginPressed ? 0.6 : 1.0),
-                                            fontSize: 16,
+                                            fontSize: 16.sp,
                                             fontWeight: FontWeight.bold,
                                             decoration: TextDecoration.underline,
                                           ),

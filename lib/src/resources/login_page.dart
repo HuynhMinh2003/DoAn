@@ -12,6 +12,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -45,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
         resizeToAvoidBottomInset: false,
         // Cho phép đẩy nội dung khi bàn phím xuất hiện
         body: GestureDetector(
-          onTap: (){
+          onTap: () {
             FocusManager.instance.primaryFocus?.unfocus();
           },
           child: Stack(
@@ -58,10 +59,12 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-              SafeArea(child:
-              KeyboardVisibilityBuilder(builder: (context, isKeyboardVisible) {
+              SafeArea(child: KeyboardVisibilityBuilder(
+                  builder: (context, isKeyboardVisible) {
                 return SingleChildScrollView(
-                  padding: EdgeInsets.only(bottom: isKeyboardVisible ? 100 : 100),
+                  padding: EdgeInsets.only(
+                    bottom: isKeyboardVisible ? MediaQuery.of(context).viewInsets.bottom : 100.h,
+                  ),
                   child: ConstrainedBox(
                       constraints: BoxConstraints(
                         maxHeight: MediaQuery.of(context).size.height -
@@ -74,22 +77,24 @@ class _LoginPageState extends State<LoginPage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Transform.translate(
-                            offset: Offset(-11.5, -110),
+                            offset: Offset(-11.5.w, -110.h),
                             // Đẩy ảnh lên 20 pixels
                             child: Transform.scale(
                               scale: 3.5, // Phóng to ảnh
                               child: Image.asset(
                                 'assets/ic_hinhtron.png',
-                                width: MediaQuery.of(context).size.width * 0.55,
-                                height: MediaQuery.of(context).size.height * 0.2,
+                                width: 0.55.sw,
+                                // Chiều rộng dựa trên kích thước màn hình
+                                height: 0.2.sh,
+                                // Chiều cao dựa trên kích thước màn hình
                                 fit: BoxFit.contain,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10.h),
                           Padding(
-                            padding:
-                            EdgeInsets.symmetric(vertical: 40, horizontal: 30),
+                            padding: EdgeInsets.symmetric(
+                                vertical: 40.h, horizontal: 30.w),
                             // Chỉ padding ngang
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -97,42 +102,49 @@ class _LoginPageState extends State<LoginPage> {
                               children: [
                                 // Chào mừng
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(0, 5, 0, 1),
+                                  padding:
+                                      EdgeInsets.fromLTRB(0.w, 5.h, 0.w, 1.h),
                                   child: Text(
                                     'Welcome back!',
                                     style: GoogleFonts.pacifico(
-                                      fontSize: 45,
+                                      fontSize: 45.sp,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
                                   ),
                                 ),
 
-                                const Padding(
-                                  padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                Padding(
+                                  padding:
+                                      EdgeInsets.fromLTRB(0.w, 5.h, 0.w, 0.h),
                                   child: Text(
                                     'Login to continue using hApp',
-                                    style:
-                                    TextStyle(fontSize: 16, color: Colors.grey),
+                                    style: TextStyle(
+                                        fontSize: 16.sp, color: Colors.grey),
                                   ),
                                 ),
 
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
+                                  padding:
+                                      EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 0.h),
                                   child: StreamBuilder<String>(
                                     stream: authBloc.emailStream1,
                                     builder: (context, snapshot) => Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Container(
                                           decoration: _inputBoxDecoration(),
                                           child: TextField(
                                             controller: _emailController1,
-                                            style: const TextStyle(color: Colors.white),
-                                            keyboardType: TextInputType.emailAddress,
+                                            style: const TextStyle(
+                                                color: Colors.white),
+                                            keyboardType:
+                                                TextInputType.emailAddress,
                                             decoration: _inputDecoration(
                                               'Email',
-                                              const Icon(Icons.email, color: Colors.blue),
+                                              const Icon(Icons.email,
+                                                  color: Colors.blue),
                                               Colors.grey,
                                             ),
                                           ),
@@ -140,10 +152,13 @@ class _LoginPageState extends State<LoginPage> {
                                         // Hiển thị lỗi bên dưới TextField
                                         if (snapshot.hasError)
                                           Padding(
-                                            padding: const EdgeInsets.only(top: 5, left: 8),
+                                            padding: EdgeInsets.only(
+                                                top: 5.h, left: 8.w),
                                             child: Text(
                                               snapshot.error.toString(),
-                                              style: const TextStyle(color: Colors.red, fontSize: 12),
+                                              style: TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 12.sp),
                                             ),
                                           ),
                                       ],
@@ -152,11 +167,13 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
 
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(0, 20, 0, 5),
+                                  padding:
+                                      EdgeInsets.fromLTRB(0.w, 20.h, 0.w, 5.h),
                                   child: StreamBuilder<String>(
                                     stream: authBloc.passStream1,
                                     builder: (context, snapshot) => Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Container(
                                           decoration: _inputBoxDecoration(),
@@ -164,20 +181,26 @@ class _LoginPageState extends State<LoginPage> {
                                             builder: (context, setState) {
                                               return TextField(
                                                 controller: _passController1,
-                                                style: const TextStyle(color: Colors.white),
+                                                style: const TextStyle(
+                                                    color: Colors.white),
                                                 obscureText: _isObscure,
                                                 decoration: _inputDecoration1(
                                                   'Password',
-                                                  const Icon(Icons.lock, color: Colors.blue),
+                                                  const Icon(Icons.lock,
+                                                      color: Colors.blue),
                                                   Colors.grey,
                                                   suffixIcon: IconButton(
                                                     icon: Icon(
-                                                      _isObscure ? Icons.visibility : Icons.visibility_off,
+                                                      _isObscure
+                                                          ? Icons.visibility
+                                                          : Icons
+                                                              .visibility_off,
                                                       color: Colors.blue,
                                                     ),
                                                     onPressed: () {
                                                       setState(() {
-                                                        _isObscure = !_isObscure;
+                                                        _isObscure =
+                                                            !_isObscure;
                                                       });
                                                     },
                                                   ),
@@ -189,10 +212,13 @@ class _LoginPageState extends State<LoginPage> {
                                         // Hiển thị lỗi bên dưới TextField
                                         if (snapshot.hasError)
                                           Padding(
-                                            padding: const EdgeInsets.only(top: 5, left: 8),
+                                            padding: EdgeInsets.only(
+                                                top: 5.h, left: 8.w),
                                             child: Text(
                                               snapshot.error.toString(),
-                                              style: const TextStyle(color: Colors.red, fontSize: 12),
+                                              style: TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 12.sp),
                                             ),
                                           ),
                                       ],
@@ -208,10 +234,10 @@ class _LoginPageState extends State<LoginPage> {
                                     child: StatefulBuilder(
                                       builder: (context, setState) {
                                         return GestureDetector(
-                                          onTapDown: (_) =>
-                                              setState(() => _isPressed1 = true),
-                                          onTapCancel: () =>
-                                              setState(() => _isPressed1 = false),
+                                          onTapDown: (_) => setState(
+                                              () => _isPressed1 = true),
+                                          onTapCancel: () => setState(
+                                              () => _isPressed1 = false),
                                           onTapUp: (_) {
                                             setState(() => _isPressed1 = false);
                                             _onForgotPasswordClick();
@@ -219,12 +245,12 @@ class _LoginPageState extends State<LoginPage> {
                                           child: Text(
                                             'Forgot password?',
                                             style: TextStyle(
-                                              fontSize: 16,
+                                              fontSize: 16.sp,
                                               fontWeight: FontWeight.bold,
                                               color: const Color(0xfff9fafc)
                                                   .withOpacity(_isPressed1
-                                                  ? 0.6
-                                                  : 1.0), // Hiệu ứng nhấn
+                                                      ? 0.6
+                                                      : 1.0), // Hiệu ứng nhấn
                                             ),
                                           ),
                                         );
@@ -234,7 +260,8 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 // Nút Login
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(0, 75, 0, 10),
+                                  padding:
+                                      EdgeInsets.fromLTRB(0.w, 75.h, 0.w, 10.h),
                                   child: GestureDetector(
                                     onTap: _onLoginClick,
                                     onTapDown: (_) =>
@@ -247,15 +274,18 @@ class _LoginPageState extends State<LoginPage> {
                                         setState(() => isPressed = false),
                                     // Khi hủy nhấn
                                     child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 100),
+                                      duration:
+                                          const Duration(milliseconds: 100),
                                       width: double.infinity,
-                                      height: 52,
+                                      height: 52.h,
                                       transform: isPressed
-                                          ? Matrix4.translationValues(2, 2, 0)
+                                          ? Matrix4.translationValues(
+                                              2.w, 2.h, 0)
                                           : Matrix4.identity(),
                                       // Hiệu ứng lún xuống
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(30),
+                                        borderRadius:
+                                            BorderRadius.circular(30.r),
                                         gradient: const LinearGradient(
                                           colors: [
                                             Color(0xFF0D1F41),
@@ -267,29 +297,29 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                         boxShadow: isPressed
                                             ? [
-                                          BoxShadow(
-                                            color:
-                                            Colors.black.withOpacity(0.2),
-                                            // Bóng mờ hơn khi nhấn
-                                            offset: const Offset(2, 2),
-                                            blurRadius: 3,
-                                          ),
-                                        ]
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.2),
+                                                  // Bóng mờ hơn khi nhấn
+                                                  offset: Offset(2.w, 2.h),
+                                                  blurRadius: 3.r,
+                                                ),
+                                              ]
                                             : [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(
-                                                0.4), // Bóng đậm phía dưới
-                                            offset: const Offset(4, 4),
-                                            blurRadius: 5,
-                                          ),
-                                        ],
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(
+                                                      0.4), // Bóng đậm phía dưới
+                                                  offset: Offset(4.w, 4.h),
+                                                  blurRadius: 5.r,
+                                                ),
+                                              ],
                                       ),
-                                      child: const Center(
+                                      child: Center(
                                         child: Text(
                                           'LOGIN',
                                           style: TextStyle(
                                               color: Colors.white,
-                                              fontSize: 18,
+                                              fontSize: 18.sp,
                                               fontWeight: FontWeight.bold),
                                         ),
                                       ),
@@ -298,21 +328,24 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
 
                                 Padding(
-                                    padding:
-                                    const EdgeInsets.fromLTRB(0, 20, 0, 30),
+                                    padding: EdgeInsets.fromLTRB(
+                                        0.w, 20.h, 0.w, 30.h),
                                     child: RichText(
                                       text: TextSpan(
                                         text: 'New user? ',
-                                        style: const TextStyle(
-                                            color: Colors.white, fontSize: 16),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16.sp),
                                         children: [
                                           TextSpan(
                                             text: "Sign up for a new account",
                                             style: TextStyle(
-                                              color: Colors.blue.withOpacity(_isPressed ? 0.6 : 1.0),
-                                              fontSize: 16,
+                                              color: Colors.blue.withOpacity(
+                                                  _isPressed ? 0.6 : 1.0),
+                                              fontSize: 16.sp,
                                               fontWeight: FontWeight.bold,
-                                              decoration: TextDecoration.underline,
+                                              decoration:
+                                                  TextDecoration.underline,
                                             ),
                                             recognizer: TapGestureRecognizer()
                                               ..onTapDown = (_) {
@@ -325,18 +358,33 @@ class _LoginPageState extends State<LoginPage> {
                                                   _isPressed = false;
                                                 });
 
-                                                Navigator.of(context).push(PageRouteBuilder(
-                                                  transitionDuration: Duration(milliseconds: 1000), // Thời gian hiệu ứng
-                                                  pageBuilder: (context, animation, secondaryAnimation) => RegisterPage(),
-                                                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                                    var fadeAnimation = Tween<double>(
-                                                      begin: 0.0, // Bắt đầu từ trong suốt
-                                                      end: 1.0,   // Hiện ra hoàn toàn
+                                                Navigator.of(context)
+                                                    .push(PageRouteBuilder(
+                                                  transitionDuration: Duration(
+                                                      milliseconds: 1000),
+                                                  // Thời gian hiệu ứng
+                                                  pageBuilder: (context,
+                                                          animation,
+                                                          secondaryAnimation) =>
+                                                      RegisterPage(),
+                                                  transitionsBuilder: (context,
+                                                      animation,
+                                                      secondaryAnimation,
+                                                      child) {
+                                                    var fadeAnimation =
+                                                        Tween<double>(
+                                                      begin: 0.0,
+                                                      // Bắt đầu từ trong suốt
+                                                      end:
+                                                          1.0, // Hiện ra hoàn toàn
                                                     ).animate(animation);
 
-                                                    var scaleAnimation = Tween<double>(
-                                                      begin: 0.8, // Nhỏ hơn bình thường
-                                                      end: 1.0,   // Phóng to đến kích thước chuẩn
+                                                    var scaleAnimation =
+                                                        Tween<double>(
+                                                      begin: 0.8,
+                                                      // Nhỏ hơn bình thường
+                                                      end:
+                                                          1.0, // Phóng to đến kích thước chuẩn
                                                     ).animate(animation);
 
                                                     return FadeTransition(
@@ -367,8 +415,7 @@ class _LoginPageState extends State<LoginPage> {
               })),
             ],
           ),
-        )
-    );
+        ));
   }
 
   void _onForgotPasswordClick() {
@@ -377,27 +424,28 @@ class _LoginPageState extends State<LoginPage> {
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       isScrollControlled: true,
       builder: (context) {
         return Padding(
           padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20, // Đẩy nội dung lên khi bàn phím mở
-            top: 20,
+            left: 20.w,
+            right: 20.w,
+            bottom: MediaQuery.of(context).viewInsets.bottom +
+                20.h, // Đẩy nội dung lên khi bàn phím mở
+            top: 20.h,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 "Forgot Password",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 10.h),
               Text("Please enter your email to reset your password."),
-              SizedBox(height: 10),
+              SizedBox(height: 10.h),
               TextField(
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -406,27 +454,37 @@ class _LoginPageState extends State<LoginPage> {
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 20.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   TextButton(
-                    onPressed: () => Navigator.pop(context), // Đóng bottom sheet
+                    onPressed: () => Navigator.pop(context),
+                    // Đóng bottom sheet
                     child: Text("Cancel"),
                   ),
                   ElevatedButton(
                     onPressed: () {
                       String email = emailController.text.trim();
                       if (email.isEmpty) {
-                        _showCustomSnackBar(context, "Please enter your email.", Colors.red, Icons.error);
+                        _showCustomSnackBar(context, "Please enter your email.",
+                            Colors.red, Icons.error);
                         return;
                       }
 
-                      FirebaseAuth.instance.sendPasswordResetEmail(email: email).then((value) {
-                        Navigator.pop(context); // Đóng bottom sheet sau khi gửi email
-                        _showCustomSnackBar(context, "Password reset link sent!", Colors.green, Icons.check_circle);
+                      FirebaseAuth.instance
+                          .sendPasswordResetEmail(email: email)
+                          .then((value) {
+                        Navigator.pop(
+                            context); // Đóng bottom sheet sau khi gửi email
+                        _showCustomSnackBar(
+                            context,
+                            "Password reset link sent!",
+                            Colors.green,
+                            Icons.check_circle);
                       }).catchError((error) {
-                        _showCustomSnackBar(context, error.toString(), Colors.red, Icons.error);
+                        _showCustomSnackBar(
+                            context, error.toString(), Colors.red, Icons.error);
                       });
                     },
                     child: Text("Send"),
@@ -441,22 +499,26 @@ class _LoginPageState extends State<LoginPage> {
   }
 
 // Hàm hiển thị SnackBar đẹp hơn
-  void _showCustomSnackBar(BuildContext context, String message, Color color, IconData icon) {
+  void _showCustomSnackBar(
+      BuildContext context, String message, Color color, IconData icon) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
             Icon(icon, color: Colors.white),
-            SizedBox(width: 10),
-            Expanded(child: Text(message, style: TextStyle(color: Colors.white))),
+            SizedBox(width: 10.w),
+            Expanded(
+                child: Text(message, style: TextStyle(color: Colors.white))),
           ],
         ),
         backgroundColor: color,
-        behavior: SnackBarBehavior.floating, // Hiển thị nổi lên thay vì dính dưới cùng
+        behavior: SnackBarBehavior.floating,
+        // Hiển thị nổi lên thay vì dính dưới cùng
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10), // Bo góc SnackBar
         ),
-        margin: EdgeInsets.all(20), // Tạo khoảng cách xung quanh
+        margin: EdgeInsets.all(20.r),
+        // Tạo khoảng cách xung quanh
         duration: Duration(seconds: 3), // Hiển thị trong 3 giây
       ),
     );
@@ -468,7 +530,7 @@ class _LoginPageState extends State<LoginPage> {
 
     var isValid1 = authBloc.isValidSignIn(email, pass);
 
-    if(isValid1){
+    if (isValid1) {
       LoadingDialog.showLoadingDialog(context, "Loading...");
 
       authBloc.signIn(
@@ -492,16 +554,26 @@ class _LoginPageState extends State<LoginPage> {
 
             // Lấy thông tin từ Realtime Database
             DatabaseReference userRef =
-            FirebaseDatabase.instance.ref('users/$userId');
+                FirebaseDatabase.instance.ref('users/$userId');
             DatabaseEvent event = await userRef.once();
 
             if (event.snapshot.exists) {
-              bool isApproved = event.snapshot.child('isApproved').value as bool;
+              bool isApproved =
+                  event.snapshot.child('isApproved').value as bool;
 
               if (isApproved) {
-                // Nếu isApproved là true, điều hướng đến HomePage
+                // Lấy thông tin user từ Firebase hoặc SharedPreferences
+                Map<String, dynamic> userData = {
+                  'uid': FirebaseAuth.instance.currentUser?.uid ?? '',
+                  'name':
+                      FirebaseAuth.instance.currentUser?.displayName ?? 'User',
+                  'email':
+                      FirebaseAuth.instance.currentUser?.email ?? 'No email',
+                };
+
+                // Nếu isApproved là true, điều hướng đến HomePage và truyền userData
                 Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const HomePage(),
+                  builder: (context) => HomePage(userData: userData),
                 ));
               } else {
                 // Nếu isApproved là false, điều hướng đến WaitingPage
@@ -524,7 +596,6 @@ class _LoginPageState extends State<LoginPage> {
         },
       );
     }
-
   }
 
   BoxDecoration _inputBoxDecoration() {
@@ -538,12 +609,12 @@ class _LoginPageState extends State<LoginPage> {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(8.r),
       boxShadow: [
         BoxShadow(
           color: Colors.black.withOpacity(0.1),
-          blurRadius: 6,
-          offset: const Offset(0, 3),
+          blurRadius: 6.r,
+          offset: Offset(0.w, 3.h),
         ),
       ],
     );
@@ -552,27 +623,28 @@ class _LoginPageState extends State<LoginPage> {
   InputDecoration _inputDecoration(String hint, Icon icon, Color labelColor) {
     return InputDecoration(
       labelText: hint,
-      labelStyle: TextStyle(color: labelColor, fontSize: 14),
+      labelStyle: TextStyle(color: labelColor, fontSize: 14.sp),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
       fillColor: Colors.transparent,
       prefixIcon: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: EdgeInsets.symmetric(horizontal: 12.w),
         child: icon,
       ),
-      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
         borderSide: BorderSide.none, // Loại bỏ viền để hợp với gradient
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.5), width: 1),
+        borderRadius: BorderRadius.circular(8.r),
+        borderSide:
+            BorderSide(color: Colors.white.withOpacity(0.5), width: 1.w),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide:
-        BorderSide(color: Colors.white, width: 1.5), // Viền trắng khi focus
+        borderRadius: BorderRadius.circular(8.r),
+        borderSide: BorderSide(
+            color: Colors.white, width: 1.5.w), // Viền trắng khi focus
       ),
     );
   }
@@ -581,29 +653,29 @@ class _LoginPageState extends State<LoginPage> {
       {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: hint,
-      labelStyle: TextStyle(color: labelColor, fontSize: 14),
+      labelStyle: TextStyle(color: labelColor, fontSize: 14.sp),
       // Label màu trắng để dễ nhìn
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
       fillColor: Colors.transparent,
       // Nền trong suốt để hiện gradient
       prefixIcon: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: EdgeInsets.symmetric(horizontal: 12.w),
         child: icon,
       ),
       suffixIcon: suffixIcon,
       // Thêm icon đuôi nếu cần
-      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
         borderSide: BorderSide(
             color: Colors.white.withOpacity(0.5),
-            width: 1), // Viền mờ khi chưa focus
+            width: 1.w), // Viền mờ khi chưa focus
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide:
-        BorderSide(color: Colors.white, width: 1.5), // Viền trắng khi focus
+        borderRadius: BorderRadius.circular(8.r),
+        borderSide: BorderSide(
+            color: Colors.white, width: 1.5.w), // Viền trắng khi focus
       ),
     );
   }
