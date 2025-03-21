@@ -44,43 +44,43 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'REDACTED_FIREBASE_API_KEY_2',
+    apiKey: '***REMOVED***',
     appId: 'REDACTED_APP_ID',
     messagingSenderId: 'REDACTED_MESSAGING_SENDER_ID',
     projectId: 'REDACTED_PROJECT_ID',
     authDomain: 'REDACTED_PROJECT_ID.firebaseapp.com',
-    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com',
-    storageBucket: 'REDACTED_PROJECT_ID.firebasestorage.app',
+    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.***REMOVED***',
+    storageBucket: 'REDACTED_PROJECT_ID.***REMOVED***',
     measurementId: 'REDACTED_MEASUREMENT_ID',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'REDACTED_FIREBASE_API_KEY_1',
+    apiKey: '***REMOVED***',
     appId: '1:REDACTED_MESSAGING_SENDER_ID:android:c3d980af7c2385fa0771d7',
     messagingSenderId: 'REDACTED_MESSAGING_SENDER_ID',
     projectId: 'REDACTED_PROJECT_ID',
-    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com',
-    storageBucket: 'REDACTED_PROJECT_ID.firebasestorage.app',
+    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.***REMOVED***',
+    storageBucket: 'REDACTED_PROJECT_ID.***REMOVED***',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'REDACTED_FIREBASE_API_KEY_2',
+    apiKey: '***REMOVED***',
     appId: '1:REDACTED_MESSAGING_SENDER_ID:ios:b5d8666013dc32ac0771d7',
     messagingSenderId: 'REDACTED_MESSAGING_SENDER_ID',
     projectId: 'REDACTED_PROJECT_ID',
-    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com',
-    storageBucket: 'REDACTED_PROJECT_ID.firebasestorage.app',
+    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.***REMOVED***',
+    storageBucket: 'REDACTED_PROJECT_ID.***REMOVED***',
     iosBundleId: 'com.example.doAn',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'REDACTED_FIREBASE_API_KEY_2',
+    apiKey: '***REMOVED***',
     appId: '1:REDACTED_MESSAGING_SENDER_ID:web:fba7a1809989cabd0771d7',
     messagingSenderId: 'REDACTED_MESSAGING_SENDER_ID',
     projectId: 'REDACTED_PROJECT_ID',
     authDomain: 'REDACTED_PROJECT_ID.firebaseapp.com',
-    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com',
-    storageBucket: 'REDACTED_PROJECT_ID.firebasestorage.app',
+    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.***REMOVED***',
+    storageBucket: 'REDACTED_PROJECT_ID.***REMOVED***',
     measurementId: 'G-R6MZQYTGGZ',
   );
 }
