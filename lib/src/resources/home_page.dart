@@ -26,8 +26,7 @@ class _HomePageState extends State<HomePage> {
   Uint8List? _image;
   Database? _sqliteDb;
 
-  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
-  GlobalKey<ScaffoldMessengerState>();
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   bool _isLoading = false; // Trạng thái loading
 
