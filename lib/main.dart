@@ -16,6 +16,7 @@ import 'package:do_an/src/app.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/provider/resident_provider.dart';
+import 'package:do_an/src/resources/provider/userinfo_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -91,16 +92,23 @@ void main() async {
   print("OAuth Token: $oauthToken");
   sendNotification(
       oauthToken,
-      "eCJDF6G5TrG5AOe_pxLuEi:APA91bGSTpRd3MMQv3OElQAZKTOgr1w4xgQe3RtP7-JqyVv-B2LpZ_tM5x97l-yopvS5XcyB1bF5S4RJIIVtL60jxiIMPN_KxclC6qY2la_P205n6_9df30", // FCM Token của thiết bị nhận
+      "dv9w-xXkRbmgOJtaueNIAx:APA91bFov0-Y3eXzP2SdT0XTWnXnW6D625SohIPPUY61aWr4PNfPQQhGaPbZzhvdvaSnWrzu90ewEK1RRcJOy7ERU7s3YTqQhisdtNOtwXb_xj9WQC3QJ6o", // FCM Token của thiết bị nhận
       "Thông báo tiền nước!",
       "Hóa đơn tháng này là 500,000 VND."
   );
   // Khởi chạy ứng dụng
   runApp(
     ScreenUtilInit(
-      designSize: const Size(384, 856.1777777777778),
+      // designSize: const Size(384, 856.1777777777778),
+      designSize: const Size(384, 784.0),
       minTextAdapt: true,
+      splitScreenMode: true, // Hỗ trợ màn hình chia đôi
       builder: (context, child) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          double screenWidth = MediaQuery.of(context).size.width;
+          double screenHeight = MediaQuery.of(context).size.height;
+          print("📱 Kích thước màn hình: width = $screenWidth, height = $screenHeight");
+        });
         return FutureBuilder<Map<String, dynamic>?>(
           future: checkLoginState(),
           builder: (context, snapshot) {
