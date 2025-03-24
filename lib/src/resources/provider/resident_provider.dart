@@ -11,20 +11,6 @@ class ResidentProvider with ChangeNotifier {
     _fetchResidents();
   }
 
-  // int get approvedCount =>
-  //     _residents.where((resident) => resident['isApproved'] == true).length;
-  //
-  // void setResidents(List<Map<String, dynamic>> residents) {
-  //   _residents = residents;
-  //   notifyListeners(); // Thông báo thay đổi
-  // }
-  //
-  // void approveResident(String id) {
-  //   final resident = _residents.firstWhere((resident) => resident['id'] == id);
-  //   resident['isApproved'] = true;
-  //   notifyListeners(); // Thông báo thay đổi
-  // }
-
   // Hàm lấy danh sách cư dân từ Firebase
   void _fetchResidents() async {
     try {
@@ -47,24 +33,6 @@ class ResidentProvider with ChangeNotifier {
       print("Lỗi khi lấy dữ liệu từ Firebase: $error");
     }
   }
-
-  // // Hàm thêm cư dân mới vào Firebase và danh sách cục bộ
-  // Future<void> addResident(Map<String, dynamic> residentData) async {
-  //   try {
-  //     final newRef = _databaseRef.push();
-  //     await newRef.set(residentData); // Thêm vào Firebase
-  //
-  //     // Thêm vào danh sách cư dân cục bộ
-  //     _residents.add({
-  //       "id": newRef.key,
-  //       ...residentData,
-  //     });
-  //
-  //     notifyListeners(); // Cập nhật giao diện ngay lập tức
-  //   } catch (error) {
-  //     print("Lỗi khi thêm cư dân: $error");
-  //   }
-  // }
 
   // Hàm cập nhật thông tin cư dân trong Firebase và danh sách cục bộ
   Future<void> updateResident(String id, Map<String, dynamic> updatedData) async {
