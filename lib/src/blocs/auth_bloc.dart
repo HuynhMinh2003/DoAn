@@ -132,7 +132,8 @@ class AuthBloc {
     required String phone,
     required String nameHouse, // Thêm tham số
     required String pass,
-    required double apartmentArea, // Add apartmentArea parameter
+    required double apartmentArea,
+    required String avatarUrl, // Ảnh đại diện
     required Function onSuccess,
     required Function(String) onRegisterError,
   }) {
@@ -149,6 +150,7 @@ class AuthBloc {
         nameHouse: nameHouse,
         password: pass,
         area: apartmentArea, // Gửi diện tích căn hộ vào signUp
+        avatarUrl: avatarUrl, // Lưu avatar vào database
         onSuccess: onSuccess,
         onRegisterError: onRegisterError,
       );

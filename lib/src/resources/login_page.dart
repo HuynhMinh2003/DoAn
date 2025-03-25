@@ -38,11 +38,21 @@ class _LoginPageState extends State<LoginPage> {
         statusBarIconBrightness: Brightness.light, // Icon màu trắng
       ),
     );
+    print("Login Screen INIT");
+  }
+
+  @override
+  void dispose() {
+    print("Login Screen DISPOSED");
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    print("📌 Login Screen rebuilt");
+
+    return LayoutBuilder(builder: (context, constraints){
+      return Scaffold(
         resizeToAvoidBottomInset: false,
         // Cho phép đẩy nội dung khi bàn phím xuất hiện
         body: GestureDetector(
@@ -61,361 +71,359 @@ class _LoginPageState extends State<LoginPage> {
 
               SafeArea(child: KeyboardVisibilityBuilder(
                   builder: (context, isKeyboardVisible) {
-                return SingleChildScrollView(
-                  padding: EdgeInsets.only(
-                    bottom: isKeyboardVisible ? MediaQuery.of(context).viewInsets.bottom : 100.h,
-                  ),
-                  child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height -
-                            MediaQuery.of(context)
-                                .padding
-                                .top, // Giới hạn đúng chiều cao
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.only(
+                        bottom: isKeyboardVisible ? MediaQuery.of(context).viewInsets.bottom : 100.h,
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Transform.translate(
-                            offset: Offset(-11.5.w, -110.h),
-                            // Đẩy ảnh lên 20 pixels
-                            child: Transform.scale(
-                              scale: 3.5, // Phóng to ảnh
-                              child: Image.asset(
-                                'assets/ic_hinhtron.png',
-                                width: 0.55.sw,
-                                // Chiều rộng dựa trên kích thước màn hình
-                                height: 0.2.sh,
-                                // Chiều cao dựa trên kích thước màn hình
-                                fit: BoxFit.contain,
-                              ),
-                            ),
+                      child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height -
+                                MediaQuery.of(context)
+                                    .padding
+                                    .top, // Giới hạn đúng chiều cao
                           ),
-                          SizedBox(height: 10.h),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                vertical: 40.h, horizontal: 30.w),
-                            // Chỉ padding ngang
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Chào mừng
-                                Padding(
-                                  padding:
-                                      EdgeInsets.fromLTRB(0.w, 5.h, 0.w, 1.h),
-                                  child: Text(
-                                    'Welcome back!',
-                                    style: GoogleFonts.pacifico(
-                                      fontSize: 45.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Transform.translate(
+                                offset: Offset(-10.5.w, -110.h),
+                                // Đẩy ảnh lên 20 pixels
+                                child: Transform.scale(
+                                  scale: 3.5, // Phóng to ảnh
+                                  child: Image.asset(
+                                    'assets/ic_hinhtron.png',
+                                    width: 0.55.sw,
+                                    // Chiều rộng dựa trên kích thước màn hình
+                                    height: 0.2.sh,
+                                    // Chiều cao dựa trên kích thước màn hình
+                                    fit: BoxFit.contain,
                                   ),
                                 ),
-
-                                Padding(
-                                  padding:
-                                      EdgeInsets.fromLTRB(0.w, 5.h, 0.w, 0.h),
-                                  child: Text(
-                                    'Login to continue using hApp',
-                                    style: TextStyle(
-                                        fontSize: 16.sp, color: Colors.grey),
-                                  ),
-                                ),
-
-                                Padding(
-                                  padding:
-                                      EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 0.h),
-                                  child: StreamBuilder<String>(
-                                    stream: authBloc.emailStream1,
-                                    builder: (context, snapshot) => Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          decoration: _inputBoxDecoration(),
-                                          child: TextField(
-                                            controller: _emailController1,
-                                            style: const TextStyle(
-                                                color: Colors.white),
-                                            keyboardType:
-                                                TextInputType.emailAddress,
-                                            decoration: _inputDecoration(
-                                              'Email',
-                                              const Icon(Icons.email,
-                                                  color: Colors.blue),
-                                              Colors.grey,
-                                            ),
-                                          ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 40.h, horizontal: 30.w),
+                                // Chỉ padding ngang
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Chào mừng
+                                    Padding(
+                                      padding:
+                                      EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 1.h),
+                                      child: Text(
+                                        'Welcome back!',
+                                        style: GoogleFonts.pacifico(
+                                          fontSize: 45,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
                                         ),
-                                        // Hiển thị lỗi bên dưới TextField
-                                        if (snapshot.hasError)
-                                          Padding(
-                                            padding: EdgeInsets.only(
-                                                top: 5.h, left: 8.w),
-                                            child: Text(
-                                              snapshot.error.toString(),
-                                              style: TextStyle(
-                                                  color: Colors.red,
-                                                  fontSize: 12.sp),
-                                            ),
-                                          ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                ),
 
-                                Padding(
-                                  padding:
-                                      EdgeInsets.fromLTRB(0.w, 20.h, 0.w, 5.h),
-                                  child: StreamBuilder<String>(
-                                    stream: authBloc.passStream1,
-                                    builder: (context, snapshot) => Column(
-                                      crossAxisAlignment:
+                                    Padding(
+                                      padding:
+                                      EdgeInsets.fromLTRB(0.w, 5.h, 0.w, 0.h),
+                                      child: Text(
+                                        'Login to continue using hApp',
+                                        style: TextStyle(
+                                            fontSize: 16, color: Colors.grey),
+                                      ),
+                                    ),
+
+                                    Padding(
+                                      padding: EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 0.h),
+                                      child: StreamBuilder<String>(
+                                        stream: authBloc.emailStream1,
+                                        builder: (context, snapshot) => Column(
+                                          crossAxisAlignment:
                                           CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          decoration: _inputBoxDecoration(),
-                                          child: StatefulBuilder(
-                                            builder: (context, setState) {
-                                              return TextField(
-                                                controller: _passController1,
+                                          children: [
+                                            Container(
+                                              decoration: _inputBoxDecoration(),
+                                              child: TextField(
+                                                controller: _emailController1,
                                                 style: const TextStyle(
                                                     color: Colors.white),
-                                                obscureText: _isObscure,
-                                                decoration: _inputDecoration1(
-                                                  'Password',
-                                                  const Icon(Icons.lock,
+                                                keyboardType:
+                                                TextInputType.emailAddress,
+                                                decoration: _inputDecoration(
+                                                  'Email',
+                                                  const Icon(Icons.email,
                                                       color: Colors.blue),
                                                   Colors.grey,
-                                                  suffixIcon: IconButton(
-                                                    icon: Icon(
-                                                      _isObscure
-                                                          ? Icons.visibility
-                                                          : Icons
-                                                              .visibility_off,
-                                                      color: Colors.blue,
-                                                    ),
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        _isObscure =
-                                                            !_isObscure;
-                                                      });
-                                                    },
-                                                  ),
                                                 ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                        // Hiển thị lỗi bên dưới TextField
-                                        if (snapshot.hasError)
-                                          Padding(
-                                            padding: EdgeInsets.only(
-                                                top: 5.h, left: 8.w),
-                                            child: Text(
-                                              snapshot.error.toString(),
-                                              style: TextStyle(
-                                                  color: Colors.red,
-                                                  fontSize: 12.sp),
+                                              ),
                                             ),
-                                          ),
-                                      ],
+                                            // Hiển thị lỗi bên dưới TextField
+                                            if (snapshot.hasError)
+                                              Padding(
+                                                padding: EdgeInsets.only(
+                                                    top: 5.h, left: 8.w),
+                                                child: Text(
+                                                  snapshot.error.toString(),
+                                                  style: TextStyle(
+                                                      color: Colors.red,
+                                                      fontSize: 12),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
 
-                                // Forgot password
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: MouseRegion(
-                                    cursor: SystemMouseCursors.click,
-                                    child: StatefulBuilder(
-                                      builder: (context, setState) {
-                                        return GestureDetector(
-                                          onTapDown: (_) => setState(
-                                              () => _isPressed1 = true),
-                                          onTapCancel: () => setState(
-                                              () => _isPressed1 = false),
-                                          onTapUp: (_) {
-                                            setState(() => _isPressed1 = false);
-                                            _onForgotPasswordClick();
-                                          },
-                                          child: Text(
-                                            'Forgot password?',
-                                            style: TextStyle(
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.bold,
-                                              color: const Color(0xfff9fafc)
-                                                  .withOpacity(_isPressed1
+                                    Padding(
+                                      padding:
+                                      EdgeInsets.fromLTRB(0.w, 20.h, 0.w, 5.h),
+                                      child: StreamBuilder<String>(
+                                        stream: authBloc.passStream1,
+                                        builder: (context, snapshot) => Column(
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                          children: [
+                                            Container(
+                                              decoration: _inputBoxDecoration(),
+                                              child: StatefulBuilder(
+                                                builder: (context, setState) {
+                                                  return TextField(
+                                                    controller: _passController1,
+                                                    style: const TextStyle(
+                                                        color: Colors.white),
+                                                    obscureText: _isObscure,
+                                                    decoration: _inputDecoration1(
+                                                      'Password',
+                                                      const Icon(Icons.lock,
+                                                          color: Colors.blue),
+                                                      Colors.grey,
+                                                      suffixIcon: IconButton(
+                                                        icon: Icon(
+                                                          _isObscure
+                                                              ? Icons.visibility
+                                                              : Icons
+                                                              .visibility_off,
+                                                          color: Colors.blue,
+                                                        ),
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            _isObscure =
+                                                            !_isObscure;
+                                                          });
+                                                        },
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                            // Hiển thị lỗi bên dưới TextField
+                                            if (snapshot.hasError)
+                                              Padding(
+                                                padding: EdgeInsets.only(
+                                                    top: 5.h, left: 8.w),
+                                                child: Text(
+                                                  snapshot.error.toString(),
+                                                  style: TextStyle(
+                                                      color: Colors.red,
+                                                      fontSize: 12),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+
+                                    // Forgot password
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: MouseRegion(
+                                        cursor: SystemMouseCursors.click,
+                                        child: StatefulBuilder(
+                                          builder: (context, setState) {
+                                            return GestureDetector(
+                                              onTapDown: (_) => setState(
+                                                      () => _isPressed1 = true),
+                                              onTapCancel: () => setState(
+                                                      () => _isPressed1 = false),
+                                              onTapUp: (_) {
+                                                setState(() => _isPressed1 = false);
+                                                _onForgotPasswordClick();
+                                              },
+                                              child: Text(
+                                                'Forgot password?',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: const Color(0xfff9fafc)
+                                                      .withOpacity(_isPressed1
                                                       ? 0.6
                                                       : 1.0), // Hiệu ứng nhấn
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    // Nút Login
+                                    Padding(
+                                      padding:
+                                      EdgeInsets.fromLTRB(0.w, 75.h, 0.w, 10.h),
+                                      child: GestureDetector(
+                                        onTap: _onLoginClick,
+                                        onTapDown: (_) =>
+                                            setState(() => isPressed = true),
+                                        // Khi nhấn xuống
+                                        onTapUp: (_) =>
+                                            setState(() => isPressed = false),
+                                        // Khi thả ra
+                                        onTapCancel: () =>
+                                            setState(() => isPressed = false),
+                                        // Khi hủy nhấn
+                                        child: AnimatedContainer(
+                                          duration:
+                                          const Duration(milliseconds: 100),
+                                          width: double.infinity,
+                                          height: 52.h,
+                                          transform: isPressed
+                                              ? Matrix4.translationValues(
+                                              2.w, 2.h, 0)
+                                              : Matrix4.identity(),
+                                          // Hiệu ứng lún xuống
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                            BorderRadius.circular(30.r),
+                                            gradient: const LinearGradient(
+                                              colors: [
+                                                Color(0xFF0D1F41),
+                                                Color(0xFF2054B0),
+                                                // Màu xanh chính
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                            boxShadow: isPressed
+                                                ? [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.2),
+                                                // Bóng mờ hơn khi nhấn
+                                                offset: Offset(2.w, 2.h),
+                                                blurRadius: 3.r,
+                                              ),
+                                            ]
+                                                : [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(
+                                                    0.4), // Bóng đậm phía dưới
+                                                offset: Offset(4.w, 4.h),
+                                                blurRadius: 5.r,
+                                              ),
+                                            ],
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              'LOGIN',
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold),
                                             ),
                                           ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                // Nút Login
-                                Padding(
-                                  padding:
-                                      EdgeInsets.fromLTRB(0.w, 75.h, 0.w, 10.h),
-                                  child: GestureDetector(
-                                    onTap: _onLoginClick,
-                                    onTapDown: (_) =>
-                                        setState(() => isPressed = true),
-                                    // Khi nhấn xuống
-                                    onTapUp: (_) =>
-                                        setState(() => isPressed = false),
-                                    // Khi thả ra
-                                    onTapCancel: () =>
-                                        setState(() => isPressed = false),
-                                    // Khi hủy nhấn
-                                    child: AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 100),
-                                      width: double.infinity,
-                                      height: 52.h,
-                                      transform: isPressed
-                                          ? Matrix4.translationValues(
-                                              2.w, 2.h, 0)
-                                          : Matrix4.identity(),
-                                      // Hiệu ứng lún xuống
-                                      decoration: BoxDecoration(
-                                        borderRadius:
-                                            BorderRadius.circular(30.r),
-                                        gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xFF0D1F41),
-                                            Color(0xFF2054B0),
-                                            // Màu xanh chính
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
-                                        boxShadow: isPressed
-                                            ? [
-                                                BoxShadow(
-                                                  color: Colors.black
-                                                      .withOpacity(0.2),
-                                                  // Bóng mờ hơn khi nhấn
-                                                  offset: Offset(2.w, 2.h),
-                                                  blurRadius: 3.r,
-                                                ),
-                                              ]
-                                            : [
-                                                BoxShadow(
-                                                  color: Colors.black.withOpacity(
-                                                      0.4), // Bóng đậm phía dưới
-                                                  offset: Offset(4.w, 4.h),
-                                                  blurRadius: 5.r,
-                                                ),
-                                              ],
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          'LOGIN',
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.bold),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ),
 
-                                Padding(
-                                    padding: EdgeInsets.fromLTRB(
-                                        0.w, 20.h, 0.w, 30.h),
-                                    child: RichText(
-                                      text: TextSpan(
-                                        text: 'New user? ',
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16.sp),
-                                        children: [
-                                          TextSpan(
-                                            text: "Sign up for a new account",
+                                    Padding(
+                                        padding: EdgeInsets.fromLTRB(
+                                            0.w, 20.h, 0.w, 30.h),
+                                        child: RichText(
+                                          text: TextSpan(
+                                            text: 'New user? ',
                                             style: TextStyle(
-                                              color: Colors.blue.withOpacity(
-                                                  _isPressed ? 0.6 : 1.0),
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.bold,
-                                              decoration:
+                                                color: Colors.white,
+                                                fontSize: 16),
+                                            children: [
+                                              TextSpan(
+                                                text: "Sign up for a new account",
+                                                style: TextStyle(
+                                                  color: Colors.blue.withOpacity(
+                                                      _isPressed ? 0.6 : 1.0),
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  decoration:
                                                   TextDecoration.underline,
-                                            ),
-                                            recognizer: TapGestureRecognizer()
-                                              ..onTapDown = (_) {
-                                                setState(() {
-                                                  _isPressed = true;
-                                                });
-                                              }
-                                              ..onTapUp = (_) {
-                                                setState(() {
-                                                  _isPressed = false;
-                                                });
+                                                ),
+                                                recognizer: TapGestureRecognizer()
+                                                  ..onTapDown = (_) {
+                                                    setState(() {
+                                                      _isPressed = true;
+                                                    });
+                                                  }
+                                                  ..onTapUp = (_) {
+                                                    setState(() {
+                                                      _isPressed = false;
+                                                    });
 
-                                                Navigator.of(context)
-                                                    .push(PageRouteBuilder(
-                                                  transitionDuration: Duration(
-                                                      milliseconds: 1000),
-                                                  // Thời gian hiệu ứng
-                                                  pageBuilder: (context,
+                                                    Navigator.of(context)
+                                                        .push(PageRouteBuilder(
+                                                      transitionDuration: Duration(
+                                                          milliseconds: 1000),
+                                                      // Thời gian hiệu ứng
+                                                      pageBuilder: (context,
                                                           animation,
                                                           secondaryAnimation) =>
-                                                      RegisterPage(),
-                                                  transitionsBuilder: (context,
-                                                      animation,
-                                                      secondaryAnimation,
-                                                      child) {
-                                                    var fadeAnimation =
+                                                          RegisterPage(),
+                                                      transitionsBuilder: (context,
+                                                          animation,
+                                                          secondaryAnimation,
+                                                          child) {
+                                                        var fadeAnimation =
                                                         Tween<double>(
-                                                      begin: 0.0,
-                                                      // Bắt đầu từ trong suốt
-                                                      end:
+                                                          begin: 0.0,
+                                                          // Bắt đầu từ trong suốt
+                                                          end:
                                                           1.0, // Hiện ra hoàn toàn
-                                                    ).animate(animation);
+                                                        ).animate(animation);
 
-                                                    var scaleAnimation =
+                                                        var scaleAnimation =
                                                         Tween<double>(
-                                                      begin: 0.8,
-                                                      // Nhỏ hơn bình thường
-                                                      end:
+                                                          begin: 0.8,
+                                                          // Nhỏ hơn bình thường
+                                                          end:
                                                           1.0, // Phóng to đến kích thước chuẩn
-                                                    ).animate(animation);
+                                                        ).animate(animation);
 
-                                                    return FadeTransition(
-                                                      opacity: fadeAnimation,
-                                                      child: ScaleTransition(
-                                                        scale: scaleAnimation,
-                                                        child: child,
-                                                      ),
-                                                    );
+                                                        return FadeTransition(
+                                                          opacity: fadeAnimation,
+                                                          child: ScaleTransition(
+                                                            scale: scaleAnimation,
+                                                            child: child,
+                                                          ),
+                                                        );
+                                                      },
+                                                    ));
+                                                  }
+                                                  ..onTapCancel = () {
+                                                    setState(() {
+                                                      _isPressed = false;
+                                                    });
                                                   },
-                                                ));
-                                              }
-                                              ..onTapCancel = () {
-                                                setState(() {
-                                                  _isPressed = false;
-                                                });
-                                              },
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                    )),
-                              ],
-                            ),
-                          ),
-                        ],
-                      )),
-                );
-              })),
+                                        )),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )),
+                    );
+                  })),
             ],
           ),
-        ));
+        ));});
   }
 
   void _onForgotPasswordClick() {
@@ -577,9 +585,12 @@ class _LoginPageState extends State<LoginPage> {
                 ));
               } else {
                 // Nếu isApproved là false, điều hướng đến WaitingPage
-                Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (context) => WaitingForApprovalPage(),
-                ));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => WaitingForApprovalPage(),
+                  ),
+                );
+
               }
             } else {
               MsgDialog.showMsgDialog(context, "Error",
@@ -623,7 +634,7 @@ class _LoginPageState extends State<LoginPage> {
   InputDecoration _inputDecoration(String hint, Icon icon, Color labelColor) {
     return InputDecoration(
       labelText: hint,
-      labelStyle: TextStyle(color: labelColor, fontSize: 14.sp),
+      labelStyle: TextStyle(color: labelColor, fontSize: 14),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
       fillColor: Colors.transparent,
@@ -639,12 +650,12 @@ class _LoginPageState extends State<LoginPage> {
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8.r),
         borderSide:
-            BorderSide(color: Colors.white.withOpacity(0.5), width: 1.w),
+            BorderSide(color: Colors.white.withOpacity(0.5), width: 1),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8.r),
         borderSide: BorderSide(
-            color: Colors.white, width: 1.5.w), // Viền trắng khi focus
+            color: Colors.white, width: 1.5), // Viền trắng khi focus
       ),
     );
   }
@@ -653,7 +664,7 @@ class _LoginPageState extends State<LoginPage> {
       {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: hint,
-      labelStyle: TextStyle(color: labelColor, fontSize: 14.sp),
+      labelStyle: TextStyle(color: labelColor, fontSize: 14),
       // Label màu trắng để dễ nhìn
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
@@ -670,12 +681,12 @@ class _LoginPageState extends State<LoginPage> {
         borderRadius: BorderRadius.circular(8.r),
         borderSide: BorderSide(
             color: Colors.white.withOpacity(0.5),
-            width: 1.w), // Viền mờ khi chưa focus
+            width: 1), // Viền mờ khi chưa focus
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8.r),
         borderSide: BorderSide(
-            color: Colors.white, width: 1.5.w), // Viền trắng khi focus
+            color: Colors.white, width: 1.5), // Viền trắng khi focus
       ),
     );
   }

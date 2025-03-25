@@ -26,6 +26,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   String? _selectedApartment; // Biến lưu trữ căn hộ được chọn
   double _apartmentArea = 0.0; // Biến lưu diện tích căn hộ
+  String _avatarUrl = "";
   bool isPressed2 =false;
   bool _isLoginPressed =false;
 
@@ -83,15 +84,20 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: Image.asset(
-                            'assets/ic_signup.png',
-                            fit: BoxFit.cover, // Đảm bảo ảnh nền phủ toàn bộ màn hình
+                          child: Transform.translate(
+                            offset: Offset(0, -50.h), // Đẩy ảnh lên trên 50px (tùy chỉnh)
+                            child: Image.asset(
+                              'assets/ic_signup.png',
+                              fit: MediaQuery.of(context).size.width > 600
+                                  ? BoxFit.fill
+                                  : BoxFit.cover,
+                            ),
                           ),
                         ),
                         Column(
                           children: [
                                 Padding(
-                                  padding: EdgeInsets.fromLTRB(20.w, 80.h, 0.w, 1.h),
+                                  padding: EdgeInsets.fromLTRB(20.w, 40.h, 0.w, 1.h),
                                   child: Align( // Căn trái
                                     alignment: Alignment.centerLeft,
                                     child: Row(
@@ -99,7 +105,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                         Text(
                                           'Sign up',
                                           style: GoogleFonts.pacifico(
-                                            fontSize: 45.sp,
+                                            fontSize: 45,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white,
                                           ),
@@ -116,7 +122,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     child: Text(
                                       'Create a new account with simple steps',
                                       style: TextStyle(
-                                        fontSize: 15.sp,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.grey,
                                       ),
@@ -127,12 +133,12 @@ class _RegisterPageState extends State<RegisterPage> {
                               mainAxisAlignment: MainAxisAlignment.center, // Căn giữa nội dung theo chiều dọc
                               children: [
                                 Padding(
-                                  padding: EdgeInsets.fromLTRB(35.w, 85.h, 35.w, 1.h),
+                                  padding: EdgeInsets.fromLTRB(35.w, 75.h, 35.w, 1.h),
                                   child: StreamBuilder(
                                     stream: authBloc.nameStream,
                                     builder: (context, snapshot) => TextField(
                                       controller: _nameController,
-                                      style: TextStyle(fontSize: 16.sp, color: Colors.black),
+                                      style: TextStyle(fontSize: 16, color: Colors.black),
                                       decoration: InputDecoration(
                                         errorText: snapshot.hasError
                                             ? snapshot.error.toString()
@@ -152,7 +158,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     stream: authBloc.cccdStream,
                                     builder: (context, snapshot) => TextField(
                                       controller: _cccdController,
-                                      style: TextStyle(fontSize: 16.sp, color: Colors.black),
+                                      style: TextStyle(fontSize: 16, color: Colors.black),
                                       decoration: InputDecoration(
                                         errorText: snapshot.hasError
                                             ? snapshot.error.toString()
@@ -173,7 +179,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                       stream: authBloc.birthDateStream,
                                       builder: (context, snapshot) => TextField(
                                         controller: _birthDateController,
-                                        style: TextStyle(fontSize: 18.sp, color: Colors.black),
+                                        style: TextStyle(fontSize: 18, color: Colors.black),
                                         decoration: InputDecoration(
                                           errorText:
                                           snapshot.hasError ? snapshot.error.toString() : null,
@@ -195,7 +201,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     stream: authBloc.emailStream,
                                     builder: (context, snapshot) => TextField(
                                       controller: _emailController,
-                                      style: TextStyle(fontSize: 18.sp, color: Colors.black),
+                                      style: TextStyle(fontSize: 18, color: Colors.black),
                                       decoration: InputDecoration(
                                         errorText: snapshot.hasError
                                             ? snapshot.error.toString()
@@ -215,7 +221,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     stream: authBloc.phoneStream,
                                     builder: (context, snapshot) => TextField(
                                       controller: _phoneController,
-                                      style: TextStyle(fontSize: 18.sp, color: Colors.black),
+                                      style: TextStyle(fontSize: 18, color: Colors.black),
                                       decoration: InputDecoration(
                                         errorText:
                                         snapshot.hasError ? snapshot.error.toString() : null,
@@ -264,7 +270,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     stream: authBloc.passStream,
                                     builder: (context, snapshot) => TextField(
                                       controller: _passController,
-                                      style: TextStyle(fontSize: 18.sp, color: Colors.black),
+                                      style: TextStyle(fontSize: 18, color: Colors.black),
                                       obscureText: true,
                                       decoration: InputDecoration(
                                         errorText: snapshot.hasError
@@ -335,7 +341,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           'SIGN UP',
                                           style: TextStyle(
                                               color: Colors.white,
-                                              fontSize: 18.sp,
+                                              fontSize: 18,
                                               fontWeight: FontWeight.bold),
                                         ),
                                       ),
@@ -349,13 +355,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                     text: TextSpan(
                                       text: 'Already a user?',
                                       style:
-                                      TextStyle(color: Color(0xff606470), fontSize: 16.sp),
+                                      TextStyle(color: Color(0xff606470), fontSize: 16),
                                       children: <TextSpan>[
                                         TextSpan(
                                           text: " Login now",
                                           style: TextStyle(
                                             color: Colors.blue.withOpacity(_isLoginPressed ? 0.6 : 1.0),
-                                            fontSize: 16.sp,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                             decoration: TextDecoration.underline,
                                           ),
@@ -448,6 +454,7 @@ class _RegisterPageState extends State<RegisterPage> {
       cccd: _cccdController.text,
       // Truyền DateTime trực tiếp
       apartmentArea: _apartmentArea,
+      avatarUrl: _avatarUrl,
       onSuccess: () {
         LoadingDialog.hideLoadingDialog(context);
         Navigator.pushReplacement(
