@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,7 +17,8 @@ class FirAuth {
     required String phone,
     required String password,
     required String nameHouse,
-    required double area, // Added area parameter
+    required double area,
+    required String avatarUrl, // Ảnh đại diện
     required Function onSuccess,
     required Function(String) onRegisterError,
   }) {
@@ -33,6 +36,7 @@ class FirAuth {
           phone,
           nameHouse,
           area,
+          "",
           onSuccess,
           onRegisterError,
         );
@@ -54,6 +58,7 @@ class FirAuth {
       String phone,
       String nameHouse,
       double area,
+      String avatarUrl, // Thêm ảnh vào database
       Function onSuccess,
       Function(String) onRegisterError,
       ) async{
@@ -71,6 +76,7 @@ class FirAuth {
       "isApproved": false,
       "role": 0,
       "fcmToken": fcmToken, // Lưu token vào Firestore
+      "avatarUrl": avatarUrl, // Lưu URL ảnh
     };
 
     var ref = FirebaseDatabase.instance.ref().child("users");
