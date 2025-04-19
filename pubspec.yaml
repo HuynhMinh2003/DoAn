@@ -57,6 +57,8 @@ dependencies:
   flutter_keyboard_visibility: ^6.0.0
   shared_preferences: ^2.5.2
   firebase_storage: ^12.4.4
+  responsive_framework: ^1.5.1
+  flutter_svg: ^2.1.0
 
 dev_dependencies:
   flutter_test:
@@ -82,21 +84,24 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/ic_lock.png
-    - assets/ic_phone.png
-    - assets/ic_user.png
-    - assets/ic_house.png
-    - assets/ic_calendar.png
-    - assets/ic_mail.png
-    - assets/ic_pencil.png
-    - assets/ic_cccd.png
-    - assets/ic_hinhtron.png
-    - assets/ic_hinhbotron.png
-    - assets/ic_signup.png
-    - assets/ic_signup1.png
-    - assets/ic_signup2.png
-    - assets/ic_login.png
     - assets/service_account.json
+    - assets/images/image_login.svg
+    - assets/images/two_circle.png
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+    - family: Oswald
+      fonts:
+        - asset: assets/fonts/Oswald-Regular.ttf
+        - asset: assets/fonts/Oswald-Bold.ttf
+          weight: 700
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-Regular.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:
