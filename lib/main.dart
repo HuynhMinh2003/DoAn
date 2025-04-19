@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/firebase_options.dart';
 import 'package:do_an/src/fire_base/firebase_auth_service.dart';
 import 'package:do_an/src/fire_base/notification_service.dart';
-import 'package:do_an/src/resources/home_page.dart';
+import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,14 +14,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:do_an/src/app.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
-import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/provider/resident_provider.dart';
-import 'package:do_an/src/resources/provider/userinfo_provider.dart';
 import 'package:flutter/foundation.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 
 // Cấu hình Firebase
 const firebaseOptions = FirebaseOptions(
@@ -51,12 +48,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // // Khởi tạo SQLite cho các nền tảng non-mobile như desktop
-  // if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.windows ||
-  //     defaultTargetPlatform == TargetPlatform.macOS ||
-  //     defaultTargetPlatform == TargetPlatform.linux)) {
-  //   sqfliteFfiInit();  // Khởi tạo FFI cho nền tảng không phải di động
-  // }
 // Khóa ứng dụng chỉ chạy ở chế độ dọc
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -92,15 +83,22 @@ void main() async {
   print("OAuth Token: $oauthToken");
   sendNotification(
       oauthToken,
-      "cAaBnkGPQIikyBN6rOm-i-:APA91bFZUkSL6ooRj4q6m1BeN6IeRe_wQRrOaeA-MpBvI6bEaLE8psWQcB83pDvALMmcC9nejQz8wA7rQwuK-VaeL0GR9OQCg7OXzW3vf9W4MQkL40_Tg2g", // FCM Token của thiết bị nhận
+      "djX1z-KOTUKUF1U4z-p87i:APA91bGAuVs1QIv0oQj8g3ELK-tpd2BpAu2do9yLLq6_HOAVPgc_VwjUOcfnT6bf5hMA9IiQjsoYiXCTltyJedIL3wXuoPslW4CcEU1eFO6h3lGNlOzM2Js", // FCM Token của thiết bị nhận
       "Thông báo tiền nước!",
       "Hóa đơn tháng này là 500,000 VND."
   );
+
+  //Thêm lắng nghe sự kiện khi token thay đổi
+  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async{
+    print("FCM Token refreshed: $newToken");
+    await _saveTokenToFirestore(newToken);
+  });
+
   // Khởi chạy ứng dụng
   runApp(
     ScreenUtilInit(
       // designSize: const Size(384, 856.1777777777778),
-      designSize: const Size(384, 784.0),
+      designSize: const Size(384, 856.1777777777778),
       minTextAdapt: true,
       splitScreenMode: true, // Hỗ trợ màn hình chia đôi
       builder: (context, child) {
@@ -109,36 +107,32 @@ void main() async {
           double screenHeight = MediaQuery.of(context).size.height;
           print("📱 Kích thước màn hình: width = $screenWidth, height = $screenHeight");
         });
-        return FutureBuilder<Map<String, dynamic>?>(
-          future: checkLoginState(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const MaterialApp(
-                home: Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                ),
-              );
-            } else {
-              var userData = snapshot.data;
-              bool isLoggedIn = userData != null;
-
-              return MultiProvider(
-                providers: [
-                  ChangeNotifierProvider(create: (_) => ResidentProvider()),
-                  ChangeNotifierProvider(create: (_) => UserDataProvider()),
-                  ChangeNotifierProvider(create: (_) => UserImageProvider()),
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => ResidentProvider()),
+            ChangeNotifierProvider(create: (_) => UserDataProvider()),
+            ChangeNotifierProvider(create: (_) => UserImageProvider()),
+          ],
+          child: MyApp(
+            AuthBloc(),
+            MaterialApp(
+              navigatorKey: navigatorKey,
+              debugShowCheckedModeBanner: false,
+              theme: ThemeData(
+                fontFamily: 'Montserrat',
+              ),
+              builder: (context, child) => ResponsiveBreakpoints.builder(
+                child: child!,
+                breakpoints: [
+                  const Breakpoint(start: 0, end: 450, name: MOBILE),
+                  const Breakpoint(start: 451, end: 800, name: TABLET),
+                  const Breakpoint(start: 801, end: 1920, name: DESKTOP),
+                  const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
                 ],
-                child: MyApp(
-                  AuthBloc(),
-                  MaterialApp(
-                    navigatorKey: navigatorKey,
-                    home: isLoggedIn ? HomePage(userData: userData) : LoginPage(),
-                    debugShowCheckedModeBanner: false,
-                  ),
-                ),
-              );
-            }
-          },
+              ),
+              home: LoginPage(), // hoặc AuthWrapper()
+            ),
+          ),
         );
       },
     ),
@@ -165,22 +159,34 @@ Future<void> _requestNotificationPermissions() async {
 }
 
 // Hàm lưu token FCM vào Firestore
-Future<void> _saveTokenToFirestore(String token) async {
-  final userId = FirebaseAuth.instance.currentUser?.uid; // Lấy userId hiện tại
-  if (userId != null) {
-    try {
-      // Lưu token vào Firestore, nếu tài liệu không tồn tại sẽ tạo mới
-      await FirebaseFirestore.instance
-          .collection('users') // Chọn collection 'users'
-          .doc(userId)
-          .set({
-        'fcmToken': token,  // Cập nhật hoặc tạo mới token vào trường 'fcmToken'
-        'lastUpdated': FieldValue.serverTimestamp() // Lưu thời gian cập nhật
-      }, SetOptions(merge: true)); // merge: true để không ghi đè toàn bộ tài liệu
-      print("Token saved to Firestore successfully");
-    } catch (e) {
-      print("Error saving token to Firestore: $e");
+Future<void> _saveTokenToFirestore(String newToken) async {
+  final userId = FirebaseAuth.instance.currentUser?.uid;
+  if (userId == null) return; // Không có userId thì thoát luôn
+
+  try {
+    DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userId);
+    DocumentSnapshot userDoc = await userRef.get();
+
+    if (userDoc.exists) {
+      List<String> tokens = List<String>.from(userDoc['fcmTokens'] ?? []);
+
+      if (!tokens.contains(newToken)) {
+        // Nếu token chưa tồn tại thì thêm vào danh sách
+        await userRef.update({
+          'fcmTokens': FieldValue.arrayUnion([newToken]),
+          'lastUpdated': FieldValue.serverTimestamp(),
+        });
+      }
+    } else {
+      // Nếu user chưa có tài liệu, tạo mới với danh sách token
+      await userRef.set({
+        'fcmTokens': [newToken],
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
     }
+    print("FCM Token saved successfully!");
+  } catch (e) {
+    print("Error saving FCM Token: $e");
   }
 }
 
@@ -212,20 +218,6 @@ Future<void> _registerWithFCM() async {
     print("Sending token to server...");
     // TODO: Thay thế bằng API gọi server của bạn
   }
-}
-
-Future<Map<String, dynamic>?> checkLoginState() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-
-  if (isLoggedIn && FirebaseAuth.instance.currentUser != null) {
-    return {
-      'uid': prefs.getString('uid'),
-      'name': prefs.getString('name'),
-      'email': prefs.getString('email'),
-    };
-  }
-  return null;
 }
 
 Future<void> _handleInitialMessage() async {
