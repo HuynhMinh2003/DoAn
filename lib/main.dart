@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/firebase_options.dart';
 import 'package:do_an/src/fire_base/firebase_auth_service.dart';
 import 'package:do_an/src/fire_base/notification_service.dart';
+import 'package:do_an/src/resources/chon_can_ho_page.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
@@ -47,6 +48,14 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 // Hàm chính
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  //Đặt màu thanh trạng thái ở đây
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // hoặc đặt màu chính bạn muốn
+      statusBarIconBrightness: Brightness.dark, // icon trắng cho nền tối
+    ),
+  );
 
 // Khóa ứng dụng chỉ chạy ở chế độ dọc
   SystemChrome.setPreferredOrientations([
@@ -121,16 +130,21 @@ void main() async {
               theme: ThemeData(
                 fontFamily: 'Montserrat',
               ),
-              builder: (context, child) => ResponsiveBreakpoints.builder(
-                child: child!,
-                breakpoints: [
-                  const Breakpoint(start: 0, end: 450, name: MOBILE),
-                  const Breakpoint(start: 451, end: 800, name: TABLET),
-                  const Breakpoint(start: 801, end: 1920, name: DESKTOP),
-                  const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
-                ],
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: TextScaler.linear(1.0),
+                ),
+                child: ResponsiveBreakpoints.builder(
+                  child: child!,
+                  breakpoints: [
+                    const Breakpoint(start: 0, end: 899, name: MOBILE),             // Điện thoại nhỏ & vừa (iPhone, Android phổ biến)
+                    const Breakpoint(start: 900, end: 1279, name: TABLET),          // Tablet (iPad, Galaxy Tab, điện thoại gập ngang)
+                    const Breakpoint(start: 1280, end: 1919, name: DESKTOP),        // Laptop cơ bản (13"–14")
+                    const Breakpoint(start: 1920, end: double.infinity, name: '4K'), // Màn hình 2K, 4K, ultrawide
+                  ],
+                ),
               ),
-              home: LoginPage(), // hoặc AuthWrapper()
+              home: ApartmentFilterPage(), // hoặc AuthWrapper()
             ),
           ),
         );
