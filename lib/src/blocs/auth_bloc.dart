@@ -1,157 +1,126 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:do_an/src/fire_base/fire_base_auth.dart';
 
 class AuthBloc {
   final _firAuth = FirAuth();
 
-  final StreamController<String> _nameController = StreamController<String>();
-  final StreamController<String> _cccdController = StreamController<String>();
-  final StreamController<DateTime> _birthDateController = StreamController<DateTime>(); // Sửa thành DateTime
-  final StreamController<String> _emailController = StreamController<String>();
-  final StreamController<String> _phoneController = StreamController<String>();
-  final StreamController<String> _nameHouseController = StreamController<String>();
-  final StreamController<String> _passController = StreamController<String>();
-  final StreamController<double> _apartmentAreaController = StreamController<double>(); // New controller for apartment area
+  final StreamController<String> _nameCompanyController = StreamController<String>.broadcast();
+  final StreamController<String> _emailCompanyController = StreamController<String>.broadcast();
+  final StreamController<String> _phoneCompanyController = StreamController<String>.broadcast();
+  final StreamController<String> _typeCompanyController = StreamController<String>.broadcast();
+  final StreamController<String> _describeCompanyController = StreamController<String>.broadcast();
 
-  Stream<String> get nameStream => _nameController.stream;
-  Stream<String> get cccdStream => _cccdController.stream;
-  Stream<DateTime> get birthDateStream => _birthDateController.stream; // Sửa thành DateTime
-  Stream<String> get emailStream => _emailController.stream;
-  Stream<String> get phoneStream => _phoneController.stream;
-  Stream<String> get nameHouseStream => _nameHouseController.stream;
-  Stream<String> get passStream => _passController.stream;
-  Stream<double> get apartmentAreaStream => _apartmentAreaController.stream;
+  Stream<String> get nameCompanyStream => _nameCompanyController.stream;
+  Stream<String> get emailCompanyStream => _emailCompanyController.stream;
+  Stream<String> get phoneCompanyStream => _phoneCompanyController.stream;
+  Stream<String> get typeCompanyStream => _typeCompanyController.stream;
+  Stream<String> get describeCompanyStream => _describeCompanyController.stream;
 
-  final StreamController<String> _emailController1 = StreamController<String>();
-  final StreamController<String> _passController1 = StreamController<String>();
+  final StreamController<String> _nameStaffController = StreamController<String>.broadcast();
+  final StreamController<String> _emailStaffController = StreamController<String>.broadcast();
+  final StreamController<String> _phoneStaffController = StreamController<String>.broadcast();
+  final StreamController<String> _rollStaffController = StreamController<String>.broadcast();
 
-  Stream<String> get emailStream1 => _emailController1.stream;
-  Stream<String> get passStream1 => _passController1.stream;// New stream for apartment area
+  Stream<String> get nameStaffStream => _nameStaffController.stream;
+  Stream<String> get emailStaffStream => _emailStaffController.stream;
+  Stream<String> get phoneStaffStream => _phoneStaffController.stream;
+  Stream<String> get rollStaffStream => _rollStaffController.stream;
 
-  /// Kiểm tra dữ liệu hợp lệ
-  bool isValid(
-      String name,
-      String cccd,
-      DateTime? birthDate, // Chuyển thành DateTime
-      String email,
-      String phone,
-      String? nameHouse,
-      String pass,
-      double apartmentArea, // Add apartment area to validation
+  final StreamController<String> _emailCompanyController1 = StreamController<String>.broadcast();
+  final StreamController<String> _passCompanyController1 = StreamController<String>.broadcast();
+
+  Stream<String> get emailStream => _emailCompanyController1.stream;
+  Stream<String> get passStream => _passCompanyController1.stream;
+
+  /// Tạo mật khẩu ngẫu nhiên
+  String generateRandomPassword({int length = 10}) {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#\$";
+    final rand = Random.secure();
+    return List.generate(length, (_) => chars[rand.nextInt(chars.length)]).join();
+  }
+
+  /// Kiểm tra dữ liệu hợp lệ (không cần kiểm tra password nếu không nhập từ form)
+  bool isValidSignUp(
+      String nameCompany,
+      String emailCompany,
+      String phoneCompany,
+      String typeCompany,
+      String describeCompany,
       ) {
     bool isValid = true;
 
-    // Kiểm tra tên
-    if (name.isEmpty) {
-      _nameController.sink.addError("Phải nhập tên !");
+    if (nameCompany.isEmpty) {
+      _nameCompanyController.sink.addError("Phải nhập tên công ty !");
       isValid = false;
     } else {
-      _nameController.sink.add(""); // Xóa lỗi nếu hợp lệ
+      _nameCompanyController.sink.add("");
     }
 
-    // Kiểm tra email
     final emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
-    if (email.isEmpty) {
-      _emailController.sink.addError("Phải nhập email !");
+    if (emailCompany.isEmpty) {
+      _emailCompanyController.sink.addError("Phải nhập email công ty!");
       isValid = false;
-    } else if (!emailRegex.hasMatch(email)) {
-      _emailController.sink.addError("Email không hợp lệ !");
+    } else if (!emailRegex.hasMatch(emailCompany)) {
+      _emailCompanyController.sink.addError("Email không hợp lệ !");
       isValid = false;
     } else {
-      _emailController.sink.add("");
+      _emailCompanyController.sink.add("");
     }
 
-    // Kiểm tra mật khẩu
-    if (pass.isEmpty) {
-      _passController.sink.addError("Phải nhập mật khẩu !");
+    final phoneRegex = RegExp(r'^\d{10,15}$');
+    if (phoneCompany.isEmpty) {
+      _phoneCompanyController.sink.addError("Phải nhập số điện thoại công ty !");
       isValid = false;
-    } else if (pass.length < 6) {
-      _passController.sink.addError("Mật khẩu phải có ít nhất 6 ký tự !");
+    } else if (!phoneRegex.hasMatch(phoneCompany)) {
+      _phoneCompanyController.sink.addError("Số điện thoại không hợp lệ !");
       isValid = false;
     } else {
-      _passController.sink.add("");
+      _phoneCompanyController.sink.add("");
     }
 
-    // Kiểm tra số điện thoại
-    final phoneRegex = RegExp(r'^\d{10,15}$'); // Chỉ số từ 10 đến 15 chữ số
-    if (phone.isEmpty) {
-      _phoneController.sink.addError("Phải nhập số điện thoại !");
-      isValid = false;
-    } else if (!phoneRegex.hasMatch(phone)) {
-      _phoneController.sink.addError("Số điện thoại không hợp lệ !");
+    if (typeCompany.isEmpty) {
+      _typeCompanyController.sink.addError("Phải điền loại dịch vụ !");
       isValid = false;
     } else {
-      _phoneController.sink.add("");
+      _typeCompanyController.sink.add("");
     }
 
-    // Kiểm tra số cccd
-    final cccdRegex = RegExp(r'^\d{12}$'); // Biểu thức kiểm tra đúng 12 chữ số
-    if (cccd.isEmpty) {
-      _cccdController.sink.addError("Phải nhập số CCCD !");
-      isValid = false;
-    } else if (!cccdRegex.hasMatch(cccd)) {
-      _cccdController.sink.addError("Số CCCD không hợp lệ !");
+    if (describeCompany.isEmpty) {
+      _describeCompanyController.sink.addError("Phải điền loại dịch vụ !");
       isValid = false;
     } else {
-      _cccdController.sink.add("");
-    }
-
-    // Kiểm tra tên căn hộ
-    if (nameHouse == null || nameHouse.isEmpty) {
-      _nameHouseController.sink.addError("Phải chọn tên căn hộ !");
-      isValid = false;
-    } else {
-      _nameHouseController.sink.add(""); // Xóa lỗi nếu hợp lệ
-    }
-
-    // Kiểm tra ngày sinh
-    if (birthDate == null) {
-      _birthDateController.sink.addError("Phải nhập ngày sinh !");
-      isValid = false;
-    } else {
-      _birthDateController.sink.add(birthDate); // Phát ngày sinh vào Stream
-    }
-
-    // Kiểm tra diện tích căn hộ
-    if (apartmentArea <= 0) {
-      _apartmentAreaController.sink.addError("Diện tích căn hộ không hợp lệ !");
-      isValid = false;
-    } else {
-      _apartmentAreaController.sink.add(apartmentArea); // Phát diện tích vào Stream
+      _describeCompanyController.sink.add("");
     }
 
     return isValid;
   }
 
-  /// Đăng ký người dùng
-  void signUp({
-    required String name,
-    required String cccd,
-    required DateTime? birthDate, // birthDate có thể là null
-    required String email,
-    required String phone,
-    required String nameHouse, // Thêm tham số
-    required String pass,
-    required double apartmentArea,
-    required String avatarUrl, // Ảnh đại diện
+  /// Đăng ký công ty
+  void signUpCompany({
+    required String nameCompany,
+    required String emailCompany,
+    required String phoneCompany,
+    required String typeCompany,
+    required String describeCompany,
     required Function onSuccess,
     required Function(String) onRegisterError,
   }) {
-    if (isValid(name, cccd, birthDate, email, phone, nameHouse, pass, apartmentArea)) {
-      // Kiểm tra nếu birthDate không phải là null, nếu không thì dùng giá trị mặc định
-      DateTime finalBirthDate = birthDate ?? DateTime(2000, 01, 01); // Sử dụng giá trị mặc định nếu null
+    if (isValidSignUp(nameCompany, emailCompany, phoneCompany, typeCompany, describeCompany)) {
+      final randomPassword = generateRandomPassword(); // 👉 tạo mật khẩu tại đây
 
-      _firAuth.signUp(
-        name: name,
-        cccd: cccd,
-        birthDate: finalBirthDate, // Gửi giá trị birthDate đã chuyển thành chuỗi
-        email: email,
-        phone: phone,
-        nameHouse: nameHouse,
-        password: pass,
-        area: apartmentArea, // Gửi diện tích căn hộ vào signUp
-        avatarUrl: avatarUrl, // Lưu avatar vào database
-        onSuccess: onSuccess,
+      _firAuth.signUpCompany(
+        nameCompany: nameCompany,
+        emailCompany: emailCompany,
+        phoneCompany: phoneCompany,
+        typeCompany: typeCompany,
+        describeCompany: describeCompany,
+        password: randomPassword,
+        onSuccess: () {
+          // 👉 Gọi onSuccess() và có thể gửi mật khẩu về Gmail tại đây
+          print('Mật khẩu ngẫu nhiên là: $randomPassword');
+          onSuccess();
+        },
         onRegisterError: onRegisterError,
       );
     }
@@ -163,35 +132,33 @@ class AuthBloc {
     final emailRegex1 = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
 
     if (email.isEmpty) {
-      _emailController1.sink.addError("Phải nhập email !");
+      _emailCompanyController1.sink.addError("Phải nhập email !");
       isValid1 = false;
     } else if (!emailRegex1.hasMatch(email)) {
-      _emailController1.sink.addError("Email không hợp lệ !");
+      _emailCompanyController1.sink.addError("Email không hợp lệ !");
       isValid1 = false;
     } else {
-      _emailController1.sink.add(""); // Xóa lỗi nếu hợp lệ
+      _emailCompanyController1.sink.add("");
     }
 
     if (pass.isEmpty) {
-      _passController1.sink.addError("Mật khẩu không được để trống !");
+      _passCompanyController1.sink.addError("Mật khẩu không được để trống !");
       isValid1 = false;
     } else {
-      _passController1.sink.add(""); // Xóa lỗi nếu hợp lệ
+      _passCompanyController1.sink.add("");
     }
 
     return isValid1;
   }
 
-
-  /// Đăng nhập người dùng
-  void signIn({
+  void signInCompany({
     required String email,
     required String pass,
     required Function onSuccess,
     required Function(String) onSignInError,
   }) {
     if (isValidSignIn(email, pass)) {
-      _firAuth.signIn(
+      _firAuth.signInCompany(
         email: email,
         password: pass,
         onSuccess: onSuccess,
@@ -200,15 +167,11 @@ class AuthBloc {
     }
   }
 
-  /// Đóng các StreamController
   void dispose() {
-    _nameController.close();
-    _cccdController.close();
-    _birthDateController.close();
-    _emailController.close();
-    _phoneController.close();
-    _nameController.close();
-    _passController.close();
-    _apartmentAreaController.close(); // Close the new controller
+    _nameCompanyController.close();
+    _emailCompanyController.close();
+    _phoneCompanyController.close();
+    _typeCompanyController.close();
+    _describeCompanyController.close();
   }
 }
