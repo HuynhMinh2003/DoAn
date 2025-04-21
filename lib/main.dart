@@ -7,6 +7,8 @@ import 'package:do_an/src/resources/chon_can_ho_page.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
+import 'package:do_an/src/resources/tao_tk_ctdv_ngoai.dart';
+import 'package:do_an/src/resources/tao_tk_nv.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -144,7 +146,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: ApartmentFilterPage(), // hoặc AuthWrapper()
+              home: const LoginPage(), // hoặc AuthWrapper()
             ),
           ),
         );
