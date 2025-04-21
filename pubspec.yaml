@@ -87,6 +87,8 @@ flutter:
   assets:
     - assets/service_account.json
     - assets/images/image_login.svg
+    - assets/images/image_signup_cty.svg
+    - assets/images/image_signup_nv.svg
     - assets/images/two_circle.png
 
   fonts:
