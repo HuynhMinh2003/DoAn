@@ -5,6 +5,7 @@ import 'package:do_an/src/fire_base/fire_base_auth.dart';
 class AuthBloc {
   final _firAuth = FirAuth();
 
+  // công ty
   final StreamController<String> _nameCompanyController = StreamController<String>.broadcast();
   final StreamController<String> _emailCompanyController = StreamController<String>.broadcast();
   final StreamController<String> _phoneCompanyController = StreamController<String>.broadcast();
@@ -17,16 +18,16 @@ class AuthBloc {
   Stream<String> get typeCompanyStream => _typeCompanyController.stream;
   Stream<String> get describeCompanyStream => _describeCompanyController.stream;
 
+  // nhân viên
   final StreamController<String> _nameStaffController = StreamController<String>.broadcast();
   final StreamController<String> _emailStaffController = StreamController<String>.broadcast();
   final StreamController<String> _phoneStaffController = StreamController<String>.broadcast();
-  final StreamController<String> _rollStaffController = StreamController<String>.broadcast();
 
   Stream<String> get nameStaffStream => _nameStaffController.stream;
   Stream<String> get emailStaffStream => _emailStaffController.stream;
   Stream<String> get phoneStaffStream => _phoneStaffController.stream;
-  Stream<String> get rollStaffStream => _rollStaffController.stream;
 
+  // login chung
   final StreamController<String> _emailCompanyController1 = StreamController<String>.broadcast();
   final StreamController<String> _passCompanyController1 = StreamController<String>.broadcast();
 
@@ -41,7 +42,7 @@ class AuthBloc {
   }
 
   /// Kiểm tra dữ liệu hợp lệ (không cần kiểm tra password nếu không nhập từ form)
-  bool isValidSignUp(
+  bool isValidSignUpCompany(
       String nameCompany,
       String emailCompany,
       String phoneCompany,
@@ -106,7 +107,7 @@ class AuthBloc {
     required Function onSuccess,
     required Function(String) onRegisterError,
   }) {
-    if (isValidSignUp(nameCompany, emailCompany, phoneCompany, typeCompany, describeCompany)) {
+    if (isValidSignUpCompany(nameCompany, emailCompany, phoneCompany, typeCompany, describeCompany)) {
       final randomPassword = generateRandomPassword(); // 👉 tạo mật khẩu tại đây
 
       _firAuth.signUpCompany(
@@ -124,6 +125,68 @@ class AuthBloc {
         onRegisterError: onRegisterError,
       );
     }
+  }
+
+  /// Đăng ký nhân viên
+  void signUpStaff({
+    required String name,
+    required String email,
+    required String phone,
+    required String position,
+    required Function onSuccess,
+    required Function(String) onRegisterError,
+  }) {
+    if (isValidStaffSignUp(name, email, phone, position)) {
+      final randomPassword = generateRandomPassword();
+
+      _firAuth.signUpStaff(
+        name: name,
+        email: email,
+        phone: phone,
+        position: position,
+        password: randomPassword,
+        onSuccess: () {
+          print('Mật khẩu ngẫu nhiên cho nhân viên là: $randomPassword');
+          onSuccess();
+        },
+        onRegisterError: onRegisterError,
+      );
+    }
+  }
+
+  bool isValidStaffSignUp(String name, String email, String phone, String position) {
+    bool isValid = true;
+
+    if (name.isEmpty) {
+      _nameStaffController.sink.addError("Phải nhập tên nhân viên!");
+      isValid = false;
+    } else {
+      _nameStaffController.sink.add("");
+    }
+
+    final emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+    if (email.isEmpty) {
+      _emailStaffController.sink.addError("Phải nhập email!");
+      isValid = false;
+    } else if (!emailRegex.hasMatch(email)) {
+      _emailStaffController.sink.addError("Email không hợp lệ!");
+      isValid = false;
+    } else {
+      _emailStaffController.sink.add("");
+    }
+
+    final phoneRegex = RegExp(r'^\d{10,15}$');
+    if (phone.isEmpty) {
+      _phoneStaffController.sink.addError("Phải nhập số điện thoại!");
+      isValid = false;
+    } else if (!phoneRegex.hasMatch(phone)) {
+      _phoneStaffController.sink.addError("Số điện thoại không hợp lệ!");
+      isValid = false;
+    } else {
+      _phoneStaffController.sink.add("");
+    }
+
+    return isValid;
   }
 
   bool isValidSignIn(String email, String pass) {
@@ -151,14 +214,14 @@ class AuthBloc {
     return isValid1;
   }
 
-  void signInCompany({
+  void signIn({
     required String email,
     required String pass,
     required Function onSuccess,
     required Function(String) onSignInError,
   }) {
     if (isValidSignIn(email, pass)) {
-      _firAuth.signInCompany(
+      _firAuth.signIn(
         email: email,
         password: pass,
         onSuccess: onSuccess,
@@ -173,5 +236,13 @@ class AuthBloc {
     _phoneCompanyController.close();
     _typeCompanyController.close();
     _describeCompanyController.close();
+
+    _nameStaffController.close();
+    _emailStaffController.close();
+    _phoneStaffController.close();
+
+    _emailCompanyController1.close();
+    _passCompanyController1.close();
   }
+
 }
