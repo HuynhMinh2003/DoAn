@@ -3,11 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/firebase_options.dart';
 import 'package:do_an/src/fire_base/firebase_auth_service.dart';
 import 'package:do_an/src/fire_base/notification_service.dart';
-import 'package:do_an/src/resources/chon_can_ho_page.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
-import 'package:do_an/src/resources/tao_tk_ctdv_ngoai.dart';
 import 'package:do_an/src/resources/tao_tk_nv.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -74,36 +72,36 @@ void main() async {
   // Khởi tạo SQLite
   // initDatabase();
 
-  // Đăng ký xử lý tin nhắn trong nền
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Yêu cầu quyền nhận thông báo
-  await _requestNotificationPermissions();
-
-  // Đăng ký và lấy mã thông báo FCM
-  await _registerWithFCM();
-
-  await _handleInitialMessage();
-
-  // Đăng ký xử lý tin nhắn foreground
-  _setupForegroundMessageHandler();
-
-  String oauthToken = await FirebaseAuthService.getOAuthToken();
-  print("OAuth Token: $oauthToken");
-  sendNotification(
-      oauthToken,
-      "djX1z-KOTUKUF1U4z-p87i:APA91bGAuVs1QIv0oQj8g3ELK-tpd2BpAu2do9yLLq6_HOAVPgc_VwjUOcfnT6bf5hMA9IiQjsoYiXCTltyJedIL3wXuoPslW4CcEU1eFO6h3lGNlOzM2Js", // FCM Token của thiết bị nhận
-      "Thông báo tiền nước!",
-      "Hóa đơn tháng này là 500,000 VND."
-  );
-
-  //Thêm lắng nghe sự kiện khi token thay đổi
-  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async{
-    print("FCM Token refreshed: $newToken");
-    await _saveTokenToFirestore(newToken);
-  });
+  // // Đăng ký xử lý tin nhắn trong nền
+  // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  //
+  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  //
+  // // Yêu cầu quyền nhận thông báo
+  // await _requestNotificationPermissions();
+  //
+  // // Đăng ký và lấy mã thông báo FCM
+  // await _registerWithFCM();
+  //
+  // await _handleInitialMessage();
+  //
+  // // Đăng ký xử lý tin nhắn foreground
+  // _setupForegroundMessageHandler();
+  //
+  // String oauthToken = await FirebaseAuthService.getOAuthToken();
+  // print("OAuth Token: $oauthToken");
+  // sendNotification(
+  //     oauthToken,
+  //     "djX1z-KOTUKUF1U4z-p87i:APA91bGAuVs1QIv0oQj8g3ELK-tpd2BpAu2do9yLLq6_HOAVPgc_VwjUOcfnT6bf5hMA9IiQjsoYiXCTltyJedIL3wXuoPslW4CcEU1eFO6h3lGNlOzM2Js", // FCM Token của thiết bị nhận
+  //     "Thông báo tiền nước!",
+  //     "Hóa đơn tháng này là 500,000 VND."
+  // );
+  //
+  // //Thêm lắng nghe sự kiện khi token thay đổi
+  // FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async{
+  //   print("FCM Token refreshed: $newToken");
+  //   await _saveTokenToFirestore(newToken);
+  // });
 
   // Khởi chạy ứng dụng
   runApp(
