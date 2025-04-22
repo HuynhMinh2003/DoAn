@@ -80,9 +80,6 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                                 fontSize: 12.sp,
                               ),
                             ),
-                            SizedBox(
-                              height: 10.h,
-                            ),
                             _buildTextField(
                               controller: _nameCompanyController,
                               label: 'Tên công ty:',
