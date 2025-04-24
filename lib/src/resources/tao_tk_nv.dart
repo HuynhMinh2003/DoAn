@@ -1,11 +1,14 @@
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
+import 'package:do_an/src/resources/provider/user_image_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 
 class AddAccountStaffPage extends StatefulWidget {
   const AddAccountStaffPage({super.key});
@@ -22,6 +25,8 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
   final AuthBloc _authBloc = AuthBloc();
 
   String? _selectedRole;
+
+  String? _imageUrl;
 
   List<String> _roleItems = [];
 
@@ -77,17 +82,102 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                       children: [
                         // Bên trái: ảnh
                         Expanded(
-                          child: Center(
-                            child: Padding(
-                              padding: EdgeInsets.only(right: 30.w),
-                              child: SvgPicture.asset(
-                                'assets/images/image_signup_nv.svg',
-                                width: 600.h,
-                              ),
-                            ),
+                          child:
+                          Consumer<UserImageProvider>(
+                              builder: (context, avatarProvider, child) {
+                                String? avatarUrl = avatarProvider.avatarUrl;
+                                return GestureDetector(
+                                  onTap: () async {
+                                    final provider = Provider.of<UserImageProvider>(context, listen: false);
+
+                                    await provider.pickImage(); // chỉ lưu tạm vào _selectedImageFile
+
+                                    await Future.delayed(Duration(milliseconds: 300));
+                                    if (kIsWeb) {
+                                      print("🧾 Ảnh web đã chọn: ${provider.webImageBytes != null ? "Đã có dữ liệu bytes" : "null"}");
+                                    } else {
+                                      print("🧾 Ảnh file đã chọn: ${provider.selectedImageFile?.path ?? "null"}");
+                                    }
+                                    // Kiểm tra nếu không có ảnh hoặc ảnh không thể tải
+                                    if (provider.selectedImageFile == null && provider.webImageBytes == null && avatarUrl == null) {
+                                      MsgDialog.showMsgDialog(context, "Lỗi", "Không thể tải được ảnh ");
+                                    }
+                                  },
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: Colors.grey.shade200, width: 0.5.w), // Viền xám mỏng
+                                        ),
+                                        child: CircleAvatar(
+                                          radius: 150.r,
+                                          backgroundColor: Colors.white,
+                                          child: avatarUrl != null
+                                              ? ClipOval(
+                                            child: Image.network(
+                                              '$avatarUrl?t=${DateTime.now().millisecondsSinceEpoch}',
+                                              fit: BoxFit.cover,
+                                              width: 300.w,
+                                              height: 300.h,
+                                              loadingBuilder: (context, child, loadingProgress) {
+                                                if (loadingProgress == null) return child;
+                                                return const Center(child: CircularProgressIndicator());
+                                              },
+                                              errorBuilder: (context, error, stackTrace) =>
+                                              const Icon(Icons.error, color: Colors.red),
+                                            ),
+                                          )
+                                              : avatarProvider.webImageBytes != null
+                                              ? ClipOval(
+                                            child: Image.memory(
+                                              avatarProvider.webImageBytes!,
+                                              fit: BoxFit.cover,
+                                              width: 300.w,
+                                              height: 300.h,
+                                            ),
+                                          )
+                                              : avatarProvider.selectedImageFile != null
+                                              ? ClipOval(
+                                            child: Image.file(
+                                              avatarProvider.selectedImageFile!,
+                                              fit: BoxFit.cover,
+                                              width: 300.w,
+                                              height: 300.h,
+                                            ),
+                                          )
+                                              : Icon(Icons.add_a_photo, size: 15.sp, color: Colors.grey),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        child: Container(
+                                          padding:  EdgeInsets.symmetric(horizontal: 10.w, vertical: 1.h),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black38,
+                                            borderRadius: BorderRadius.circular(12.r),
+                                          ),
+                                          child: Text(
+                                            (avatarUrl != null ||
+                                                avatarProvider.selectedImageFile != null ||
+                                                avatarProvider.webImageBytes != null)
+                                                ? 'Thay đổi'
+                                                : 'Thêm ảnh',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 4.sp,
+                                            ),
+                                          ),
+
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
                           ),
                         ),
-
                         // Bên phải: form login
                         Expanded(
                             child: Column(
@@ -158,9 +248,9 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                             style: TextStyle(
                                               fontFamily: "Oswald",
                                               fontWeight: FontWeight.w700,
-                                              fontSize: 5.sp,
+                                              fontSize: 7.sp,
                                               color: Colors.white,
-                                              height: 1.0,
+                                              height: 1.h,
                                             ),
                                             textAlign: TextAlign.center,
                                           ),
@@ -191,9 +281,9 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                             style: TextStyle(
                                               fontFamily: "Oswald",
                                               fontWeight: FontWeight.w700,
-                                              fontSize: 5.sp,
+                                              fontSize: 7.sp,
                                               color: Colors.white,
-                                              height: 1.0,
+                                              height: 1.h,
                                             ),
                                             textAlign: TextAlign.center,
                                           ),
@@ -216,6 +306,60 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
     );
   }
 
+  _onSignUpStaffClicked() async {
+    if (_selectedRole == null) {
+      MsgDialog.showMsgDialog(context, "Lỗi", "Vui lòng chọn vai trò");
+      return;
+    }
+
+    var isValidStaff = _authBloc.isValidStaffSignUp(
+      _nameStaffController.text,
+      _emailStaffController.text,
+      _phoneStaffController.text,
+      _selectedRole!,
+    );
+
+    if (!isValidStaff) return;
+
+    // Hiển thị dialog loading
+    LoadingDialog.showLoadingDialog(context, 'Đang tải ...');
+
+    try {
+      final imageProvider = Provider.of<UserImageProvider>(context, listen: false);
+      final userId = const Uuid().v4(); // Tạm tạo UID (nếu chưa có user thực)
+
+      final imageUrl = await imageProvider.uploadSelectedImageAndGetUrl(userId);
+
+      if (imageUrl == null) {
+        LoadingDialog.hideLoadingDialog(context);
+        MsgDialog.showMsgDialog(context, "Lỗi", "Bạn chưa chọn ảnh. Vui lòng chọn lại");
+        return;
+      }
+
+      _imageUrl = imageUrl;
+
+      // Gọi hàm tạo tài khoản
+      _authBloc.signUpStaff(
+        name: _nameStaffController.text,
+        email: _emailStaffController.text,
+        phone: _phoneStaffController.text,
+        position: _selectedRole!,
+        imageUrl: _imageUrl!,
+        onSuccess: () {
+          LoadingDialog.hideLoadingDialog(context);
+          MsgDialog.showMsgDialog(context, "Tạo tài khoản thành công!", "Tài khoản đã được tạo");
+        },
+        onRegisterError: (msg) {
+          LoadingDialog.hideLoadingDialog(context);
+          MsgDialog.showMsgDialog(context, "Tạo tài khoản thất bại !", msg);
+        },
+      );
+    } catch (e) {
+      LoadingDialog.hideLoadingDialog(context);
+      MsgDialog.showMsgDialog(context, "Lỗi hệ thống", "Không thể tạo tài khoản: $e");
+    }
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -228,9 +372,12 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
         builder: (context, snapshot) {
           return TextField(
             controller: controller,
-            style: TextStyle(fontSize: 18, color: Colors.black),
+            style: TextStyle(fontSize: 4.sp, color: Colors.black),
             decoration: InputDecoration(
               labelText: label,
+              labelStyle: TextStyle(
+                fontSize: 4.sp
+              ),
               errorText: snapshot.hasError ? snapshot.error as String : null,
               contentPadding:
               EdgeInsets.symmetric(vertical: 2.h, horizontal: 10.w),
@@ -261,7 +408,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
               isExpanded: true,
               hint: Text(
                 label+":",
-                style: TextStyle(color: Colors.black),
+                style: TextStyle(color: Colors.black, fontSize: 4.sp),
               ),
               items: items.map((item) {
                 return DropdownMenuItem(
@@ -302,37 +449,4 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
     );
   }
 
-  _onSignUpStaffClicked(){
-    if (_selectedRole == null) {
-      MsgDialog.showMsgDialog(context, "Lỗi", "Vui lòng chọn vai trò.");
-      return;
-    }
-    var isValidStaff = _authBloc.isValidStaffSignUp(
-      _nameStaffController.text,
-      _emailStaffController.text,
-      _phoneStaffController.text,
-      _selectedRole!,
-    );
-
-    if (isValidStaff) {
-      // loading dialog
-      LoadingDialog.showLoadingDialog(context, 'Đang tải ...');
-
-      // create user
-      _authBloc.signUpStaff(
-        name: _nameStaffController.text,
-        email: _emailStaffController.text,
-        phone: _phoneStaffController.text,
-        position: _selectedRole!,
-        onSuccess: () {
-          LoadingDialog.hideLoadingDialog(context);
-          MsgDialog.showMsgDialog(context, "Tạo tài khoản thành công!", "Tài khoản đã được tạo.");
-        },
-        onRegisterError: (msg) {
-          LoadingDialog.hideLoadingDialog(context);
-          MsgDialog.showMsgDialog(context, "Tạo tài khoản thất bại !", msg);
-        },
-      );
-    }
-  }
 }
