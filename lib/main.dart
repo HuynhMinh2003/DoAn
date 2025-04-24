@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/firebase_options.dart';
 import 'package:do_an/src/fire_base/firebase_auth_service.dart';
 import 'package:do_an/src/fire_base/notification_service.dart';
+import 'package:do_an/src/resources/ds_nhanvien_page.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
@@ -132,7 +133,7 @@ void main() async {
               ),
               builder: (context, child) => MediaQuery(
                 data: MediaQuery.of(context).copyWith(
-                  textScaler: TextScaler.linear(1.0),
+                  textScaler: const TextScaler.linear(1.0),
                 ),
                 child: ResponsiveBreakpoints.builder(
                   child: child!,
@@ -144,7 +145,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: const AddAccountStaffPage(), // hoặc AuthWrapper()
+              home: const StaffListPage(), // hoặc AuthWrapper()
             ),
           ),
         );
