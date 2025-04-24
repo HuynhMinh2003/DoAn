@@ -9,15 +9,15 @@ class MsgDialog {
           title: Center(child: Text(title, style: TextStyle(
             fontFamily: "Oswald",
             fontWeight: FontWeight.w700,
-            fontSize: 8.sp,
+            fontSize: 7.sp,
           ),)),
-          content: Text(msg),
+          content: Text(msg, style: TextStyle(fontSize: 4.sp),textAlign: TextAlign.center),
           actions: <Widget>[
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop(MsgDialog);
               },
-              child: const Text("Đồng ý"),
+              child: Text("Đồng ý", style: TextStyle(fontSize: 3.sp),),
             ),
           ],
         ));

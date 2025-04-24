@@ -358,8 +358,8 @@ class _LoginPageState extends State<LoginPage> {
 
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       isScrollControlled: true,
       builder: (context) {
@@ -373,12 +373,12 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 "Quên mật khẩu",
                 style: TextStyle(
                   fontFamily: "Oswald",
                   fontWeight: FontWeight.w700,
-                  fontSize: 30,
+                  fontSize: 6.sp,
                 ),
               ),
               SizedBox(height: 10.h),
