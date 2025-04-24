@@ -60,6 +60,7 @@ dependencies:
   responsive_framework: ^1.5.1
   flutter_svg: ^2.1.0
   dropdown_button2: ^2.3.9
+  cloud_functions: ^5.4.0
 
 dev_dependencies:
   flutter_test:

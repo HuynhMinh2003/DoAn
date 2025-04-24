@@ -20,7 +20,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailCompanyController1 = TextEditingController();
+  final TextEditingController _emailCompanyController1 =
+      TextEditingController();
   final TextEditingController _passCompanyController1 = TextEditingController();
 
   final AuthBloc _authBloc = AuthBloc();
@@ -34,8 +35,8 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       // Đường dẫn Firestore cho nhân viên
-      DocumentReference staffRef = FirebaseFirestore.instance.collection(
-          "users").doc(staffId);
+      DocumentReference staffRef =
+          FirebaseFirestore.instance.collection("users").doc(staffId);
       DocumentSnapshot staffDoc = await staffRef.get();
 
       if (staffDoc.exists) {
@@ -72,51 +73,52 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery
-        .of(context)
-        .size;
+    final size = MediaQuery.of(context).size;
     final isLandscape = size.height < size.width;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7FEFF),
-      body: SafeArea(
-        bottom: true, // bảo vệ khỏi thanh đh
-        top: true, // bảo vệ khỏi thanh tb
-        child: Stack(
-          children: [
-            // Ảnh hình tròn trang trí (top left)
-            Positioned(
-              top: 0,
-              left: 0,
-              child: Image.asset(
-                'assets/images/two_circle.png',
-                width: 160,
-              ),
-            ),
+    return GestureDetector(
+        onTap: () {
+          // Ẩn bàn phím khi chạm ra ngoài TextField
+          FocusScope.of(context).unfocus();
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF7FEFF),
+          body: SafeArea(
+            bottom: true, // bảo vệ khỏi thanh đh
+            top: true, // bảo vệ khỏi thanh tb
+            child: Stack(
+              children: [
+                // Ảnh hình tròn trang trí (top left)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  child: Image.asset(
+                    'assets/images/two_circle.png',
+                    width: 160,
+                  ),
+                ),
 
-            // Nội dung chính
-            SingleChildScrollView(
-              padding: EdgeInsets.only(left: isLandscape ? 80 : 24.w,
-                  right: isLandscape ? 80 : 24.w,
-                  top: 170.h),
-              child: isLandscape
-                  ? _buildLandScapeLayout(context)
-                  : _buildPortraitLayout(context),
+                // Nội dung chính
+                SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                      left: isLandscape ? 80 : 24.w,
+                      right: isLandscape ? 80 : 24.w,
+                      top: 170.h),
+                  child: isLandscape
+                      ? _buildLandScapeLayout(context)
+                      : _buildPortraitLayout(context),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        ));
   }
 
   /// Layout cho Desktop
   Widget _buildLandScapeLayout(BuildContext context) {
     return Center(
       child: SizedBox(
-        width: MediaQuery
-            .of(context)
-            .size
-            .width,
+        width: MediaQuery.of(context).size.width,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -136,101 +138,101 @@ class _LoginPageState extends State<LoginPage> {
             // Bên phải: form login
             Expanded(
                 child: Column(
-                  children: [
-                    SizedBox(height: 50.h),
-                    // Tiêu đề
-                    Text(
-                      'Chào mừng trở lại',
-                      style: TextStyle(
-                        fontFamily: "Oswald",
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15.sp,
-                      ),
+              children: [
+                SizedBox(height: 50.h),
+                // Tiêu đề
+                Text(
+                  'Chào mừng trở lại',
+                  style: TextStyle(
+                    fontFamily: "Oswald",
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15.sp,
+                  ),
+                ),
+
+                SizedBox(height: 8.h),
+
+                Text(
+                  'Đăng nhập để tiếp tục trải nghiệm !',
+                  style: TextStyle(
+                      fontFamily: "Oswald",
+                      fontSize: 5.sp,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold),
+                ),
+
+                SizedBox(height: 30.h),
+
+                _buildTextField(
+                    controller: _emailCompanyController1,
+                    label: "Nhập email",
+                    stream: _authBloc.emailStream),
+
+                _buildTextField(
+                    controller: _passCompanyController1,
+                    label: "Nhập password",
+                    stream: _authBloc.passStream),
+
+                SizedBox(height: 10.h),
+
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: StatefulBuilder(
+                      builder: (context, setState) {
+                        return GestureDetector(
+                          onTapDown: (_) => setState(() => _isPressed1 = true),
+                          onTapCancel: () =>
+                              setState(() => _isPressed1 = false),
+                          onTapUp: (_) {
+                            setState(() => _isPressed1 = false);
+                            _onForgotPasswordClick();
+                          },
+                          child: Text(
+                            'Quên mật khẩu?',
+                            style: TextStyle(
+                              fontSize: 4.sp,
+                              color: const Color(0xFF0077BE).withOpacity(
+                                  _isPressed1 ? 0.6 : 1.0), // Hiệu ứng nhấn
+                            ),
+                          ),
+                        );
+                      },
                     ),
+                  ),
+                ),
 
-                    SizedBox(height: 8.h),
+                SizedBox(height: 20.h),
 
-                    Text(
-                      'Đăng nhập để tiếp tục trải nghiệm !',
+                // Nút đăng nhập
+                SizedBox(
+                  width: double.infinity,
+                  height: 60.h,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _onLoginClick();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2D80F8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
+                      ),
+                      elevation: 4,
+                      shadowColor: Colors.black45,
+                    ),
+                    child: Text(
+                      "Đăng nhập",
                       style: TextStyle(
                           fontFamily: "Oswald",
-                          fontSize: 5.sp,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.bold),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 8.sp,
+                          color: Colors.white),
                     ),
-
-                    SizedBox(height: 30.h),
-
-                    _buildTextField(controller: _emailCompanyController1,
-                        label: "Nhập email",
-                        stream: _authBloc.emailStream),
-
-                    _buildTextField(controller: _passCompanyController1,
-                        label: "Nhập password",
-                        stream: _authBloc.passStream),
-
-
-                    SizedBox(height: 10.h),
-
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: StatefulBuilder(
-                          builder: (context, setState) {
-                            return GestureDetector(
-                              onTapDown: (_) =>
-                                  setState(() => _isPressed1 = true),
-                              onTapCancel: () =>
-                                  setState(() => _isPressed1 = false),
-                              onTapUp: (_) {
-                                setState(() => _isPressed1 = false);
-                                _onForgotPasswordClick();
-                              },
-                              child: Text(
-                                'Quên mật khẩu?',
-                                style: TextStyle(
-                                  fontSize: 4.sp,
-                                  color: const Color(0xFF0077BE).withOpacity(
-                                      _isPressed1 ? 0.6 : 1.0), // Hiệu ứng nhấn
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 20.h),
-
-                    // Nút đăng nhập
-                    SizedBox(
-                      width: double.infinity,
-                      height: 60.h,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          _onLoginClick();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2D80F8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.r),
-                          ),
-                          elevation: 4,
-                          shadowColor: Colors.black45,
-                        ),
-                        child: Text(
-                          "Đăng nhập",
-                          style: TextStyle(
-                              fontFamily: "Oswald",
-                              fontWeight: FontWeight.w700,
-                              fontSize: 8.sp,
-                              color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                )),
+                  ),
+                ),
+              ],
+            )),
           ],
         ),
       ),
@@ -274,11 +276,13 @@ class _LoginPageState extends State<LoginPage> {
 
         SizedBox(height: 24.h),
 
-        _buildTextField(controller: _emailCompanyController1,
+        _buildTextField(
+            controller: _emailCompanyController1,
             label: "Nhập email",
             stream: _authBloc.emailStream),
 
-        _buildTextField(controller: _passCompanyController1,
+        _buildTextField(
+            controller: _passCompanyController1,
             label: "Nhập password",
             stream: _authBloc.passStream),
 
@@ -291,10 +295,8 @@ class _LoginPageState extends State<LoginPage> {
             child: StatefulBuilder(
               builder: (context, setState) {
                 return GestureDetector(
-                  onTapDown: (_) =>
-                      setState(() => _isPressed1 = true),
-                  onTapCancel: () =>
-                      setState(() => _isPressed1 = false),
+                  onTapDown: (_) => setState(() => _isPressed1 = true),
+                  onTapCancel: () => setState(() => _isPressed1 = false),
                   onTapUp: (_) {
                     setState(() => _isPressed1 = false);
                     _onForgotPasswordClick();
@@ -347,7 +349,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ),
-
       ],
     );
   }
@@ -372,12 +373,13 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
+              const Text(
                 "Quên mật khẩu",
                 style: TextStyle(
                   fontFamily: "Oswald",
                   fontWeight: FontWeight.w700,
-                  fontSize: 8.sp,),
+                  fontSize: 30,
+                ),
               ),
               SizedBox(height: 10.h),
               const Text("Vui lòng nhập email của bạn để tiếp tục"),
@@ -407,8 +409,7 @@ class _LoginPageState extends State<LoginPage> {
                       }
 
                       // Hiển thị dialog loading
-                      LoadingDialog.showLoadingDialog(
-                          context, "Kiểm tra tài khoản...");
+                      LoadingDialog.showLoadingDialog(context, "Kiểm tra tài khoản...");
 
                       try {
                         // Lấy email từ Firestore
@@ -418,38 +419,22 @@ class _LoginPageState extends State<LoginPage> {
                         // Kiểm tra nếu email tồn tại trong Firestore
                         if (querySnapshot.docs.isEmpty) {
                           Navigator.pop(context); // Đóng loading dialog và bottom sheet
-                          Navigator.pop(context); // Đóng loading dialog và bottom sheet
                           Future.delayed(Duration(milliseconds: 200), () {
-                            _showCustomSnackBar(
-                                context,
-                                "Email này không tồn tại trong hệ thống",
-                                Colors.red,
-                                Icons.error);
+                            _showCustomSnackBar(context, "Email này không tồn tại trong hệ thống", Colors.red, Icons.error);
                           });
                           return;
-                        }
-                        else{
+                        } else {
                           // Gửi email reset mật khẩu nếu tất cả điều kiện đã thông qua
-                          FirebaseAuth.instance
-                              .sendPasswordResetEmail(email: email);
-                          Navigator.pop(context); // Đóng loading dialog và bottom sheet
+                          await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
                           Navigator.pop(context); // Đóng loading dialog và bottom sheet
                           Future.delayed(Duration(milliseconds: 200), () {
-                            _showCustomSnackBar(
-                                context,
-                                "Link đặt lại mật khẩu đã được gửi!",
-                                Colors.green,
-                                Icons.check_circle);
+                            _showCustomSnackBar(context, "Link đặt lại mật khẩu đã được gửi!", Colors.green, Icons.check_circle);
                           });
                         }
                       } catch (error) {
-                        Navigator.pop(
-                            context); // Đóng loading dialog và bottom sheet
-                        Navigator.pop(
-                            context); // Đóng loading dialog và bottom sheet
+                        Navigator.pop(context); // Đóng loading dialog và bottom sheet
                         Future.delayed(Duration(milliseconds: 200), () {
-                          _showCustomSnackBar(context, error.toString(),
-                              Colors.red, Icons.error);
+                          _showCustomSnackBar(context, error.toString(), Colors.red, Icons.error);
                         });
                       }
                     },
@@ -478,13 +463,14 @@ class _LoginPageState extends State<LoginPage> {
         backgroundColor: color,
         behavior: SnackBarBehavior.floating, // Hiển thị nổi lên thay vì dính dưới cùng
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10), // Bo góc SnackBar
+          borderRadius: BorderRadius.circular(30), // Bo góc SnackBar
         ),
-        margin: EdgeInsets.all(20), // Tạo khoảng cách xung quanh
+        margin: EdgeInsets.all(10), // Tạo khoảng cách xung quanh
         duration: Duration(seconds: 3), // Hiển thị trong 3 giây
       ),
     );
   }
+
 
   _onLoginClick() {
     String email = _emailCompanyController1.text;
@@ -510,56 +496,60 @@ class _LoginPageState extends State<LoginPage> {
             String? newToken = await FirebaseMessaging.instance.getToken();
 
             // Lấy thông tin từ Firestore
-            DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection("staffs").doc(userId).get();
+            DocumentSnapshot userDoc = await FirebaseFirestore.instance
+                .collection("staffs")
+                .doc(userId)
+                .get();
 
             if (userDoc.exists) {
               // Lấy role từ Firestore
-                int role = userDoc.get('role');
+              int role = userDoc.get('role');
 
-                // Kiểm tra thiết bị (mobile/web)
-                bool isMobile = !kIsWeb;
+              // Kiểm tra thiết bị (mobile/web)
+              bool isMobile = !kIsWeb;
 
-                // Điều hướng theo role và thiết bị
-                if (role == 1) {
-                  if (isMobile) {
-                    // Trên thiết bị mobile -> Giao diện 1
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(
-                      builder: (context) => const AdminMobilePage(),
-                    ));
-                    if (newToken != null) {
-                      await _saveTokenToFirestore(newToken); // Gọi hàm lưu token vào Firestore
-                    }
-                  } else {
-                    // Trên web -> Giao diện 2
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(
-                      builder: (context) => const AdminWebPage(),
-                    ));
-                    if (newToken != null) {
-                      await _saveTokenToFirestore(newToken); // Gọi hàm lưu token vào Firestore
-                    }
+              // Điều hướng theo role và thiết bị
+              if (role == 1) {
+                if (isMobile) {
+                  // Trên thiết bị mobile -> Giao diện 1
+                  Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (context) => const AdminMobilePage(),
+                  ));
+                  if (newToken != null) {
+                    await _saveTokenToFirestore(
+                        newToken); // Gọi hàm lưu token vào Firestore
+                  }
+                } else {
+                  // Trên web -> Giao diện 2
+                  Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (context) => const AdminWebPage(),
+                  ));
+                  if (newToken != null) {
+                    await _saveTokenToFirestore(
+                        newToken); // Gọi hàm lưu token vào Firestore
                   }
                 }
-                else if (role == 2 || role == 3 || role == 4) {
-                  if (isMobile) {
-                    // Trên mobile -> Điều hướng đến giao diện tương ứng
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(
-                      builder: (context) => const TestPage(),
-                    ));
-                    if (newToken != null) {
-                      await _saveTokenToFirestore(newToken); // Gọi hàm lưu token vào Firestore
-                    }
-                  } else {
-                    // Trên web -> Hiển thị thông báo
-                    MsgDialog.showMsgDialog(
-                      context,
-                      "Thông báo",
-                      "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
-                    );
+              } else if (role == 2 || role == 3 || role == 4) {
+                if (isMobile) {
+                  // Trên mobile -> Điều hướng đến giao diện tương ứng
+                  Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (context) => const TestPage(),
+                  ));
+                  if (newToken != null) {
+                    await _saveTokenToFirestore(
+                        newToken); // Gọi hàm lưu token vào Firestore
                   }
+                } else {
+                  // Trên web -> Hiển thị thông báo
+                  MsgDialog.showMsgDialog(
+                    context,
+                    "Thông báo",
+                    "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
+                  );
                 }
+              }
             }
-          }
-          else {
+          } else {
             MsgDialog.showMsgDialog(
                 context, "Lỗi", "Xác thực người dùng không thành công");
           }
@@ -572,33 +562,36 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
     required Stream<String> stream,
   }) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 8.h),
-      child: StreamBuilder<String>(
-        stream: stream,
-        builder: (context, snapshot) {
-          return TextField(
-            controller: controller,
-            style: const TextStyle(fontSize: 18, color: Colors.black),
-            decoration: InputDecoration(
-              labelText: label,
-              errorText: snapshot.hasError ? snapshot.error as String : null,
-              contentPadding:
-              EdgeInsets.symmetric(vertical: 2.h, horizontal: 14.w),
-              border: OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xffCED0D2), width: 1.w),
-                borderRadius: BorderRadius.all(Radius.circular(30.r)),
+    return Builder(builder: (context){
+      final size = MediaQuery.of(context).size;
+      final isLandscape = size.height < size.width;
+      return Padding(
+        padding: EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 8.h),
+        child: StreamBuilder<String>(
+          stream: stream,
+          builder: (context, snapshot) {
+            return TextField(
+              controller: controller,
+              style: const TextStyle(fontSize: 18, color: Colors.black),
+              decoration: InputDecoration(
+                labelText: label,
+                errorText: snapshot.hasError ? snapshot.error as String : null,
+                contentPadding:
+                EdgeInsets.symmetric(vertical: 2.h, horizontal: isLandscape? 8.w:24.w),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xffCED0D2), width: 1.w),
+                  borderRadius: BorderRadius.all(Radius.circular(30.r)),
+                ),
               ),
-            ),
-          );
-        },
-      ),
-    );
+            );
+          },
+        ),
+      );
+    });
   }
 }
