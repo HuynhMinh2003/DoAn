@@ -119,6 +119,7 @@ class FirAuth {
         "phone": phone,
         "position": position,
         "role": 2,
+        "isFree": 1,
         "createdAt": Timestamp.now(), // Dùng Timestamp của Firestore
       };
 

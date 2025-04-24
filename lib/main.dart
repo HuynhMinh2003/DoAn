@@ -144,7 +144,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: const LoginPage(), // hoặc AuthWrapper()
+              home: const AddAccountStaffPage(), // hoặc AuthWrapper()
             ),
           ),
         );

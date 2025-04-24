@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:do_an/src/fire_base/fire_base_auth.dart';
 
 class AuthBloc {
@@ -147,6 +148,7 @@ class AuthBloc {
         password: randomPassword,
         onSuccess: () {
           print('Mật khẩu ngẫu nhiên cho nhân viên là: $randomPassword');
+          // Gọi Firebase Function để gửi email
           onSuccess();
         },
         onRegisterError: onRegisterError,
