@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class LoadingDialog {
   static void showLoadingDialog(BuildContext context, String msg) {
@@ -8,16 +9,16 @@ class LoadingDialog {
         builder: (context) => Dialog(
           child: Container(
             color: Colors.white,
-            height: 100,
+            height: 20.h,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 const CircularProgressIndicator(),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
+                  padding: EdgeInsets.fromLTRB(0, 2.h, 0, 0),
                   child: Text(
                     msg,
-                    style: const TextStyle(fontSize: 18),
+                    style: TextStyle(fontSize: 7.sp),
                   ),
                 )
               ],

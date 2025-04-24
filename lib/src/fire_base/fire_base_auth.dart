@@ -77,6 +77,7 @@ class FirAuth {
     required String email,
     required String phone,
     required String position,
+    required String imageUrl,
     required String password,
     required Function onSuccess,
     required Function(String) onRegisterError,
@@ -92,6 +93,7 @@ class FirAuth {
           email,
           phone,
           position,
+          imageUrl,
           onSuccess,
           onRegisterError,
         );
@@ -109,6 +111,7 @@ class FirAuth {
       String email,
       String phone,
       String position,
+      String imageUrl,
       Function onSuccess,
       Function(String) onRegisterError,
       ) async {
@@ -120,6 +123,7 @@ class FirAuth {
         "position": position,
         "role": 2,
         "isFree": 1,
+        "imageUrl": imageUrl,
         "createdAt": Timestamp.now(), // Dùng Timestamp của Firestore
       };
 
