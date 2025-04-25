@@ -203,7 +203,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                SizedBox(height: 20.h),
+                SizedBox(height: 40.h),
 
                 // Nút đăng nhập
                 SizedBox(
@@ -260,7 +260,7 @@ class _LoginPageState extends State<LoginPage> {
           'Đăng nhập để tiếp tục trải nghiệm !',
           style: TextStyle(
               fontFamily: "Oswald",
-              fontSize: 14.sp,
+              fontSize: 16.sp,
               color: Colors.grey,
               fontWeight: FontWeight.bold),
         ),
@@ -363,114 +363,153 @@ class _LoginPageState extends State<LoginPage> {
       ),
       isScrollControlled: true,
       builder: (context) {
+        final size = MediaQuery.of(context).size;
+        final isLandscape = size.height < size.width;
+
         return Padding(
-          padding: EdgeInsets.only(
-            left: 20.w,
-            right: 20.w,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20.h, // Đẩy nội dung lên khi bàn phím mở
-            top: 20.h,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Quên mật khẩu",
-                style: TextStyle(
-                  fontFamily: "Oswald",
-                  fontWeight: FontWeight.w700,
-                  fontSize: 6.sp,
-                ),
-              ),
-              SizedBox(height: 10.h),
-              const Text("Vui lòng nhập email của bạn để tiếp tục"),
-              SizedBox(height: 10.h),
-              TextField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  hintText: "Nhập địa chỉ email",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            padding: EdgeInsets.only(
+              left: 20.w,
+              right: 20.w,
+              bottom: MediaQuery.of(context).viewInsets.bottom +
+                  20.h, // Đẩy nội dung lên khi bàn phím mở
+              top: 20.h,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context), // Đóng bottom sheet
-                    child: const Text("Hủy"),
+                  Text(
+                    "Quên mật khẩu",
+                    style: TextStyle(
+                      fontFamily: "Oswald",
+                      fontWeight: FontWeight.w700,
+                      fontSize: isLandscape ? 6.sp : 20.sp,
+                    ),
                   ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      String email = emailController.text.trim();
-                      if (email.isEmpty) {
-                        _showCustomSnackBar(context, "Nhập địa chỉ email", Colors.red, Icons.error);
-                        return;
-                      }
+                  SizedBox(height: 5.h),
+                  Text(
+                    "Vui lòng nhập email của bạn để tiếp tục",
+                    style: TextStyle(
+                      fontSize: isLandscape ? 5.sp : 16.sp,
+                    ),
+                  ),
+                  SizedBox(height: 15.h),
+                  TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      hintText: "Nhập địa chỉ email",
+                      hintStyle:
+                          TextStyle(fontSize: isLandscape ? 5.sp : 14.sp),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        // Đóng bottom sheet
+                        child: Text(
+                          "Hủy",
+                          style:
+                              TextStyle(fontSize: isLandscape ? 5.sp : 14.sp),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          String email = emailController.text.trim();
+                          if (email.isEmpty) {
+                            _showCustomSnackBar(context, "Nhập địa chỉ email",
+                                Colors.red, Icons.error);
+                            return;
+                          }
 
-                      // Hiển thị dialog loading
-                      LoadingDialog.showLoadingDialog(context, "Kiểm tra tài khoản...");
+                          // Hiển thị dialog loading
+                          LoadingDialog.showLoadingDialog(
+                              context, "Kiểm tra tài khoản...");
 
-                      try {
-                        // Lấy email từ Firestore
-                        var userRef = FirebaseFirestore.instance.collection('staffs').where('email', isEqualTo: email);
-                        var querySnapshot = await userRef.get();
+                          try {
+                            // Lấy email từ Firestore
+                            var userRef = FirebaseFirestore.instance
+                                .collection('staffs')
+                                .where('email', isEqualTo: email);
+                            var querySnapshot = await userRef.get();
 
-                        // Kiểm tra nếu email tồn tại trong Firestore
-                        if (querySnapshot.docs.isEmpty) {
-                          Navigator.pop(context); // Đóng loading dialog và bottom sheet
-                          Future.delayed(Duration(milliseconds: 200), () {
-                            _showCustomSnackBar(context, "Email này không tồn tại trong hệ thống", Colors.red, Icons.error);
-                          });
-                          return;
-                        } else {
-                          // Gửi email reset mật khẩu nếu tất cả điều kiện đã thông qua
-                          await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-                          Navigator.pop(context); // Đóng loading dialog và bottom sheet
-                          Future.delayed(Duration(milliseconds: 200), () {
-                            _showCustomSnackBar(context, "Link đặt lại mật khẩu đã được gửi!", Colors.green, Icons.check_circle);
-                          });
-                        }
-                      } catch (error) {
-                        Navigator.pop(context); // Đóng loading dialog và bottom sheet
-                        Future.delayed(Duration(milliseconds: 200), () {
-                          _showCustomSnackBar(context, error.toString(), Colors.red, Icons.error);
-                        });
-                      }
-                    },
-                    child: const Text("Gửi"),
+                            // Kiểm tra nếu email tồn tại trong Firestore
+                            if (querySnapshot.docs.isEmpty) {
+                              Navigator.pop(
+                                  context); // Đóng loading dialog và bottom sheet
+                              Future.delayed(Duration(milliseconds: 200), () {
+                                _showCustomSnackBar(
+                                    context,
+                                    "Email này không tồn tại trong hệ thống",
+                                    Colors.red,
+                                    Icons.error);
+                              });
+                              return;
+                            } else {
+                              // Gửi email reset mật khẩu nếu tất cả điều kiện đã thông qua
+                              await FirebaseAuth.instance
+                                  .sendPasswordResetEmail(email: email);
+                              Navigator.pop(
+                                  context); // Đóng loading dialog và bottom sheet
+                              Future.delayed(Duration(milliseconds: 200), () {
+                                _showCustomSnackBar(
+                                    context,
+                                    "Link đặt lại mật khẩu đã được gửi!",
+                                    Colors.green,
+                                    Icons.check_circle);
+                              });
+                            }
+                          } catch (error) {
+                            Navigator.pop(
+                                context); // Đóng loading dialog và bottom sheet
+                            Future.delayed(Duration(milliseconds: 200), () {
+                              _showCustomSnackBar(context, error.toString(),
+                                  Colors.red, Icons.error);
+                            });
+                          }
+                        },
+                        child: Text("Gửi",
+                            style: TextStyle(
+                                fontSize: isLandscape ? 5.sp : 14.sp)),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        );
+            ));
       },
     );
   }
 
 // Hàm hiển thị SnackBar đẹp hơn
-  void _showCustomSnackBar(BuildContext context, String message, Color color, IconData icon) {
+  void _showCustomSnackBar(
+      BuildContext context, String message, Color color, IconData icon) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
             Icon(icon, color: Colors.white),
             SizedBox(width: 10),
-            Expanded(child: Text(message, style: TextStyle(color: Colors.white))),
+            Expanded(
+                child: Text(message, style: TextStyle(color: Colors.white))),
           ],
         ),
         backgroundColor: color,
-        behavior: SnackBarBehavior.floating, // Hiển thị nổi lên thay vì dính dưới cùng
+        behavior: SnackBarBehavior.floating,
+        // Hiển thị nổi lên thay vì dính dưới cùng
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30), // Bo góc SnackBar
+          borderRadius: BorderRadius.circular(30.r), // Bo góc SnackBar
         ),
-        margin: EdgeInsets.all(10), // Tạo khoảng cách xung quanh
+        margin: EdgeInsets.all(10),
+        // Tạo khoảng cách xung quanh
         duration: Duration(seconds: 3), // Hiển thị trong 3 giây
       ),
     );
   }
-
 
   _onLoginClick() {
     String email = _emailCompanyController1.text;
@@ -567,7 +606,7 @@ class _LoginPageState extends State<LoginPage> {
     required String label,
     required Stream<String> stream,
   }) {
-    return Builder(builder: (context){
+    return Builder(builder: (context) {
       final size = MediaQuery.of(context).size;
       final isLandscape = size.height < size.width;
       return Padding(
@@ -580,9 +619,10 @@ class _LoginPageState extends State<LoginPage> {
               style: const TextStyle(fontSize: 18, color: Colors.black),
               decoration: InputDecoration(
                 labelText: label,
+                labelStyle: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp),
                 errorText: snapshot.hasError ? snapshot.error as String : null,
-                contentPadding:
-                EdgeInsets.symmetric(vertical: 2.h, horizontal: isLandscape? 8.w:24.w),
+                contentPadding: EdgeInsets.symmetric(
+                    vertical: 2.h, horizontal: isLandscape ? 8.w : 24.w),
                 border: OutlineInputBorder(
                   borderSide: BorderSide(color: Color(0xffCED0D2), width: 1.w),
                   borderRadius: BorderRadius.all(Radius.circular(30.r)),

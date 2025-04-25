@@ -9,7 +9,7 @@ class LoadingDialog {
         builder: (context) => Dialog(
           child: Container(
             color: Colors.white,
-            height: 20.h,
+            height: 100.h,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
