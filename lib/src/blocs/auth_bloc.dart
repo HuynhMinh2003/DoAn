@@ -28,11 +28,11 @@ class AuthBloc {
   Stream<String> get phoneStaffStream => _phoneStaffController.stream;
 
   // login chung
-  final StreamController<String> _emailCompanyController1 = StreamController<String>.broadcast();
-  final StreamController<String> _passCompanyController1 = StreamController<String>.broadcast();
+  final StreamController<String> _emailController = StreamController<String>.broadcast();
+  final StreamController<String> _passController = StreamController<String>.broadcast();
 
-  Stream<String> get emailStream => _emailCompanyController1.stream;
-  Stream<String> get passStream => _passCompanyController1.stream;
+  Stream<String> get emailStream => _emailController.stream;
+  Stream<String> get passStream => _passController.stream;
 
   /// Tạo mật khẩu ngẫu nhiên
   String generateRandomPassword({int length = 10}) {
@@ -126,7 +126,6 @@ class AuthBloc {
       );
     }
   }
-
   /// Đăng ký nhân viên
   void signUpStaff({
     required String name,
@@ -197,20 +196,20 @@ class AuthBloc {
     final emailRegex1 = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
 
     if (email.isEmpty) {
-      _emailCompanyController1.sink.addError("Phải nhập email !");
+      _emailController.sink.addError("Phải nhập email !");
       isValid1 = false;
     } else if (!emailRegex1.hasMatch(email)) {
-      _emailCompanyController1.sink.addError("Email không hợp lệ !");
+      _emailController.sink.addError("Email không hợp lệ !");
       isValid1 = false;
     } else {
-      _emailCompanyController1.sink.add("");
+      _emailController.sink.add("");
     }
 
     if (pass.isEmpty) {
-      _passCompanyController1.sink.addError("Mật khẩu không được để trống !");
+      _passController.sink.addError("Mật khẩu không được để trống !");
       isValid1 = false;
     } else {
-      _passCompanyController1.sink.add("");
+      _passController.sink.add("");
     }
 
     return isValid1;
@@ -243,8 +242,8 @@ class AuthBloc {
     _emailStaffController.close();
     _phoneStaffController.close();
 
-    _emailCompanyController1.close();
-    _passCompanyController1.close();
+    _emailController.close();
+    _passController.close();
   }
 
 }
