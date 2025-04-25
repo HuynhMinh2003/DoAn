@@ -2,8 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
-import 'package:do_an/src/resources/quan_li_mobile.dart';
+import 'package:do_an/src/resources/staff_page.dart';
 import 'package:do_an/src/resources/quan_li_web.dart';
+import 'package:do_an/src/resources/home_first_staff_page.dart';
 import 'package:do_an/src/resources/test.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -20,9 +21,9 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailCompanyController1 =
+  final TextEditingController _emailController =
       TextEditingController();
-  final TextEditingController _passCompanyController1 = TextEditingController();
+  final TextEditingController _passController = TextEditingController();
 
   final AuthBloc _authBloc = AuthBloc();
 
@@ -65,8 +66,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
-    _emailCompanyController1.dispose();
-    _passCompanyController1.dispose();
+    _emailController.dispose();
+    _passController.dispose();
     _authBloc.dispose();
     super.dispose();
   }
@@ -164,12 +165,12 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(height: 30.h),
 
                 _buildTextField(
-                    controller: _emailCompanyController1,
+                    controller: _emailController,
                     label: "Nhập email",
                     stream: _authBloc.emailStream),
 
                 _buildTextField(
-                    controller: _passCompanyController1,
+                    controller: _passController,
                     label: "Nhập password",
                     stream: _authBloc.passStream),
 
@@ -277,12 +278,12 @@ class _LoginPageState extends State<LoginPage> {
         SizedBox(height: 24.h),
 
         _buildTextField(
-            controller: _emailCompanyController1,
+            controller: _emailController,
             label: "Nhập email",
             stream: _authBloc.emailStream),
 
         _buildTextField(
-            controller: _passCompanyController1,
+            controller: _passController,
             label: "Nhập password",
             stream: _authBloc.passStream),
 
@@ -400,7 +401,7 @@ class _LoginPageState extends State<LoginPage> {
                     decoration: InputDecoration(
                       hintText: "Nhập địa chỉ email",
                       hintStyle:
-                          TextStyle(fontSize: isLandscape ? 5.sp : 14.sp),
+                          TextStyle(fontSize: isLandscape ? 6.sp : 14.sp),
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -417,11 +418,12 @@ class _LoginPageState extends State<LoginPage> {
                               TextStyle(fontSize: isLandscape ? 5.sp : 14.sp),
                         ),
                       ),
+
                       ElevatedButton(
                         onPressed: () async {
                           String email = emailController.text.trim();
                           if (email.isEmpty) {
-                            _showCustomSnackBar(context, "Nhập địa chỉ email",
+                            _showCustomSnackBar(context, "Vui lòng nhập địa chỉ email !",
                                 Colors.red, Icons.error);
                             return;
                           }
@@ -437,10 +439,12 @@ class _LoginPageState extends State<LoginPage> {
                                 .where('email', isEqualTo: email);
                             var querySnapshot = await userRef.get();
 
+                            if (!mounted) return; // đảm bảo context còn sống
+
+                            Navigator.pop(context);
+
                             // Kiểm tra nếu email tồn tại trong Firestore
                             if (querySnapshot.docs.isEmpty) {
-                              Navigator.pop(
-                                  context); // Đóng loading dialog và bottom sheet
                               Future.delayed(Duration(milliseconds: 200), () {
                                 _showCustomSnackBar(
                                     context,
@@ -453,8 +457,6 @@ class _LoginPageState extends State<LoginPage> {
                               // Gửi email reset mật khẩu nếu tất cả điều kiện đã thông qua
                               await FirebaseAuth.instance
                                   .sendPasswordResetEmail(email: email);
-                              Navigator.pop(
-                                  context); // Đóng loading dialog và bottom sheet
                               Future.delayed(Duration(milliseconds: 200), () {
                                 _showCustomSnackBar(
                                     context,
@@ -462,14 +464,17 @@ class _LoginPageState extends State<LoginPage> {
                                     Colors.green,
                                     Icons.check_circle);
                               });
+                              Navigator.pop(context);
+
                             }
                           } catch (error) {
-                            Navigator.pop(
-                                context); // Đóng loading dialog và bottom sheet
-                            Future.delayed(Duration(milliseconds: 200), () {
-                              _showCustomSnackBar(context, error.toString(),
-                                  Colors.red, Icons.error);
-                            });
+                            if(mounted){
+                              Navigator.pop(context);
+                              Future.delayed(Duration(milliseconds: 200), () {
+                                _showCustomSnackBar(context, error.toString(),
+                                    Colors.red, Icons.error);
+                              });
+                            }
                           }
                         },
                         child: Text("Gửi",
@@ -512,8 +517,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   _onLoginClick() {
-    String email = _emailCompanyController1.text;
-    String pass = _passCompanyController1.text;
+    FocusScope.of(context).unfocus(); // Ẩn bàn phím ảo
+
+    String email = _emailController.text;
+    String pass = _passController.text;
 
     var isValid = _authBloc.isValidSignIn(email, pass);
 
@@ -552,7 +559,7 @@ class _LoginPageState extends State<LoginPage> {
                 if (isMobile) {
                   // Trên thiết bị mobile -> Giao diện 1
                   Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (context) => const AdminMobilePage(),
+                    builder: (context) => StaffPage(),
                   ));
                   if (newToken != null) {
                     await _saveTokenToFirestore(
@@ -568,7 +575,17 @@ class _LoginPageState extends State<LoginPage> {
                         newToken); // Gọi hàm lưu token vào Firestore
                   }
                 }
-              } else if (role == 2 || role == 3 || role == 4) {
+              }
+              else if (role == 2) {
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (context) => const HomeFirstStaffPage(),
+                ));
+                if (newToken != null) {
+                  await _saveTokenToFirestore(
+                      newToken); // Gọi hàm lưu token vào Firestore
+                }
+              }
+              else if (role == 3) {
                 if (isMobile) {
                   // Trên mobile -> Điều hướng đến giao diện tương ứng
                   Navigator.of(context).pushReplacement(MaterialPageRoute(

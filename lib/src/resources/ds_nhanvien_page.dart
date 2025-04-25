@@ -161,7 +161,7 @@ class _StaffListPageState extends State<StaffListPage> {
                   });
                 },
               ),
-              SizedBox(height: 60.h,),
+              SizedBox(height: 40.h,),
               SizedBox(
                 height: 400,
                 child:  StreamBuilder<QuerySnapshot>(
