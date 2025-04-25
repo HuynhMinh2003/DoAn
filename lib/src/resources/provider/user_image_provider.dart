@@ -151,17 +151,17 @@ class UserImageProvider extends ChangeNotifier {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      final storageRef = FirebaseStorage.instance.ref('avatars/${user.uid}.jpg');
-
-      ListResult result = await FirebaseStorage.instance.ref('avatars/').listAll();
-      bool fileExists = result.items.any((item) => item.fullPath == storageRef.fullPath);
-
-      if (!fileExists) {
-        print("⚠️ Ảnh không tồn tại trên Firebase Storage.");
+      // 🔹 Lấy thông tin người dùng từ Firestore để biết tên file ảnh
+      final snapshot = await FirebaseFirestore.instance.collection('staffs').doc(user.uid).get();
+      final data = snapshot.data();
+      if (data == null || !data.containsKey('imageFileName')) {
         _avatarUrl = null;
         notifyListeners();
         return;
       }
+
+      final fileName = data['imageFileName'];
+      final storageRef = FirebaseStorage.instance.ref('avatars/$fileName');
 
       String downloadURL = await storageRef.getDownloadURL();
       _avatarUrl = downloadURL;
@@ -171,6 +171,27 @@ class UserImageProvider extends ChangeNotifier {
       _avatarUrl = null;
     }
   }
+
+  Future<void> loadImageByStaffId(String staffId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance.collection('staffs').doc(staffId).get();
+      print("Snapshot data: ${snapshot.data()}");  // Log dữ liệu nhận được từ Firestore
+
+      final data = snapshot.data();
+      if (data == null || !data.containsKey('imageUrl')) {
+        _avatarUrl = null;
+      } else {
+        _avatarUrl = data['imageUrl'];
+      }
+      print("Avatar URL: $_avatarUrl");  // Kiểm tra giá trị avatarUrl
+      notifyListeners();
+    } catch (e) {
+      print("⚠️ Không thể tải ảnh từ Firestore: $e");
+      _avatarUrl = null;
+      notifyListeners();
+    }
+  }
+
 
   @override
   void dispose() {
