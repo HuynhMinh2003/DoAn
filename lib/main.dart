@@ -7,6 +7,8 @@ import 'package:do_an/src/resources/ds_nhanvien_page.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
+import 'package:do_an/src/resources/staff_page.dart';
+import 'package:do_an/src/resources/home_first_staff_page.dart';
 import 'package:do_an/src/resources/tao_tk_nv.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -145,7 +147,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: const AddAccountStaffPage(), // hoặc AuthWrapper()
+              home: LoginPage(), // hoặc AuthWrapper()
             ),
           ),
         );

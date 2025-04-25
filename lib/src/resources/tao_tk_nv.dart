@@ -100,7 +100,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                     }
                                     // Kiểm tra nếu không có ảnh hoặc ảnh không thể tải
                                     if (provider.selectedImageFile == null && provider.webImageBytes == null && avatarUrl == null) {
-                                      MsgDialog.showMsgDialog(context, "Lỗi", "Không thể tải được ảnh ");
+                                      MsgDialog.showMsgDialog(context, "Lỗi", "Chưa chọn ảnh hoặc không tải được ảnh ");
                                     }
                                   },
                                   child: Stack(
