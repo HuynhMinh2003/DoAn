@@ -42,7 +42,7 @@ class AuthBloc {
   }
 
   /// Kiểm tra dữ liệu hợp lệ (không cần kiểm tra password nếu không nhập từ form)
-  bool isValidSignUpCompany(
+  bool isValidCompanySignUp(
       String nameCompany,
       String emailCompany,
       String phoneCompany,
@@ -107,7 +107,7 @@ class AuthBloc {
     required Function onSuccess,
     required Function(String) onRegisterError,
   }) {
-    if (isValidSignUpCompany(nameCompany, emailCompany, phoneCompany, typeCompany, describeCompany)) {
+    if (isValidCompanySignUp(nameCompany, emailCompany, phoneCompany, typeCompany, describeCompany)) {
       final randomPassword = generateRandomPassword(); // 👉 tạo mật khẩu tại đây
 
       _firAuth.signUpCompany(
@@ -116,7 +116,7 @@ class AuthBloc {
         phoneCompany: phoneCompany,
         typeCompany: typeCompany,
         describeCompany: describeCompany,
-        password: randomPassword,
+        passwordCompany: randomPassword,
         onSuccess: () {
           // 👉 Gọi onSuccess() và có thể gửi mật khẩu về Gmail tại đây
           print('Mật khẩu ngẫu nhiên là: $randomPassword');
@@ -128,24 +128,24 @@ class AuthBloc {
   }
   /// Đăng ký nhân viên
   void signUpStaff({
-    required String name,
-    required String email,
-    required String phone,
+    required String nameStaff,
+    required String emailStaff,
+    required String phoneStaff,
     required String position,
-    required String imageUrl,
+    required String imageUrlStaff,
     required Function onSuccess,
     required Function(String) onRegisterError,
   }) {
-    if (isValidStaffSignUp(name, email, phone, position)) {
+    if (isValidStaffSignUp(nameStaff, emailStaff, phoneStaff, position)) {
       final randomPassword = generateRandomPassword();
 
       _firAuth.signUpStaff(
-        name: name,
-        email: email,
-        phone: phone,
+        nameStaff: nameStaff,
+        emailStaff: emailStaff,
+        phoneStaff: phoneStaff,
         position: position,
-        imageUrl: imageUrl,
-        password: randomPassword,
+        imageUrlStaff: imageUrlStaff,
+        passwordStaff: randomPassword,
         onSuccess: () {
           print('Mật khẩu ngẫu nhiên cho nhân viên là: $randomPassword');
           onSuccess();

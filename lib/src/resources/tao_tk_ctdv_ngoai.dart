@@ -1,7 +1,8 @@
 import 'package:do_an/src/blocs/auth_bloc.dart';
+import 'package:do_an/src/resources/dialog/loading_dialog.dart';
+import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class AddAccountCompanyPage extends StatefulWidget {
   const AddAccountCompanyPage({super.key});
@@ -44,142 +45,124 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
             ),
             SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.only(left: 80, right: 80, top: 140.h),
+                padding: EdgeInsets.only(left: 100.w, right: 100.w, top: 140.h),
                 child: Center(
                   child: SizedBox(
                     width: MediaQuery.of(context).size.width,
-                    child: Row(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Bên trái: ảnh
-                        Expanded(
-                          child: Center(
-                            child: Padding(
-                              padding: EdgeInsets.only(right: 30.w),
-                              child: SvgPicture.asset(
-                                'assets/images/image_signup_cty.svg',
-                                width: 700.h,
-                              ),
-                            ),
+                        SizedBox(
+                          height: 20.h,
+                        ),
+                        Text(
+                          'Tài khoản mới cho dịch vụ ngoài',
+                          style: TextStyle(
+                            fontFamily: "Oswald",
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.sp,
                           ),
                         ),
-
-                        // Bên phải: form login
-                        Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                            SizedBox(
-                              height: 20.h,
-                            ),
-                            Text(
-                              'Tài khoản mới cho dịch vụ ngoài',
-                              style: TextStyle(
-                                fontFamily: "Oswald",
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12.sp,
+                        _buildTextField(
+                          controller: _nameCompanyController,
+                          label: 'Tên công ty:',
+                          stream: _authBloc.nameCompanyStream,
+                        ),
+                        _buildTextField(
+                          controller: _emailCompanyController,
+                          label: 'Email:',
+                          stream: _authBloc.emailCompanyStream,
+                        ),
+                        _buildTextField(
+                          controller: _phoneCompanyController,
+                          label: 'Số điện thoại:',
+                          stream: _authBloc.phoneCompanyStream,
+                        ),
+                        _buildTextField(
+                          controller: _typeCompanyController,
+                          label: 'Loại dịch vụ:',
+                          stream: _authBloc.typeCompanyStream,
+                        ),
+                        _buildTextField(
+                          controller: _describeCompanyController,
+                          label: 'Mô tả:',
+                          stream: _authBloc.describeCompanyStream,
+                        ),
+                        SizedBox(
+                          height: 40.h,
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 60.h,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    _onSignUpCompanyClicked();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                    const Color(0xFF2D80F8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                      BorderRadius.circular(30.r),
+                                    ),
+                                    elevation: 4,
+                                    shadowColor: Colors.black45,
+                                    alignment: Alignment.center,
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                  child: Text(
+                                    "Tạo tài khoản",
+                                    style: TextStyle(
+                                      fontFamily: "Oswald",
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 7.sp,
+                                      color: Colors.white,
+                                      height: 1.0,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
                               ),
                             ),
-                            _buildTextField(
-                              controller: _nameCompanyController,
-                              label: 'Tên công ty:',
-                              stream: _authBloc.nameCompanyStream,
-                            ),
-                            _buildTextField(
-                              controller: _emailCompanyController,
-                              label: 'Email:',
-                              stream: _authBloc.emailCompanyStream,
-                            ),
-                            _buildTextField(
-                              controller: _phoneCompanyController,
-                              label: 'Số điện thoại:',
-                              stream: _authBloc.phoneCompanyStream,
-                            ),
-                            _buildTextField(
-                              controller: _typeCompanyController,
-                              label: 'Loại dịch vụ:',
-                              stream: _authBloc.typeCompanyStream,
-                            ),
-                            _buildTextField(
-                              controller: _describeCompanyController,
-                              label: 'Mô tả:',
-                              stream: _authBloc.describeCompanyStream,
-                            ),
-                            SizedBox(
-                              height: 40.h,
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: SizedBox(
-                                    height: 60.h,
-                                    child: ElevatedButton(
-                                      onPressed: () {},
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            const Color(0xFF2D80F8),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(30.r),
-                                        ),
-                                        elevation: 4,
-                                        shadowColor: Colors.black45,
-                                        alignment: Alignment.center,
-                                        padding: EdgeInsets.zero,
-                                      ),
-                                      child: Text(
-                                        "Tạo tài khoản",
-                                        style: TextStyle(
-                                          fontFamily: "Oswald",
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 5.sp,
-                                          color: Colors.white,
-                                          height: 1.0,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
+                            SizedBox(width: 20.w),
+                            // Khoảng cách giữa 2 nút
+                            Expanded(
+                              child: SizedBox(
+                                height: 60.h,
+                                child: ElevatedButton(
+                                  onPressed: () {},
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                    const Color(0xFF2D80F8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                      BorderRadius.circular(30.r),
                                     ),
+                                    elevation: 4,
+                                    shadowColor: Colors.black45,
+                                    alignment: Alignment.center,
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                  child: Text(
+                                    "Hủy",
+                                    style: TextStyle(
+                                      fontFamily: "Oswald",
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 7.sp,
+                                      color: Colors.white,
+                                      height: 1.0,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
-                                SizedBox(width: 20.w),
-                                // Khoảng cách giữa 2 nút
-                                Expanded(
-                                  child: SizedBox(
-                                    height: 60.h,
-                                    child: ElevatedButton(
-                                      onPressed: () {},
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            const Color(0xFF2D80F8),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(30.r),
-                                        ),
-                                        elevation: 4,
-                                        shadowColor: Colors.black45,
-                                        alignment: Alignment.center,
-                                        padding: EdgeInsets.zero,
-                                      ),
-                                      child: Text(
-                                        "Hủy",
-                                        style: TextStyle(
-                                          fontFamily: "Oswald",
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 5.sp,
-                                          color: Colors.white,
-                                          height: 1.0,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ],
-                        )),
+                        ),
                       ],
-                    ),
+                    )
                   ),
                 ),
               ),
@@ -189,6 +172,44 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
       ),
     );
   }
+
+  _onSignUpCompanyClicked() async{
+  var isValidCompany = _authBloc.isValidCompanySignUp(
+  _nameCompanyController.text,
+  _emailCompanyController.text,
+  _phoneCompanyController.text,
+  _typeCompanyController.text,
+  _describeCompanyController.text,
+
+  );
+
+  if (!isValidCompany) return;
+
+  // Hiển thị dialog loading
+  LoadingDialog.showLoadingDialog(context, 'Đang tải ...');
+
+  try {
+  // Gọi hàm tạo tài khoản
+  _authBloc.signUpCompany(
+  nameCompany: _nameCompanyController.text,
+  emailCompany: _emailCompanyController.text,
+  phoneCompany: _phoneCompanyController.text,
+  typeCompany: _typeCompanyController.text,
+  describeCompany: _describeCompanyController.text,
+    onSuccess: () {
+  LoadingDialog.hideLoadingDialog(context);
+  MsgDialog.showMsgDialog(context, "Tạo tài khoản thành công!", "Tài khoản đã được tạo");
+  },
+  onRegisterError: (msg) {
+  LoadingDialog.hideLoadingDialog(context);
+  MsgDialog.showMsgDialog(context, "Tạo tài khoản thất bại !", msg);
+  },
+  );
+  } catch (e) {
+  LoadingDialog.hideLoadingDialog(context);
+  MsgDialog.showMsgDialog(context, "Lỗi hệ thống", "Không thể tạo tài khoản: $e");
+  }
+}
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -202,9 +223,12 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
         builder: (context, snapshot) {
           return TextField(
             controller: controller,
-            style: TextStyle(fontSize: 18, color: Colors.black),
+            style: TextStyle(fontSize: 4.sp, color: Colors.black),
             decoration: InputDecoration(
               labelText: label,
+              labelStyle: TextStyle(
+                  fontSize: 4.sp
+              ),
               errorText: snapshot.hasError ? snapshot.error as String : null,
               contentPadding:
                   EdgeInsets.symmetric(vertical: 2.h, horizontal: 10.w),
@@ -359,71 +383,4 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
 //     ],
 //   );
 // }
-}
-
-class FilterDropdown extends StatefulWidget {
-  final String label;
-
-  const FilterDropdown({super.key, required this.label});
-
-  @override
-  State<FilterDropdown> createState() => _FilterDropdownState();
-}
-
-class _FilterDropdownState extends State<FilterDropdown> {
-  final TextEditingController _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose(); // đừng quên xoá controller
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isLandscape = size.height < size.width;
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: isLandscape ? 50.h : 50.h),
-      //  padding thay đổi theo màn hình
-      child: Row(
-        children: [
-          SizedBox(
-            width: isLandscape ? 50.w : 100.w,
-            child: Text(
-              widget.label,
-              style: TextStyle(
-                fontFamily: "Oswald",
-                fontWeight: FontWeight.w700,
-                fontSize: isLandscape ? 8.sp : 16.sp,
-              ),
-            ),
-          ),
-          SizedBox(width: 2.w),
-          Expanded(
-            child: Container(
-              height: 30.h,
-              padding: EdgeInsets.symmetric(horizontal: 2.w),
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Colors.black26),
-                ),
-              ),
-              child: TextField(
-                controller: _controller,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  isDense: true,
-                ),
-                onChanged: (value) {
-                  // có thể trigger search logic hoặc UI cập nhật ở đây
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

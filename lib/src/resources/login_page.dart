@@ -516,9 +516,12 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  _onLoginClick() {
-    FocusScope.of(context).unfocus(); // Ẩn bàn phím ảo
+  _onLoginClick() async {
+// Ẩn bàn phím và remove focus
+    FocusScope.of(context).requestFocus(FocusNode());
 
+    // Chờ 100-200ms cho keyboard kịp đóng hoàn toàn
+    await Future.delayed(Duration(milliseconds: 150));
     String email = _emailController.text;
     String pass = _passController.text;
 
@@ -577,12 +580,22 @@ class _LoginPageState extends State<LoginPage> {
                 }
               }
               else if (role == 2) {
-                Navigator.of(context).pushReplacement(MaterialPageRoute(
-                  builder: (context) => const HomeFirstStaffPage(),
-                ));
-                if (newToken != null) {
-                  await _saveTokenToFirestore(
-                      newToken); // Gọi hàm lưu token vào Firestore
+                if (isMobile) {
+                  // Trên thiết bị mobile -> Giao diện 1
+                  Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (context) => HomeFirstStaffPage(),
+                  ));
+                  if (newToken != null) {
+                    await _saveTokenToFirestore(
+                        newToken); // Gọi hàm lưu token vào Firestore
+                  }
+                } else {
+                  // Trên web -> Hiển thị thông báo
+                  MsgDialog.showMsgDialog(
+                    context,
+                    "Thông báo",
+                    "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
+                  );
                 }
               }
               else if (role == 3) {

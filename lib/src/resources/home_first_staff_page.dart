@@ -12,7 +12,7 @@ class HomeFirstStaffPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         theme: ThemeData(
-    colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF00BAAA),
+    colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF00F5DD),
         ),
     useMaterial3: true,
     ),
