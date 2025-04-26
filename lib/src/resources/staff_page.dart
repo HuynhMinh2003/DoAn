@@ -102,76 +102,76 @@ class _StaffPageState extends BaseStaffInfoScreen<StaffPage> {
 
     return Scaffold(
       backgroundColor: Colors.grey[200], // Màu nền nhẹ
-      body: Column(
-        children: [
-          Card(
-            margin: EdgeInsets.zero,
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            color: Color(0xFF00BAAA),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  child: Image.asset(
-                    'assets/images/two_circle.png',
-                    width: 160,
-                  ),
+        body: Stack(
+          children: [
+            // Card header phía trên (giữ nguyên như bạn đã làm)
+            Card(
+              margin: EdgeInsets.zero,
+              elevation: 9,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30.r),
+                  bottomRight: Radius.circular(30.r),
                 ),
-                Positioned(
-                  top: 32,
-                  right: 16,
-                  child: IconButton(
-                    icon: Icon(Icons.logout),
-                    onPressed: () {
-                      _logout();
-                    },
-                    tooltip: 'Đăng xuất',
+              ),
+              color: Color(0xFF03A293),
+              child:
+              Stack(
+                children: [
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: Image.asset(
+                      'assets/images/two_circle_green.png',
+                      width: 160,
+                    ),
                   ),
-                ),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 20.h),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(height: 100.h),
-                      CircleAvatar(
-                        radius: 70.r,
-                        backgroundImage: avatarUrl != null
-                            ? NetworkImage(avatarUrl)
-                            : null,
-                        child: avatarUrl == null
-                            ? const Icon(Icons.person, size: 50)
-                            : null,
-                      ),
-                      SizedBox(height: 10.h),
-                      Text(
-                        "Xin chào, ${staffInfo?["name"] ?? "người dùng"}",
-                        style: TextStyle(fontFamily:"Oswald",fontSize: 25.sp, color: Colors.white),
-                      ),
-                      SizedBox(height: 10.h),
-                      Text(
-                        "${staffInfo?["position"] ?? "Chức vụ không rõ"}",
-                        style: TextStyle(fontFamily:"Oswald",fontSize: 20.sp, color: Colors.white),
-                      ),
-                    ],
+                  Positioned(
+                    top: 32,
+                    right: 16,
+                    child: IconButton(
+                      icon: Icon(Icons.logout),
+                      onPressed: _logout,
+                      tooltip: 'Đăng xuất',
+                    ),
                   ),
-                )
-              ],
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 20.h),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(height: 100.h),
+                        CircleAvatar(
+                          radius: 50.r,
+                          backgroundImage: avatarUrl != null
+                              ? NetworkImage(avatarUrl)
+                              : null,
+                          child: avatarUrl == null
+                              ? const Icon(Icons.person, size: 50)
+                              : null,
+                        ),
+                        SizedBox(height: 10.h),
+                        Text(
+                          "Xin chào, ${staffInfo?["name"] ?? "người dùng"}",
+                          style: TextStyle(fontFamily:"Oswald", fontSize: 25.sp, color: Colors.white),
+                        ),
+                        SizedBox(height: 10.h),
+                        Text(
+                          "${staffInfo?["position"] ?? "Chức vụ không rõ"}",
+                          style: TextStyle(fontFamily:"Oswald", fontSize: 20.sp, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: Container(
-              // Khoảng trắng bên dưới
-            ),
-          ),
-        ],
-      ),
+
+            Container(),
+          ],
+        )
 
     );
   }

@@ -192,7 +192,6 @@ class UserImageProvider extends ChangeNotifier {
     }
   }
 
-
   @override
   void dispose() {
     _avatarListener?.cancel();
