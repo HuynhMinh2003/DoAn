@@ -13,12 +13,12 @@ class FirAuth {
     required String phoneCompany,
     required String typeCompany,
     required String describeCompany,
-    required String password,
+    required String passwordCompany,
     required Function onSuccess,
     required Function(String) onRegisterError,
   }) {
     _firebaseAuth
-        .createUserWithEmailAndPassword(email: emailCompany, password: password)
+        .createUserWithEmailAndPassword(email: emailCompany, password: passwordCompany)
         .then((userCredential) async {
       var company = userCredential.user;
       if (company != null) {
@@ -33,7 +33,7 @@ class FirAuth {
           onRegisterError,
         );
       } else {
-        onRegisterError("Tạo công ty thất bại!");
+        onRegisterError("Tạo tài khoản công ty thất bại!");
       }
     }).catchError((err) {
       _onSignUpErr(err.code, onRegisterError);
@@ -51,54 +51,50 @@ class FirAuth {
       Function onSuccess,
       Function(String) onRegisterError,
       ) async {
-    String? fcmToken = await FirebaseMessaging.instance.getToken(); // Lấy FCM Token
-
-    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
-
-    final companyData = {
-      "nameCompany": nameCompany,
-      "emailCompany": emailCompany,
-      "phoneCompany": phoneCompany,
-      "typeCompany": typeCompany,
-      "describeCompany": describeCompany,
-      "fcmToken": fcmToken,
-      "createdAt": DateTime.now().toIso8601String(),
-    };
-
-    dbRef.child("companies").child(companyId).set(companyData).then((_) {
+    try{
+      final companyData = {
+        "name": nameCompany,
+        "email": emailCompany,
+        "phone": phoneCompany,
+        "type": typeCompany,
+        "describe": describeCompany,
+        "role": 4,
+        "createdAt": DateTime.now().toIso8601String(),
+      };
+      await FirebaseFirestore.instance.collection("companies").doc(companyId).set(companyData);
       onSuccess();
-    }).catchError((error) {
-      onRegisterError("Lỗi khi lưu thông tin công ty.");
-    });
+    } catch (e) {
+      onRegisterError("Lỗi khi lưu thông tin công ty");
+    }
   }
 
   void signUpStaff({
-    required String name,
-    required String email,
-    required String phone,
+    required String nameStaff,
+    required String emailStaff,
+    required String phoneStaff,
     required String position,
-    required String imageUrl,
-    required String password,
+    required String imageUrlStaff,
+    required String passwordStaff,
     required Function onSuccess,
     required Function(String) onRegisterError,
   }) {
     _firebaseAuth
-        .createUserWithEmailAndPassword(email: email, password: password)
+        .createUserWithEmailAndPassword(email: emailStaff, password: passwordStaff)
         .then((userCredential) async {
-      var user = userCredential.user;
-      if (user != null) {
+      var staff = userCredential.user;
+      if (staff != null) {
         _createStaff(
-          user.uid,
-          name,
-          email,
-          phone,
+          staff.uid,
+          nameStaff,
+          emailStaff,
+          phoneStaff,
           position,
-          imageUrl,
+          imageUrlStaff,
           onSuccess,
           onRegisterError,
         );
       } else {
-        onRegisterError("Tạo tài khoản thất bại!");
+        onRegisterError("Tạo tài khoản nhân viên thất bại!");
       }
     }).catchError((err) {
       _onSignUpErr(err.code, onRegisterError);
@@ -107,30 +103,30 @@ class FirAuth {
 
   void _createStaff(
       String userId,
-      String name,
-      String email,
-      String phone,
+      String nameStaff,
+      String emailStaff,
+      String phoneStaff,
       String position,
-      String imageUrl,
+      String imageUrlStaff,
       Function onSuccess,
       Function(String) onRegisterError,
       ) async {
     try {
       final staffData = {
-        "name": name,
-        "email": email,
-        "phone": phone,
+        "name": nameStaff,
+        "email": emailStaff,
+        "phone": phoneStaff,
         "position": position,
         "role": 2,
         "isFree": 1,
-        "imageUrl": imageUrl,
+        "imageUrl": imageUrlStaff,
         "createdAt": Timestamp.now(), // Dùng Timestamp của Firestore
       };
 
       await FirebaseFirestore.instance.collection("staffs").doc(userId).set(staffData);
       onSuccess();
     } catch (e) {
-      onRegisterError("Lỗi khi lưu thông tin nhân viên.");
+      onRegisterError("Lỗi khi lưu thông tin nhân viên");
     }
   }
 
