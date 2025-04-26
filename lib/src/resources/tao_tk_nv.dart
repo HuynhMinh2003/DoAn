@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
@@ -70,230 +71,255 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
             ),
             SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.only(left: 80, right: 80, top: 140.h),
+                padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 140.h),
                 child: Center(
                   child: SizedBox(
                     width: MediaQuery
                         .of(context)
                         .size
                         .width,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Column(
                       children: [
-                        // Bên trái: ảnh
-                        Expanded(
-                          child:
-                          Consumer<UserImageProvider>(
-                              builder: (context, avatarProvider, child) {
-                                String? avatarUrl = avatarProvider.avatarUrl;
-                                return GestureDetector(
-                                  onTap: () async {
-                                    final provider = Provider.of<UserImageProvider>(context, listen: false);
-
-                                    await provider.pickImage(); // chỉ lưu tạm vào _selectedImageFile
-
-                                    await Future.delayed(Duration(milliseconds: 300));
-                                    if (kIsWeb) {
-                                      print("🧾 Ảnh web đã chọn: ${provider.webImageBytes != null ? "Đã có dữ liệu bytes" : "null"}");
-                                    } else {
-                                      print("🧾 Ảnh file đã chọn: ${provider.selectedImageFile?.path ?? "null"}");
-                                    }
-                                    // Kiểm tra nếu không có ảnh hoặc ảnh không thể tải
-                                    if (provider.selectedImageFile == null && provider.webImageBytes == null && avatarUrl == null) {
-                                      MsgDialog.showMsgDialog(context, "Lỗi", "Chưa chọn ảnh hoặc không tải được ảnh ");
-                                    }
-                                  },
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(color: Colors.grey.shade200, width: 0.5.w), // Viền xám mỏng
-                                        ),
-                                        child: CircleAvatar(
-                                          radius: 150.r,
-                                          backgroundColor: Colors.white,
-                                          child: avatarUrl != null
-                                              ? ClipOval(
-                                            child: Image.network(
-                                              '$avatarUrl?t=${DateTime.now().millisecondsSinceEpoch}',
-                                              fit: BoxFit.cover,
-                                              width: 300.w,
-                                              height: 300.h,
-                                              loadingBuilder: (context, child, loadingProgress) {
-                                                if (loadingProgress == null) return child;
-                                                return const Center(child: CircularProgressIndicator());
-                                              },
-                                              errorBuilder: (context, error, stackTrace) =>
-                                              const Icon(Icons.error, color: Colors.red),
-                                            ),
-                                          )
-                                              : avatarProvider.webImageBytes != null
-                                              ? ClipOval(
-                                            child: Image.memory(
-                                              avatarProvider.webImageBytes!,
-                                              fit: BoxFit.cover,
-                                              width: 300.w,
-                                              height: 300.h,
-                                            ),
-                                          )
-                                              : avatarProvider.selectedImageFile != null
-                                              ? ClipOval(
-                                            child: Image.file(
-                                              avatarProvider.selectedImageFile!,
-                                              fit: BoxFit.cover,
-                                              width: 300.w,
-                                              height: 300.h,
-                                            ),
-                                          )
-                                              : Icon(Icons.add_a_photo, size: 15.sp, color: Colors.grey),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        bottom: 0,
-                                        child: Container(
-                                          padding:  EdgeInsets.symmetric(horizontal: 10.w, vertical: 1.h),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black38,
-                                            borderRadius: BorderRadius.circular(12.r),
-                                          ),
-                                          child: Text(
-                                            (avatarUrl != null ||
-                                                avatarProvider.selectedImageFile != null ||
-                                                avatarProvider.webImageBytes != null)
-                                                ? 'Thay đổi'
-                                                : 'Thêm ảnh',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 4.sp,
-                                            ),
-                                          ),
-
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }
-                          ),
+                        SizedBox(
+                          height: 20.h,
                         ),
-                        // Bên phải: form login
-                        Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  height: 20.h,
-                                ),
-                                Text(
-                                  'Tài khoản mới cho nhân viên',
-                                  style: TextStyle(
-                                    fontFamily: "Oswald",
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12.sp,
-                                  ),
-                                ),
-                                _buildTextField(
-                                  controller: _nameStaffController,
-                                  label: 'Họ và tên:',
-                                  stream: _authBloc.nameStaffStream,
-                                ),
-                                _buildTextField(
-                                  controller: _phoneStaffController,
-                                  label: 'Số điện thoại:',
-                                  stream: _authBloc.phoneStaffStream,
-                                ),
-                                _buildTextField(
-                                  controller: _emailStaffController,
-                                  label: 'Email:',
-                                  stream: _authBloc.emailStaffStream,
-                                ),
-                                buildFilterDropdown(
-                                  label: "Vai trò",
-                                  items: _roleItems,
-                                  selectedValue: _selectedRole,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedRole = value;
-                                    });
-                                  },
-                                ),
-                                SizedBox(
-                                  height: 40.h,
-                                ),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: SizedBox(
-                                        height: 60.h,
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            _onSignUpStaffClicked();
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                            const Color(0xFF2D80F8),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(30.r),
+                        Text(
+                          'Tài khoản mới cho nhân viên',
+                          style: TextStyle(
+                            fontFamily: "Oswald",
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.sp,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(
+                          height: 30.h,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(width: 25.w,),
+                            // Bên trái: ảnh
+                            Center(
+                              child: Consumer<UserImageProvider>(
+                                builder: (context, avatarProvider, child) {
+                                  String? avatarUrl = avatarProvider.avatarUrl;
+                                  bool hasImage = avatarUrl != null ||
+                                      avatarProvider.selectedImageFile != null ||
+                                      avatarProvider.webImageBytes != null;
+
+                                  Widget _buildAvatarImage() {
+                                    if (avatarProvider.webImageBytes != null) {
+                                      return Image.memory(
+                                        avatarProvider.webImageBytes!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      );
+                                    } else if (avatarProvider.selectedImageFile != null) {
+                                      return Image.file(
+                                        avatarProvider.selectedImageFile!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      );
+                                    } else if (avatarUrl != null) {
+                                      return Image.network(
+                                        '$avatarUrl?t=${DateTime.now().millisecondsSinceEpoch}',
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) return child;
+                                          return const Center(child: CircularProgressIndicator());
+                                        },
+                                        errorBuilder: (context, error, stackTrace) =>
+                                        const Center(child: Icon(Icons.error, color: Colors.red)),
+                                      );
+                                    } else {
+                                      return Icon(Icons.add_a_photo, size: 20.sp, color: Colors.grey);
+                                    }
+                                  }
+
+                                  double avatarSize = min(300.w, 300.h);
+
+                                  return SizedBox(
+                                    width: avatarSize, // ➔ Chiều ngang avatar
+                                    height: avatarSize + 40.h, // ➔ Chiều cao avatar + label
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        ClipOval(
+                                          child: Material(
+                                            color: Colors.white,
+                                            child: InkWell(
+                                              onTap: () async {
+                                                final provider = Provider.of<UserImageProvider>(context, listen: false);
+                                                await provider.pickImage();
+                                                await Future.delayed(const Duration(milliseconds: 300));
+
+                                                if (kIsWeb) {
+                                                  print("🧾 Ảnh web đã chọn: ${provider.webImageBytes != null ? "Đã có dữ liệu bytes" : "null"}");
+                                                } else {
+                                                  print("🧾 Ảnh file đã chọn: ${provider.selectedImageFile?.path ?? "null"}");
+                                                }
+
+                                                if (provider.selectedImageFile == null &&
+                                                    provider.webImageBytes == null &&
+                                                    avatarUrl == null) {
+                                                  MsgDialog.showMsgDialog(context, "Lỗi", "Chưa chọn ảnh hoặc không tải được ảnh ");
+                                                }
+                                              },
+                                              splashColor: Colors.grey.withOpacity(0.1),
+                                              highlightColor: Colors.transparent,
+                                              radius: avatarSize / 2,
+                                              customBorder: const CircleBorder(),
+                                              child: Container(
+                                                width: avatarSize,
+                                                height: avatarSize,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(color: Colors.grey.shade300, width: 0.5.w),
+                                                ),
+                                                child: AnimatedSwitcher(
+                                                  duration: const Duration(milliseconds: 300),
+                                                  child: _buildAvatarImage(),
+                                                ),
+                                              ),
                                             ),
-                                            elevation: 4,
-                                            shadowColor: Colors.black45,
-                                            alignment: Alignment.center,
-                                            padding: EdgeInsets.zero,
-                                          ),
-                                          child: Text(
-                                            "Tạo tài khoản",
-                                            style: TextStyle(
-                                              fontFamily: "Oswald",
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 7.sp,
-                                              color: Colors.white,
-                                              height: 1.h,
-                                            ),
-                                            textAlign: TextAlign.center,
                                           ),
                                         ),
-                                      ),
+                                        Positioned(
+                                          bottom: 0,
+                                          child: Container(
+                                            margin: EdgeInsets.only(top: 8.h),
+                                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black26,
+                                              borderRadius: BorderRadius.circular(20.r),
+                                            ),
+                                            child: Text(
+                                              hasImage ? 'Thay đổi' : 'Thêm ảnh',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 4.sp,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(width: 20.w),
-                                    // Khoảng cách giữa 2 nút
-                                    Expanded(
-                                      child: SizedBox(
-                                        height: 60.h,
-                                        child: ElevatedButton(
-                                          onPressed: () {},
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                            const Color(0xFF2D80F8),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(30.r),
-                                            ),
-                                            elevation: 4,
-                                            shadowColor: Colors.black45,
-                                            alignment: Alignment.center,
-                                            padding: EdgeInsets.zero,
-                                          ),
-                                          child: Text(
-                                            "Hủy",
-                                            style: TextStyle(
-                                              fontFamily: "Oswald",
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 7.sp,
-                                              color: Colors.white,
-                                              height: 1.h,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ),
+                                  );
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 60.w,),
+                            // Bên phải: form login
+                            Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _buildTextField(
+                                      controller: _nameStaffController,
+                                      label: 'Họ và tên:',
+                                      stream: _authBloc.nameStaffStream,
+                                    ),
+                                    _buildTextField(
+                                      controller: _phoneStaffController,
+                                      label: 'Số điện thoại:',
+                                      stream: _authBloc.phoneStaffStream,
+                                    ),
+                                    _buildTextField(
+                                      controller: _emailStaffController,
+                                      label: 'Email:',
+                                      stream: _authBloc.emailStaffStream,
+                                    ),
+                                    buildFilterDropdown(
+                                      label: "Vai trò",
+                                      items: _roleItems,
+                                      selectedValue: _selectedRole,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _selectedRole = value;
+                                        });
+                                      },
                                     ),
                                   ],
+                                )),
+                          ],
+                        ),
+                        SizedBox(height: 70.h,),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Phân bố nút cách đều
+                          children: [
+                            SizedBox(width: 10.w), // Tùy chọn nếu bạn muốn có khoảng cách giữa các nút
+                            Expanded(
+                              child: SizedBox(
+                                height: 60.h,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    _onSignUpStaffClicked();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2D80F8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30.r),
+                                    ),
+                                    elevation: 4,
+                                    shadowColor: Colors.black45,
+                                    alignment: Alignment.center,
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                  child: Text(
+                                    "Tạo tài khoản",
+                                    style: TextStyle(
+                                      fontFamily: "Oswald",
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 7.sp,
+                                      color: Colors.white,
+                                      height: 1.h,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
-                              ],
-                            )),
+                              ),
+                            ),
+                            SizedBox(width: 60.w), // Tùy chọn nếu bạn muốn có khoảng cách giữa các nút
+                            Expanded(
+                              child: SizedBox(
+                                height: 60.h,
+                                child: ElevatedButton(
+                                  onPressed: () {},
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2D80F8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30.r),
+                                    ),
+                                    elevation: 4,
+                                    shadowColor: Colors.black45,
+                                    alignment: Alignment.center,
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                  child: Text(
+                                    "Hủy",
+                                    style: TextStyle(
+                                      fontFamily: "Oswald",
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 7.sp,
+                                      color: Colors.white,
+                                      height: 1.h,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 20.w), // Tùy chọn nếu bạn muốn có khoảng cách giữa các nút
+
+                          ],
+                        )
+
                       ],
                     ),
                   ),
@@ -340,11 +366,11 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
 
       // Gọi hàm tạo tài khoản
       _authBloc.signUpStaff(
-        name: _nameStaffController.text,
-        email: _emailStaffController.text,
-        phone: _phoneStaffController.text,
+        nameStaff: _nameStaffController.text,
+        emailStaff: _emailStaffController.text,
+        phoneStaff: _phoneStaffController.text,
         position: _selectedRole!,
-        imageUrl: _imageUrl!,
+        imageUrlStaff: _imageUrl!,
         onSuccess: () {
           LoadingDialog.hideLoadingDialog(context);
           MsgDialog.showMsgDialog(context, "Tạo tài khoản thành công!", "Tài khoản đã được tạo");
@@ -431,7 +457,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
               ),
               dropdownStyleData: DropdownStyleData(
                 maxHeight: 200.h,
-                width: 172.w,
+                width: 140.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                   color: Color(0xFFF7FEFF),
