@@ -134,10 +134,11 @@ class _StaffListPageState extends State<StaffListPage> {
     );
   }
 
-  Widget _buildLandScapeLayout(BuildContext context){
+  Widget _buildLandScapeLayout(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(left: 40.w, right: 40.w, top: 170.h),
+      padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 170.h),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             'Danh sách nhân viên',
@@ -147,121 +148,142 @@ class _StaffListPageState extends State<StaffListPage> {
               fontSize: 12.sp,
             ),
           ),
-
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              buildFilterDropdown(
-                label: "Lọc theo chức vụ",
-                items: _positionItems,
-                selectedValue: _selectedPosition,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedPosition = value;
-                  });
-                },
-              ),
-              SizedBox(height: 40.h,),
-              SizedBox(
-                height: 400,
-                child:  StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection("staffs")
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError)
-                      return const Center(child: Text("Lỗi dữ liệu"));
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    final allStaffs = snapshot.data!.docs;
-
-                    final staffs = (_selectedPosition == null || _selectedPosition == "Tất cả")
-                        ? allStaffs
-                        : allStaffs.where((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      return data["position"] == _selectedPosition;
-                    }).toList();
-
-                    if (staffs.isEmpty)
-                      return const Center(child: Text("Không có nhân viên nào"));
-
-                    return ListView.separated(
-                      itemCount: staffs.length,
-                      separatorBuilder: (context, index) => Divider(
-                        color: Colors.grey,
-                        thickness: 0.2.w,
-                        indent: 2.w,
-                        endIndent: 2.w,
+          SizedBox(height: 20.h),
+          SizedBox(
+            height: MediaQuery.of(context).size.height - 100, // tùy chỉnh
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Bộ lọc bên trái
+                Container(
+                  width: 100.w,
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF7FEFF),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      buildFilterDropdown(
+                        label: "Lọc theo chức vụ",
+                        items: _positionItems,
+                        selectedValue: _selectedPosition,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedPosition = value;
+                          });
+                        },
                       ),
-                      itemBuilder: (context, index) {
-                        final staff = staffs[index].data() as Map<String, dynamic>;
-                        return GestureDetector(
-                          onTap: () => _showStaffDetails(context, staff),
-                          child: Padding(
-                            padding:  EdgeInsets.symmetric(
-                                horizontal: 6.w, vertical: 4.h),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 40.r,
-                                      backgroundImage: staff["imageUrl"] != null
-                                          ? NetworkImage(staff["imageUrl"])
-                                          : null,
-                                      child: staff["imageUrl"] == null
-                                          ? Icon(Icons.person, size: 10.r)
-                                          : null,
-                                    ),
-                                    SizedBox(width: 5.w),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          staff["name"] ?? "Không tên",
-                                          style: TextStyle(
-                                            fontFamily: "Oswald",
-                                            fontSize: 6.sp,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Row(children: [
-                                          Text(
-                                            staff["position"] ?? "Không rõ vai trò",
-                                            style: TextStyle(
-                                                fontSize: 4.sp, color: Colors.grey),
-                                          ),
-                                          SizedBox(width: 5.w),
-                                          Container(
-                                            width: 5.w,
-                                            height: 12.h,
-                                            decoration: BoxDecoration(
-                                              color: staff["isFree"] == 1
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                        ]),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                    ],
+                  ),
                 ),
-              )
-            ],
-          )
+                SizedBox(width: 30.w),
+                // Danh sách nhân viên bên phải
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection("staffs")
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return const Center(child: Text("Lỗi dữ liệu"));
+                      }
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
+                      final allStaffs = snapshot.data!.docs;
+
+                      final staffs = (_selectedPosition == null || _selectedPosition == "Tất cả")
+                          ? allStaffs
+                          : allStaffs.where((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        return data["position"] == _selectedPosition;
+                      }).toList();
+
+                      if (staffs.isEmpty) {
+                        return const Center(child: Text("Không có nhân viên nào"));
+                      }
+
+                      return GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 30.h,
+                          crossAxisSpacing: 10.w,
+                          childAspectRatio: 5 / 1.5,
+                        ),
+                        itemCount: staffs.length,
+                        itemBuilder: (context, index) {
+                          final staff = staffs[index].data() as Map<String, dynamic>;
+                          return GestureDetector(
+                            onTap: () => _showStaffDetails(context, staff),
+                            child: Container(
+                              padding: EdgeInsets.all(5.w),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.3),
+                                    blurRadius: 6.r,
+                                    offset: Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      SizedBox(width: 5.w,),
+                                      CircleAvatar(
+                                        radius: 40.r,
+                                        backgroundImage: staff["imageUrl"] != null
+                                            ? NetworkImage(staff["imageUrl"])
+                                            : null,
+                                        child: staff["imageUrl"] == null
+                                            ? Icon(Icons.person, size: 30.r)
+                                            : null,
+                                      ),
+                                      SizedBox(width: 5.w,),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              staff["name"] ?? "Không tên",
+                                              style: TextStyle(
+                                                fontFamily: "Oswald",
+                                                fontSize: 6.sp,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              staff["isFree"] == 1 ? "Đang rảnh" : "Đang bận",
+                                              style: TextStyle(
+                                                fontSize: 4.sp,
+                                                color: staff["isFree"] == 1 ? Colors.green : Colors.red, // ✅ thay đổi màu theo trạng thái
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -442,7 +464,7 @@ class _StaffListPageState extends State<StaffListPage> {
               ),
               dropdownStyleData: DropdownStyleData(
                 maxHeight: 200.h,
-                width: isLandscape? 304.w : 324.w,
+                width: isLandscape? 100.w : 324.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                   color: Color(0xFFF7FEFF),
