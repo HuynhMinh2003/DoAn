@@ -40,7 +40,7 @@ class _StaffPageState extends BaseStaffInfoScreen<StaffPage> {
         return;
       }
 
-      DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userId);
+      DocumentReference userRef = FirebaseFirestore.instance.collection('staffs').doc(userId);
       DocumentSnapshot userDoc = await userRef.get();
 
       if (!userDoc.exists) {
@@ -53,6 +53,7 @@ class _StaffPageState extends BaseStaffInfoScreen<StaffPage> {
       if (tokens.contains(fcmToken)) {
         await userRef.update({
           'fcmTokens': FieldValue.arrayRemove([fcmToken]),
+          'lastUpdated': FieldValue.serverTimestamp(),
         });
         print("✅ Đã xóa token FCM: $fcmToken");
       } else {
