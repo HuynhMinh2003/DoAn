@@ -30,6 +30,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPressed1 = false;
 
   // Hàm lưu token FCM vào Firestore (tránh lưu trùng)
+// Hàm lưu token FCM vào Firestore (tránh lưu trùng)
   Future<void> _saveTokenToFirestore(String newToken) async {
     final staffId = FirebaseAuth.instance.currentUser?.uid;
     if (staffId == null) return; // Không có userId thì thoát luôn
@@ -37,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       // Đường dẫn Firestore cho nhân viên
       DocumentReference staffRef =
-          FirebaseFirestore.instance.collection("users").doc(staffId);
+      FirebaseFirestore.instance.collection("staffs").doc(staffId);
       DocumentSnapshot staffDoc = await staffRef.get();
 
       if (staffDoc.exists) {
@@ -54,10 +55,11 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         // Nếu tài liệu của nhân viên chưa tồn tại, tạo mới với danh sách token
         await staffRef.set({
-          'fcmTokens': [newToken],
+          'fcmTokens': [newToken],  // Lưu mảng token FCM
           'lastUpdated': FieldValue.serverTimestamp(),
         });
       }
+
       print("FCM Token saved successfully!");
     } catch (e) {
       print("Error saving FCM Token: $e");
