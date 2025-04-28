@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+
 
 class FirAuth {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -118,9 +117,10 @@ class FirAuth {
         "phone": phoneStaff,
         "position": position,
         "role": 2,
-        "isFree": 1,
+        "isFree": true,
         "imageUrl": imageUrlStaff,
-        "createdAt": Timestamp.now(), // Dùng Timestamp của Firestore
+        "fcmTokens": [], // Thêm fcmToken dưới dạng chuỗi rỗng
+        "createdAt": Timestamp.now(),
       };
 
       await FirebaseFirestore.instance.collection("staffs").doc(userId).set(staffData);
@@ -129,6 +129,7 @@ class FirAuth {
       onRegisterError("Lỗi khi lưu thông tin nhân viên");
     }
   }
+
 
   /// Đăng nhập người dùng
   void signIn({

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/firebase_options.dart';
 import 'package:do_an/src/fire_base/firebase_auth_service.dart';
 import 'package:do_an/src/fire_base/notification_service.dart';
+import 'package:do_an/src/resources/chon_can_ho_page.dart';
 import 'package:do_an/src/resources/ds_congty_page.dart';
 import 'package:do_an/src/resources/ds_nhanvien_page.dart';
 import 'package:do_an/src/resources/login_page.dart';
@@ -149,7 +150,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: StaffListPage(), // hoặc AuthWrapper()
+              home: ApartmentFilterPage(), // hoặc AuthWrapper()
             ),
           ),
         );
