@@ -72,7 +72,7 @@ class _StaffListPageState extends State<StaffListPage> {
               SizedBox(height: 18.h),
               Text("SĐT: ${staff["phone"]}", style: TextStyle(fontSize: isLandscape? 3.5.sp:15.sp)),
               SizedBox(height: 18.h),
-              Text("Vai trò: ${staff["position"]}", style: TextStyle(fontSize: isLandscape? 3.5.sp:15.sp)),
+              Text("Vị trí: ${staff["position"]}", style: TextStyle(fontSize: isLandscape? 3.5.sp:15.sp)),
             ],
           ),
         ),
@@ -161,7 +161,7 @@ class _StaffListPageState extends State<StaffListPage> {
                     color: Color(0xFFF7FEFF),
                     borderRadius: BorderRadius.circular(10.r),
                   ),
-                  child: Column(
+                  child: SingleChildScrollView(child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       buildFilterDropdown(
@@ -175,11 +175,11 @@ class _StaffListPageState extends State<StaffListPage> {
                         },
                       ),
                     ],
-                  ),
+                  ),)
                 ),
                 SizedBox(width: 30.w),
                 // Danh sách nhân viên bên phải
-                Expanded(
+                Flexible(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection("staffs")
@@ -205,78 +205,91 @@ class _StaffListPageState extends State<StaffListPage> {
                         return const Center(child: Text("Không có nhân viên nào"));
                       }
 
-                      return GridView.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 30.h,
-                          crossAxisSpacing: 10.w,
-                          childAspectRatio: 5 / 1.5,
-                        ),
-                        itemCount: staffs.length,
-                        itemBuilder: (context, index) {
-                          final staff = staffs[index].data() as Map<String, dynamic>;
-                          return GestureDetector(
-                            onTap: () => _showStaffDetails(context, staff),
-                            child: Container(
-                              padding: EdgeInsets.all(5.w),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12.r),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.3),
-                                    blurRadius: 6.r,
-                                    offset: Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                children: [
-                                  Row(
+                      return SingleChildScrollView(
+                        child: GridView.builder(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 30.h,
+                            crossAxisSpacing: 10.w,
+                            childAspectRatio: 5 / 1.5,
+                          ),
+                          itemCount: staffs.length,
+                          shrinkWrap: true, // Giảm chiều cao của GridView khi cần thiết
+                          physics: NeverScrollableScrollPhysics(), // Ngừng cuộn bên trong GridView
+                          itemBuilder: (context, index) {
+                            final staff = staffs[index].data() as Map<String, dynamic>;
+                            return GestureDetector(
+                              onTap: () => _showStaffDetails(context, staff),
+                              child: Container(
+                                padding: EdgeInsets.all(5.sp),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.3),
+                                      blurRadius: 6.r,
+                                      offset: Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: SingleChildScrollView(
+                                  child: Column(
                                     children: [
-                                      SizedBox(width: 5.w,),
-                                      CircleAvatar(
-                                        radius: 40.r,
-                                        backgroundImage: staff["imageUrl"] != null
-                                            ? NetworkImage(staff["imageUrl"])
-                                            : null,
-                                        child: staff["imageUrl"] == null
-                                            ? Icon(Icons.person, size: 30.r)
-                                            : null,
-                                      ),
-                                      SizedBox(width: 5.w,),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              staff["name"] ?? "Không tên",
-                                              style: TextStyle(
-                                                fontFamily: "Oswald",
-                                                fontSize: 6.sp,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
+                                      Row(
+                                        children: [
+                                          SizedBox(width: 5.w),
+                                          // Đảm bảo CircleAvatar có kích thước cố định
+                                          Container(
+                                            width: 16.w, // Cố định kích thước cho CircleAvatar
+                                            height: 70.h, // Cố định chiều cao bằng với chiều rộng để giữ tỉ lệ
+                                            child: CircleAvatar(
+                                              radius: 8.r, // Radius = 1/2 chiều rộng của CircleAvatar để nó hiển thị chính xác
+                                              backgroundImage: staff["imageUrl"] != null
+                                                  ? NetworkImage(staff["imageUrl"])
+                                                  : null,
+                                              child: staff["imageUrl"] == null
+                                                  ? Icon(Icons.person, size: 40.w)
+                                                  : null,
                                             ),
-                                            Text(
-                                              staff["isFree"] == 1 ? "Đang rảnh" : "Đang bận",
-                                              style: TextStyle(
-                                                fontSize: 4.sp,
-                                                color: staff["isFree"] == 1 ? Colors.green : Colors.red, // ✅ thay đổi màu theo trạng thái
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
+                                          ),
 
-                                          ],
-                                        ),
-                                      )
+                                          SizedBox(width: 5.w),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  staff["name"] ?? "Không tên",
+                                                  style: TextStyle(
+                                                    fontFamily: "Oswald",
+                                                    fontSize: 6.sp,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                Text(
+                                                  staff["isFree"] == 1 ? "Đang rảnh" : "Đang bận",
+                                                  style: TextStyle(
+                                                    fontSize: 4.sp,
+                                                    color: staff["isFree"] == 1
+                                                        ? Colors.green
+                                                        : Colors.red,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
-                                ],
+                                )
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
