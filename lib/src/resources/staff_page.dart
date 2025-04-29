@@ -22,16 +22,15 @@ class _StaffPageState extends BaseStaffInfoScreen<StaffPage> {
     final staffId = FirebaseAuth.instance.currentUser?.uid;
     if (staffId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Provider.of<UserImageProvider>(context, listen: false).loadImageByStaffId(staffId);
-        getStaffInfo(staffId);
+        Provider.of<UserImageProvider>(context, listen: false)
+            .loadImageByStaffId(staffId);
       });
     }
   }
 
-  /// Hàm xóa token khỏi Firestore khi đăng xuất
   Future<void> _removeFcmToken() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return; // Không có userId thì không làm gì cả
+    if (userId == null) return;
 
     try {
       String? fcmToken = await FirebaseMessaging.instance.getToken();
@@ -40,7 +39,8 @@ class _StaffPageState extends BaseStaffInfoScreen<StaffPage> {
         return;
       }
 
-      DocumentReference userRef = FirebaseFirestore.instance.collection('staffs').doc(userId);
+      DocumentReference userRef =
+      FirebaseFirestore.instance.collection('staffs').doc(userId);
       DocumentSnapshot userDoc = await userRef.get();
 
       if (!userDoc.exists) {
@@ -59,28 +59,37 @@ class _StaffPageState extends BaseStaffInfoScreen<StaffPage> {
       } else {
         print("⚠️ Token không tồn tại trong danh sách, không cần xóa.");
       }
-
     } catch (e) {
       print("❌ Lỗi khi xóa token FCM: $e");
     }
   }
 
-  /// Đăng xuất tài khoản
   void _logout() {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Center(child: Text('Đăng xuất',style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 25.sp ),),) ,
-          content: Text('Bạn có chắc chắn muốn đăng xuất không?', style: TextStyle(fontSize: 13.sp),),
+          title: Center(
+            child: Text(
+              'Đăng xuất',
+              style: TextStyle(
+                  fontFamily: "Oswald",
+                  fontWeight: FontWeight.bold,
+                  fontSize: 25.sp),
+            ),
+          ),
+          content: Text(
+            'Bạn có chắc chắn muốn đăng xuất không?',
+            style: TextStyle(fontSize: 13.sp),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Hủy', style: TextStyle(fontSize: 14.sp),),
+              child: Text('Hủy', style: TextStyle(fontSize: 14.sp)),
             ),
             TextButton(
               onPressed: () async {
-                await _removeFcmToken(); // Xóa token FCM trước khi đăng xuất
+                await _removeFcmToken();
                 await FirebaseAuth.instance.signOut();
                 Navigator.of(context).pop();
                 Navigator.pushAndRemoveUntil(
@@ -89,92 +98,95 @@ class _StaffPageState extends BaseStaffInfoScreen<StaffPage> {
                       (route) => false,
                 );
               },
-              child: Text('Đồng ý', style: TextStyle(fontSize: 14.sp),),
+              child: Text('Đồng ý', style: TextStyle(fontSize: 14.sp)),
             ),
           ],
         );
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final avatarProvider = Provider.of<UserImageProvider>(context);
     String? avatarUrl = avatarProvider.avatarUrl;
 
     return Scaffold(
-      backgroundColor: Colors.grey[200], // Màu nền nhẹ
-        body: Stack(
-          children: [
-            // Card header phía trên (giữ nguyên như bạn đã làm)
-            Card(
-              margin: EdgeInsets.zero,
-              elevation: 9,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30.r),
-                  bottomRight: Radius.circular(30.r),
-                ),
-              ),
-              color: Color(0xFF03A293),
-              child:
-              Stack(
-                children: [
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    child: Image.asset(
-                      'assets/images/two_circle_green.png',
-                      width: 160,
-                    ),
-                  ),
-                  Positioned(
-                    top: 32,
-                    right: 16,
-                    child: IconButton(
-                      icon: Icon(Icons.logout),
-                      onPressed: _logout,
-                      tooltip: 'Đăng xuất',
-                    ),
-                  ),
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 20.h),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(height: 100.h),
-                        CircleAvatar(
-                          radius: 50.r,
-                          backgroundImage: avatarUrl != null
-                              ? NetworkImage(avatarUrl)
-                              : null,
-                          child: avatarUrl == null
-                              ? const Icon(Icons.person, size: 50)
-                              : null,
-                        ),
-                        SizedBox(height: 10.h),
-                        Text(
-                          "Xin chào, ${staffInfo?["name"] ?? "người dùng"}",
-                          style: TextStyle(fontFamily:"Oswald", fontSize: 25.sp, color: Colors.white),
-                        ),
-                        SizedBox(height: 10.h),
-                        Text(
-                          "${staffInfo?["position"] ?? "Chức vụ không rõ"}",
-                          style: TextStyle(fontFamily:"Oswald", fontSize: 20.sp, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+      backgroundColor: Colors.grey[200],
+      body: Stack(
+        children: [
+          Card(
+            margin: EdgeInsets.zero,
+            elevation: 9,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30.r),
+                bottomRight: Radius.circular(30.r),
               ),
             ),
-
-            Container(),
-          ],
-        )
-
+            color: Color(0xFF03A293),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  child: Image.asset(
+                    'assets/images/two_circle_green.png',
+                    width: 160,
+                  ),
+                ),
+                Positioned(
+                  top: 32,
+                  right: 16,
+                  child: IconButton(
+                    icon: Icon(Icons.logout),
+                    onPressed: _logout,
+                    tooltip: 'Đăng xuất',
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 20.h),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 100.h),
+                      CircleAvatar(
+                        radius: 50.r,
+                        backgroundImage: avatarUrl != null
+                            ? NetworkImage(avatarUrl)
+                            : null,
+                        child: avatarUrl == null
+                            ? const Icon(Icons.person, size: 50)
+                            : null,
+                      ),
+                      SizedBox(height: 10.h),
+                      Text(
+                        "Xin chào, ${staffInfo?.name ?? "người dùng"}",
+                        style: TextStyle(
+                            fontFamily: "Oswald",
+                            fontSize: 25.sp,
+                            color: Colors.white),
+                      ),
+                      SizedBox(height: 10.h),
+                      Text(
+                        "${staffInfo?.position ?? "Chức vụ không rõ"}",
+                        style: TextStyle(
+                            fontFamily: "Oswald",
+                            fontSize: 20.sp,
+                            color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Chỗ trống để thêm các widget nội dung phía dưới nếu cần
+          Container(),
+        ],
+      ),
     );
   }
 }
-
