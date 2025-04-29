@@ -457,7 +457,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
               ),
               dropdownStyleData: DropdownStyleData(
                 maxHeight: 200.h,
-                width: 140.w,
+                width: 135.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                   color: Color(0xFFF7FEFF),
