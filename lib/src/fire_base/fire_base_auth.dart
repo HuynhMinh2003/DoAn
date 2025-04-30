@@ -130,7 +130,6 @@ class FirAuth {
     }
   }
 
-
   /// Đăng nhập người dùng
   void signIn({
     required String email,
