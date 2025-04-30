@@ -1,4 +1,5 @@
 import 'package:do_an/src/models/contract_data.dart';
+import 'package:do_an/src/models/resident_info.dart';
 import 'package:do_an/src/resources/contract_review_page.dart';
 import 'package:flutter/material.dart';
 
