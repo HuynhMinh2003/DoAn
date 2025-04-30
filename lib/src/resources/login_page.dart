@@ -29,7 +29,6 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isPressed1 = false;
 
-  // Hàm lưu token FCM vào Firestore (tránh lưu trùng)
 // Hàm lưu token FCM vào Firestore (tránh lưu trùng)
   Future<void> _saveTokenToFirestore(String newToken) async {
     final staffId = FirebaseAuth.instance.currentUser?.uid;
@@ -63,6 +62,38 @@ class _LoginPageState extends State<LoginPage> {
       print("FCM Token saved successfully!");
     } catch (e) {
       print("Error saving FCM Token: $e");
+    }
+  }
+
+  Future<void> _saveResidentTokenToFirestore(String newToken) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    try {
+      // Truy vấn collectionGroup để tìm resident có uid trùng
+      final querySnapshot = await FirebaseFirestore.instance
+          .collectionGroup("residents")
+          .where("uid", isEqualTo: userId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final residentDoc = querySnapshot.docs.first.reference;
+
+        List<String> tokens = List<String>.from(querySnapshot.docs.first.get("fcmTokens") ?? []);
+
+        if (!tokens.contains(newToken)) {
+          await residentDoc.update({
+            'fcmTokens': FieldValue.arrayUnion([newToken]),
+            'lastUpdated': FieldValue.serverTimestamp(),
+          });
+        }
+
+        print("FCM Token saved for resident!");
+      } else {
+        print("Resident document not found for user ID $userId");
+      }
+    } catch (e) {
+      print("Error saving FCM token for resident: $e");
     }
   }
 
@@ -535,96 +566,84 @@ class _LoginPageState extends State<LoginPage> {
       _authBloc.signIn(
         email: email,
         pass: pass,
-        onSuccess: () async {
-          LoadingDialog.hideLoadingDialog(context);
+          onSuccess: () async {
+            LoadingDialog.hideLoadingDialog(context);
 
-          // Lấy UID của người dùng đã đăng nhập
-          var currentUser = FirebaseAuth.instance.currentUser;
-          if (currentUser != null) {
-            String userId = currentUser.uid;
+            var currentUser = FirebaseAuth.instance.currentUser;
+            if (currentUser != null) {
+              String userId = currentUser.uid;
 
-            // Cập nhật FCM token sau khi đăng nhập
-            String? newToken = await FirebaseMessaging.instance.getToken();
+              // Lấy FCM token mới
+              String? newToken = await FirebaseMessaging.instance.getToken();
 
-            // Lấy thông tin từ Firestore
-            DocumentSnapshot userDoc = await FirebaseFirestore.instance
-                .collection("staffs")
-                .doc(userId)
-                .get();
+              int? role; // Biến để lưu role
 
-            if (userDoc.exists) {
-              // Lấy role từ Firestore
-              int role = userDoc.get('role');
+              // Thử lấy role từ bảng staffs
+              DocumentSnapshot staffDoc = await FirebaseFirestore.instance
+                  .collection("staffs")
+                  .doc(userId)
+                  .get();
 
-              // Kiểm tra thiết bị (mobile/web)
-              bool isMobile = !kIsWeb;
+              if (staffDoc.exists) {
+                role = staffDoc.get('role');
+              } else {
+                // Nếu không có trong staff, tìm trong residents (dùng collectionGroup)
+                final querySnapshot = await FirebaseFirestore.instance
+                    .collectionGroup("residents")
+                    .where("uid", isEqualTo: userId)
+                    .limit(1)
+                    .get();
 
-              // Điều hướng theo role và thiết bị
-              if (role == 1) {
-                if (isMobile) {
-                  // Trên thiết bị mobile -> Giao diện 1
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (context) => StaffPage(),
-                  ));
-                  if (newToken != null) {
-                    await _saveTokenToFirestore(
-                        newToken); // Gọi hàm lưu token vào Firestore
-                  }
-                } else {
-                  // Trên web -> Giao diện 2
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (context) => const AdminWebPage(),
-                  ));
-                  if (newToken != null) {
-                    await _saveTokenToFirestore(
-                        newToken); // Gọi hàm lưu token vào Firestore
-                  }
+                if (querySnapshot.docs.isNotEmpty) {
+                  role = querySnapshot.docs.first.get('role');
                 }
               }
-              else if (role == 2) {
-                if (isMobile) {
-                  // Trên thiết bị mobile -> Giao diện 1
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (context) => HomeFirstStaffPage(),
-                  ));
-                  if (newToken != null) {
-                    await _saveTokenToFirestore(
-                        newToken); // Gọi hàm lưu token vào Firestore
+
+              if (role != null) {
+                bool isMobile = !kIsWeb;
+
+                if (role == 1) {
+                  if (isMobile) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => StaffPage()),
+                    );
+                  } else {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => const AdminWebPage()),
+                    );
                   }
-                } else {
-                  // Trên web -> Hiển thị thông báo
-                  MsgDialog.showMsgDialog(
-                    context,
-                    "Thông báo",
-                    "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
+                } else if (role == 2) {
+                  if (isMobile) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => HomeFirstStaffPage()),
+                    );
+                    // Lưu FCM token nếu có
+                    if (newToken != null) {
+                      await _saveTokenToFirestore(newToken);
+                    }
+                  } else {
+                    MsgDialog.showMsgDialog(
+                      context,
+                      "Thông báo",
+                      "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
+                    );
+                  }
+                } else if (role == 3) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => TestPage()),
                   );
-                }
-              }
-              else if (role == 3) {
-                if (isMobile) {
-                  // Trên mobile -> Điều hướng đến giao diện tương ứng
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (context) => const TestPage(),
-                  ));
+                  // Lưu FCM token nếu có
                   if (newToken != null) {
-                    await _saveTokenToFirestore(
-                        newToken); // Gọi hàm lưu token vào Firestore
+                    await _saveResidentTokenToFirestore(newToken);
                   }
-                } else {
-                  // Trên web -> Hiển thị thông báo
-                  MsgDialog.showMsgDialog(
-                    context,
-                    "Thông báo",
-                    "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
-                  );
                 }
+              } else {
+                MsgDialog.showMsgDialog(context, "Lỗi", "Không tìm thấy role cho tài khoản này");
               }
+            } else {
+              MsgDialog.showMsgDialog(context, "Lỗi", "Xác thực người dùng không thành công");
             }
-          } else {
-            MsgDialog.showMsgDialog(
-                context, "Lỗi", "Xác thực người dùng không thành công");
-          }
-        },
+          },
         onSignInError: (msg) {
           LoadingDialog.hideLoadingDialog(context);
           MsgDialog.showMsgDialog(context, "Đăng nhập", msg);
