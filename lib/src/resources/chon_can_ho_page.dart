@@ -49,6 +49,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                 builder: (_) => ContractInfoPage(
                   apartmentData: apartment,
                   contractType: 'rent',
+                  apartmentId: apartment.id, // 👈 truyền ID
                 ),
               ));
             },
@@ -61,6 +62,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                 builder: (_) => ContractInfoPage(
                   apartmentData: apartment,
                   contractType: 'sale',
+                  apartmentId: apartment.id, // 👈 truyền ID
                 ),
               ));
             },
