@@ -6,8 +6,9 @@ import 'package:flutter/material.dart';
 class ContractInfoPage extends StatefulWidget {
   final Apartment apartmentData;
   final String contractType;
+  final String apartmentId;
 
-  ContractInfoPage({required this.apartmentData, required this.contractType});
+  ContractInfoPage({required this.apartmentData, required this.contractType, required this.apartmentId});
 
 
   @override
@@ -67,6 +68,14 @@ class _ContractInfoPageState extends State<ContractInfoPage> {
                 OutlinedButton(onPressed: () => Navigator.pop(context), child: Text("Quay lại")),
                 ElevatedButton(
                   onPressed: () {
+                    // Kiểm tra hợp đồng thuê phải chọn ngày kết thúc
+                    if (widget.contractType == 'rent' && endDate == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Vui lòng chọn ngày kết thúc hợp đồng")),
+                      );
+                      return;
+                    }
+
                     final contractData = ContractData(
                       apartmentName: widget.apartmentData.apartmentName,
                       building: widget.apartmentData.building,
@@ -75,14 +84,20 @@ class _ContractInfoPageState extends State<ContractInfoPage> {
                       salePrice: salePrice,
                       contractType: widget.contractType,
                       startDate: now,
-                      endDate: endDate,
+                      endDate: widget.contractType == 'rent' ? endDate! : null,
                       numberOfResidents: selectedPeople,
                       residents: [],
+                      apartmentDocId: widget.apartmentId,
                     );
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => ResidentInfoPage(contractData: contractData),
-                    ));
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ResidentInfoPage(contractData: contractData),
+                      ),
+                    );
                   },
+
                   child: Text("Tiếp tục"),
                 )
               ],

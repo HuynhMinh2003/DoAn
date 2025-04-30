@@ -1,14 +1,17 @@
+import 'package:do_an/src/models/resident_info.dart';
+
 class ContractData {
   final String apartmentName;
   final String building;
   final double area;
   final int rentPrice;
   final int salePrice;
-  final String contractType; // 'rent' hoặc 'sale'
+  final String contractType;
   final DateTime startDate;
   final DateTime? endDate;
   final int numberOfResidents;
   final List<ResidentInfo> residents;
+  final String apartmentDocId; // 👈 Doc ID của căn hộ trong Firestore
 
   ContractData({
     required this.apartmentName,
@@ -21,6 +24,7 @@ class ContractData {
     this.endDate,
     required this.numberOfResidents,
     required this.residents,
+    required this.apartmentDocId,
   });
 
   ContractData copyWith({
@@ -34,6 +38,7 @@ class ContractData {
     DateTime? endDate,
     int? numberOfResidents,
     List<ResidentInfo>? residents,
+    String? apartmentDocId, // 👈 thêm tham số vào copyWith
   }) {
     return ContractData(
       apartmentName: apartmentName ?? this.apartmentName,
@@ -46,22 +51,9 @@ class ContractData {
       endDate: endDate ?? this.endDate,
       numberOfResidents: numberOfResidents ?? this.numberOfResidents,
       residents: residents ?? this.residents,
+      apartmentDocId: apartmentDocId ?? this.apartmentDocId,
     );
   }
 }
 
-class ResidentInfo {
-  final String fullName;
-  final String cccd;
-  final String phone;
-  final DateTime birthDate;
-  final String email;
 
-  ResidentInfo({
-    required this.fullName,
-    required this.cccd,
-    required this.phone,
-    required this.birthDate,
-    required this.email,
-  });
-}
