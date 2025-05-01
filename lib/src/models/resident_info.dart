@@ -1,12 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ResidentInfo {
-  final String? residentId; // nullable
+  final String? residentId; // optional, nếu lấy từ Firestore thì có
   final String fullName;
   final String cccd;
   final String phone;
   final DateTime birthDate;
   final String email;
+  final String? apartmentId; // Thêm apartmentId
 
   ResidentInfo({
     this.residentId,
@@ -15,27 +16,52 @@ class ResidentInfo {
     required this.phone,
     required this.birthDate,
     required this.email,
+    this.apartmentId,
   });
 
-  factory ResidentInfo.fromMap(Map<String, dynamic> map, String docId) {
+  // Tạo từ Firestore, có docId (thường dùng khi lấy từ collection)
+  factory ResidentInfo.fromMap(Map<String, dynamic> map, [String? docId]) {
     return ResidentInfo(
-      residentId: docId, // lấy từ document ID
+      residentId: docId,
       fullName: map['name'] ?? '',
       cccd: map['cccd'] ?? '',
       phone: map['phone'] ?? '',
       birthDate: (map['birthDate'] as Timestamp).toDate(),
       email: map['email'] ?? '',
+      apartmentId: map['apartmentId'], // Lấy apartmentId
     );
   }
 
+  // Convert thành Map để lưu Firestore
   Map<String, dynamic> toMap() {
     return {
-      // Không nên lưu residentId vào trong map, vì nó là doc ID
       'name': fullName,
       'cccd': cccd,
       'phone': phone,
-      'birthDate': birthDate,
+      'birthDate': Timestamp.fromDate(birthDate),
       'email': email,
+      'apartmentId': apartmentId,
     };
+  }
+
+  // Tạo bản sao với các giá trị mới
+  ResidentInfo copyWith({
+    String? residentId,
+    String? fullName,
+    String? cccd,
+    String? phone,
+    DateTime? birthDate,
+    String? email,
+    String? apartmentId,
+  }) {
+    return ResidentInfo(
+      residentId: residentId ?? this.residentId,
+      fullName: fullName ?? this.fullName,
+      cccd: cccd ?? this.cccd,
+      phone: phone ?? this.phone,
+      birthDate: birthDate ?? this.birthDate,
+      email: email ?? this.email,
+      apartmentId: apartmentId ?? this.apartmentId,
+    );
   }
 }
