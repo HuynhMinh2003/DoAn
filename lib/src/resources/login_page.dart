@@ -66,34 +66,37 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _saveResidentTokenToFirestore(String newToken) async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return;
+    final residentId = FirebaseAuth.instance.currentUser?.uid;
+    if (residentId == null) return; // Không có userId thì thoát luôn
 
     try {
-      // Truy vấn collectionGroup để tìm resident có uid trùng
-      final querySnapshot = await FirebaseFirestore.instance
-          .collectionGroup("residents")
-          .where("uid", isEqualTo: userId)
-          .get();
+      // Đường dẫn Firestore cho nhân viên
+      DocumentReference residentRef =
+      FirebaseFirestore.instance.collection("residents").doc(residentId);
+      DocumentSnapshot residentDoc = await residentRef.get();
 
-      if (querySnapshot.docs.isNotEmpty) {
-        final residentDoc = querySnapshot.docs.first.reference;
-
-        List<String> tokens = List<String>.from(querySnapshot.docs.first.get("fcmTokens") ?? []);
+      if (residentDoc.exists) {
+        // Lấy danh sách token hiện tại
+        List<String> tokens = List<String>.from(residentDoc['fcmTokens'] ?? []);
 
         if (!tokens.contains(newToken)) {
-          await residentDoc.update({
+          // Nếu token chưa tồn tại thì thêm vào danh sách
+          await residentRef.update({
             'fcmTokens': FieldValue.arrayUnion([newToken]),
             'lastUpdated': FieldValue.serverTimestamp(),
           });
         }
-
-        print("FCM Token saved for resident!");
       } else {
-        print("Resident document not found for user ID $userId");
+        // Nếu tài liệu của nhân viên chưa tồn tại, tạo mới với danh sách token
+        await residentRef.set({
+          'fcmTokens': [newToken],  // Lưu mảng token FCM
+          'lastUpdated': FieldValue.serverTimestamp(),
+        });
       }
+
+      print("FCM Token saved successfully!");
     } catch (e) {
-      print("Error saving FCM token for resident: $e");
+      print("Error saving FCM Token: $e");
     }
   }
 

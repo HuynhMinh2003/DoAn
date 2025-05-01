@@ -27,12 +27,46 @@ class AuthBloc {
   Stream<String> get emailStaffStream => _emailStaffController.stream;
   Stream<String> get phoneStaffStream => _phoneStaffController.stream;
 
+  // cư dân
+  final StreamController<String>  _nameResidentController = StreamController<String>.broadcast();
+  final StreamController<String> _cccdResidentController = StreamController<String>.broadcast();
+  final StreamController<String>  _phoneResidentController = StreamController<String>.broadcast();
+  final StreamController<String>  _emailResidentController = StreamController<String>.broadcast();
+  final _birthDateController = StreamController<DateTime?>.broadcast();
+
+  Stream<DateTime?> get birthDateStream => _birthDateController.stream;
+  Stream<String> get nameResidentStream => _nameResidentController.stream;
+  Stream<String> get cccdResidentStream => _cccdResidentController.stream;
+  Stream<String> get phoneResidentStream => _phoneResidentController.stream;
+  Stream<String> get emailResidentStream => _emailResidentController.stream;
+
   // login chung
   final StreamController<String> _emailController = StreamController<String>.broadcast();
   final StreamController<String> _passController = StreamController<String>.broadcast();
 
   Stream<String> get emailStream => _emailController.stream;
   Stream<String> get passStream => _passController.stream;
+
+  void updateBirthDate(DateTime? birthDate) {
+    _birthDateController.sink.add(birthDate); // Cập nhật giá trị ngày sinh
+  }
+
+  void clearNameResidentError() {
+    _nameResidentController.sink.add(""); // xóa lỗi bằng cách đẩy lại giá trị trống
+  }
+
+  void clearEmailResidentError() {
+    _emailResidentController.sink.add(""); // xóa lỗi bằng cách đẩy lại giá trị trống
+  }
+
+  void clearPhoneResidentError() {
+    _phoneResidentController.sink.add(""); // xóa lỗi bằng cách đẩy lại giá trị trống
+  }
+
+  void clearCccdResidentError() {
+    _cccdResidentController.sink.add(""); // xóa lỗi bằng cách đẩy lại giá trị trống
+  }
+
 
   /// Tạo mật khẩu ngẫu nhiên
   String generateRandomPassword({int length = 10}) {
@@ -126,6 +160,7 @@ class AuthBloc {
       );
     }
   }
+
   /// Đăng ký nhân viên
   void signUpStaff({
     required String nameStaff,
@@ -190,6 +225,67 @@ class AuthBloc {
     return isValid;
   }
 
+  bool isValidResidentSignUp(
+      String nameResident,
+      String emailResident,
+      String phoneResident,
+      String cccdResident,
+      DateTime? birthDate,
+      ) {
+    bool isValid = true;
+
+    if (nameResident.isEmpty) {
+      _nameResidentController.sink.addError("Phải nhập tên cư dân !");
+      isValid = false;
+    } else {
+      _nameResidentController.sink.add("");
+    }
+
+    final emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+    if (emailResident.isEmpty) {
+      _emailResidentController.sink.addError("Phải nhập email cư dân!");
+      isValid = false;
+    } else if (!emailRegex.hasMatch(emailResident)) {
+      _emailResidentController.sink.addError("Email không hợp lệ !");
+      isValid = false;
+    } else {
+      _emailResidentController.sink.add("");
+    }
+
+    final phoneRegex = RegExp(r'^\d{10,15}$');
+    if (phoneResident.isEmpty) {
+      _phoneResidentController.sink.addError("Phải nhập số điện thoại cư dân !");
+      isValid = false;
+    } else if (!phoneRegex.hasMatch(phoneResident)) {
+      _phoneResidentController.sink.addError("Số điện thoại không hợp lệ !");
+      isValid = false;
+    } else {
+      _phoneResidentController.sink.add("");
+    }
+
+    final cccdRegex = RegExp(r'^\d{12}$');
+    if (cccdResident.isEmpty) {
+      _cccdResidentController.sink.addError("Phải nhập số CCCD !");
+      isValid = false;
+    } else if (!cccdRegex.hasMatch(cccdResident)) {
+      _cccdResidentController.sink.addError("Số CCCD không hợp lệ !");
+      isValid = false;
+    } else {
+      _cccdResidentController.sink.add("");
+    }
+
+    if (birthDate == null) {
+      // Nếu ngày sinh trống, phát sự kiện lỗi
+      _birthDateController.sink.addError("Ngày sinh không được để trống!");
+      isValid = false;
+    } else {
+      // Nếu có ngày sinh, cập nhật bình thường
+      _birthDateController.sink.add(birthDate);
+    }
+
+    return isValid;
+  }
+
   bool isValidSignIn(String email, String pass) {
     bool isValid1 = true;
 
@@ -241,6 +337,11 @@ class AuthBloc {
     _nameStaffController.close();
     _emailStaffController.close();
     _phoneStaffController.close();
+
+    _nameResidentController.close();
+    _emailResidentController.close();
+    _phoneResidentController.close();
+    _cccdResidentController.close();
 
     _emailController.close();
     _passController.close();
