@@ -92,6 +92,9 @@ flutter:
     - assets/images/image_login.svg
     - assets/images/image_signup_cty.svg
     - assets/images/image_signup_nv.svg
+    - assets/images/info_contract.svg
+    - assets/images/info_resident.svg
+    - assets/images/confirm_contract.svg
     - assets/images/two_circle.png
     - assets/images/two_circle_green.png
 

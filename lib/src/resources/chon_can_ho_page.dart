@@ -48,7 +48,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
               Navigator.push(context, MaterialPageRoute(
                 builder: (_) => ContractInfoPage(
                   apartmentData: apartment,
-                  contractType: 'rent',
+                  contractType: 'thuê',
                   apartmentId: apartment.id, // 👈 truyền ID
                 ),
               ));
@@ -61,7 +61,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
               Navigator.push(context, MaterialPageRoute(
                 builder: (_) => ContractInfoPage(
                   apartmentData: apartment,
-                  contractType: 'sale',
+                  contractType: 'mua',
                   apartmentId: apartment.id, // 👈 truyền ID
                 ),
               ));
