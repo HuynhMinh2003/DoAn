@@ -581,26 +581,24 @@ class _LoginPageState extends State<LoginPage> {
 
               int? role; // Biến để lưu role
 
-              // Thử lấy role từ bảng staffs
               DocumentSnapshot staffDoc = await FirebaseFirestore.instance
                   .collection("staffs")
                   .doc(userId)
                   .get();
 
-              if (staffDoc.exists) {
+              if (staffDoc.exists && staffDoc.data() != null) {
                 role = staffDoc.get('role');
               } else {
-                // Nếu không có trong staff, tìm trong residents (dùng collectionGroup)
-                final querySnapshot = await FirebaseFirestore.instance
-                    .collectionGroup("residents")
-                    .where("uid", isEqualTo: userId)
-                    .limit(1)
+                DocumentSnapshot residentDoc = await FirebaseFirestore.instance
+                    .collection("residents")
+                    .doc(userId)
                     .get();
 
-                if (querySnapshot.docs.isNotEmpty) {
-                  role = querySnapshot.docs.first.get('role');
+                if (residentDoc.exists && residentDoc.data() != null) {
+                  role = residentDoc.get('role');
                 }
               }
+
 
               if (role != null) {
                 bool isMobile = !kIsWeb;
