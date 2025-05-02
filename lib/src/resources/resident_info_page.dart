@@ -43,32 +43,46 @@ class _ResidentInfoPageState extends State<ResidentInfoPage> {
       _emailResidentController.text,
       _phoneResidentController.text,
       _cccdResidentController.text,
-      birthDate, // Truyền trực tiếp vào hàm kiểm tra
+      birthDate,
     );
 
     if (!isValid) return;
 
-    // Tiến hành thêm cư dân vào danh sách và chuyển sang trang tiếp theo
-    residents.add(ResidentInfo(
+    final newResident = ResidentInfo(
       fullName: _nameResidentController.text,
       cccd: _cccdResidentController.text,
       phone: _phoneResidentController.text,
       email: _emailResidentController.text,
       birthDate: birthDate!,
-    ));
+    );
 
-    if (residents.length < widget.contractData.numberOfResidents) {
+    // Ghi đè nếu đã có dữ liệu ở vị trí này
+    if (residents.length > currentIndex) {
+      residents[currentIndex] = newResident;
+    } else {
+      residents.add(newResident);
+    }
+
+    if (currentIndex < widget.contractData.numberOfResidents - 1) {
       setState(() {
         currentIndex++;
-        _nameResidentController.clear();
-        _cccdResidentController.clear();
-        _phoneResidentController.clear();
-        _emailResidentController.clear();
-        birthDate = null;
+        if (residents.length > currentIndex) {
+          final r = residents[currentIndex];
+          _nameResidentController.text = r.fullName;
+          _cccdResidentController.text = r.cccd;
+          _phoneResidentController.text = r.phone;
+          _emailResidentController.text = r.email;
+          birthDate = r.birthDate;
+        } else {
+          _nameResidentController.clear();
+          _cccdResidentController.clear();
+          _phoneResidentController.clear();
+          _emailResidentController.clear();
+          birthDate = null;
+        }
       });
     } else {
-      final updatedContract =
-          widget.contractData.copyWith(residents: residents);
+      final updatedContract = widget.contractData.copyWith(residents: residents);
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -76,6 +90,7 @@ class _ResidentInfoPageState extends State<ResidentInfoPage> {
         ),
       );
     }
+
   }
 
   Widget _buildTextField({
@@ -264,7 +279,7 @@ class _ResidentInfoPageState extends State<ResidentInfoPage> {
                         clearError: authBloc.clearEmailResidentError,
                       ),
                       _buildDatePickerButton(),
-                      SizedBox(height: 40.h),
+                      SizedBox(height: 25.h),
                       Row(
                         children: [
                           SizedBox(width: 20.w),
@@ -273,12 +288,21 @@ class _ResidentInfoPageState extends State<ResidentInfoPage> {
                               child: SizedBox(
                                 height: 60.h,
                                 child: OutlinedButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      residents.removeLast();
-                                      currentIndex--;
-                                    });
-                                  },
+                                    onPressed: () {
+                                      if (currentIndex > 0) {
+                                        setState(() {
+                                          currentIndex--;
+
+                                          // Nạp lại dữ liệu từ cư dân cũ
+                                          final r = residents[currentIndex];
+                                          _nameResidentController.text = r.fullName;
+                                          _cccdResidentController.text = r.cccd;
+                                          _phoneResidentController.text = r.phone;
+                                          _emailResidentController.text = r.email;
+                                          birthDate = r.birthDate;
+                                        });
+                                      }
+                                    },
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(color: Colors.grey),
                                     shape: RoundedRectangleBorder(
