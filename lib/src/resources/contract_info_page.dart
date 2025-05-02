@@ -29,8 +29,20 @@ class _ContractInfoPageState extends State<ContractInfoPage> {
     final formattedDate = DateFormat('dd/MM/yyyy').format(now);
 
     final area = widget.apartmentData.area;
+
     final rentPrice = widget.apartmentData.rentPrice;
+    final formattedrentPrice = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '', // nếu muốn bỏ ký hiệu "₫"
+      decimalDigits: 0,
+    ).format(rentPrice);
+
     final salePrice = widget.apartmentData.salePrice;
+    final formattedsalePrice = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '', // nếu muốn bỏ ký hiệu "₫"
+      decimalDigits: 0,
+    ).format(salePrice);
 
     return Scaffold(
       backgroundColor: Color(0xFFF7FEFF),
@@ -57,14 +69,14 @@ class _ContractInfoPageState extends State<ContractInfoPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Center(child: Text('Thông tin hợp đồng', style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.w700, fontSize: 12.sp),),),
-                      SizedBox(height: 20.h),
-                      Text("Căn hộ: ${widget.apartmentData.apartmentName} ", style: TextStyle(fontSize: 6.sp),),
-                      SizedBox(height: 20.h),
-                      Text("Diện tích: $area m²", style: TextStyle(fontSize: 6.sp),),
-                      SizedBox(height: 20.h),
-                      Text("Loại hợp đồng: ${widget.contractType}", style: TextStyle(fontSize: 6.sp),),
-                      SizedBox(height: 20.h),
-                      Row(children: [Text("Số người ở: ", style: TextStyle(fontSize: 6.sp),), SizedBox(width: 10.w,),
+                      SizedBox(height: 5.h),
+                      Text("Căn hộ: ${widget.apartmentData.apartmentName} ", style: TextStyle(fontSize: 5.sp),),
+                      SizedBox(height: 25.h),
+                      Text("Diện tích: $area m²", style: TextStyle(fontSize: 5.sp),),
+                      SizedBox(height: 25.h),
+                      Text("Loại hợp đồng: ${widget.contractType}", style: TextStyle(fontSize: 5.sp),),
+                      SizedBox(height: 25.h),
+                      Row(children: [Text("Số người ở: ", style: TextStyle(fontSize: 5.sp),), SizedBox(width: 10.w,),
                         DropdownButtonHideUnderline(
                           child: DropdownButton2<int>(
                             isExpanded: true,
@@ -76,7 +88,7 @@ class _ContractInfoPageState extends State<ContractInfoPage> {
                             items: List.generate(10, (index) => index + 1)
                                 .map((e) => DropdownMenuItem<int>(
                               value: e,
-                              child: Text('$e người', style: TextStyle(fontSize: 5.sp)),
+                              child: Text('$e người', style: TextStyle(fontSize: 4.5.sp)),
                             ))
                                 .toList(),
                             onChanged: (value) => setState(() => selectedPeople = value!),
@@ -95,7 +107,7 @@ class _ContractInfoPageState extends State<ContractInfoPage> {
                             ),
                             iconStyleData: IconStyleData(
                               icon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
-                              iconSize: 5.sp,
+                              iconSize: 4.5.sp,
                             ),
                             dropdownStyleData: DropdownStyleData(
                               maxHeight: 150.h,
@@ -112,18 +124,18 @@ class _ContractInfoPageState extends State<ContractInfoPage> {
                         ),
 
                       ]),
-                      SizedBox(height: 20.h),
-                      Text("Ngày bắt đầu: $formattedDate", style: TextStyle(fontSize: 6.sp),),
-                      SizedBox(height: 20.h),
+                      SizedBox(height: 25.h),
+                      Text("Ngày bắt đầu: $formattedDate", style: TextStyle(fontSize: 5.sp),),
+                      SizedBox(height: 25.h),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             "Ngày hết hợp đồng:",
-                            style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.w500),
+                            style: TextStyle(fontSize: 5.sp, fontWeight: FontWeight.w500),
                           ),
-                          SizedBox(width: 10.w),
-                          if (widget.contractType == 'thuê')
+                          SizedBox(width: 5.w),
+                          widget.contractType == 'thuê' ?
                             ElevatedButton(
                               onPressed: () async {
                                 DateTime? picked = await showDatePicker(
@@ -147,13 +159,14 @@ class _ContractInfoPageState extends State<ContractInfoPage> {
                                 endDate == null
                                     ? "Chọn ngày kết thúc"
                                     : "${endDate!.toLocal().toString().split(' ')[0]}",
-                                style: TextStyle(fontSize: 5.sp, color: Colors.black87),
+                                style: TextStyle(fontSize: 4.5.sp, color: Colors.black87),
                               ),
-                            ),
+                            ):
+                          Text("∞", style: TextStyle(fontSize: 4.5.sp),)
                         ],
                       ),
-                      SizedBox(height: 20.h),
-                      Text("${widget.contractType == 'thuê' ? "Giá thuê: $rentPrice" : "Giá mua: $salePrice"} VND", style: TextStyle(fontSize: 6.sp),),
+                      SizedBox(height: 25.h),
+                      Text("${widget.contractType == 'thuê' ? "Giá thuê: $formattedrentPrice VNĐ /tháng" : "Giá mua: $formattedsalePrice VNĐ"}", style: TextStyle(fontSize: 5.sp),),
                       SizedBox(height: 60.h),
                       Row(
                         children: [
