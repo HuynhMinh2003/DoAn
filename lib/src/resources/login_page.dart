@@ -614,20 +614,27 @@ class _LoginPageState extends State<LoginPage> {
                     );
                   }
                 } else if (role == 2) {
-                  if (isMobile) {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => HomeFirstStaffPage()),
-                    );
-                    // Lưu FCM token nếu có
-                    if (newToken != null) {
-                      await _saveTokenToFirestore(newToken);
-                    }
-                  } else {
-                    MsgDialog.showMsgDialog(
-                      context,
-                      "Thông báo",
-                      "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
-                    );
+                  // if (isMobile) {
+                  //   Navigator.of(context).pushReplacement(
+                  //     MaterialPageRoute(builder: (context) => HomeFirstStaffPage()),
+                  //   );
+                  //   // Lưu FCM token nếu có
+                  //   if (newToken != null) {
+                  //     await _saveTokenToFirestore(newToken);
+                  //   }
+                  // } else {
+                  //   MsgDialog.showMsgDialog(
+                  //     context,
+                  //     "Thông báo",
+                  //     "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
+                  //   );
+                  // }
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => HomeFirstStaffPage()),
+                  );
+                  // Lưu FCM token nếu có
+                  if (newToken != null) {
+                    await _saveTokenToFirestore(newToken);
                   }
                 } else if (role == 3) {
                   Navigator.of(context).pushReplacement(
