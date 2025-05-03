@@ -3,6 +3,8 @@ import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AddAccountCompanyPage extends StatefulWidget {
   const AddAccountCompanyPage({super.key});
@@ -173,43 +175,48 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
     );
   }
 
-  _onSignUpCompanyClicked() async{
-  var isValidCompany = _authBloc.isValidCompanySignUp(
-  _nameCompanyController.text,
-  _emailCompanyController.text,
-  _phoneCompanyController.text,
-  _typeCompanyController.text,
-  _describeCompanyController.text,
+  _onSignUpCompanyClicked() async {
+    var isValidCompany = _authBloc.isValidCompanySignUp(
+      _nameCompanyController.text,
+      _emailCompanyController.text,
+      _phoneCompanyController.text,
+      _typeCompanyController.text,
+      _describeCompanyController.text,
+    );
 
-  );
+    if (!isValidCompany) return;
 
-  if (!isValidCompany) return;
+    LoadingDialog.showLoadingDialog(context, 'Đang tải ...');
 
-  // Hiển thị dialog loading
-  LoadingDialog.showLoadingDialog(context, 'Đang tải ...');
+    try {
+      final url = Uri.parse("https://createcompanyaccount-ttrkrlo35a-uc.a.run.app");
 
-  try {
-  // Gọi hàm tạo tài khoản
-  _authBloc.signUpCompany(
-  nameCompany: _nameCompanyController.text,
-  emailCompany: _emailCompanyController.text,
-  phoneCompany: _phoneCompanyController.text,
-  typeCompany: _typeCompanyController.text,
-  describeCompany: _describeCompanyController.text,
-    onSuccess: () {
-  LoadingDialog.hideLoadingDialog(context);
-  MsgDialog.showMsgDialog(context, "Tạo tài khoản thành công!", "Tài khoản đã được tạo");
-  },
-  onRegisterError: (msg) {
-  LoadingDialog.hideLoadingDialog(context);
-  MsgDialog.showMsgDialog(context, "Tạo tài khoản thất bại !", msg);
-  },
-  );
-  } catch (e) {
-  LoadingDialog.hideLoadingDialog(context);
-  MsgDialog.showMsgDialog(context, "Lỗi hệ thống", "Không thể tạo tài khoản: $e");
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'nameCompany': _nameCompanyController.text.trim(),
+          'email': _emailCompanyController.text.trim(),
+          'phone': _phoneCompanyController.text.trim(),
+          'type': _typeCompanyController.text.trim(),
+          'description': _describeCompanyController.text.trim(),
+        }),
+      );
+
+      LoadingDialog.hideLoadingDialog(context);
+
+      if (response.statusCode == 200) {
+        MsgDialog.showMsgDialog(context, "Tạo tài khoản thành công!", "Tài khoản công ty đã được tạo và email đã được gửi.");
+      } else {
+        MsgDialog.showMsgDialog(context, "Tạo tài khoản thất bại!", response.body);
+      }
+    } catch (e) {
+      LoadingDialog.hideLoadingDialog(context);
+      MsgDialog.showMsgDialog(context, "Lỗi hệ thống", "Không thể tạo tài khoản: $e");
+    }
   }
-}
 
   Widget _buildTextField({
     required TextEditingController controller,
