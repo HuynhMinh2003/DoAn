@@ -1,10 +1,12 @@
 import 'dart:async'; // Thêm import Timer
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/apartment.dart';
+import 'package:do_an/src/models/contract_data.dart';
 import 'package:do_an/src/resources/contract_info_page.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart'; // Thêm import shimmer
 
 class ApartmentFilterPage extends StatefulWidget {
@@ -60,7 +62,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                     ),
                   ));
             },
-            child: Text("Thuê"),
+            child: Text("Thuê", style: TextStyle(fontSize: 3.5.sp),),
           ),
           TextButton(
             onPressed: () {
@@ -75,11 +77,86 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                     ),
                   ));
             },
-            child: Text("Mua"),
+            child: Text("Mua", style: TextStyle(fontSize: 3.5.sp),),
           ),
         ],
       ),
     );
+  }
+
+  void showApartmentContractInfoDialog(BuildContext context, Apartment apartment) async {
+    final contractCollectionRef = FirebaseFirestore.instance
+        .collection("apartments")
+        .doc(apartment.id)
+        .collection("contracts");
+
+    try {
+      final snapshot = await contractCollectionRef.limit(1).get(); // Lấy 1 hợp đồng đầu tiên (vì chỉ có 1)
+
+      if (snapshot.docs.isEmpty) {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: Text("Thông tin hợp đồng", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp)),
+            content: Text("Căn hộ này chưa có hợp đồng.", style: TextStyle(fontSize: 4.sp)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp),),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      final doc = snapshot.docs.first;
+      final contract = ContractData.fromMap(doc.data(), doc.id, []); // Bỏ qua residents nếu chưa cần
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text("Phòng ${contract.apartmentName}", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 15.h),
+              Text("Diện tích: ${contract.area} m²", style: TextStyle(fontSize: 4.sp)),
+              SizedBox(height: 10.h),
+              Text("Người đại diện: ${contract.representative ?? 'Không có'}", style: TextStyle(fontSize: 4.sp)),
+              SizedBox(height: 10.h),
+              Text("Số người ở: ${contract.numberOfResidents}", style: TextStyle(fontSize: 4.sp)),
+              SizedBox(height: 10.h),
+              Text("Tình trạng: ${contract.contractType == 'rent' ? 'Đã được thuê' : 'Đã được mua'}", style: TextStyle(fontSize: 4.sp)),
+              SizedBox(height: 10.h),
+              Text("Đã có hợp đồng từ: ${DateFormat('dd/MM/yyyy – HH:mm').format(contract.startDate)}", style: TextStyle(fontSize: 4.sp)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp),),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      print("❌ Lỗi lấy hợp đồng: $e");
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text("Lỗi", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp)),
+          content: Text("Không thể tải thông tin hợp đồng.", style: TextStyle(fontSize: 4.sp)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp),),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override
@@ -296,14 +373,14 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
 
                                           if (apartment.isRent == true) {
                                             statusIcon = const Icon(
-                                                Icons.person,
+                                                Icons.vpn_key,
                                                 color: Colors.orange);
-                                            statusText = "Đang cho thuê";
+                                            statusText = "Đã được thuê";
                                           } else if (apartment.isSale == true) {
                                             statusIcon = const Icon(
-                                                Icons.shopping_cart,
+                                                Icons.shopping_bag,
                                                 color: Colors.green);
-                                            statusText = "Đang bán";
+                                            statusText = "Đã được mua";
                                           } else {
                                             statusIcon = const Icon(
                                                 Icons.home_outlined,
@@ -347,8 +424,12 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                                 ],
                                               ),
                                               onTap: () {
-                                                showApartmentDialog(
-                                                    context, apartment);
+                                                if (apartment.isRent == true||apartment.isSale == true) {
+                                                  showApartmentContractInfoDialog(context, apartment);
+                                                } else {
+                                                  showApartmentDialog(
+                                                      context, apartment);
+                                                }
                                               },
                                             ),
                                           );
@@ -435,7 +516,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
               ),
               dropdownStyleData: DropdownStyleData(
                 maxHeight: 200.h,
-                width: isLandscape ? 100.w : 324.w,
+                width: isLandscape ? 132.w : 324.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                   color: Color(0xFFF7FEFF),
