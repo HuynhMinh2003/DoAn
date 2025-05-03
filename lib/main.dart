@@ -150,7 +150,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: LoginPage(), // hoặc AuthWrapper()
+              home: ApartmentFilterPage(), // hoặc AuthWrapper()
             ),
           ),
         );

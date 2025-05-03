@@ -1,10 +1,12 @@
+import 'dart:io';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/contract_data.dart';
+import 'package:docx_template/docx_template.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
@@ -278,22 +280,18 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
     );
   }
 
-  Future<void> saveToFirestore(ContractData contract,
-      String representative) async {
+  Future<void> saveToFirestore(ContractData contract, String representative) async {
     final apartmentRef = FirebaseFirestore.instance.collection("apartments")
         .doc(contract.apartmentDocId);
-
-    // Tạo document hợp đồng mới trong subcollection "contracts" của căn hộ
     final contractDoc = apartmentRef.collection("contracts").doc();
 
-    // Lưu thông tin hợp đồng
+    // Lưu vào Firestore
     await contractDoc.set({
       "apartmentDocId": contract.apartmentDocId,
       "apartmentName": contract.apartmentName,
       "building": contract.building,
       "area": contract.area,
-      "price": contract.contractType == "thuê" ? contract.rentPrice : contract
-          .salePrice,
+      "price": contract.contractType == "thuê" ? contract.rentPrice : contract.salePrice,
       "type": contract.contractType,
       "startDate": contract.startDate,
       "endDate": contract.endDate,
@@ -302,14 +300,12 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
       "createdAt": Timestamp.now(),
     });
 
-    // Lưu từng cư dân và gọi Cloud Function để tạo tài khoản
+    // Gửi yêu cầu tạo tài khoản cho từng cư dân
     for (final resident in contract.residents) {
       try {
         final response = await http.post(
           Uri.parse('https://createresidentaccount-ttrkrlo35a-uc.a.run.app'),
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
           body: json.encode({
             'email': resident.email,
             'fullName': resident.fullName,
@@ -319,19 +315,17 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
             'apartmentId': contract.apartmentDocId,
           }),
         );
-
         if (response.statusCode == 200) {
           print("✅ Tạo tài khoản cho ${resident.fullName} thành công.");
         } else {
           print("❌ Lỗi tạo tài khoản: ${response.body}");
         }
       } catch (e) {
-        print("❌ Lỗi gọi Cloud Function tạo tài khoản cho ${resident
-            .fullName}: $e");
+        print("❌ Lỗi tạo tài khoản cho ${resident.fullName}: $e");
       }
     }
 
-    // Cập nhật danh sách cư dân trong document căn hộ
+    // Cập nhật danh sách cư dân
     final residentNames = contract.residents.map((r) => r.fullName).toList();
     await apartmentRef.update({
       contract.contractType == "thuê" ? "isRent" : "isSale": true,
@@ -348,5 +342,60 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
       "photoURL": "",
       "createdAt": Timestamp.now(),
     });
+
+    // === ⬇️ THÊM PHẦN TẠO FILE WORD HỢP ĐỒNG DƯỚI ĐÂY ⬇️ ===
+    final templateData = await rootBundle.load(
+      contract.contractType == "thuê"
+          ? 'assets/templates/hd_thue_canho.docx'
+          : 'assets/templates/hd_mua_canho.docx',
+    );
+    final docx = await DocxTemplate.fromBytes(templateData.buffer.asUint8List());
+
+    final content = Content();
+    content
+      ..add(TextContent("apartment_name", contract.apartmentName))
+      ..add(TextContent("building", contract.building))
+      ..add(TextContent("area", contract.area.toString()))
+      ..add(TextContent("price", (contract.contractType == "thuê" ? contract.rentPrice : contract.salePrice).toString()))
+      ..add(TextContent("start_date", DateFormat("dd/MM/yyyy").format(contract.startDate)))
+      ..add(TextContent("representative", contract.representative));
+
+    // ✅ Nếu có endDate thì thêm, ngược lại truyền chuỗi rỗng
+    content.add(TextContent(
+        "end_date",
+        contract.endDate != null
+            ? DateFormat("dd/MM/yyyy").format(contract.endDate!)
+            : ""
+    ));
+
+    // === Thêm danh sách cư dân vào đây ===
+    final List<PlainContent> residentsList = [];
+
+    for (final r in contract.residents) {
+      final residentContent = PlainContent("residents")
+        ..add(TextContent("resident_name", r.fullName))
+        ..add(TextContent("resident_cccd", r.cccd))
+        ..add(TextContent("resident_phone", r.phone));
+
+      residentsList.add(residentContent);
+    }
+
+// residents là tag list, resident là mỗi item trong list
+    content.add(ListContent("residents", residentsList));
+
+    final fileBytes = await docx.generate(content);
+
+    String getDesktopPath() {
+      final home = Platform.isWindows
+          ? Platform.environment['USERPROFILE']
+          : Platform.environment['HOME'];
+      return "$home/Desktop";
+    }
+    final desktopPath = getDesktopPath();
+    final filePath =
+        "$desktopPath/${contract.contractType}_${contract.apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
+    final file = File(filePath);
+    await file.writeAsBytes(fileBytes!);
+    print("✅ File Word đã lưu tại: $filePath");
   }
 }
