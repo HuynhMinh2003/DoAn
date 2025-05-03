@@ -10,6 +10,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AddAccountStaffPage extends StatefulWidget {
   const AddAccountStaffPage({super.key});
@@ -347,12 +349,11 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
 
     if (!isValidStaff) return;
 
-    // Hiển thị dialog loading
     LoadingDialog.showLoadingDialog(context, 'Đang tải ...');
 
     try {
       final imageProvider = Provider.of<UserImageProvider>(context, listen: false);
-      final userId = const Uuid().v4(); // Tạm tạo UID (nếu chưa có user thực)
+      final userId = const Uuid().v4();
 
       final imageUrl = await imageProvider.uploadSelectedImageAndGetUrl(userId);
 
@@ -364,25 +365,35 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
 
       _imageUrl = imageUrl;
 
-      // Gọi hàm tạo tài khoản
-      _authBloc.signUpStaff(
-        nameStaff: _nameStaffController.text,
-        emailStaff: _emailStaffController.text,
-        phoneStaff: _phoneStaffController.text,
-        position: _selectedRole!,
-        imageUrlStaff: _imageUrl!,
-        onSuccess: () {
-          LoadingDialog.hideLoadingDialog(context);
-          MsgDialog.showMsgDialog(context, "Tạo tài khoản thành công!", "Tài khoản đã được tạo");
-        },
-        onRegisterError: (msg) {
-          LoadingDialog.hideLoadingDialog(context);
-          MsgDialog.showMsgDialog(context, "Tạo tài khoản thất bại !", msg);
-        },
+      // Gọi Cloud Function createStaffAccount
+      final url = Uri.parse("https://createstaffaccount-ttrkrlo35a-uc.a.run.app");
+
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": _emailStaffController.text.trim(),
+          "fullName": _nameStaffController.text.trim(),
+          "phone": _phoneStaffController.text.trim(),
+          "position": _selectedRole!,
+          "imageUrl": _imageUrl!,
+        }),
       );
+
+      LoadingDialog.hideLoadingDialog(context);
+
+      if (response.statusCode == 200) {
+        MsgDialog.showMsgDialog(context, "Thành công", "Tạo tài khoản nhân viên thành công.");
+      } else {
+        MsgDialog.showMsgDialog(
+          context,
+          "Thất bại",
+          "Không thể tạo tài khoản: ${response.body}",
+        );
+      }
     } catch (e) {
       LoadingDialog.hideLoadingDialog(context);
-      MsgDialog.showMsgDialog(context, "Lỗi hệ thống", "Không thể tạo tài khoản: $e");
+      MsgDialog.showMsgDialog(context, "Lỗi", "Không thể tạo tài khoản: $e");
     }
   }
 
