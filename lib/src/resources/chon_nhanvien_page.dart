@@ -1,22 +1,19 @@
 import 'package:do_an/src/models/staffs.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:excel/excel.dart' as ex;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
-import 'dart:html' as html;
 
-
-class StaffListPage extends StatefulWidget {
-  const StaffListPage({super.key});
+class StaffFilterPage extends StatefulWidget {
+  const StaffFilterPage({super.key});
 
   @override
-  State<StaffListPage> createState() => _StaffListPageState();
+  State<StaffFilterPage> createState() => _StaffFilterPageState();
 }
 
-class _StaffListPageState extends State<StaffListPage> {
+class _StaffFilterPageState extends State<StaffFilterPage> {
   String? _selectedPosition;
   List<String> _positionItems = [];
   List<Staff> _staffList = [];
@@ -76,152 +73,71 @@ class _StaffListPageState extends State<StaffListPage> {
     });
   }
 
-  void showStaffDialog(BuildContext context, Staff staff, VoidCallback onRefresh) {
-    final nameController = TextEditingController(text: staff.name);
-    final emailController = TextEditingController(text: staff.email);
-    final phoneController = TextEditingController(text: staff.phone);
-    final positionController = TextEditingController(text: staff.position);
-
-    bool isEditing = false;
-
+  void _showStaffDetails(BuildContext context, Staff staff) {
     final size = MediaQuery.of(context).size;
     final isLandscape = size.height < size.width;
 
     showDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(
-                "Thông tin nhân viên",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: isLandscape ? 5.sp : 20.sp, color: Colors.blueAccent),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (staff.imageUrl.isNotEmpty)
-                      Center(
-                        child: CircleAvatar(
-                          radius: 70.r,
-                          backgroundImage: NetworkImage(staff.imageUrl),
-                        ),
-                      ),
-                    SizedBox(height: 30.h),
-                    TextField(
-                      controller: nameController,
-                      enabled: isEditing,
-                      style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
-                      decoration: InputDecoration(labelText: 'Họ và tên'),
-                    ),
-                    SizedBox(height: 18.h),
-                    TextField(
-                      controller: emailController,
-                      enabled: isEditing,
-                      style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
-                      decoration: InputDecoration(labelText: 'Email'),
-                    ),
-                    SizedBox(height: 18.h),
-                    TextField(
-                      controller: phoneController,
-                      enabled: isEditing,
-                      style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
-                      decoration: InputDecoration(labelText: 'SĐT'),
-                    ),
-                    SizedBox(height: 18.h),
-                    TextField(
-                      controller: positionController,
-                      enabled: isEditing,
-                      style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
-                      decoration: InputDecoration(labelText: 'Vị trí'),
-                    ),
-                  ],
+      builder: (_) => AlertDialog(
+        title: Text(
+          "Thông tin cá nhân",
+          style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: isLandscape ? 5.sp : 20.sp, color: Colors.blueAccent),
+          textAlign: TextAlign.center,
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (staff.imageUrl.isNotEmpty)
+                Center(
+                  child: CircleAvatar(
+                    radius: 70.r,
+                    backgroundImage: NetworkImage(staff.imageUrl),
+                  ),
+                ),
+              SizedBox(height: 30.h),
+              Text("Họ và tên: ${staff.name}", style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp)),
+              SizedBox(height: 18.h),
+              Text("Email: ${staff.email}", style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp)),
+              SizedBox(height: 18.h),
+              Text("SĐT: ${staff.phone}", style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp)),
+              SizedBox(height: 18.h),
+              Text("Vị trí: ${staff.position}", style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp)),
+            ],
+          ),
+        ),
+        actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: staff.isFree
+                    ? () {
+                  print("Button nhấn được");
+                }
+                    : null,
+                child: Text(
+                  "Phân việc",
+                  style: TextStyle(
+                    fontSize: isLandscape ? 4.sp : 15.sp,
+                    color: staff.isFree ? Colors.blue : Colors.grey,
+                  ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () async {
-                    final confirm = await showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: Text("Xác nhận xóa"),
-                        content: Text("Bạn có chắc chắn muốn xóa nhân viên này?"),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Hủy")),
-                          TextButton(onPressed: () => Navigator.pop(context, true), child: Text("Xóa", style: TextStyle(color: Colors.red))),
-                        ],
-                      ),
-                    );
-                    if (confirm == true) {
-                      await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).delete();
-                      Navigator.pop(context);
-                      onRefresh();
-                    }
-                  },
-                  child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: isLandscape ? 4.sp : 15.sp)),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    if (isEditing) {
-                      await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).update({
-                        'name': nameController.text.trim(),
-                        'email': emailController.text.trim(),
-                        'phone': phoneController.text.trim(),
-                        'position': positionController.text.trim(),
-                      });
-                      Navigator.pop(context);
-                      onRefresh();
-                    } else {
-                      setState(() {
-                        isEditing = true;
-                      });
-                    }
-                  },
-                  child: Text(isEditing ? "Lưu" : "Sửa", style: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp)),
-                ),
-              ],
-            );
-          },
-        );
-      },
+              TextButton(
+                onPressed: () {
+                  if (!mounted) return;
+                  Navigator.pop(context);
+                },
+                child: Text("Đóng", style: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp)),
+              ),
+            ],
+          )
+        ],
+      ),
     );
-  }
-
-  Future<void> exportStaffsToExcel(List<Staff> staffs) async {
-    final excel = ex.Excel.createExcel(); // tạo file mới
-    final sheet = excel['DanhSachNhanVien']; // tạo sheet
-
-    // Dòng tiêu đề (Header)
-    final headers = [
-      ex.TextCellValue('Tên nhân viên'),
-      ex.TextCellValue('Số điện thoại'),
-      ex.TextCellValue('Chức vụ'),
-      ex.TextCellValue('Email'),
-    ];
-    sheet.insertRowIterables(headers, 0); // Ghi dòng đầu tiên
-
-    // Ghi từng dòng dữ liệu
-    for (int i = 0; i < staffs.length; i++) {
-      final apt = staffs[i];
-      final row = [
-        ex.TextCellValue(apt.name),
-        ex.TextCellValue(apt.phone),
-        ex.TextCellValue(apt.position),
-        ex.TextCellValue(apt.email),
-      ];
-      sheet.insertRowIterables(row, i + 1);
-    }
-
-    // Xuất file
-    final fileBytes = excel.encode();
-    final blob = html.Blob([fileBytes]);
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute("download", "DanhSachNhanVien.xlsx")
-      ..click();
-    html.Url.revokeObjectUrl(url);
   }
 
   @override
@@ -254,8 +170,7 @@ class _StaffListPageState extends State<StaffListPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(mainAxisSize:MainAxisSize.min, children: [
-            Text(
+          Text(
             'Danh sách nhân viên',
             style: TextStyle(
               fontFamily: "Oswald",
@@ -263,19 +178,6 @@ class _StaffListPageState extends State<StaffListPage> {
               fontSize: 12.sp,
             ),
           ),
-            SizedBox(width: 10.w),
-            ElevatedButton(
-              onPressed: () => exportStaffsToExcel(_staffList),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.upload),
-                  SizedBox(width: 5.w,),
-                  Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
-                ],
-              ),
-            )
-          ],),
           SizedBox(height: 20.h),
           SizedBox(
             height: MediaQuery.of(context).size.height - 100,
@@ -336,9 +238,7 @@ class _StaffListPageState extends State<StaffListPage> {
                       itemBuilder: (context, index) {
                         final staff = _staffList[index];
                         return GestureDetector(
-                          onTap: () => showStaffDialog(context, staff, (){
-                            _fetchStaff();
-                          }),
+                          onTap: () => _showStaffDetails(context, staff),
                           child: Container(
                             padding: EdgeInsets.all(5.sp),
                             decoration: BoxDecoration(
@@ -385,11 +285,12 @@ class _StaffListPageState extends State<StaffListPage> {
                                               ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
-                                            SizedBox(height: 10.h,),
                                             Text(
-                                              staff.email,
+                                              staff.isFree ? "Đang rảnh" : "Đang bận",
                                               style: TextStyle(
                                                 fontSize: 4.sp,
+                                                color: staff.isFree ? Colors.green : Colors.red,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ],
@@ -503,9 +404,7 @@ class _StaffListPageState extends State<StaffListPage> {
                       itemBuilder: (context, index) {
                         final staff = staffs[index];
                         return GestureDetector(
-                          onTap: () => showStaffDialog(context, staff, (){
-                            _fetchStaff();
-                          }),
+                          onTap: () => _showStaffDetails(context, staff),
                           child: Padding(
                             padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
                             child: Row(
@@ -568,7 +467,6 @@ class _StaffListPageState extends State<StaffListPage> {
       ),
     );
   }
-
 // Hàm lọc nhân viên theo chức vụ
   Widget buildFilterDropdown<T>({
     required String label,
@@ -578,6 +476,7 @@ class _StaffListPageState extends State<StaffListPage> {
   }) {
     final size = MediaQuery.of(context).size;
     final isLandscape = size.height < size.width;
+
     return Padding(
       padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 8.h),
       child: SizedBox(
