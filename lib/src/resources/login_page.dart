@@ -654,7 +654,7 @@ class _LoginPageState extends State<LoginPage> {
           },
         onSignInError: (msg) {
           LoadingDialog.hideLoadingDialog(context);
-          MsgDialog.showMsgDialog(context, "Đăng nhập", msg);
+          MsgDialog.showMsgDialog(context, "Đăng nhập", "msg");
         },
       );
     }

@@ -1,8 +1,6 @@
 import 'dart:async'; // Thêm import Timer
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/apartment.dart';
-import 'package:do_an/src/models/contract_data.dart';
-import 'package:do_an/src/resources/contract_info_page.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
@@ -10,15 +8,17 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart'; // Thêm import shimmer
+import 'package:excel/excel.dart' as ex;
+import 'dart:html' as html;
 
-class ApartmentFilterPage extends StatefulWidget {
-  const ApartmentFilterPage({Key? key}) : super(key: key);
+class ApartmentListPage extends StatefulWidget {
+  const ApartmentListPage({Key? key}) : super(key: key);
 
   @override
-  State<ApartmentFilterPage> createState() => _ApartmentFilterPageState();
+  State<ApartmentListPage> createState() => _ApartmentListPageState();
 }
 
-class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
+class _ApartmentListPageState extends State<ApartmentListPage> {
   List<Apartment> allApartments = [];
   List<Apartment> filteredApartments = [];
 
@@ -35,135 +35,139 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
 
   double minArea = 50;
   double maxArea = 120;
+
   RangeValues selectedAreaRange = const RangeValues(50, 120);
 
   double minFunction(double a, double b) => a < b ? a : b;
   double maxFunction(double a, double b) => a > b ? a : b;
 
-  void showApartmentDialog(BuildContext context, Apartment apartment) {
+  void showApartmentDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) {
+    final areaController = TextEditingController(text: apartment.area.toString());
+    final rentController = TextEditingController(text: NumberFormat("#,###").format(apartment.rentPrice)); // Hiển thị có dấu phân cách
+    final saleController = TextEditingController(text: NumberFormat("#,###").format(apartment.salePrice)); // Hiển thị có dấu phân cách
+    final descriptionController = TextEditingController(text: apartment.description);
+
+    bool isEditing = false;
+
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text("Phòng ${apartment.apartmentName}", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp),),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 10.h,),
-            Text('Diện tích: ${apartment.area} m²', style: TextStyle(fontSize: 4.sp),),
-            SizedBox(height: 30.h,),
-            Text(apartment.description, style: TextStyle(fontSize: 4.sp)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ContractInfoPage(
-                      apartmentData: apartment,
-                      contractType: 'thuê',
-                      apartmentId: apartment.id, // 👈 truyền ID
-                    ),
-                  ));
-            },
-            child: Text("Thuê", style: TextStyle(fontSize: 3.5.sp),),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ContractInfoPage(
-                      apartmentData: apartment,
-                      contractType: 'mua',
-                      apartmentId: apartment.id, // 👈 truyền ID
-                    ),
-                  ));
-            },
-            child: Text("Mua", style: TextStyle(fontSize: 3.5.sp),),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void showApartmentContractInfoDialog(BuildContext context, Apartment apartment) async {
-    final contractCollectionRef = FirebaseFirestore.instance
-        .collection("apartments")
-        .doc(apartment.id)
-        .collection("contracts");
-
-    try {
-      final snapshot = await contractCollectionRef.limit(1).get(); // Lấy 1 hợp đồng đầu tiên (vì chỉ có 1)
-
-      if (snapshot.docs.isEmpty) {
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: Text("Thông tin hợp đồng", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp)),
-            content: Text("Căn hộ này chưa có hợp đồng.", style: TextStyle(fontSize: 4.sp)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp),),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(
+                "Thông tin phòng ${apartment.apartmentName}",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp),
               ),
-            ],
-          ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Tòa nhà: ${apartment.building}', style: TextStyle(fontSize: 4.sp)),
+                    SizedBox(height: 10.h),
+                    TextField(
+                      controller: areaController,
+                      enabled: isEditing,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(fontSize: 4.sp), // Cỡ chữ nội dung nhập
+                      decoration: InputDecoration(
+                        labelText: 'Diện tích (m²)',
+                        labelStyle: TextStyle(fontSize: 4.sp), // Cỡ chữ label
+                      ),
+                    ),
+                    TextField(
+                      controller: rentController,
+                      enabled: isEditing,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(fontSize: 4.sp),
+                      decoration: InputDecoration(
+                        labelText: 'Giá thuê (VNĐ)',
+                        labelStyle: TextStyle(fontSize: 4.sp),
+                      ),
+                      onChanged: (value) {
+                        if (isEditing) {
+                          rentController.text = value.replaceAll(',', '');
+                        }
+                      },
+                    ),
+                    TextField(
+                      controller: saleController,
+                      enabled: isEditing,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(fontSize: 4.sp),
+                      decoration: InputDecoration(
+                        labelText: 'Giá mua (VNĐ)',
+                        labelStyle: TextStyle(fontSize: 4.sp),
+                      ),
+                      onChanged: (value) {
+                        if (isEditing) {
+                          saleController.text = value.replaceAll(',', '');
+                        }
+                      },
+                    ),
+                    TextField(
+                      controller: descriptionController,
+                      enabled: isEditing,
+                      style: TextStyle(fontSize: 4.sp),
+                      decoration: InputDecoration(
+                        labelText: 'Mô tả',
+                        labelStyle: TextStyle(fontSize: 4.sp),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    final confirm = await showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: Text('Xác nhận xóa',style: TextStyle(fontSize: 4.sp)),
+                        content: Text('Bạn có chắc muốn xóa căn hộ này?',style: TextStyle(fontSize: 4.sp)),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(context, false), child:  Text('Hủy',style: TextStyle(fontSize: 4.sp))),
+                          TextButton(onPressed: () => Navigator.pop(context, true), child:  Text('Xóa',style: TextStyle(fontSize: 4.sp))),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true) {
+                      await FirebaseFirestore.instance.collection('apartments').doc(apartment.id).delete();
+                      Navigator.pop(context);
+                      onRefresh();
+                    }
+                  },
+                  child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (isEditing) {
+                      // Lưu cập nhật, chuyển giá thành dạng số sau khi chỉnh sửa
+                      await FirebaseFirestore.instance.collection('apartments').doc(apartment.id).update({
+                        'area': double.tryParse(areaController.text) ?? apartment.area,
+                        'rentPrice': int.tryParse(rentController.text.replaceAll(',', '')) ?? apartment.rentPrice,
+                        'salePrice': int.tryParse(saleController.text.replaceAll(',', '')) ?? apartment.salePrice,
+                        'description': descriptionController.text,
+                      });
+                      Navigator.pop(context);
+                      onRefresh();
+                    } else {
+                      // Bật chế độ sửa
+                      setState(() {
+                        isEditing = true;
+                      });
+                    }
+                  },
+                  child: Text(isEditing ? "Lưu" : "Sửa",style: TextStyle(fontSize: 4.sp)),
+                ),
+              ],
+            );
+          },
         );
-        return;
-      }
-
-      final doc = snapshot.docs.first;
-      final contract = ContractData.fromMap(doc.data(), doc.id, []); // Bỏ qua residents nếu chưa cần
-
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text("Phòng ${contract.apartmentName}", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 15.h),
-              Text("Diện tích: ${contract.area} m²", style: TextStyle(fontSize: 4.sp)),
-              SizedBox(height: 10.h),
-              Text("Người đại diện: ${contract.representative ?? 'Không có'}", style: TextStyle(fontSize: 4.sp)),
-              SizedBox(height: 10.h),
-              Text("Số người ở: ${contract.numberOfResidents}", style: TextStyle(fontSize: 4.sp)),
-              SizedBox(height: 10.h),
-              Text("Tình trạng: ${contract.contractType == 'rent' ? 'Đã được thuê' : 'Đã được mua'}", style: TextStyle(fontSize: 4.sp)),
-              SizedBox(height: 10.h),
-              Text("Đã có hợp đồng từ: ${DateFormat('dd/MM/yyyy – HH:mm').format(contract.startDate)}", style: TextStyle(fontSize: 4.sp)),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp),),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      print("❌ Lỗi lấy hợp đồng: $e");
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text("Lỗi", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp)),
-          content: Text("Không thể tải thông tin hợp đồng.", style: TextStyle(fontSize: 4.sp)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp),),
-            ),
-          ],
-        ),
-      );
-    }
+      },
+    );
   }
 
   Future<void> fetchAreaRangeFromFirestore() async {
@@ -187,7 +191,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
   Future<void> loadApartmentsFromFirestore() async {
     try {
       final snapshot =
-          await FirebaseFirestore.instance.collection('apartments').get();
+      await FirebaseFirestore.instance.collection('apartments').get();
       List<Apartment> apartments = [];
 
       for (var doc in snapshot.docs) {
@@ -231,8 +235,8 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
 
     result = result
         .where((a) =>
-            a.area >= selectedAreaRange.start &&
-            a.area <= selectedAreaRange.end)
+    a.area >= selectedAreaRange.start &&
+        a.area <= selectedAreaRange.end)
         .toList();
 
     setState(() {
@@ -243,7 +247,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
   List<int> getFloorsByBuilding(
       List<Apartment> apartments, String selectedBuilding) {
     final filtered =
-        apartments.where((apt) => apt.building == selectedBuilding);
+    apartments.where((apt) => apt.building == selectedBuilding);
     final floors = filtered.map((apt) => apt.floor).toSet().toList();
     floors.sort();
     return floors;
@@ -254,6 +258,87 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
       return [];
     }
     return getFloorsByBuilding(allApartments, selectedBuilding!);
+  }
+
+  Future<void> importApartmentsFromExcelWeb() async {
+    final uploadInput = html.FileUploadInputElement()..accept = '.xlsx';
+    uploadInput.click();
+
+    uploadInput.onChange.listen((event) {
+      final file = uploadInput.files!.first;
+      final reader = html.FileReader();
+
+      reader.readAsArrayBuffer(file);
+
+      reader.onLoadEnd.listen((e) async {
+        final bytes = reader.result as List<int>;
+        final excel = ex.Excel.decodeBytes(bytes);
+        final sheet = excel.tables[excel.tables.keys.first];
+        if (sheet == null) return;
+
+        for (int i = 1; i < sheet.rows.length; i++) {
+          final row = sheet.rows[i];
+          final apartmentData = {
+            'apartmentName': row[0]?.value.toString() ?? '',
+            'area': double.tryParse(row[1]?.value.toString() ?? '0') ?? 0.0,
+            'building': row[2]?.value.toString() ?? '',
+            'description': row[3]?.value.toString() ?? '',
+            'rentPrice': int.tryParse(row[4]?.value.toString() ?? '0') ?? 0,
+            'salePrice': int.tryParse(row[5]?.value.toString() ?? '0') ?? 0,
+            'isRent': false,
+            'isSale': false,
+            'residents': [],
+          };
+
+          await FirebaseFirestore.instance.collection('apartments').add(apartmentData);
+
+        }
+        loadApartmentsFromFirestore();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Thêm căn hộ thành công!', style: TextStyle(fontSize: 4.sp),)),
+        );
+
+      });
+    });
+  }
+
+  Future<void> exportApartmentsToExcel(List<Apartment> apartments) async {
+    final excel = ex.Excel.createExcel(); // tạo file mới
+    final sheet = excel['DanhSachCanHo']; // tạo sheet
+
+    // Dòng tiêu đề (Header)
+    final headers = [
+      ex.TextCellValue('Tên căn hộ'),
+      ex.TextCellValue('Diện tích'),
+      ex.TextCellValue('Tòa nhà'),
+      ex.TextCellValue('Mô tả'),
+      ex.TextCellValue('Giá thuê'),
+      ex.TextCellValue('Giá bán'),
+    ];
+    sheet.insertRowIterables(headers, 0); // Ghi dòng đầu tiên
+
+    // Ghi từng dòng dữ liệu
+    for (int i = 0; i < apartments.length; i++) {
+      final apt = apartments[i];
+      final row = [
+        ex.TextCellValue(apt.apartmentName),
+        ex.DoubleCellValue(apt.area as double),
+        ex.TextCellValue(apt.building),
+        ex.TextCellValue(apt.description),
+        ex.IntCellValue(apt.rentPrice),
+        ex.IntCellValue(apt.salePrice),
+      ];
+      sheet.insertRowIterables(row, i + 1);
+    }
+
+    // Xuất file
+    final fileBytes = excel.encode();
+    final blob = html.Blob([fileBytes]);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute("download", "DanhSachCanHo.xlsx")
+      ..click();
+    html.Url.revokeObjectUrl(url);
   }
 
   @override
@@ -281,6 +366,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     super.dispose();
 
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -307,7 +393,34 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                           fontSize: 12.sp,
                         ),
                       ),
-                      SizedBox(height: 40.h),
+                      SizedBox(height: 20.h,),
+                      Row(
+                        mainAxisSize:MainAxisSize.min,
+                        children: [
+                        ElevatedButton(
+                        onPressed: importApartmentsFromExcelWeb,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.add),
+                            SizedBox(width: 5.w,),
+                            Text('Thêm file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
+                          ],
+                        ),
+                      ),
+                        SizedBox(width: 20.w,),
+                        ElevatedButton(
+                          onPressed: () => exportApartmentsToExcel(filteredApartments),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.upload),
+                              SizedBox(width: 5.w,),
+                              Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
+                            ],
+                          ),
+                        ),],),
+                      SizedBox(height: 10.h),
                       SizedBox(
                           height: MediaQuery.of(context).size.height - 360.h ,
                           child: Row(
@@ -439,13 +552,12 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                           ],
                                         ),
                                         onTap: () {
-                                          if (apartment.isRent == true||apartment.isSale == true) {
-                                            showApartmentContractInfoDialog(context, apartment);
-                                          } else {
-                                            showApartmentDialog(
-                                                context, apartment);
-                                          }
+                                          showApartmentDialog(context, apartment, () {
+                                            loadApartmentsFromFirestore();
+                                             // gọi lại để cập nhật danh sách sau khi sửa/xóa
+                                          });
                                         },
+
                                       ),
                                     );
                                   },
