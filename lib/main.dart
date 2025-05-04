@@ -4,9 +4,12 @@ import 'package:do_an/firebase_options.dart';
 import 'package:do_an/src/fire_base/firebase_auth_service.dart';
 import 'package:do_an/src/fire_base/notification_service.dart';
 import 'package:do_an/src/resources/chon_can_ho_page.dart';
+import 'package:do_an/src/resources/ds_canho_page.dart';
 import 'package:do_an/src/resources/ds_congty_page.dart';
+import 'package:do_an/src/resources/chon_nhanvien_page.dart';
 import 'package:do_an/src/resources/ds_nhanvien_page.dart';
 import 'package:do_an/src/resources/login_page.dart';
+import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
 import 'package:do_an/src/resources/staff_page.dart';
@@ -127,6 +130,7 @@ void main() async {
             ChangeNotifierProvider(create: (_) => ResidentProvider()),
             ChangeNotifierProvider(create: (_) => UserDataProvider()),
             ChangeNotifierProvider(create: (_) => UserImageProvider()),
+            ChangeNotifierProvider(create: (_) => ContractNotifier()),
           ],
           child: MyApp(
             AuthBloc(),
@@ -150,7 +154,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: ApartmentFilterPage(), // hoặc AuthWrapper()
+              home: CompanyListPage(), // hoặc AuthWrapper()
             ),
           ),
         );
