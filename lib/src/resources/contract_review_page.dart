@@ -1,7 +1,9 @@
-import 'dart:io';
-import 'dart:math';
+import 'dart:html' as html;import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/contract_data.dart';
+import 'package:do_an/src/models/resident_info.dart';
+import 'package:do_an/src/resources/chon_can_ho_page.dart';
+import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:docx_template/docx_template.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,6 +14,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:provider/provider.dart';
 
 class ContractReviewPage extends StatefulWidget {
   final ContractData contractData;
@@ -24,6 +28,14 @@ class ContractReviewPage extends StatefulWidget {
 
 class _ContractReviewPageState extends State<ContractReviewPage> {
   String? selectedRep;
+
+  // Hàm format tiền VND: ví dụ 10000000 -> "10.000.000"
+  final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '', decimalDigits: 0);
+
+// Hàm format ngày: ví dụ DateTime(2025, 5, 4) -> "ngày 04 tháng 05 năm 2025"
+  String formatCustomDate(DateTime date) {
+    return 'ngày ${date.day.toString().padLeft(2, '0')} tháng ${date.month.toString().padLeft(2, '0')} năm ${date.year}';
+  }
 
   @override
   void initState() {
@@ -237,19 +249,21 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
                                           height: 60.h,
                                           child: ElevatedButton(
                                             onPressed: () async {
-                                              await saveToFirestore(
-                                                  widget.contractData,
-                                                  selectedRep!);
-                                              Navigator.popUntil(
-                                                  context, (route) => route
-                                                  .isFirst);
+                                              await saveToFirestore(widget.contractData, selectedRep!);
+
+                                              // 👉 Thêm dòng này để thông báo cho màn chính reload
+                                              Provider.of<ContractNotifier>(context, listen: false).markAsCreated();
+
+                                              Navigator.of(context).pushAndRemoveUntil(
+                                                MaterialPageRoute(builder: (context) => const ApartmentFilterPage()),
+                                                    (Route<dynamic> route) => false,
+                                              );
+
                                             },
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(
-                                                  0xFF2D80F8),
+                                              backgroundColor: const Color(0xFF2D80F8),
                                               shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius
-                                                    .circular(30.r),
+                                                borderRadius: BorderRadius.circular(30.r),
                                               ),
                                               elevation: 4,
                                               shadowColor: Colors.black45,
@@ -343,59 +357,65 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
       "createdAt": Timestamp.now(),
     });
 
-    // === ⬇️ THÊM PHẦN TẠO FILE WORD HỢP ĐỒNG DƯỚI ĐÂY ⬇️ ===
-    final templateData = await rootBundle.load(
-      contract.contractType == "thuê"
-          ? 'assets/templates/hd_thue_canho.docx'
-          : 'assets/templates/hd_mua_canho.docx',
-    );
+    final templateData = await rootBundle.load(contract.contractType=='thuê'?'assets/templates/hd_thue_ch.docx' :'assets/templates/hd_mua_ch.docx');
+    print("✅ Đã tải template DOCX");
+
     final docx = await DocxTemplate.fromBytes(templateData.buffer.asUint8List());
+    print("✅ Đã tạo DocxTemplate");
 
     final content = Content();
+    print("✅ Bắt đầu tạo nội dung");
+
     content
       ..add(TextContent("apartment_name", contract.apartmentName))
       ..add(TextContent("building", contract.building))
       ..add(TextContent("area", contract.area.toString()))
-      ..add(TextContent("price", (contract.contractType == "thuê" ? contract.rentPrice : contract.salePrice).toString()))
-      ..add(TextContent("start_date", DateFormat("dd/MM/yyyy").format(contract.startDate)))
-      ..add(TextContent("representative", contract.representative));
+      ..add(TextContent(
+          "price",
+          currencyFormat.format(contract.contractType == "thuê"
+              ? contract.rentPrice
+              : contract.salePrice)))
+      ..add(TextContent("start_date", formatCustomDate(contract.startDate)))
+      ..add(TextContent("representative", representative))
+      ..add(TextContent("end_date", contract.endDate != null ? formatCustomDate(contract.endDate!) : ""));
 
-    // ✅ Nếu có endDate thì thêm, ngược lại truyền chuỗi rỗng
-    content.add(TextContent(
-        "end_date",
-        contract.endDate != null
-            ? DateFormat("dd/MM/yyyy").format(contract.endDate!)
-            : ""
-    ));
+    print("✅ Đã thêm thông tin chính");
 
-    // === Thêm danh sách cư dân vào đây ===
-    final List<PlainContent> residentsList = [];
+    // === Danh sách cư dân ===
+    final residentsList = <PlainContent>[];
 
-    for (final r in contract.residents) {
+    for (final r in List<ResidentInfo>.from(contract.residents)) {
       final residentContent = PlainContent("residents")
-        ..add(TextContent("resident_name", r.fullName))
-        ..add(TextContent("resident_cccd", r.cccd))
-        ..add(TextContent("resident_phone", r.phone));
+        ..add(TextContent("resident_name", "Họ và tên: " + r.fullName))
+        ..add(TextContent("resident_cccd", "Số CCCD: " + r.cccd))
+        ..add(TextContent("resident_phone", "Số điện thoại: " + r.phone));
 
       residentsList.add(residentContent);
     }
+
 
 // residents là tag list, resident là mỗi item trong list
     content.add(ListContent("residents", residentsList));
 
     final fileBytes = await docx.generate(content);
+    print("Đã tạo file bytes từ DocxTemplate");
 
-    String getDesktopPath() {
-      final home = Platform.isWindows
-          ? Platform.environment['USERPROFILE']
-          : Platform.environment['HOME'];
-      return "$home/Desktop";
+// Kiểm tra fileBytes có hợp lệ không
+    if (fileBytes == null) {
+      print("Lỗi: Không thể tạo file bytes.");
+    } else {
+      print("File bytes hợp lệ.");
     }
-    final desktopPath = getDesktopPath();
-    final filePath =
-        "$desktopPath/${contract.contractType}_${contract.apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
-    final file = File(filePath);
-    await file.writeAsBytes(fileBytes!);
-    print("✅ File Word đã lưu tại: $filePath");
+
+    final fileName =
+        "${contract.contractType}_${contract.apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
+    final blob = html.Blob([fileBytes]);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute("download", fileName)
+      ..click();
+    html.Url.revokeObjectUrl(url);
+
+    print("✅ File Word đã được tải về: $fileName");
   }
 }
