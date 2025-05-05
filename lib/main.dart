@@ -9,10 +9,11 @@ import 'package:do_an/src/resources/ds_congty_page.dart';
 import 'package:do_an/src/resources/chon_nhanvien_page.dart';
 import 'package:do_an/src/resources/ds_nhanvien_page.dart';
 import 'package:do_an/src/resources/login_page.dart';
+import 'package:do_an/src/resources/main_admin_page.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
-import 'package:do_an/src/resources/staff_page.dart';
+import 'package:do_an/src/resources/staff_page_1.dart';
 import 'package:do_an/src/resources/home_first_staff_page.dart';
 import 'package:do_an/src/resources/tao_tk_ctdv_ngoai.dart';
 import 'package:do_an/src/resources/tao_tk_nv.dart';
@@ -154,7 +155,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: CompanyListPage(), // hoặc AuthWrapper()
+              home: MainAdminPage(), // hoặc AuthWrapper()
             ),
           ),
         );
