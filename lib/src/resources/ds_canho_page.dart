@@ -1,6 +1,7 @@
 import 'dart:async'; // Thêm import Timer
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/apartment.dart';
+import 'package:do_an/src/resources/back_button.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
@@ -568,6 +569,11 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                     ],
                   ),
                 ),
+              ),
+              Positioned(
+                top: MediaQuery.of(context).size.height/2,
+                left: 10.w,
+                child: const BackButtonWidget(),
               ),
             ],
           )),

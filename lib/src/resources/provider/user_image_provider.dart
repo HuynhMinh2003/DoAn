@@ -76,12 +76,20 @@ class UserImageProvider extends ChangeNotifier {
     }
   }
 
+  // Phương thức reset ảnh
+  void resetImage() {
+    _selectedImageFile = null;
+    _webImageBytes = null;
+    _avatarUrl = null;
+    notifyListeners(); // Cập nhật UI
+  }
+
   // Chỉ gọi khi nhấn nút đăng ký → upload ảnh + lưu Firestore
-  Future<String?> uploadSelectedImageAndGetUrl(String userId) async {
+  Future<String?> uploadSelectedImageAndGetUrl(String userId, String uniqueFileName) async {
     try {
       final storageRef = FirebaseStorage.instance
           .ref()
-          .child('staffs/$userId/avatar.jpg'); // Đường dẫn lưu ảnh
+          .child('staffs/$userId/$uniqueFileName'); // Sử dụng tên file duy nhất
 
       UploadTask uploadTask;
 

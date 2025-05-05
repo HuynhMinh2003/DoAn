@@ -1,15 +1,12 @@
 import 'package:do_an/src/resources/back_button.dart';
 import 'package:do_an/src/resources/chon_can_ho_page.dart';
-import 'package:do_an/src/resources/chon_nhanvien_page.dart';
 import 'package:do_an/src/resources/ds_canho_page.dart';
-import 'package:do_an/src/resources/ds_nhanvien_page.dart';
-import 'package:do_an/src/resources/tao_tk_nv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class StaffPage extends StatelessWidget {
-  const StaffPage({super.key});
+class ApartmentPage extends StatelessWidget {
+  const ApartmentPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -33,8 +30,8 @@ class StaffPage extends StatelessWidget {
                   crossAxisSpacing: 60.w,
                   shrinkWrap: true,
                   children: [
-                    _buildCard(context, 'Tạo tài khoản\n  nhân viên', 'assets/images/image_add_staff.svg', AddAccountStaffPage()),
-                    _buildCard(context, 'Danh sách\n nhân viên', 'assets/images/image_list_staff.svg', StaffListPage()),
+                    _buildCard(context, 'Hợp đồng ', 'assets/images/image_manage_contract.svg', ApartmentFilterPage()),
+                    _buildCard(context, 'Danh sách phòng', 'assets/images/image_manage_contract.svg', ApartmentListPage()),
                   ],
                 ),
               ),
@@ -63,15 +60,15 @@ class StaffPage extends StatelessWidget {
         color: Colors.white,
         elevation: 4,
         child: SingleChildScrollView(child:
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(height: 50.h),
-            SvgPicture.asset(svgPath, width: 100.w, height: 100.h),
-            SizedBox(height: 30.h),
-            Text(label, style: TextStyle(fontFamily:"Oswald",fontSize: 6.sp, fontWeight: FontWeight.w700)),
-          ],
-        )
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(height: 50.h),
+                SvgPicture.asset(svgPath, width: 100.w, height: 100.h),
+                SizedBox(height: 30.h),
+                Text(label, style: TextStyle(fontFamily:"Oswald",fontSize: 6.sp, fontWeight: FontWeight.w700)),
+              ],
+            )
         ),
       ),
     );

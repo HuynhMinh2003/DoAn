@@ -98,7 +98,7 @@ class _StaffFilterPageState extends State<StaffFilterPage> {
                   ),
                 ),
               SizedBox(height: 30.h),
-              Text("Họ và tên: ${staff.name}", style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp)),
+              Text("Họ và tên: ${staff.fullName}", style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp)),
               SizedBox(height: 18.h),
               Text("Email: ${staff.email}", style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp)),
               SizedBox(height: 18.h),
@@ -277,7 +277,7 @@ class _StaffFilterPageState extends State<StaffFilterPage> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              staff.name,
+                                              staff.fullName,
                                               style: TextStyle(
                                                 fontFamily: "Oswald",
                                                 fontSize: 6.sp,
@@ -426,7 +426,7 @@ class _StaffFilterPageState extends State<StaffFilterPage> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          staff.name.isNotEmpty ? staff.name : "Không tên",
+                                          staff.fullName.isNotEmpty ? staff.fullName : "Không tên",
                                           style: TextStyle(
                                             fontFamily: "Oswald",
                                             fontSize: 20.sp,
