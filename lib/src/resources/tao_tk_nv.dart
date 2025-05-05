@@ -1,5 +1,7 @@
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
+import 'package:do_an/src/resources/back_button.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
@@ -9,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -36,6 +37,14 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
   @override
   void initState() {
     super.initState();
+    // Kiểm tra xem widget có còn mounted không trước khi gọi resetImage
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final avatarProvider = Provider.of<UserImageProvider>(context, listen: false);
+        avatarProvider.resetImage();
+      });
+    }
+
     _fetchPositions();
   }
 
@@ -292,8 +301,22 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                               child: SizedBox(
                                 height: 60.h,
                                 child: ElevatedButton(
-                                  onPressed: () {},
-                                  style: ElevatedButton.styleFrom(
+                                    onPressed: () {
+                                      // Xóa tất cả thông tin trong các trường nhập
+                                      _nameStaffController.clear();
+                                      _phoneStaffController.clear();
+                                      _emailStaffController.clear();
+
+                                      // Reset ảnh
+                                      final avatarProvider = Provider.of<UserImageProvider>(context, listen: false);
+                                      avatarProvider.resetImage();  // Reset ảnh
+
+                                      // Reset vai trò nếu cần
+                                      setState(() {
+                                        _selectedRole = null;  // Hoặc giá trị mặc định bạn muốn
+                                      });
+                                    },
+                                    style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF2D80F8),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30.r),
@@ -328,6 +351,11 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                 ),
               ),
             ),
+            Positioned(
+              top: MediaQuery.of(context).size.height/2,
+              left: 10.w,
+              child: const BackButtonWidget(),
+            ),
           ],
         ),
       ),
@@ -349,23 +377,19 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
 
     if (!isValidStaff) return;
 
-    LoadingDialog.showLoadingDialog(context, 'Đang tải ...');
+    final imageProvider = Provider.of<UserImageProvider>(context, listen: false);
+    final hasImage = (kIsWeb && imageProvider.webImageBytes != null) ||
+        (!kIsWeb && imageProvider.selectedImageFile != null);
+
+    if (!hasImage) {
+      MsgDialog.showMsgDialog(context, "Lỗi", "Bạn chưa chọn ảnh. Vui lòng chọn lại");
+      return;
+    }
+
+    LoadingDialog.showLoadingDialog(context, 'Đang tạo tài khoản ...');
 
     try {
-      final imageProvider = Provider.of<UserImageProvider>(context, listen: false);
-      final userId = const Uuid().v4();
-
-      final imageUrl = await imageProvider.uploadSelectedImageAndGetUrl(userId);
-
-      if (imageUrl == null) {
-        LoadingDialog.hideLoadingDialog(context);
-        MsgDialog.showMsgDialog(context, "Lỗi", "Bạn chưa chọn ảnh. Vui lòng chọn lại");
-        return;
-      }
-
-      _imageUrl = imageUrl;
-
-      // Gọi Cloud Function createStaffAccount
+      // 1. Gọi Cloud Function tạo tài khoản trước
       final url = Uri.parse("https://createstaffaccount-ttrkrlo35a-uc.a.run.app");
 
       final response = await http.post(
@@ -376,21 +400,35 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
           "fullName": _nameStaffController.text.trim(),
           "phone": _phoneStaffController.text.trim(),
           "position": _selectedRole!,
-          "imageUrl": _imageUrl!,
         }),
       );
 
-      LoadingDialog.hideLoadingDialog(context);
-
-      if (response.statusCode == 200) {
-        MsgDialog.showMsgDialog(context, "Thành công", "Tạo tài khoản nhân viên thành công.");
-      } else {
-        MsgDialog.showMsgDialog(
-          context,
-          "Thất bại",
-          "Không thể tạo tài khoản: ${response.body}",
-        );
+      if (response.statusCode != 200) {
+        LoadingDialog.hideLoadingDialog(context);
+        MsgDialog.showMsgDialog(context, "Thất bại", "Không thể tạo tài khoản: ${response.body}");
+        return;
       }
+
+      // 2. Nếu thành công → lấy `uid` từ phản hồi
+      final responseBody = jsonDecode(response.body);
+      final userId = responseBody['uid']; // Lấy uid từ phản hồi
+      final uniqueFileName = "${DateTime.now().millisecondsSinceEpoch}_avatar.jpg";
+
+      final imageUrl = await imageProvider.uploadSelectedImageAndGetUrl(userId, uniqueFileName);
+
+      _imageUrl = imageUrl;
+
+      // 3. Cập nhật Firestore với imageUrl nếu cần
+      await FirebaseFirestore.instance.collection("staffs").doc(userId).set({
+        "imageUrl": imageUrl,
+        "email": _emailStaffController.text.trim(),
+        "fullName": _nameStaffController.text.trim(),
+        "phone": _phoneStaffController.text.trim(),
+        "position": _selectedRole!,
+      }, SetOptions(merge: true));
+
+      LoadingDialog.hideLoadingDialog(context);
+      MsgDialog.showMsgDialog(context, "Thành công", "Tạo tài khoản nhân viên thành công.");
     } catch (e) {
       LoadingDialog.hideLoadingDialog(context);
       MsgDialog.showMsgDialog(context, "Lỗi", "Không thể tạo tài khoản: $e");
@@ -468,7 +506,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
               ),
               dropdownStyleData: DropdownStyleData(
                 maxHeight: 200.h,
-                width: 135.w,
+                width: 130.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                   color: Color(0xFFF7FEFF),
