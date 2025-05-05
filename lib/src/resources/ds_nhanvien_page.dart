@@ -1,11 +1,18 @@
+import 'dart:convert';
+import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/models/staffs.dart';
+import 'package:do_an/src/resources/back_button.dart';
+import 'package:do_an/src/resources/provider/user_image_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:excel/excel.dart' as ex;
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:http/http.dart' as http;
 import 'dart:html' as html;
 
 
@@ -17,6 +24,8 @@ class StaffListPage extends StatefulWidget {
 }
 
 class _StaffListPageState extends State<StaffListPage> {
+  final AuthBloc _authBloc = AuthBloc();
+
   String? _selectedPosition;
   List<String> _positionItems = [];
   List<Staff> _staffList = [];
@@ -76,112 +85,271 @@ class _StaffListPageState extends State<StaffListPage> {
     });
   }
 
+  Future<bool> deleteStaffAccount(String uid) async {
+    try {
+      final response = await http.post(
+        Uri.parse("https://deletestaffaccount-ttrkrlo35a-uc.a.run.app"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'uid': uid}),
+      );
+
+      if (response.statusCode == 200) {
+        print("✅ Xóa tài khoản $uid thành công.");
+        return true;
+      } else {
+        print("❌ Lỗi khi xóa tài khoản $uid: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Exception khi gọi Cloud Function xóa user $uid: $e");
+      return false;
+    }
+  }
+
   void showStaffDialog(BuildContext context, Staff staff, VoidCallback onRefresh) {
-    final nameController = TextEditingController(text: staff.name);
+    final nameController = TextEditingController(text: staff.fullName);
     final emailController = TextEditingController(text: staff.email);
     final phoneController = TextEditingController(text: staff.phone);
     final positionController = TextEditingController(text: staff.position);
 
     bool isEditing = false;
+    bool isLoading = false;
 
     final size = MediaQuery.of(context).size;
     final isLandscape = size.height < size.width;
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return AlertDialog(
-              title: Text(
-                "Thông tin nhân viên",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: isLandscape ? 5.sp : 20.sp, color: Colors.blueAccent),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (staff.imageUrl.isNotEmpty)
-                      Center(
-                        child: CircleAvatar(
-                          radius: 70.r,
-                          backgroundImage: NetworkImage(staff.imageUrl),
-                        ),
+            return ChangeNotifierProvider(
+              create: (_) => UserImageProvider(),
+              child: Consumer<UserImageProvider>(
+                builder: (context, imageProvider, _) {
+                  return AlertDialog(
+                    title: Text(
+                      "Thông tin nhân viên",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: "Oswald",
+                        fontWeight: FontWeight.bold,
+                        fontSize: isLandscape ? 7.sp : 20.sp,
+                        color: Colors.blueAccent,
                       ),
-                    SizedBox(height: 30.h),
-                    TextField(
-                      controller: nameController,
-                      enabled: isEditing,
-                      style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
-                      decoration: InputDecoration(labelText: 'Họ và tên'),
                     ),
-                    SizedBox(height: 18.h),
-                    TextField(
-                      controller: emailController,
-                      enabled: isEditing,
-                      style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
-                      decoration: InputDecoration(labelText: 'Email'),
-                    ),
-                    SizedBox(height: 18.h),
-                    TextField(
-                      controller: phoneController,
-                      enabled: isEditing,
-                      style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
-                      decoration: InputDecoration(labelText: 'SĐT'),
-                    ),
-                    SizedBox(height: 18.h),
-                    TextField(
-                      controller: positionController,
-                      enabled: isEditing,
-                      style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
-                      decoration: InputDecoration(labelText: 'Vị trí'),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () async {
-                    final confirm = await showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: Text("Xác nhận xóa"),
-                        content: Text("Bạn có chắc chắn muốn xóa nhân viên này?"),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Hủy")),
-                          TextButton(onPressed: () => Navigator.pop(context, true), child: Text("Xóa", style: TextStyle(color: Colors.red))),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isLoading) CircularProgressIndicator(),
+                          if (!isLoading) ...[
+                            Center(
+                              child: Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 70.r,
+                                    backgroundImage: imageProvider.webImageBytes != null
+                                        ? MemoryImage(imageProvider.webImageBytes!)
+                                        : imageProvider.selectedImageFile != null
+                                        ? FileImage(imageProvider.selectedImageFile!)
+                                        : (staff.imageUrl.isNotEmpty
+                                        ? NetworkImage(staff.imageUrl)
+                                        : const AssetImage('assets/default_avatar.png')
+                                    as ImageProvider),
+                                  ),
+                                  if (isEditing)
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: IconButton(
+                                        icon: Icon(Icons.camera_alt, color: Colors.blueAccent),
+                                        onPressed: () async {
+                                          await imageProvider.pickImage();
+                                        },
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 20.h),
+                            StreamBuilder<String>(
+                              stream: _authBloc.nameStaffStream,
+                              builder: (context, snapshot) => TextField(
+                                controller: nameController,
+                                enabled: isEditing,
+                                style: TextStyle(
+                                    fontSize: isLandscape ? 3.5.sp : 15.sp),
+                                decoration: InputDecoration(
+                                  labelText: 'Họ và tên',
+                                  errorText: snapshot.hasError
+                                      ? snapshot.error as String
+                                      : null,
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 18.h),
+                            StreamBuilder<String>(
+                              stream: _authBloc.emailStaffStream,
+                              builder: (context, snapshot) => TextField(
+                                controller: emailController,
+                                enabled: isEditing,
+                                style: TextStyle(
+                                    fontSize: isLandscape ? 3.5.sp : 15.sp),
+                                decoration: InputDecoration(
+                                  labelText: 'Email',
+                                  errorText: snapshot.hasError
+                                      ? snapshot.error as String
+                                      : null,
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 18.h),
+                            StreamBuilder<String>(
+                              stream: _authBloc.phoneStaffStream,
+                              builder: (context, snapshot) => TextField(
+                                controller: phoneController,
+                                enabled: isEditing,
+                                style: TextStyle(
+                                    fontSize: isLandscape ? 3.5.sp : 15.sp),
+                                decoration: InputDecoration(
+                                  labelText: 'SĐT',
+                                  errorText: snapshot.hasError
+                                      ? snapshot.error as String
+                                      : null,
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 18.h),
+                            TextField(
+                              controller: positionController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
+                              decoration: InputDecoration(labelText: 'Vị trí'),
+                            ),
+                          ],
                         ],
                       ),
-                    );
-                    if (confirm == true) {
-                      await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).delete();
-                      Navigator.pop(context);
-                      onRefresh();
-                    }
-                  },
-                  child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: isLandscape ? 4.sp : 15.sp)),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    if (isEditing) {
-                      await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).update({
-                        'name': nameController.text.trim(),
-                        'email': emailController.text.trim(),
-                        'phone': phoneController.text.trim(),
-                        'position': positionController.text.trim(),
-                      });
-                      Navigator.pop(context);
-                      onRefresh();
-                    } else {
-                      setState(() {
-                        isEditing = true;
-                      });
-                    }
-                  },
-                  child: Text(isEditing ? "Lưu" : "Sửa", style: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp)),
-                ),
-              ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () async {
+                          final confirm = await showDialog(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: Text("Xác nhận xóa"),
+                              content: Text("Bạn có chắc chắn muốn xóa nhân viên này?"),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Hủy")),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: Text("Xóa", style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirm == true) {
+                            if (staff.imageUrl.isNotEmpty) {
+                              try {
+                                final storageRef = FirebaseStorage.instance.refFromURL(staff.imageUrl);
+                                await storageRef.delete();
+                              } catch (e) {
+                                print("⚠️ Không tìm thấy hoặc không thể xóa ảnh cũ: $e");
+                              }
+                            }
+
+                            // Gọi hàm xóa tài khoản từ Firebase Authentication và Cloud Function
+                            bool deleteSuccess = await deleteStaffAccount(staff.uid);
+
+                            if (deleteSuccess) {
+                              // Xóa thông tin nhân viên từ Firestore
+                              await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).delete();
+                              Navigator.pop(context);
+                              onRefresh();
+                            } else {
+                              // Nếu xóa không thành công, thông báo lỗi
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lỗi khi xóa tài khoản.")));
+                            }
+                          }
+                        },
+                        child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: isLandscape ? 4.sp : 15.sp)),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          if (isEditing) {
+                            final isValid = _authBloc.isValidStaffSignUp(
+                              nameController.text.trim(),
+                              emailController.text.trim(),
+                              phoneController.text.trim(),
+                              positionController.text.trim(),
+                            );
+
+                            if (!isValid) {
+                              setState(() => isLoading = false);
+                              return;
+                            }
+
+                            setState(() => isLoading = true);
+
+                            String? newImageUrl;
+
+                            // ✅ Chỉ khi có ảnh mới thì mới xóa ảnh cũ và upload
+                            if (imageProvider.webImageBytes != null) {
+                              // 1. Xóa ảnh cũ nếu có
+                              if (staff.imageUrl.isNotEmpty) {
+                                try {
+                                  final storageRef = FirebaseStorage.instance.refFromURL(staff.imageUrl);
+                                  await storageRef.delete();
+                                } catch (e) {
+                                  print("⚠️ Không thể xóa ảnh cũ: $e");
+                                }
+                              }
+
+                              // 2. Upload ảnh mới
+                              final uniqueFileName = "${DateTime.now().millisecondsSinceEpoch}_avatar.jpg";
+                              newImageUrl = await imageProvider.uploadSelectedImageAndGetUrl(staff.uid, uniqueFileName);
+                            }
+
+                            // 3. Cập nhật dữ liệu vào Firestore
+                            final updateData = {
+                              'fullName': nameController.text.trim(),
+                              'email': emailController.text.trim(),
+                              'phone': phoneController.text.trim(),
+                              'position': positionController.text.trim(),
+                            };
+
+                            if (newImageUrl != null) {
+                              updateData['imageUrl'] = newImageUrl;
+                            }
+
+                            try {
+                              await FirebaseFirestore.instance
+                                  .collection('staffs')
+                                  .doc(staff.uid)
+                                  .update(updateData);
+                            } catch (e) {
+                              print("❌ Lỗi khi cập nhật Firestore: $e");
+                            }
+
+                            setState(() => isLoading = false);
+                            Navigator.pop(context);
+                            onRefresh();
+                          } else {
+                            setState(() => isEditing = true);
+                          }
+                        },
+                        child: Text(
+                          isEditing ? "Lưu" : "Sửa",
+                          style: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             );
           },
         );
@@ -206,7 +374,7 @@ class _StaffListPageState extends State<StaffListPage> {
     for (int i = 0; i < staffs.length; i++) {
       final apt = staffs[i];
       final row = [
-        ex.TextCellValue(apt.name),
+        ex.TextCellValue(apt.fullName),
         ex.TextCellValue(apt.phone),
         ex.TextCellValue(apt.position),
         ex.TextCellValue(apt.email),
@@ -242,6 +410,11 @@ class _StaffListPageState extends State<StaffListPage> {
             SingleChildScrollView(
               child: isLandscape ? _buildLandScapeLayout(context) : _buildPortraitLayout(context),
             ),
+            Positioned(
+              top: MediaQuery.of(context).size.height/2,
+              left: 10.w,
+              child: const BackButtonWidget(),
+            ),
           ],
         ),
       ),
@@ -254,8 +427,7 @@ class _StaffListPageState extends State<StaffListPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(mainAxisSize:MainAxisSize.min, children: [
-            Text(
+          Text(
             'Danh sách nhân viên',
             style: TextStyle(
               fontFamily: "Oswald",
@@ -263,30 +435,26 @@ class _StaffListPageState extends State<StaffListPage> {
               fontSize: 12.sp,
             ),
           ),
-            SizedBox(width: 10.w),
-            ElevatedButton(
-              onPressed: () => exportStaffsToExcel(_staffList),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.upload),
-                  SizedBox(width: 5.w,),
-                  Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
-                ],
-              ),
-            )
-          ],),
-          SizedBox(height: 20.h),
-          SizedBox(
-            height: MediaQuery.of(context).size.height - 100,
-            child: Column(
+          SizedBox(width: 10.h),
+          ElevatedButton(
+            onPressed: () => exportStaffsToExcel(_staffList),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 200.w,
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF7FEFF),
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
+                Icon(Icons.upload),
+                SizedBox(width: 5.w,),
+                Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
+              ],
+            ),
+          ),
+          SizedBox(height: 30.h),
+          SizedBox(
+            height: MediaQuery.of(context).size.height - 360.h ,
+            child:  Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,17 +486,18 @@ class _StaffListPageState extends State<StaffListPage> {
                     ),
                   ),
                 ),
-                SizedBox(height: 30.h),
-                Flexible(
+                SizedBox(width: 30.w),
+                Expanded(
+                  flex: 4,
                   child: _staffList.isEmpty
                       ? const Center(child: Text("Không có nhân viên nào"))
                       : SingleChildScrollView(
                     child: GridView.builder(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
+                        crossAxisCount: 2,
                         mainAxisSpacing: 30.h,
-                        crossAxisSpacing: 10.w,
-                        childAspectRatio: 5 / 1.5,
+                        crossAxisSpacing: 5.w,
+                        childAspectRatio: 6 / 2,
                       ),
                       itemCount: _staffList.length,
                       shrinkWrap: true,
@@ -340,7 +509,7 @@ class _StaffListPageState extends State<StaffListPage> {
                             _fetchStaff();
                           }),
                           child: Container(
-                            padding: EdgeInsets.all(5.sp),
+                            padding: EdgeInsets.fromLTRB(1.w,25.h,1.w,0.w),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12.r),
@@ -359,8 +528,8 @@ class _StaffListPageState extends State<StaffListPage> {
                                     children: [
                                       SizedBox(width: 5.w),
                                       Container(
-                                        width: 16.w,
-                                        height: 70.h,
+                                        width: 17.w,
+                                        height: 80.h,
                                         child: CircleAvatar(
                                           radius: 8.r,
                                           backgroundImage: staff.imageUrl.isNotEmpty
@@ -377,19 +546,19 @@ class _StaffListPageState extends State<StaffListPage> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              staff.name,
+                                              staff.fullName,
                                               style: TextStyle(
                                                 fontFamily: "Oswald",
-                                                fontSize: 6.sp,
+                                                fontSize: 5.5.sp,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                             SizedBox(height: 10.h,),
                                             Text(
-                                              staff.email,
+                                              staff.position,
                                               style: TextStyle(
-                                                fontSize: 4.sp,
+                                                fontSize: 3.5.sp,
                                               ),
                                             ),
                                           ],
@@ -408,7 +577,8 @@ class _StaffListPageState extends State<StaffListPage> {
                 ),
               ],
             ),
-          ),
+
+          )
         ],
       ),
     );
@@ -527,7 +697,7 @@ class _StaffListPageState extends State<StaffListPage> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          staff.name.isNotEmpty ? staff.name : "Không tên",
+                                          staff.fullName.isNotEmpty ? staff.fullName : "Không tên",
                                           style: TextStyle(
                                             fontFamily: "Oswald",
                                             fontSize: 20.sp,
@@ -612,7 +782,7 @@ class _StaffListPageState extends State<StaffListPage> {
               ),
               dropdownStyleData: DropdownStyleData(
                 maxHeight: 200.h,
-                width: isLandscape ? 200.w : 324.w,
+                width: isLandscape ? 126.w : 324.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                   color: Color(0xFFF7FEFF),

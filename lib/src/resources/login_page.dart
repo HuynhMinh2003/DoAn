@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
-import 'package:do_an/src/resources/staff_page.dart';
+import 'package:do_an/src/resources/staff_page_1.dart';
 import 'package:do_an/src/resources/quan_li_web.dart';
 import 'package:do_an/src/resources/home_first_staff_page.dart';
 import 'package:do_an/src/resources/test.dart';

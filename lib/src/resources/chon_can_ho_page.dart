@@ -1,10 +1,13 @@
 import 'dart:async'; // Thêm import Timer
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/apartment.dart';
 import 'package:do_an/src/models/contract_data.dart';
+import 'package:do_an/src/resources/back_button.dart';
 import 'package:do_an/src/resources/contract_info_page.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -40,6 +43,26 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
   double minFunction(double a, double b) => a < b ? a : b;
   double maxFunction(double a, double b) => a > b ? a : b;
 
+  Future<bool> deleteResidentAccount(String uid) async {
+    try {
+      final response = await http.post(
+        Uri.parse("https://deleteresidentaccount-ttrkrlo35a-uc.a.run.app"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'uid': uid}),
+      );
+
+      if (response.statusCode == 200) {
+        print("✅ Xóa tài khoản $uid thành công.");
+        return true;
+      } else {
+        print("❌ Lỗi khi xóa tài khoản $uid: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Exception khi gọi Cloud Function xóa user $uid: $e");
+      return false;
+    }
+  }
   void showApartmentDialog(BuildContext context, Apartment apartment) {
     showDialog(
       context: context,
@@ -91,76 +114,118 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     );
   }
 
-  void showApartmentContractInfoDialog(BuildContext context, Apartment apartment) async {
-    final contractCollectionRef = FirebaseFirestore.instance
-        .collection("apartments")
-        .doc(apartment.id)
-        .collection("contracts");
+  void showApartmentContractInfoDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) async {
+    final apartmentDocRef = FirebaseFirestore.instance.collection("apartments").doc(apartment.id);
+    final contractCollectionRef = apartmentDocRef.collection("contracts");
+    final billWaterCollectionRef = apartmentDocRef.collection("billWater");
+    final residentsCollectionRef = FirebaseFirestore.instance.collection("residents"); // Reference đến collection "residents"
 
     try {
-      final snapshot = await contractCollectionRef.limit(1).get(); // Lấy 1 hợp đồng đầu tiên (vì chỉ có 1)
+      // Lấy hợp đồng đầu tiên
+      final contractSnapshot = await contractCollectionRef.limit(1).get();
 
-      if (snapshot.docs.isEmpty) {
+      if (contractSnapshot.docs.isEmpty) {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: Text("Thông tin hợp đồng", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp)),
-            content: Text("Căn hộ này chưa có hợp đồng.", style: TextStyle(fontSize: 4.sp)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp),),
-              ),
-            ],
+            title: Text("Thông tin hợp đồng"),
+            content: Text("Căn hộ này chưa có hợp đồng."),
+            actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("Đóng"))],
           ),
         );
         return;
       }
 
-      final doc = snapshot.docs.first;
-      final contract = ContractData.fromMap(doc.data(), doc.id, []); // Bỏ qua residents nếu chưa cần
+      final contractDoc = contractSnapshot.docs.first;
+      final contract = ContractData.fromMap(contractDoc.data(), contractDoc.id, []);
+
+      // Lấy hóa đơn nước đầu tiên
+      final billWaterSnapshot = await billWaterCollectionRef.limit(1).get();
+      String billWaterInfo = "Chưa có hóa đơn nước";
+
+      if (billWaterSnapshot.docs.isNotEmpty) {
+        final billDoc = billWaterSnapshot.docs.first;
+        // Xử lý thông tin hóa đơn nước nếu cần
+        billWaterInfo = "Số tiền: ${billDoc['totalAmount']} VND";  // Giả sử bạn lưu tổng số tiền trong hóa đơn
+      }
 
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: Text("Phòng ${contract.apartmentName}", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp)),
+          title: Text("Phòng ${contract.apartmentName}"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 15.h),
-              Text("Diện tích: ${contract.area} m²", style: TextStyle(fontSize: 4.sp)),
-              SizedBox(height: 10.h),
-              Text("Người đại diện: ${contract.representative ?? 'Không có'}", style: TextStyle(fontSize: 4.sp)),
-              SizedBox(height: 10.h),
-              Text("Số người ở: ${contract.numberOfResidents}", style: TextStyle(fontSize: 4.sp)),
-              SizedBox(height: 10.h),
-              Text("Tình trạng: ${contract.contractType == 'rent' ? 'Đã được thuê' : 'Đã được mua'}", style: TextStyle(fontSize: 4.sp)),
-              SizedBox(height: 10.h),
-              Text("Đã có hợp đồng từ: ${DateFormat('dd/MM/yyyy – HH:mm').format(contract.startDate)}", style: TextStyle(fontSize: 4.sp)),
+              Text("Diện tích: ${contract.area} m²"),
+              Text("Người đại diện: ${contract.representative ?? 'Không có'}"),
+              Text("Số người ở: ${contract.numberOfResidents}"),
+              Text("Tình trạng: ${contract.contractType == 'rent' ? 'Đã được thuê' : 'Đã được mua'}"),
+              Text("Hợp đồng từ: ${DateFormat('dd/MM/yyyy – HH:mm').format(contract.startDate)}"),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp),),
+              child: Text("Đóng", style: TextStyle(fontSize: 4.sp),),
+            ),
+            TextButton(
+              onPressed: () async {
+                final confirm = await showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: Text("Xác nhận xóa", style: TextStyle(fontSize: 4.sp)),
+                    content: Text("Bạn có chắc chắn muốn xóa hợp đồng và hóa đơn nước của căn hộ này không?", style: TextStyle(fontSize: 4.sp)),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Hủy", style: TextStyle(fontSize: 4.sp))),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  // 1. Xóa hợp đồng
+                  await contractDoc.reference.delete();
+
+                  // 2. Xóa hóa đơn nước
+                  final billWaterDoc = billWaterSnapshot.docs.isNotEmpty ? billWaterSnapshot.docs.first : null;
+                  if (billWaterDoc != null) {
+                    await billWaterDoc.reference.delete();
+                  }
+
+                  final residentsSnapshot = await residentsCollectionRef.where('apartmentId', isEqualTo: apartment.id).get();
+                  for (var residentDoc in residentsSnapshot.docs) {
+                    await residentDoc.reference.delete();
+                  }
+
+                  for (var residentDoc in residentsSnapshot.docs) {
+                    final uid = residentDoc.id;
+                    await deleteResidentAccount(uid); // Gọi hàm đã tách
+                  }
+
+                  // 3. Cập nhật trạng thái căn hộ
+                  await apartmentDocRef.update({'isRent': false, 'isSale':false, 'residents':[]});
+
+                  Navigator.pop(context);
+                  onRefresh();
+                }
+              },
+              child: Text("Xóa hợp đồng", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
             ),
           ],
         ),
       );
     } catch (e) {
-      print("❌ Lỗi lấy hợp đồng: $e");
+      print("❌ Lỗi khi xóa hợp đồng: $e");
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: Text("Lỗi", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp)),
-          content: Text("Không thể tải thông tin hợp đồng.", style: TextStyle(fontSize: 4.sp)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp),),
-            ),
-          ],
+          title: Text("Lỗi", style: TextStyle(fontSize: 6.sp)),
+          content: Text("Không thể thực hiện thao tác xóa hợp đồng.", style: TextStyle(fontSize: 4.sp)),
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("Đóng", style: TextStyle(fontSize: 4.sp)))],
         ),
       );
     }
@@ -440,7 +505,9 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                         ),
                                         onTap: () {
                                           if (apartment.isRent == true||apartment.isSale == true) {
-                                            showApartmentContractInfoDialog(context, apartment);
+                                            showApartmentContractInfoDialog(context, apartment, (){
+                                              loadApartmentsFromFirestore();
+                                            });
                                           } else {
                                             showApartmentDialog(
                                                 context, apartment);
@@ -456,6 +523,11 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                     ],
                   ),
                 ),
+              ),
+              Positioned(
+                top: MediaQuery.of(context).size.height/2,
+                left: 10.w,
+                child: const BackButtonWidget(),
               ),
             ],
           )),

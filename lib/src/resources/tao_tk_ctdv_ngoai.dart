@@ -1,4 +1,5 @@
 import 'package:do_an/src/blocs/auth_bloc.dart';
+import 'package:do_an/src/resources/back_button.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:flutter/material.dart';
@@ -134,7 +135,12 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                               child: SizedBox(
                                 height: 60.h,
                                 child: ElevatedButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    _nameCompanyController.clear();
+                                    _emailCompanyController.clear();
+                                    _phoneCompanyController.clear();
+                                    _typeCompanyController.clear();
+                                  },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
                                     const Color(0xFF2D80F8),
@@ -168,6 +174,11 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                   ),
                 ),
               ),
+            ),
+            Positioned(
+              top: MediaQuery.of(context).size.height/2,
+              left: 10.w,
+              child: const BackButtonWidget(),
             ),
           ],
         ),
