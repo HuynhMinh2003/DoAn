@@ -7,7 +7,7 @@ class Staff {
   final String imageUrl;
   final bool isFree;
   final Timestamp lastUpdated;
-  final String name;
+  final String fullName;
   final String phone;
   final String position;
   final int role;
@@ -20,7 +20,7 @@ class Staff {
     required this.imageUrl,
     required this.isFree,
     required this.lastUpdated,
-    required this.name,
+    required this.fullName,
     required this.phone,
     required this.position,
     required this.role,
@@ -37,7 +37,7 @@ class Staff {
       imageUrl: json['imageUrl'] ?? '',
       isFree: json['isFree'] ?? false,
       lastUpdated: json['lastUpdated'] != null ? json['lastUpdated'] as Timestamp : Timestamp.fromMillisecondsSinceEpoch(0), // Nếu null, dùng giá trị mặc định
-      name: json['name'] ?? '',
+      fullName: json['fullName'] ?? '',
       phone: json['phone'] ?? '',
       position: json['position'] ?? '',
       role: json['role'] ?? 0,
@@ -53,7 +53,7 @@ class Staff {
       'imageUrl': imageUrl,
       'isFree': isFree,
       'lastUpdated': lastUpdated,
-      'name': name,
+      'fullName': fullName,
       'phone': phone,
       'position': position,
       'role': role,

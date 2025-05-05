@@ -1,16 +1,19 @@
-import 'package:do_an/src/resources/back_button.dart';
-import 'package:do_an/src/resources/chon_can_ho_page.dart';
-import 'package:do_an/src/resources/chon_nhanvien_page.dart';
-import 'package:do_an/src/resources/ds_canho_page.dart';
+import 'package:do_an/src/resources/apartment_page.dart';
 import 'package:do_an/src/resources/ds_nhanvien_page.dart';
-import 'package:do_an/src/resources/tao_tk_nv.dart';
+import 'package:do_an/src/resources/staff_page.dart';
+import 'package:do_an/src/resources/tao_tk_ctdv_ngoai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class StaffPage extends StatelessWidget {
-  const StaffPage({super.key});
+class MainAdminPage extends StatefulWidget {
+  const MainAdminPage({super.key});
 
+  @override
+  State<MainAdminPage> createState() => _MainAdminPageState();
+}
+
+class _MainAdminPageState extends State<MainAdminPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,24 +28,20 @@ class StaffPage extends StatelessWidget {
             ),
             SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(100.w, 280.h, 100.w, 0.h),
-                child:
-                GridView.count(
-                  crossAxisCount: 2, // hiển thị 2 cột
+                padding: EdgeInsets.fromLTRB(60.w, 170.h, 60.w, 0.h),
+                child: GridView.count(
+                  crossAxisCount: 4,
                   mainAxisSpacing: 6.h,
-                  crossAxisSpacing: 60.w,
+                  crossAxisSpacing: 6.w,
                   shrinkWrap: true,
                   children: [
-                    _buildCard(context, 'Tạo tài khoản\n  nhân viên', 'assets/images/image_add_staff.svg', AddAccountStaffPage()),
-                    _buildCard(context, 'Danh sách\n nhân viên', 'assets/images/image_list_staff.svg', StaffListPage()),
+                    _buildCard(context, 'Quản lí\ncăn hộ', 'assets/images/image_room.svg', const ApartmentPage()),
+                    _buildCard(context, ' Quản lí\nnhân viên', 'assets/images/image_staff.svg', const StaffPage()),
+                    _buildCard(context, ' Quản lí công ty\n  dịch vụ ngoài', 'assets/images/image_company.svg', const AddAccountCompanyPage()),
+                    // Thêm các card khác nếu cần
                   ],
                 ),
               ),
-            ),
-            Positioned(
-              top: MediaQuery.of(context).size.height/2,
-              left: 10.w,
-              child: const BackButtonWidget(),
             ),
           ],
         ),
@@ -76,4 +75,7 @@ class StaffPage extends StatelessWidget {
       ),
     );
   }
+
 }
+
+

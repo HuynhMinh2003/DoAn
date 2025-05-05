@@ -22,9 +22,9 @@ const createStaffAccount = onRequest(
   },
   (req, res) => {
     corsHandler(req, res, async () => {
-      const { email, fullName, phone, position, imageUrl } = req.body;
+      const { email, fullName, phone, position} = req.body;
 
-      if (!email || !fullName || !phone || !position || !imageUrl) {
+      if (!email || !fullName || !phone || !position ) {
         return res.status(400).send("Thiếu thông tin nhân viên.");
       }
 
@@ -43,7 +43,7 @@ const createStaffAccount = onRequest(
           fcmTokens: [],
           phone,
           position,
-          imageUrl,
+          imageUrl: "",
           isFree:true,
           role: 2,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -84,11 +84,15 @@ const createStaffAccount = onRequest(
           `,
         });
 
-        res.status(200).send("Tạo tài khoản nhân viên và gửi email thành công.");
-      } catch (error) {
-        console.error("❌ Lỗi tạo tài khoản nhân viên:", error);
-        res.status(500).send("Lỗi: " + error.message);
-      }
+        // Trả về UID của nhân viên vừa tạo
+                res.status(200).send({
+                  message: "Tạo tài khoản nhân viên và gửi email thành công.",
+                  uid: userRecord.uid, // Trả về UID của người dùng mới
+                });
+              } catch (error) {
+                console.error("❌ Lỗi tạo tài khoản nhân viên:", error);
+                res.status(500).send("Lỗi: " + error.message);
+              }
     });
   }
 );
