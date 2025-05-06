@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ResidentInfo {
-  final String? residentId; // optional, nếu lấy từ Firestore thì có
+  String? residentId; // optional, nếu lấy từ Firestore thì có
   final String fullName;
   final String cccd;
   final String phone;
-  final DateTime birthDate;
+  final DateTime? birthDate;
   final String email;
   final String? apartmentId; // Thêm apartmentId
 
@@ -14,7 +14,7 @@ class ResidentInfo {
     required this.fullName,
     required this.cccd,
     required this.phone,
-    required this.birthDate,
+    this.birthDate,
     required this.email,
     this.apartmentId,
   });
@@ -35,12 +35,15 @@ class ResidentInfo {
   // Convert thành Map để lưu Firestore
   Map<String, dynamic> toMap() {
     return {
-      'name': fullName,
-      'cccd': cccd,
-      'phone': phone,
-      'birthDate': Timestamp.fromDate(birthDate),
-      'email': email,
       'apartmentId': apartmentId,
+      'birthDate': birthDate,
+      'cccd': cccd,
+      'creatAt': DateTime.now(),
+      'email': email,
+      'fcmTokens': [],
+      'fullName': fullName,
+      'phone': phone,
+      'role': 3
     };
   }
 
