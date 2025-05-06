@@ -325,12 +325,18 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
             'fullName': resident.fullName,
             'cccd': resident.cccd,
             'phone': resident.phone,
-            'birthDate': resident.birthDate.toIso8601String(),
+            'birthDate': resident.birthDate?.toIso8601String(),
             'apartmentId': contract.apartmentDocId,
           }),
         );
         if (response.statusCode == 200) {
-          print("✅ Tạo tài khoản cho ${resident.fullName} thành công.");
+          final responseData = json.decode(response.body);
+          final residentId = responseData['residentId']; // ✅ Lấy residentId từ response
+
+          // ✅ Gán lại vào resident
+          resident.residentId = residentId;
+
+          print("✅ Tạo tài khoản cho ${resident.fullName} thành công. ID: $residentId");
         } else {
           print("❌ Lỗi tạo tài khoản: ${response.body}");
         }
@@ -339,11 +345,15 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
       }
     }
 
-    // Cập nhật danh sách cư dân
-    final residentNames = contract.residents.map((r) => r.fullName).toList();
+    // Cập nhật danh sách cư dân (cho phép trùng tên)
+    final residentObjects = contract.residents.map((r) => {
+      'fullName': r.fullName,
+      'id': r.residentId, // Đảm bảo bạn có trường `id` trong ResidentInfo (Firestore doc ID)
+    }).toList();
+
     await apartmentRef.update({
       contract.contractType == "thuê" ? "isRent" : "isSale": true,
-      "residents": residentNames,
+      "residents": FieldValue.arrayUnion(residentObjects),
     });
 
     // Tạo hóa đơn nước đầu tiên
