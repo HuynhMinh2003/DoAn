@@ -108,7 +108,6 @@ class _StaffListPageState extends State<StaffListPage> {
 
   void showStaffDialog(BuildContext context, Staff staff, VoidCallback onRefresh) {
     final nameController = TextEditingController(text: staff.fullName);
-    final emailController = TextEditingController(text: staff.email);
     final phoneController = TextEditingController(text: staff.phone);
     final positionController = TextEditingController(text: staff.position);
 
@@ -142,6 +141,7 @@ class _StaffListPageState extends State<StaffListPage> {
                     content: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (isLoading) CircularProgressIndicator(),
                           if (!isLoading) ...[
@@ -191,21 +191,7 @@ class _StaffListPageState extends State<StaffListPage> {
                               ),
                             ),
                             SizedBox(height: 18.h),
-                            StreamBuilder<String>(
-                              stream: _authBloc.emailStaffStream,
-                              builder: (context, snapshot) => TextField(
-                                controller: emailController,
-                                enabled: isEditing,
-                                style: TextStyle(
-                                    fontSize: isLandscape ? 3.5.sp : 15.sp),
-                                decoration: InputDecoration(
-                                  labelText: 'Email',
-                                  errorText: snapshot.hasError
-                                      ? snapshot.error as String
-                                      : null,
-                                ),
-                              ),
-                            ),
+                            Text('Email: ${staff.email}',style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),),
                             SizedBox(height: 18.h),
                             StreamBuilder<String>(
                               stream: _authBloc.phoneStaffStream,
@@ -242,10 +228,10 @@ class _StaffListPageState extends State<StaffListPage> {
                               title: Text("Xác nhận xóa"),
                               content: Text("Bạn có chắc chắn muốn xóa nhân viên này?"),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Hủy")),
+                                TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Hủy",style: TextStyle(fontSize: 4.sp))),
                                 TextButton(
                                   onPressed: () => Navigator.pop(context, true),
-                                  child: Text("Xóa", style: TextStyle(color: Colors.red)),
+                                  child: Text("Xóa", style: TextStyle(color: Colors.red,fontSize: 4.sp)),
                                 ),
                               ],
                             ),
@@ -280,9 +266,8 @@ class _StaffListPageState extends State<StaffListPage> {
                       TextButton(
                         onPressed: () async {
                           if (isEditing) {
-                            final isValid = _authBloc.isValidStaffSignUp(
+                            final isValid = _authBloc.isValidStaffUpdate(
                               nameController.text.trim(),
-                              emailController.text.trim(),
                               phoneController.text.trim(),
                               positionController.text.trim(),
                             );
@@ -316,7 +301,6 @@ class _StaffListPageState extends State<StaffListPage> {
                             // 3. Cập nhật dữ liệu vào Firestore
                             final updateData = {
                               'fullName': nameController.text.trim(),
-                              'email': emailController.text.trim(),
                               'phone': phoneController.text.trim(),
                               'position': positionController.text.trim(),
                             };
@@ -345,6 +329,10 @@ class _StaffListPageState extends State<StaffListPage> {
                           isEditing ? "Lưu" : "Sửa",
                           style: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp),
                         ),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context), // Nút Đóng thêm vào đây
+                        child: Text("Đóng", style: TextStyle(fontSize: 4.sp),),
                       ),
                     ],
                   );
