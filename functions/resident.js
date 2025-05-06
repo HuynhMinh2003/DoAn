@@ -83,7 +83,10 @@ const createResidentAccount = onRequest(
           `,
         });
 
-        res.status(200).send("Tạo tài khoản cư dân và gửi email thành công.");
+        res.status(200).json({
+          message: "Tạo tài khoản cư dân và gửi email thành công.",
+          residentId: userRecord.uid, // ID cần dùng trong Flutter
+        });
       } catch (error) {
         console.error("❌ Lỗi tạo tài khoản cư dân:", error);
         res.status(500).send("Lỗi: " + error.message);

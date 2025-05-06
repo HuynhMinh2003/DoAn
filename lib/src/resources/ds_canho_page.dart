@@ -52,6 +52,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
@@ -162,6 +163,10 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                     }
                   },
                   child: Text(isEditing ? "Lưu" : "Sửa",style: TextStyle(fontSize: 4.sp)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context), // Nút Đóng thêm vào đây
+                  child: Text("Đóng", style: TextStyle(fontSize: 4.sp),),
                 ),
               ],
             );
