@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/apartment.dart';
 import 'package:do_an/src/models/contract_data.dart';
+import 'package:do_an/src/resources/add_resident_screen_page.dart';
 import 'package:do_an/src/resources/back_button.dart';
 import 'package:do_an/src/resources/contract_info_page.dart';
+import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:http/http.dart' as http;
@@ -151,8 +153,9 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
 
       showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (_) => AlertDialog(
-          title: Text("Phòng ${contract.apartmentName}"),
+          title: Center(child: Text("Phòng ${contract.apartmentName}")),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,7 +164,9 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
               Text("Người đại diện: ${contract.representative ?? 'Không có'}"),
               Text("Số người ở: ${contract.numberOfResidents}"),
               Text("Tình trạng: ${contract.contractType == 'rent' ? 'Đã được thuê' : 'Đã được mua'}"),
-              Text("Hợp đồng từ: ${DateFormat('dd/MM/yyyy – HH:mm').format(contract.startDate)}"),
+              Text(
+                "Thời hạn: ${DateFormat('dd/MM/yyyy – HH:mm').format(contract.startDate)} đến ${contract.endDate != null ? DateFormat('dd/MM/yyyy – HH:mm').format(contract.endDate!) : '∞'}",
+              ),
             ],
           ),
           actions: [
@@ -215,6 +220,10 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
               },
               child: Text("Xóa hợp đồng", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
             ),
+            TextButton(
+              onPressed: () => showUpdateResidentsDialog(context, apartment, contract, onRefresh),
+              child: Text("Cập nhật thành viên", style: TextStyle(fontSize: 4.sp)),
+            ),
           ],
         ),
       );
@@ -230,6 +239,295 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
       );
     }
   }
+
+  void showUpdateResidentsDialog(BuildContext context, Apartment apartment, ContractData contract, VoidCallback onRefresh) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text("Cập nhật thành viên"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                showAddResidentsFlow(context, apartment, contract, onRefresh);
+              },
+              child: Text("Thêm người"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                showRemoveResidentsDialog(context, apartment, contract, onRefresh);
+              },
+              child: Text("Xóa thành viên"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void showAddResidentsFlow(BuildContext context, Apartment apartment, ContractData contract, VoidCallback onRefresh) async {
+    int maxCanAdd = 10 - contract.numberOfResidents;
+    int? numberToAdd;
+
+    await showDialog(
+      context: context,
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("Chọn số người cần thêm"),
+              content: DropdownButton<int>(
+                value: numberToAdd,
+                hint: Text("Chọn số người"),
+                items: List.generate(maxCanAdd, (i) => i + 1).map((e) {
+                  return DropdownMenuItem(value: e, child: Text('$e'));
+                }).toList(),
+                onChanged: (value) => setState(() => numberToAdd = value),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: Text("Hủy")),
+                if (numberToAdd != null)
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, numberToAdd),
+                    child: Text("Tiếp tục"),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((value) {
+      if (value != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AddResidentsScreen(
+              count: value,
+              apartment: apartment,
+              contract: contract,
+              onComplete: onRefresh,
+            ),
+          ),
+        );
+      }
+    });
+  }
+
+  void showRemoveResidentsDialog(BuildContext context, Apartment apartment, ContractData contract, VoidCallback onRefresh) async {
+    final contractRef = FirebaseFirestore.instance
+        .collection("apartments")
+        .doc(apartment.id)
+        .collection("contracts")
+        .doc(contract.contractId);
+
+    final residentsSnapshot = await FirebaseFirestore.instance
+        .collection("residents")
+        .where("apartmentId", isEqualTo: apartment.id)
+        .get();
+
+    if (residentsSnapshot.docs.isEmpty) {
+      // Xử lý khi không có cư dân trong căn hộ này
+      return;
+    }
+
+    final List<Map<String, dynamic>> residentList = residentsSnapshot.docs.map((doc) {
+      final data = doc.data();
+      final fullName = data["fullName"] ?? "Unknown";  // Tránh null cho fullName
+      final isRepresentative = fullName == contract.representative;
+
+      return {
+        "id": doc.id,
+        "fullName": fullName,
+        "isRepresentative": isRepresentative,
+      };
+    }).toList();
+
+
+    String? selectedIdToRemove;
+
+    await showDialog(
+      context: context,
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("Chọn cư dân cần xóa"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: residentList.map((r) {
+                  return RadioListTile<String>(
+                    title: Text(r["fullName"] + (r["isRepresentative"] ? " (Đại diện)" : "")),
+                    value: r["id"],
+                    groupValue: selectedIdToRemove,
+                    onChanged: (value) => setState(() => selectedIdToRemove = value),
+                  );
+                }).toList(),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: Text("Hủy")),
+                TextButton(
+                  onPressed: selectedIdToRemove == null ? null : () async {
+                    Navigator.pop(context);
+
+                    if (selectedIdToRemove == null) {
+                      // Trường hợp không có cư dân nào được chọn, có thể thông báo lỗi hoặc thoát
+                      return;
+                    }
+
+                    final removedResident = residentList.firstWhere((r) => r["id"] == selectedIdToRemove);
+                    final isRepresentative = removedResident["isRepresentative"];
+                    final removedName = removedResident["fullName"];
+
+                    if (isRepresentative) {
+                      final others = residentList.where((r) => r["id"] != selectedIdToRemove).toList();
+
+                      if (others.isEmpty) {
+                        MsgDialog.showMsgDialog(
+                            context,
+                            "Không thể xóa",
+                            "Đây là người đại diện duy nhất và cũng là cư dân cuối cùng trong căn hộ. "
+                                "Vui lòng xóa hợp đồng từ giao diện chính nếu muốn xóa toàn bộ."
+                        );
+                        return;
+                      }
+
+                      else {
+                        // Có người thay thế → chọn người đại diện mới
+                        String? newRepId;
+                        await showDialog(
+                          context: context,
+                          builder: (_) {
+                            return StatefulBuilder(
+                              builder: (context, setState) {
+                                return AlertDialog(
+                                  title: Text("Chọn người đại diện mới"),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: others.map((r) {
+                                      return RadioListTile<String>(
+                                        title: Text(r["fullName"]),
+                                        value: r["id"],
+                                        groupValue: newRepId,
+                                        onChanged: (value) => setState(() => newRepId = value),
+                                      );
+                                    }).toList(),
+                                  ),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(context), child: Text("Hủy")),
+                                    TextButton(
+                                      onPressed: newRepId == null ? null : () => Navigator.pop(context, newRepId),
+                                      child: Text("Xác nhận"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ).then((newId) async {
+                          if (newId != null) {
+                            final newRepName = others.firstWhere((r) => r["id"] == newId)["fullName"];
+                            final batch = FirebaseFirestore.instance.batch();
+                            batch.update(contractRef, {
+                              "representative": newRepName,
+                              "numberOfResidents": FieldValue.increment(-1),
+                            });
+                            batch.delete(FirebaseFirestore.instance.collection("residents").doc(selectedIdToRemove));
+
+                            final removedResidentSummary = {
+                              'id': removedResident["id"],
+                              'fullName': removedResident["fullName"],
+                            };
+
+                            batch.update(FirebaseFirestore.instance.collection("apartments").doc(apartment.id), {
+                              "residents": FieldValue.arrayRemove([removedResidentSummary]),
+                            });
+
+                            batch.set(
+                              FirebaseFirestore.instance.collection("apartments").doc(apartment.id).collection("updateHistory").doc(),
+                              {
+                                "action": "Xóa cư dân & cập nhật người đại diện",
+                                "performedBy": "Admin",
+                                "residentNames": [removedName],
+                                "newRepresentative": newRepName,
+                                "timestamp": FieldValue.serverTimestamp(),
+                              },
+                            );
+
+                            // Xóa tài khoản trong Firebase Authentication
+                            await deleteResidentAccount1(selectedIdToRemove!);
+
+                            await batch.commit();
+                            onRefresh();
+                          }
+                        });
+                      }
+                    } else {
+                      // Xóa cư dân thường
+                      final batch = FirebaseFirestore.instance.batch();
+                      batch.update(contractRef, {
+                        "numberOfResidents": FieldValue.increment(-1),
+                      });
+                      batch.delete(FirebaseFirestore.instance.collection("residents").doc(selectedIdToRemove));
+
+                      final removedResidentSummary = {
+                        'id': removedResident["id"],
+                        'fullName': removedResident["fullName"],
+                      };
+
+                      batch.update(FirebaseFirestore.instance.collection("apartments").doc(apartment.id), {
+                        "residents": FieldValue.arrayRemove([removedResidentSummary]),
+                      });
+
+                      batch.set(
+                        FirebaseFirestore.instance.collection("apartments").doc(apartment.id).collection("updateHistory").doc(),
+                        {
+                          "action": "Xóa cư dân",
+                          "performedBy": "Admin",
+                          "residentNames": [removedName],
+                          "timestamp": FieldValue.serverTimestamp(),
+                        },
+                      );
+
+                      // Xóa tài khoản trong Firebase Authentication
+                      await deleteResidentAccount(selectedIdToRemove!);
+
+                      await batch.commit();
+                      onRefresh();
+                    }
+                  },
+                  child: Text("Xóa"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> deleteResidentAccount1(String uid) async {
+    const functionUrl = 'https://deleteresidentaccount-ttrkrlo35a-uc.a.run.app';
+
+    try {
+      final response = await http.post(
+        Uri.parse(functionUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'uid': uid}),
+      );
+
+      if (response.statusCode == 200) {
+        print("✅ Tài khoản đã bị xóa: ${response.body}");
+      } else {
+        print("❌ Lỗi khi xóa tài khoản: ${response.body}");
+      }
+    } catch (e) {
+      print("❌ Exception khi gọi Cloud Function: $e");
+    }
+  }
+
 
   Future<void> fetchAreaRangeFromFirestore() async {
     final snapshot = await FirebaseFirestore.instance.collection('apartments').get();
@@ -433,7 +731,8 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                     ),
                                   ),
                                 )
-                                    : (filteredApartments.isEmpty
+                                    : (
+                                    filteredApartments.isEmpty
                                     ? Center(
                                   child: Text(
                                     'Không có căn hộ nào',
