@@ -140,6 +140,7 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                                     _emailCompanyController.clear();
                                     _phoneCompanyController.clear();
                                     _typeCompanyController.clear();
+                                    _describeCompanyController.clear();
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:

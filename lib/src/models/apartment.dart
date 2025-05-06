@@ -1,5 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+class ResidentSummary {
+  final String id;
+  final String fullName;
+
+  ResidentSummary({required this.id, required this.fullName});
+
+  factory ResidentSummary.fromJson(Map<String, dynamic> json) {
+    return ResidentSummary(
+      id: json['id'] ?? '',
+      fullName: json['fullName'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'fullName': fullName,
+    };
+  }
+}
+
+
 class Apartment {
   final String id;
   final String apartmentName;
@@ -10,7 +32,7 @@ class Apartment {
   final String description;
   final bool isRent;
   final bool isSale;
-  final List<String> residents;
+  final List<ResidentSummary> residents;
 
   Apartment({
     required this.id,
@@ -37,7 +59,9 @@ class Apartment {
       description: json['description'],
       isRent: json['isRent'],
       isSale: json['isSale'],
-      residents: List<String>.from(json['residents'] ?? []),
+      residents: (json['residents'] as List<dynamic>?)
+          ?.map((e) => ResidentSummary.fromJson(Map<String, dynamic>.from(e)))
+          .toList() ?? [],
     );
   }
 
@@ -51,7 +75,7 @@ class Apartment {
       'description': description,
       'isRent': isRent,
       'isSale': isSale,
-      'residents': residents,
+      'residents': residents.map((e) => e.toJson()).toList(),
     };
   }
 

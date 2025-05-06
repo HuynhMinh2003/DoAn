@@ -225,6 +225,30 @@ class AuthBloc {
     return isValid;
   }
 
+  bool isValidStaffUpdate(String name, String phone, String position) {
+    bool isValid = true;
+
+    if (name.isEmpty) {
+      _nameStaffController.sink.addError("Phải nhập tên nhân viên!");
+      isValid = false;
+    } else {
+      _nameStaffController.sink.add("");
+    }
+
+    final phoneRegex = RegExp(r'^\d{10,15}$');
+    if (phone.isEmpty) {
+      _phoneStaffController.sink.addError("Phải nhập số điện thoại!");
+      isValid = false;
+    } else if (!phoneRegex.hasMatch(phone)) {
+      _phoneStaffController.sink.addError("Số điện thoại không hợp lệ!");
+      isValid = false;
+    } else {
+      _phoneStaffController.sink.add("");
+    }
+
+    return isValid;
+  }
+
   bool isValidResidentSignUp(
       String nameResident,
       String emailResident,
@@ -324,6 +348,27 @@ class AuthBloc {
         onSuccess: onSuccess,
         onSignInError: onSignInError,
       );
+    }
+  }
+
+  void changeName(String name) {
+    _nameResidentController.sink.add(name); // Trigger UI update
+  }
+  void changeEmail(String email) {
+    _emailResidentController.sink.add(email);
+  }
+  void changePhone(String phone) {
+    _phoneResidentController.sink.add(phone);
+  }
+  void changeCCCD(String cccd) {
+    _cccdResidentController.sink.add(cccd);
+  }
+
+  void changeBirthDate(DateTime? date) {
+    if (date == null) {
+      _birthDateController.sink.addError("Ngày sinh không được để trống!");
+    } else {
+      _birthDateController.sink.add(date);
     }
   }
 
