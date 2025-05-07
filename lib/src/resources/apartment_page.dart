@@ -31,7 +31,7 @@ class ApartmentPage extends StatelessWidget {
                   shrinkWrap: true,
                   children: [
                     _buildCard(context, 'Hợp đồng ', 'assets/images/image_manage_contract.svg', ApartmentFilterPage()),
-                    _buildCard(context, 'Danh sách phòng', 'assets/images/image_manage_contract.svg', ApartmentListPage()),
+                    _buildCard(context, 'Danh sách phòng', 'assets/images/image_list_room.svg', ApartmentListPage()),
                   ],
                 ),
               ),

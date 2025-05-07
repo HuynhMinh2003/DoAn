@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/contract_data.dart';
 import 'package:do_an/src/models/resident_info.dart';
 import 'package:do_an/src/resources/chon_can_ho_page.dart';
+import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:docx_template/docx_template.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
@@ -249,17 +250,42 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
                                           height: 60.h,
                                           child: ElevatedButton(
                                             onPressed: () async {
-                                              await saveToFirestore(widget.contractData, selectedRep!);
-
-                                              // 👉 Thêm dòng này để thông báo cho màn chính reload
-                                              Provider.of<ContractNotifier>(context, listen: false).markAsCreated();
-
-                                              Navigator.of(context).pushAndRemoveUntil(
-                                                MaterialPageRoute(builder: (context) => const ApartmentFilterPage()),
-                                                    (Route<dynamic> route) => false,
+                                              // Hiển thị dialog loading
+                                              showDialog(
+                                                context: context,
+                                                barrierDismissible: false,
+                                                builder: (BuildContext context) {
+                                                  return Center(
+                                                    child: CircularProgressIndicator(),
+                                                  );
+                                                },
                                               );
 
+                                              try {
+                                                // Lưu hợp đồng vào Firestore
+                                                await saveToFirestore(widget.contractData, selectedRep!, context);
+
+                                                await Future.delayed(Duration(seconds: 3));
+
+                                                // Đánh dấu là hợp đồng đã được tạo
+                                                Provider.of<ContractNotifier>(context, listen: false).markAsCreated();
+
+                                                // Đóng dialog
+                                                Navigator.of(context).pop();
+
+                                                Navigator.pushNamedAndRemoveUntil(
+                                                  context,
+                                                  '/apartmentFilterPage',
+                                                      (route) => false,  // Điều này sẽ xóa tất cả các route trước đó, bao gồm cả contractreviewPage.
+                                                );
+
+                                              } catch (e) {
+                                                // Xử lý lỗi nếu có
+                                                print("Lỗi: $e");
+                                                Navigator.of(context).pop(); // Đảm bảo đóng dialog khi có lỗi
+                                              }
                                             },
+
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: const Color(0xFF2D80F8),
                                               shape: RoundedRectangleBorder(
@@ -294,25 +320,10 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
     );
   }
 
-  Future<void> saveToFirestore(ContractData contract, String representative) async {
+  Future<void> saveToFirestore(ContractData contract, String representative, BuildContext context) async {
     final apartmentRef = FirebaseFirestore.instance.collection("apartments")
         .doc(contract.apartmentDocId);
     final contractDoc = apartmentRef.collection("contracts").doc();
-
-    // Lưu vào Firestore
-    await contractDoc.set({
-      "apartmentDocId": contract.apartmentDocId,
-      "apartmentName": contract.apartmentName,
-      "building": contract.building,
-      "area": contract.area,
-      "price": contract.contractType == "thuê" ? contract.rentPrice : contract.salePrice,
-      "type": contract.contractType,
-      "startDate": contract.startDate,
-      "endDate": contract.endDate,
-      "representative": representative,
-      "numberOfResidents": contract.numberOfResidents,
-      "createdAt": Timestamp.now(),
-    });
 
     // Gửi yêu cầu tạo tài khoản cho từng cư dân
     for (final resident in contract.residents) {
@@ -329,26 +340,48 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
             'apartmentId': contract.apartmentDocId,
           }),
         );
+
         if (response.statusCode == 200) {
           final responseData = json.decode(response.body);
-          final residentId = responseData['residentId']; // ✅ Lấy residentId từ response
+          final residentId = responseData['residentId']; // Lấy residentId từ response
 
-          // ✅ Gán lại vào resident
+          // Gán lại vào resident
           resident.residentId = residentId;
 
           print("✅ Tạo tài khoản cho ${resident.fullName} thành công. ID: $residentId");
         } else {
           print("❌ Lỗi tạo tài khoản: ${response.body}");
+          // Nếu có lỗi khi tạo tài khoản, dừng lại và không tiếp tục lưu vào Firestore
+          MsgDialog.showMsgDialog(context, "Lỗi", "Tạo tài khoản thất bại");
+          return;
         }
       } catch (e) {
         print("❌ Lỗi tạo tài khoản cho ${resident.fullName}: $e");
+        // Nếu có lỗi khi gửi yêu cầu, dừng lại và không tiếp tục lưu vào Firestore
+        MsgDialog.showMsgDialog(context, "Lỗi", "Tạo tài khoản thất bại");
+        return;
       }
     }
 
-    // Cập nhật danh sách cư dân (cho phép trùng tên)
+    // Lưu hợp đồng vào Firestore
+    await contractDoc.set({
+      "apartmentDocId": contract.apartmentDocId,
+      "apartmentName": contract.apartmentName,
+      "building": contract.building,
+      "area": contract.area,
+      "price": contract.contractType == "thuê" ? contract.rentPrice : contract.salePrice,
+      "type": contract.contractType,
+      "startDate": contract.startDate,
+      "endDate": contract.endDate,
+      "representative": representative,
+      "numberOfResidents": contract.numberOfResidents,
+      "createdAt": Timestamp.now(),
+    });
+
+    // Cập nhật danh sách cư dân vào Firestore
     final residentObjects = contract.residents.map((r) => {
       'fullName': r.fullName,
-      'id': r.residentId, // Đảm bảo bạn có trường `id` trong ResidentInfo (Firestore doc ID)
+      'id': r.residentId, // Lưu ID của cư dân
     }).toList();
 
     await apartmentRef.update({
@@ -367,24 +400,25 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
       "createdAt": Timestamp.now(),
     });
 
-    final templateData = await rootBundle.load(contract.contractType=='thuê'?'assets/templates/hd_thue_ch.docx' :'assets/templates/hd_mua_ch.docx');
+    // Lấy template hợp đồng
+    final templateData = await rootBundle.load(contract.contractType == 'thuê'
+        ? 'assets/templates/hd_thue_ch.docx'
+        : 'assets/templates/hd_mua_ch.docx');
     print("✅ Đã tải template DOCX");
 
+    // Tạo DocxTemplate từ template đã tải
     final docx = await DocxTemplate.fromBytes(templateData.buffer.asUint8List());
     print("✅ Đã tạo DocxTemplate");
 
     final content = Content();
     print("✅ Bắt đầu tạo nội dung");
 
+    // Thêm thông tin chính vào contract
     content
       ..add(TextContent("apartment_name", contract.apartmentName))
       ..add(TextContent("building", contract.building))
       ..add(TextContent("area", contract.area.toString()))
-      ..add(TextContent(
-          "price",
-          currencyFormat.format(contract.contractType == "thuê"
-              ? contract.rentPrice
-              : contract.salePrice)))
+      ..add(TextContent("price", currencyFormat.format(contract.contractType == "thuê" ? contract.rentPrice : contract.salePrice)))
       ..add(TextContent("start_date", formatCustomDate(contract.startDate)))
       ..add(TextContent("representative", representative))
       ..add(TextContent("end_date", contract.endDate != null ? formatCustomDate(contract.endDate!) : ""));
@@ -403,22 +437,21 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
       residentsList.add(residentContent);
     }
 
-
-// residents là tag list, resident là mỗi item trong list
+    // residents là tag list, resident là mỗi item trong list
     content.add(ListContent("residents", residentsList));
 
     final fileBytes = await docx.generate(content);
     print("Đã tạo file bytes từ DocxTemplate");
 
-// Kiểm tra fileBytes có hợp lệ không
+    // Kiểm tra fileBytes có hợp lệ không
     if (fileBytes == null) {
       print("Lỗi: Không thể tạo file bytes.");
     } else {
       print("File bytes hợp lệ.");
     }
 
-    final fileName =
-        "${contract.contractType}_${contract.apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
+    // Tạo file Word
+    final fileName = "${contract.contractType}_${contract.apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
     final blob = html.Blob([fileBytes]);
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)
@@ -427,5 +460,30 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
     html.Url.revokeObjectUrl(url);
 
     print("✅ File Word đã được tải về: $fileName");
+
+    MsgDialog.showMsgDialog(context, "Chúc mừng", "Tạo tài khoản thành công");
+
   }
+
+// Hàm hiển thị thông báo lỗi
+  void showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Lỗi'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Đóng dialog
+              },
+              child: Text('Đóng'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 }

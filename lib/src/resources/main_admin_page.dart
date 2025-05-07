@@ -1,5 +1,6 @@
 import 'package:do_an/src/resources/apartment_page.dart';
 import 'package:do_an/src/resources/ds_nhanvien_page.dart';
+import 'package:do_an/src/resources/resident_page.dart';
 import 'package:do_an/src/resources/staff_page.dart';
 import 'package:do_an/src/resources/tao_tk_ctdv_ngoai.dart';
 import 'package:flutter/material.dart';
@@ -35,8 +36,9 @@ class _MainAdminPageState extends State<MainAdminPage> {
                   crossAxisSpacing: 6.w,
                   shrinkWrap: true,
                   children: [
-                    _buildCard(context, 'Quản lí\ncăn hộ', 'assets/images/image_room.svg', const ApartmentPage()),
-                    _buildCard(context, ' Quản lí\nnhân viên', 'assets/images/image_staff.svg', const StaffPage()),
+                    _buildCard(context, 'Quản lí căn hộ', 'assets/images/image_room.svg', const ApartmentPage()),
+                    _buildCard(context, ' Quản lí nhân viên', 'assets/images/image_staff.svg', const StaffPage()),
+                    _buildCard(context, ' Quản lí cư dân', 'assets/images/image_resident.svg', ResidentPage()),
                     _buildCard(context, ' Quản lí công ty\n  dịch vụ ngoài', 'assets/images/image_company.svg', const AddAccountCompanyPage()),
                     // Thêm các card khác nếu cần
                   ],
