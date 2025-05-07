@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:do_an/src/resources/back_button.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
@@ -188,139 +189,209 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Thêm ${widget.count} cư dân")),
-      body: ListView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: widget.count,
-        itemBuilder: (context, index) {
-          return Form(
-            key: formKeys[index],
-            child: Card(
-              margin: EdgeInsets.only(bottom: 16),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Cư dân ${index + 1}", style: TextStyle(fontWeight: FontWeight.bold)),
-
-                    // Họ tên
-                    StreamBuilder<String>(
-                      stream: _authBloc[index].nameResidentStream,
-                      builder: (context, snapshot) => TextField(
-                        decoration: InputDecoration(
-                          labelText: "Họ tên",
-                          errorText: snapshot.hasError ? snapshot.error.toString() : null,
+        backgroundColor: Color(0xFFF7FEFF),
+      body:SafeArea(child: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            child: Image.asset('assets/images/two_circle.png', width: 160),
+          ),
+          Padding(
+              padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 170.h),
+          child: Column(
+            children: [
+              Text(
+                "Thêm ${widget.count} cư dân",
+                style: TextStyle(
+                  fontFamily: "Oswald",
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.sp,
+                ),
+              ),
+              SizedBox(height: 40.h),
+              Expanded(child: ListView.builder(
+                itemCount: widget.count,
+                itemBuilder: (context, index) {
+                  return Form(
+                    key: formKeys[index],
+                    child: Card(
+                      margin: EdgeInsets.only(bottom: 30.h),
+                      elevation: 2,
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                        side: BorderSide(
+                          color: Colors.black, // Màu viền bạn muốn
+                          width: 0.1.w,         // Độ dày của viền
                         ),
-                        onChanged: (val) {
-                          _authBloc[index].changeName(val);
-                          residents[index] = residents[index].copyWith(fullName: val);
-                        },
                       ),
-                    ),
+                      child: Padding(
+                        padding: EdgeInsets.all(30.r),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Cư dân ${index + 1}", style: TextStyle(fontFamily:"Oswald",fontWeight: FontWeight.bold,fontSize: 6.sp)),
 
-                    // CCCD
-                    StreamBuilder<String>(
-                      stream: _authBloc[index].cccdResidentStream,
-                      builder: (context, snapshot) => TextField(
-                        decoration: InputDecoration(
-                          labelText: "CCCD",
-                          errorText: snapshot.hasError ? snapshot.error.toString() : null,
-                        ),
-                        onChanged: (val) {
-                          _authBloc[index].changeCCCD(val);
-                          residents[index] = residents[index].copyWith(cccd: val);
-                        },
-                      ),
-                    ),
-
-                    // Email
-                    StreamBuilder<String>(
-                      stream: _authBloc[index].emailResidentStream,
-                      builder: (context, snapshot) => TextField(
-                        decoration: InputDecoration(
-                          labelText: "Email",
-                          errorText: snapshot.hasError ? snapshot.error.toString() : null,
-                        ),
-                        onChanged: (val) {
-                          _authBloc[index].changeEmail(val);
-                          residents[index] = residents[index].copyWith(email: val);
-                        },
-                      ),
-                    ),
-
-                    // SĐT
-                    StreamBuilder<String>(
-                      stream: _authBloc[index].phoneResidentStream,
-                      builder: (context, snapshot) => TextField(
-                        decoration: InputDecoration(
-                          labelText: "SĐT",
-                          errorText: snapshot.hasError ? snapshot.error.toString() : null,
-                        ),
-                        onChanged: (val) {
-                          _authBloc[index].changePhone(val);
-                          residents[index] = residents[index].copyWith(phone: val);
-                        },
-                      ),
-                    ),
-
-                    StreamBuilder<DateTime?>(
-                      stream: _authBloc[index].birthDateStream,
-                      builder: (context, snapshot) {
-                        final selectedDate = residents[index].birthDate;
-                        final displayDate = selectedDate == DateTime.now()
-                            ? ""
-                            : "${selectedDate?.toLocal()}".split(' ')[0];
-
-                        final controller = TextEditingController(text: displayDate);
-
-                        return Padding(
-                          padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 15.h),
-                          child: TextFormField(
-                            controller: controller,
-                            decoration: InputDecoration(
-                              labelText: "Ngày sinh",
-                              hintText: "Chưa chọn",
-                              errorText: snapshot.hasError ? snapshot.error.toString() : null,
-                              suffixIcon: IconButton(
-                                icon: Icon(Icons.calendar_today),
-                                onPressed: () async {
-                                  final picked = await showDatePicker(
-                                    context: context,
-                                    initialDate: selectedDate == DateTime.now() ? DateTime(2000) : selectedDate,
-                                    firstDate: DateTime(1950),
-                                    lastDate: DateTime.now(),
-                                  );
-                                  if (picked != null) {
-                                    setState(() {
-                                      residents[index] =
-                                          residents[index].copyWith(birthDate: picked);
-                                    });
-                                    _authBloc[index].changeBirthDate(picked); // BLoC cập nhật stream
-                                  }
+                            // Họ tên
+                            StreamBuilder<String>(
+                              stream: _authBloc[index].nameResidentStream,
+                              builder: (context, snapshot) => TextField(
+                                decoration: InputDecoration(
+                                  labelText: "Họ tên",
+                                  labelStyle: TextStyle(fontSize: 5.sp),
+                                  errorText: snapshot.hasError ? snapshot.error.toString() : null,
+                                ),
+                                onChanged: (val) {
+                                  _authBloc[index].changeName(val);
+                                  residents[index] = residents[index].copyWith(fullName: val);
                                 },
                               ),
                             ),
-                            readOnly: true,
-                          ),
-                        );
-                      },
-                    ),
 
-                  ],
+                            // CCCD
+                            StreamBuilder<String>(
+                              stream: _authBloc[index].cccdResidentStream,
+                              builder: (context, snapshot) => TextField(
+                                decoration: InputDecoration(
+                                  labelText: "CCCD",
+                                  labelStyle: TextStyle(fontSize: 5.sp),
+                                  errorText: snapshot.hasError ? snapshot.error.toString() : null,
+                                ),
+                                onChanged: (val) {
+                                  _authBloc[index].changeCCCD(val);
+                                  residents[index] = residents[index].copyWith(cccd: val);
+                                },
+                              ),
+                            ),
+
+                            // Email
+                            StreamBuilder<String>(
+                              stream: _authBloc[index].emailResidentStream,
+                              builder: (context, snapshot) => TextField(
+                                decoration: InputDecoration(
+                                  labelText: "Email",
+                                  labelStyle: TextStyle(fontSize: 5.sp),
+                                  errorText: snapshot.hasError ? snapshot.error.toString() : null,
+                                ),
+                                onChanged: (val) {
+                                  _authBloc[index].changeEmail(val);
+                                  residents[index] = residents[index].copyWith(email: val);
+                                },
+                              ),
+                            ),
+
+                            // SĐT
+                            StreamBuilder<String>(
+                              stream: _authBloc[index].phoneResidentStream,
+                              builder: (context, snapshot) => TextField(
+                                decoration: InputDecoration(
+                                  labelText: "SĐT",
+                                  labelStyle: TextStyle(fontSize: 5.sp),
+                                  errorText: snapshot.hasError ? snapshot.error.toString() : null,
+                                ),
+                                onChanged: (val) {
+                                  _authBloc[index].changePhone(val);
+                                  residents[index] = residents[index].copyWith(phone: val);
+                                },
+                              ),
+                            ),
+
+                            StreamBuilder<DateTime?>(
+                              stream: _authBloc[index].birthDateStream,
+                              builder: (context, snapshot) {
+                                final selectedDate = residents[index].birthDate;
+                                final displayDate = selectedDate == DateTime.now()
+                                    ? ""
+                                    : "${selectedDate?.toLocal()}".split(' ')[0];
+
+                                final controller = TextEditingController(text: displayDate);
+
+                                return Padding(
+                                  padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 15.h),
+                                  child: TextFormField(
+                                    controller: controller,
+                                    decoration: InputDecoration(
+                                      labelText: "Ngày sinh",
+                                      labelStyle: TextStyle(fontSize: 5.5.sp),
+                                      hintText: "Chưa chọn",
+                                      errorText: snapshot.hasError ? snapshot.error.toString() : null,
+                                      suffixIcon: IconButton(
+                                        icon: Icon(Icons.calendar_today),
+                                        onPressed: () async {
+                                          final picked = await showDatePicker(
+                                            context: context,
+                                            initialDate: selectedDate == DateTime.now() ? DateTime(2000) : selectedDate,
+                                            firstDate: DateTime(1950),
+                                            lastDate: DateTime.now(),
+                                          );
+                                          if (picked != null) {
+                                            setState(() {
+                                              residents[index] =
+                                                  residents[index].copyWith(birthDate: picked);
+                                            });
+                                            _authBloc[index].changeBirthDate(picked); // BLoC cập nhật stream
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    readOnly: true,
+                                  ),
+                                );
+                              },
+                            ),
+
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),),
+
+              SizedBox(height: 20.h,),
+
+              ElevatedButton(
+                onPressed: () {
+                  _submit();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2D80F8),
+                  minimumSize: Size(60.w, 60.h), // ✅ Chiều rộng và cao mong muốn
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                  elevation: 4,
+                  shadowColor: Colors.black45,
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.zero,
+                ),
+                child: Text(
+                  "Xác nhận thêm",
+                  style: TextStyle(
+                    fontFamily: "Oswald",
+                    fontWeight: FontWeight.w700,
+                    fontSize: 7.sp,
+                    color: Colors.white,
+                    height: 1.h,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-          );
-        },
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(12),
-        child: ElevatedButton(
-          onPressed: _submit,
-          child: Text("Xác nhận thêm"),
-        ),
-      ),
+
+              SizedBox(height: 40.h,),
+
+            ],
+          )
+          ),
+          Positioned(
+            top: MediaQuery.of(context).size.height/2,
+            left: 10.w,
+            child: const BackButtonWidget(),
+          ),
+        ],
+      ))
+
     );
   }
 
