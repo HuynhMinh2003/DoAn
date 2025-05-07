@@ -19,17 +19,39 @@ class ResidentInfo {
     this.apartmentId,
   });
 
-  // Tạo từ Firestore, có docId (thường dùng khi lấy từ collection)
   factory ResidentInfo.fromMap(Map<String, dynamic> map, [String? docId]) {
     return ResidentInfo(
       residentId: docId,
-      fullName: map['name'] ?? '',
+      fullName: map['fullName'] ?? '',
       cccd: map['cccd'] ?? '',
       phone: map['phone'] ?? '',
-      birthDate: (map['birthDate'] as Timestamp).toDate(),
+      birthDate: _parseDate(map['birthDate']),
       email: map['email'] ?? '',
-      apartmentId: map['apartmentId'], // Lấy apartmentId
+      apartmentId: map['apartmentId'],
     );
+  }
+
+  static DateTime? _parseDate(dynamic date) {
+    if (date == null) return null;
+    if (date is Timestamp) {
+      return date.toDate();
+    } else if (date is String) {
+      // Nếu date là String, cố gắng parse thành DateTime
+      try {
+        return DateTime.parse(date);
+      } catch (e) {
+        print("Error parsing date: $e");
+        return null;
+      }
+    }
+    return null; // Trả về null nếu không phải Timestamp hoặc String
+  }
+
+
+  // Dùng trực tiếp khi đọc từ Firestore
+  factory ResidentInfo.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return ResidentInfo.fromMap(data, doc.id);
   }
 
   // Convert thành Map để lưu Firestore
