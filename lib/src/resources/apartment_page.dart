@@ -36,11 +36,6 @@ class ApartmentPage extends StatelessWidget {
                 ),
               ),
             ),
-            Positioned(
-              top: MediaQuery.of(context).size.height/2,
-              left: 10.w,
-              child: const BackButtonWidget(),
-            ),
           ],
         ),
       ),

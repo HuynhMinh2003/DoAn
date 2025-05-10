@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,6 +26,9 @@ class _ResidentPageState extends State<ResidentPage> {
   String? selectedBuilding;
   int? selectedFloor;
   Apartment? selectedApartment;
+
+  String _searchQuery = ""; // Biến lưu trữ giá trị tìm kiếm
+  Timer? _debounce; // Biến debounce
 
   List<String> getBuildings() {
     return apartments.map((a) => a.building).toSet().toList()..sort();
@@ -70,13 +74,33 @@ class _ResidentPageState extends State<ResidentPage> {
   }
 
   Future<void> loadData() async {
-    final aptSnapshot = await FirebaseFirestore.instance.collection('apartments').get();
-    final resSnapshot = await FirebaseFirestore.instance.collection('residents').get();
+    final results = await Future.wait([
+      FirebaseFirestore.instance.collection('apartments').get(),
+      FirebaseFirestore.instance.collection('residents').get(),
+    ]);
+
+    if (!mounted) return;
 
     setState(() {
-      apartments = aptSnapshot.docs.map((doc) => Apartment.fromFirestore(doc)).toList();
-      residents = resSnapshot.docs.map((doc) => ResidentInfo.fromFirestore(doc)).toList();
+      apartments = results[0].docs.map((doc) => Apartment.fromFirestore(doc)).toList();
+      residents = results[1].docs.map((doc) => ResidentInfo.fromFirestore(doc)).toList();
     });
+  }
+
+  // Hàm debounce cho tìm kiếm theo tên
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        _searchQuery = query;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel(); // Hủy debounce khi widget bị dispose
+    super.dispose();
   }
 
   Future<bool> sendUpdatedDetailEmailFromFlutter({
@@ -333,6 +357,10 @@ class _ResidentPageState extends State<ResidentPage> {
       } else if (selectedBuilding != null) {
         return apt.building == selectedBuilding;
       }
+      // Tìm kiếm theo tên cư dân
+      if (_searchQuery.isNotEmpty) {
+        return r.fullName.toLowerCase().contains(_searchQuery.toLowerCase());
+      }
 
       return true; // chưa chọn gì thì hiển thị tất cả
     }).toList();
@@ -342,19 +370,14 @@ class _ResidentPageState extends State<ResidentPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              child: Image.asset('assets/images/two_circle.png', width: 160),
-            ),
             SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 170.h),
+                padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 70.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      "Danh sách căn hộ",
+                      "Danh sách cư dân",
                       style: TextStyle(
                         fontFamily: "Oswald",
                         fontWeight: FontWeight.w700,
@@ -369,6 +392,20 @@ class _ResidentPageState extends State<ResidentPage> {
                           Expanded(
                             child: Column(
                               children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                    labelText: "Tìm kiếm cư dân",
+                                    prefixIcon: Icon(Icons.search),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(30.r),
+                                    ),
+                                  ),
+                                  onChanged: _onSearchChanged, // Gọi hàm debounce khi nhập
+                                ),
+                              ),
+                                SizedBox(height: 30.h,),
                                 // Tòa nhà
                                 buildFilterDropdown<String>(
                                   label: 'Chọn tòa nhà',
@@ -414,34 +451,108 @@ class _ResidentPageState extends State<ResidentPage> {
                             ),
                           ),
                           const SizedBox(width: 24),
+
+                          // Vertical Divider
+                          VerticalDivider(
+                            color: Colors.grey, // Màu của đường ngăn cách
+                            thickness: 0.2.w, // Độ dày của đường ngăn cách
+                            width: 40.w, // Chiều rộng tổng thể của vùng ngăn cách (bao gồm cả padding nếu có)
+                          ),
+
                           Expanded(
                             child: matchedResidents.isEmpty
                                 ? const Center(child: Text("Không có cư dân."))
-                                : ListView.builder(
+                                : GridView.builder(
+                              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 10.h), // Thêm padding để tạo khoảng trống
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2, // Hiển thị 2 cột
+                                mainAxisSpacing: 30.h, // Khoảng cách giữa các hàng
+                                crossAxisSpacing: 5.w, // Khoảng cách giữa các cột
+                                childAspectRatio: 6 / 2.5, // Tỉ lệ chiều rộng / chiều cao của mỗi phần tử
+                              ),
                               itemCount: matchedResidents.length,
                               itemBuilder: (context, index) {
-                                final r = matchedResidents[index];
-                                return ListTile(
-                                  title: Text(r.fullName),
-                                  subtitle: Text("CCCD: ${r.cccd}"),
-                                  onTap: () {
-                                    _showResidentDetails(context, r); // Khi nhấn vào sẽ mở dialog chi tiết cư dân
-                                  },
+                                final resident = matchedResidents[index];
+                                return GestureDetector(
+                                  onTap: () => _showResidentDetails(context, resident), // Mở dialog chi tiết cư dân
+                                  child: Container(
+                                    padding: EdgeInsets.fromLTRB(1.w, 25.h, 1.w, 0.w),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.3),
+                                          blurRadius: 6.r,
+                                          offset: Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          children: [
+                                            SizedBox(width: 5.w),
+                                            Stack(
+                                              children: [
+                                                // Ảnh cư dân
+                                                Container(
+                                                  width: 17.w,
+                                                  height: 80.h,
+                                                  child: CircleAvatar(
+                                                    radius: 8.r,
+                                                    backgroundImage: (resident.imageUrl != null && resident.imageUrl!.isNotEmpty)
+                                                        ? NetworkImage(resident.imageUrl!)
+                                                        : null, // Chỉ sử dụng NetworkImage nếu imageUrl hợp lệ
+                                                    child: (resident.imageUrl == null || resident.imageUrl!.isEmpty)
+                                                        ? Icon(
+                                                      Icons.person,
+                                                      size: 8.r * 4, // Kích thước icon phù hợp với radius
+                                                      color: Colors.grey, // Màu của biểu tượng
+                                                    ) // Hiển thị icon nếu imageUrl không hợp lệ
+                                                        : null,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(width: 5.w),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    resident.fullName,
+                                                    style: TextStyle(
+                                                      fontFamily: "Oswald",
+                                                      fontSize: 4.5.sp,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  SizedBox(height: 10.h),
+                                                  Text(
+                                                    "CCCD: ${resident.cccd}",
+                                                    style: TextStyle(
+                                                      fontSize: 3.sp,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 );
                               },
                             ),
-                          ),
-                        ],
+                          ),                        ],
                       ),
                     )
                   ],
                 ),
               ),
-            ),
-            Positioned(
-              top: MediaQuery.of(context).size.height/2,
-              left: 10.w,
-              child: const BackButtonWidget(),
             ),
           ],
         ),
@@ -460,7 +571,7 @@ class _ResidentPageState extends State<ResidentPage> {
     final isLandscape = size.height < size.width;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.w, 30.h, 30.w, 8.h),
+      padding: EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 8.h),
       child: SizedBox(
         height: 60.h,
         child: DropdownButtonHideUnderline(
@@ -470,7 +581,7 @@ class _ResidentPageState extends State<ResidentPage> {
               label,
               style: TextStyle(
                 color: Colors.black,
-                fontSize: isLandscape ? 5.sp : 15.sp,
+                fontSize: 4.sp,
               ),
             ),
             items: items.map((item) {
@@ -482,7 +593,7 @@ class _ResidentPageState extends State<ResidentPage> {
                 value: item,
                 child: Text(
                   displayText,
-                  style: TextStyle(fontSize: isLandscape ? 5.sp : 15.sp),
+                  style: TextStyle(fontSize: 4.sp),
                 ),
               );
             }).toList(),
@@ -498,7 +609,7 @@ class _ResidentPageState extends State<ResidentPage> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     displayText,
-                    style: TextStyle(fontSize: isLandscape ? 5.sp : 15.sp),
+                    style: TextStyle(fontSize: 4.sp),
                   ),
                 );
               }).toList();
@@ -507,7 +618,7 @@ class _ResidentPageState extends State<ResidentPage> {
               height: 40.h,
               padding: EdgeInsets.symmetric(
                 vertical: 2.h,
-                horizontal: isLandscape ? 10.w : 25.w,
+                horizontal: 10.w,
               ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30.r),
@@ -517,7 +628,7 @@ class _ResidentPageState extends State<ResidentPage> {
             ),
             dropdownStyleData: DropdownStyleData(
               maxHeight: 200.h,
-              width: isLandscape ? 130.w : 324.w,
+              width: 139.w ,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30.r),
                 color: const Color(0xFFF7FEFF),
@@ -527,7 +638,7 @@ class _ResidentPageState extends State<ResidentPage> {
             menuItemStyleData: MenuItemStyleData(
               height: 40.h,
               padding: EdgeInsets.symmetric(
-                horizontal: isLandscape ? 10.w : 27.w,
+                horizontal: 10.w ,
               ),
             ),
           ),

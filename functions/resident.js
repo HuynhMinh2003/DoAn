@@ -21,9 +21,21 @@ const createResidentAccount = onRequest(
   },
   (req, res) => {
     corsHandler(req, res, async () => {
-      const { email, fullName, cccd, phone, birthDate, apartmentId } = req.body;
+      const { email, fullName, cccd, address, gender, phone, birthDate, apartmentId } = req.body;
 
-      if (!email || !fullName || !cccd || !phone || !birthDate || !apartmentId) {
+    console.log("📦 Dữ liệu nhận được từ body:", req.body); // Log toàn bộ body
+
+        // Kiểm tra từng trường cụ thể
+    if (!email) console.log("❌ Thiếu trường: email");
+    if (!fullName) console.log("❌ Thiếu trường: fullName");
+    if (!cccd) console.log("❌ Thiếu trường: cccd");
+    if (!address) console.log("❌ Thiếu trường: address");
+    if (!gender) console.log("❌ Thiếu trường: gender");
+    if (!phone) console.log("❌ Thiếu trường: phone");
+    if (!birthDate) console.log("❌ Thiếu trường: birthDate");
+    if (!apartmentId) console.log("❌ Thiếu trường: apartmentId");
+
+      if (!email || !fullName || !cccd || !address ||!gender ||!phone || !birthDate || !apartmentId) {
         return res.status(400).send("Thiếu thông tin.");
       }
 
@@ -39,12 +51,15 @@ const createResidentAccount = onRequest(
         await admin.firestore().collection("residents").doc(userRecord.uid).set({
           fullName,
           cccd,
+          address,
+          gender,
           phone,
           birthDate,
           email,
           apartmentId,
           role: 3,
           fcmTokens: [],
+          imageUrl: '',
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 

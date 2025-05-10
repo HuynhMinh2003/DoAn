@@ -69,6 +69,9 @@ class FirAuth {
 
   void signUpStaff({
     required String nameStaff,
+    required String addressStaff,
+    required String cccdStaff,
+    required String gender,
     required String emailStaff,
     required String phoneStaff,
     required String position,
@@ -85,6 +88,8 @@ class FirAuth {
         _createStaff(
           staff.uid,
           nameStaff,
+          addressStaff,
+          cccdStaff,
           emailStaff,
           phoneStaff,
           position,
@@ -103,6 +108,8 @@ class FirAuth {
   void _createStaff(
       String userId,
       String nameStaff,
+      String addressStaff,
+      String cccdStaff,
       String emailStaff,
       String phoneStaff,
       String position,
@@ -113,6 +120,8 @@ class FirAuth {
     try {
       final staffData = {
         "name": nameStaff,
+        "address": addressStaff,
+        "cccd": cccdStaff,
         "email": emailStaff,
         "phone": phoneStaff,
         "position": position,

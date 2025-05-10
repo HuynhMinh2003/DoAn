@@ -121,6 +121,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.11.0"
+  collapsible_sidebar:
+    dependency: "direct main"
+    description:
+      name: collapsible_sidebar
+      sha256: cdaa339abbd14ded6c23ce7b4577767e444029be487659bfe97f4a88d8cb47d7
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.7"
   collection:
     dependency: transitive
     description:
@@ -246,10 +254,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: "8986dec4581b4bcd4b6df5d75a2ea0bede3db802f500635d05fa8be298f9467f"
+      sha256: a222f231db4f822fc49e3b753674bda630e981873c84bf8604bceeb77fce0b24
       url: "https://pub.dev"
     source: hosted
-    version: "10.1.2"
+    version: "10.1.7"
   file_selector_linux:
     dependency: transitive
     description:
@@ -537,6 +545,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.8.18"
+  go_router:
+    dependency: "direct main"
+    description:
+      name: go_router
+      sha256: "0b1e06223bee260dee31a171fb1153e306907563a0b0225e8c1733211911429a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "15.1.2"
   google_fonts:
     dependency: "direct main"
     description:

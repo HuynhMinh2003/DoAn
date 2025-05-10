@@ -20,6 +20,7 @@ class _StaffFilterPageState extends State<StaffFilterPage> {
   List<Staff> _allStaffList = []; // Lưu danh sách đầy đủ của nhân viên
   String? _selectedStatus;
   final List<String> _statusItems = ["Tất cả", "Đang rảnh", "Đang bận"];
+  String _searchQuery = ""; // Biến lưu trữ giá trị tìm kiếm
 
   @override
   void initState() {
@@ -66,6 +67,13 @@ class _StaffFilterPageState extends State<StaffFilterPage> {
     if (_selectedStatus != null && _selectedStatus != "Tất cả") {
       final isFree = _selectedStatus == "Đang rảnh";
       filteredList = filteredList.where((staff) => staff.isFree == isFree).toList();
+    }
+
+    // Lọc theo tìm kiếm
+    if (_searchQuery.isNotEmpty) {
+      filteredList = filteredList
+          .where((staff) => staff.fullName.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .toList();
     }
 
     setState(() {
@@ -150,11 +158,6 @@ class _StaffFilterPageState extends State<StaffFilterPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              child: Image.asset('assets/images/two_circle.png', width: 160),
-            ),
             SingleChildScrollView(
               child: isLandscape ? _buildLandScapeLayout(context) : _buildPortraitLayout(context),
             ),
@@ -166,7 +169,7 @@ class _StaffFilterPageState extends State<StaffFilterPage> {
 
   Widget _buildLandScapeLayout(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 170.h),
+      padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 70.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -193,6 +196,25 @@ class _StaffFilterPageState extends State<StaffFilterPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                          child: TextField(
+                            decoration: InputDecoration(
+                              hintText: "Tìm kiếm theo tên...",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              prefixIcon: Icon(Icons.search),
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                _searchQuery = value;
+                                _filterStaff(); // Lọc danh sách khi nhập
+                              });
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 30.h,),
                         buildFilterDropdown(
                           label: "Lọc theo chức vụ",
                           items: _positionItems,

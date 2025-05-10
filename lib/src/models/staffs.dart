@@ -9,7 +9,10 @@ class Staff {
   final Timestamp lastUpdated;
   final String fullName;
   final String phone;
+  final String cccd;
+  final String address;
   final String position;
+  final String gender;
   final int role;
   final Timestamp createdAt;
 
@@ -22,7 +25,10 @@ class Staff {
     required this.lastUpdated,
     required this.fullName,
     required this.phone,
+    required this.cccd,
+    required this.address,
     required this.position,
+    required this.gender,
     required this.role,
     required this.createdAt,
   });
@@ -39,7 +45,10 @@ class Staff {
       lastUpdated: json['lastUpdated'] != null ? json['lastUpdated'] as Timestamp : Timestamp.fromMillisecondsSinceEpoch(0), // Nếu null, dùng giá trị mặc định
       fullName: json['fullName'] ?? '',
       phone: json['phone'] ?? '',
+      cccd: json['cccd'] ?? '',
+      address: json['address'] ?? '',
       position: json['position'] ?? '',
+      gender: json['gender'] ?? '',
       role: json['role'] ?? 0,
       createdAt: json['createdAt'] != null ? json['createdAt'] as Timestamp : Timestamp.fromMillisecondsSinceEpoch(0), // Nếu null, dùng giá trị mặc định
     );
@@ -55,7 +64,10 @@ class Staff {
       'lastUpdated': lastUpdated,
       'fullName': fullName,
       'phone': phone,
+      'cccd': cccd,
+      'address': address,
       'position': position,
+      'gender': gender,
       'role': role,
       'createdAt': createdAt,
     };
