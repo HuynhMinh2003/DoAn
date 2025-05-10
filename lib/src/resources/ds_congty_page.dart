@@ -94,11 +94,6 @@ class _CompanyListPageState extends State<CompanyListPage> {
       body: SafeArea(
           child: Stack(
             children: [
-              Positioned(
-                top: 0,
-                left: 0,
-                child: Image.asset('assets/images/two_circle.png', width: 160),
-              ),
               SingleChildScrollView(
                   child: isLandscape ? _buildLandScapeLayout(context) : _buildPortraitLayout(context)
               ),
@@ -109,7 +104,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
 
   Widget _buildLandScapeLayout(BuildContext context){
     return Padding(
-      padding: EdgeInsets.only(left: 40.w, right: 40.w, top: 170.h),
+      padding: EdgeInsets.only(left: 40.w, right: 40.w, top: 70.h),
       child: Column(
         children: [
           Text(

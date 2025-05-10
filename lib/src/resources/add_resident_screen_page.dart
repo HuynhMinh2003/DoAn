@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:do_an/src/resources/back_button.dart';
+import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
@@ -32,6 +33,8 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
 
   late List<GlobalKey<FormState>> formKeys;
   late List<ResidentInfo> residents;
+  bool isLoading = false; // Trạng thái loading
+
 
   @override
   void initState() {
@@ -41,7 +44,9 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
     residents = List.generate(widget.count, (_) => ResidentInfo(
       fullName: '',
       cccd: '',
+      address: '',
       phone: '',
+      gender: '',
       email: '',
       birthDate: null, // Default birth date
     ));
@@ -55,7 +60,10 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
     super.dispose();
   }
 
+// Hàm xử lý submit
   Future<void> _submit() async {
+    LoadingDialog.showLoadingDialog(context,"Đang tải ...");
+
     bool isValid = true;
 
     for (int i = 0; i < residents.length; i++) {
@@ -65,31 +73,38 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
         r.email,
         r.phone,
         r.cccd,
+        r.address,
+        r.gender,
         r.birthDate,
       );
       if (!isCurrentValid) isValid = false;
     }
 
-    if (!isValid) return;
+    if (!isValid) {
+      setState(() {
+        isLoading = false; // Tắt loading nếu không hợp lệ
+      });
+      return;
+    }
 
     final batch = FirebaseFirestore.instance.batch();
     final residentCollection = FirebaseFirestore.instance.collection('residents');
     final apartmentRef = FirebaseFirestore.instance.collection("apartments").doc(widget.apartment.id);
 
-    List<Map<String, dynamic>> newResidentObjects = []; // Danh sách cư dân object
+    List<Map<String, dynamic>> newResidentObjects = [];
     List<String> newResidentNames = [];
 
     try {
-      // Lấy danh sách cư dân hiện tại từ apartment để kiểm tra trùng
       final apartmentSnapshot = await apartmentRef.get();
       final existingResidents = List<Map<String, dynamic>>.from(apartmentSnapshot.data()?['residents'] ?? []);
 
       for (final resident in residents) {
-        // Tạo tài khoản cư dân và nhận uid trả về
         final uid = await _createResidentAccount(
           resident.email,
           resident.fullName,
           resident.cccd,
+          resident.address,
+          resident.gender,
           resident.phone,
           resident.birthDate,
         );
@@ -100,11 +115,8 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
         }
 
         final docRef = residentCollection.doc(uid);
-
-        // Lưu vào collection residents
         batch.set(docRef, resident.copyWith(residentId: uid, apartmentId: widget.apartment.id).toMap());
 
-        // Thêm object cư dân mới vào danh sách căn hộ
         final residentObj = {
           'id': uid,
           'fullName': resident.fullName,
@@ -120,12 +132,10 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
           if (!alreadyExists) updatedResidents.add(newR);
         }
 
-        // Cập nhật Firestore với danh sách cư dân mới
         batch.update(apartmentRef, {
           'residents': updatedResidents,
         });
 
-        // Ghi log update
         final logRef = apartmentRef.collection("updateHistory").doc();
         batch.set(logRef, {
           'action': 'Thêm cư dân',
@@ -134,9 +144,8 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
           'timestamp': Timestamp.now(),
         });
 
-        // Cập nhật số lượng cư dân trong hợp đồng
         final contractRef = apartmentRef
-            .collection("contracts")
+            .collection("contract")
             .doc(widget.contract.contractId);
         batch.update(contractRef, {
           'numberOfResidents': widget.contract.numberOfResidents + newResidentObjects.length,
@@ -146,17 +155,62 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
       await batch.commit();
 
       widget.onComplete();
-      Navigator.pop(context);
+
+      LoadingDialog.hideLoadingDialog(context);
+
+      // Hiển thị dialog thành công
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Center(child: Text("Thành công"),),
+              content: const Text("Cư dân cập nhật thành công!"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Đóng dialog
+                    Navigator.pop(context); // Quay lại trang trước
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Đồng ý"),
+                ),
+              ],
+            );
+          },
+        );
+      }
     } catch (e) {
       print("❌ Lỗi khi commit batch: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lỗi khi thêm cư dân. Vui lòng thử lại.")),
-      );
+      LoadingDialog.hideLoadingDialog(context);
+
+      // Hiển thị dialog thành công
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Center(child: Text("Thất bại"),),
+              content: const Text("Cư dân cập nhật thất bại!"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Đóng dialog
+                    Navigator.pop(context); // Quay lại trang trước
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Đồng ý"),
+                ),
+              ],
+            );
+          },
+        );
+      }
     }
   }
 
 // Hàm gọi Firebase Function để tạo tài khoản cư dân
-  Future<String?> _createResidentAccount(String email, String fullName, String cccd, String phone, DateTime? birthDate) async {
+  Future<String?> _createResidentAccount(String email, String fullName, String cccd, String address, String gender, String phone, DateTime? birthDate) async {
     final url = 'https://createresidentaccount-ttrkrlo35a-uc.a.run.app'; // Thay thế với URL Firebase function của bạn
     final headers = {'Content-Type': 'application/json'};
 
@@ -167,6 +221,8 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
       'email': email,
       'fullName': fullName,
       'cccd': cccd,
+      'address': address,
+      'gender': gender,
       'phone': phone,
       'birthDate': birthDateString, // Gửi birthDate dưới dạng chuỗi
       'apartmentId': widget.apartment.id,
@@ -192,13 +248,8 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
         backgroundColor: Color(0xFFF7FEFF),
       body:SafeArea(child: Stack(
         children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            child: Image.asset('assets/images/two_circle.png', width: 160),
-          ),
           Padding(
-              padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 170.h),
+              padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 70.h),
           child: Column(
             children: [
               Text(
@@ -249,6 +300,63 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
                               ),
                             ),
 
+                            // Giới tính
+                            Padding(
+                              padding: EdgeInsets.symmetric(vertical: 10.h),
+                              child: StreamBuilder<String>(
+                                stream: _authBloc[index].genderResidentStream,
+                                builder: (context, snapshot) => Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("Giới tính", style: TextStyle(fontSize: 5.sp, fontWeight: FontWeight.bold)),
+                                    Row(
+                                      children: [
+                                        Radio<String>(
+                                          value: 'Nam',
+                                          groupValue: residents[index].gender,
+                                          onChanged: (val) {
+                                            setState(() {
+                                              residents[index] = residents[index].copyWith(gender: val!);
+                                            });
+                                            _authBloc[index].changeGender(val!); // BLoC cập nhật stream
+                                          },
+                                        ),
+                                        Text('Nam', style: TextStyle(fontSize: 5.sp)),
+                                        SizedBox(width: 16.w),
+                                        Radio<String>(
+                                          value: 'Nữ',
+                                          groupValue: residents[index].gender,
+                                          onChanged: (val) {
+                                            setState(() {
+                                              residents[index] = residents[index].copyWith(gender: val!);
+                                            });
+                                            _authBloc[index].changeGender(val!); // BLoC cập nhật stream
+                                          },
+                                        ),
+                                        Text('Nữ', style: TextStyle(fontSize: 5.sp)),
+                                        SizedBox(width: 16.w),
+                                        Radio<String>(
+                                          value: 'Khác',
+                                          groupValue: residents[index].gender,
+                                          onChanged: (val) {
+                                            setState(() {
+                                              residents[index] = residents[index].copyWith(gender: val!);
+                                            });
+                                            _authBloc[index].changeGender(val!); // BLoC cập nhật stream
+                                          },
+                                        ),
+                                        Text('Khác', style: TextStyle(fontSize: 5.sp)),
+                                      ],
+                                    ),
+                                    if (snapshot.hasError)
+                                      Text(
+                                        snapshot.error.toString(),
+                                        style: TextStyle(color: Colors.red, fontSize: 4.sp),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
                             // CCCD
                             StreamBuilder<String>(
                               stream: _authBloc[index].cccdResidentStream,
@@ -293,6 +401,21 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
                                 onChanged: (val) {
                                   _authBloc[index].changePhone(val);
                                   residents[index] = residents[index].copyWith(phone: val);
+                                },
+                              ),
+                            ),
+
+                            StreamBuilder<String>(
+                              stream: _authBloc[index].addressResidentStream,
+                              builder: (context, snapshot) => TextField(
+                                decoration: InputDecoration(
+                                  labelText: 'Địa chỉ',
+                                  labelStyle: TextStyle(fontSize: 5.sp),
+                                  errorText: snapshot.hasError ? snapshot.error.toString() : null,
+                                ),
+                                onChanged: (val) {
+                                  _authBloc[index].changeAddress(val);
+                                  residents[index] = residents[index].copyWith(address: val);
                                 },
                               ),
                             ),
@@ -352,8 +475,8 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
               SizedBox(height: 20.h,),
 
               ElevatedButton(
-                onPressed: () {
-                  _submit();
+                onPressed:() async {
+                  await _submit();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2D80F8),
@@ -383,11 +506,6 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
 
             ],
           )
-          ),
-          Positioned(
-            top: MediaQuery.of(context).size.height/2,
-            left: 10.w,
-            child: const BackButtonWidget(),
           ),
         ],
       ))

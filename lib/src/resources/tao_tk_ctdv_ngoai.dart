@@ -41,14 +41,9 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              child: Image.asset('assets/images/two_circle.png', width: 160),
-            ),
             SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.only(left: 100.w, right: 100.w, top: 140.h),
+                padding: EdgeInsets.only(left: 100.w, right: 100.w, top: 40.h),
                 child: Center(
                   child: SizedBox(
                     width: MediaQuery.of(context).size.width,
@@ -175,11 +170,6 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              top: MediaQuery.of(context).size.height/2,
-              left: 10.w,
-              child: const BackButtonWidget(),
             ),
           ],
         ),

@@ -22,9 +22,9 @@ const createStaffAccount = onRequest(
   },
   (req, res) => {
     corsHandler(req, res, async () => {
-      const { email, fullName, phone, position} = req.body;
+      const { email, fullName, address, gender, cccd, phone, position} = req.body;
 
-      if (!email || !fullName || !phone || !position ) {
+      if (!email || !fullName || !address|| !gender|| !cccd|| !phone || !position ) {
         return res.status(400).send("Thiếu thông tin nhân viên.");
       }
 
@@ -42,6 +42,9 @@ const createStaffAccount = onRequest(
           email,
           fcmTokens: [],
           phone,
+          cccd,
+          gender,
+          address,
           position,
           imageUrl: "",
           isFree:true,
