@@ -70,6 +70,8 @@ dependencies:
   path_provider: ^2.1.5
   excel: ^4.0.6
   file_picker: ^10.1.2
+  go_router: ^15.1.1
+  collapsible_sidebar: ^2.0.7
 
 dev_dependencies:
   flutter_test:
@@ -102,7 +104,17 @@ flutter:
     - assets/images/info_contract.svg
     - assets/images/info_resident.svg
     - assets/images/confirm_contract.svg
+    - assets/images/add_staff.png
+    - assets/images/building.png
+    - assets/images/company.png
+    - assets/images/contract.png
+    - assets/images/home.png
+    - assets/images/list_room.png
+    - assets/images/list_staff.png
+    - assets/images/staff.png
+    - assets/images/people.png
     - assets/images/two_circle.png
+    - assets/images/anh_nen.jpg
     - assets/images/two_circle_green.png
     - assets/images/image_staff.svg
     - assets/images/image_resident.svg

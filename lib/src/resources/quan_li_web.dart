@@ -11,6 +11,7 @@ class _AdminWebPageState extends State<AdminWebPage> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
+      backgroundColor: Color(0xFFF7FEFF),
       body: Center(
         child: Text("Test",style: TextStyle(fontSize: 40),),
       ),
