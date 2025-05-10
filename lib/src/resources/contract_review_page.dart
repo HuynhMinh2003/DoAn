@@ -2,7 +2,6 @@ import 'dart:html' as html;import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/contract_data.dart';
 import 'package:do_an/src/models/resident_info.dart';
-import 'package:do_an/src/resources/chon_can_ho_page.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:docx_template/docx_template.dart';
@@ -84,15 +83,10 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
       body: SafeArea(
           child: Stack(
             children: [
-              Positioned(
-                top: 0,
-                left: 0,
-                child: Image.asset('assets/images/two_circle.png', width: 160),
-              ),
               SingleChildScrollView(
                   child: Padding(
                       padding: EdgeInsets.only(
-                          left: 30.w, right: 30.w, top: 170.h),
+                          left: 30.w, right: 30.w, top: 150.h),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -113,37 +107,37 @@ class _ContractReviewPageState extends State<ContractReviewPage> {
                                     style: TextStyle(fontFamily: "Oswald",
                                         fontWeight: FontWeight.w700,
                                         fontSize: 12.sp),),),
-                                  SizedBox(height: 5.h),
+                                  SizedBox(height: 20.h),
                                   Text("Tòa: ${widget.contractData.building}",
                                       style: TextStyle(fontSize: 5.sp)),
-                                  SizedBox(height: 25.h),
+                                  SizedBox(height: 30.h),
                                   Text("Căn hộ: ${widget.contractData
                                       .apartmentName}", style: TextStyle(
                                       fontSize: 5.sp)),
-                                  SizedBox(height: 25.h),
+                                  SizedBox(height: 30.h),
                                   Text("Diện tích: ${widget.contractData
                                       .area} m²", style: TextStyle(
                                       fontSize: 5.sp)),
-                                  SizedBox(height: 25.h),
+                                  SizedBox(height: 30.h),
                                   Text("Loại hợp đồng: ${widget.contractData
                                       .contractType}", style: TextStyle(
                                       fontSize: 5.sp)),
-                                  SizedBox(height: 25.h),
+                                  SizedBox(height: 30.h),
                                   Text("${widget.contractData.contractType ==
                                       'thuê'
                                       ? "Giá thuê: $formattedrentPrice VNĐ /tháng"
                                       : "Giá mua: $formattedsalePrice VNĐ"}",
                                     style: TextStyle(fontSize: 5.sp),),
-                                  SizedBox(height: 25.h),
+                                  SizedBox(height: 30.h),
                                   Text(
                                     "Thời gian: $start - $end",
                                     style: TextStyle(fontSize: 5.sp),
                                   ),
-                                  SizedBox(height: 25.h),
+                                  SizedBox(height: 30.h),
                                   Text("Số người ở: ${widget.contractData
                                       .numberOfResidents}", style: TextStyle(
                                       fontSize: 5.sp)),
-                                  SizedBox(height: 25.h),
+                                  SizedBox(height: 30.h),
                                   Row(children: [
                                     Text("Người đại diện: ",
                                         style: TextStyle(fontSize: 5.sp)),

@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
-import 'package:do_an/src/resources/back_button.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
@@ -25,10 +24,14 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
   final TextEditingController _nameStaffController = TextEditingController();
   final TextEditingController _emailStaffController = TextEditingController();
   final TextEditingController _phoneStaffController = TextEditingController();
+  final TextEditingController _cccdStaffController = TextEditingController();
+  final TextEditingController _addressStaffController = TextEditingController();
 
   final AuthBloc _authBloc = AuthBloc();
 
   String? _selectedRole;
+
+  String? selectedGender;
 
   String? _imageUrl;
 
@@ -64,6 +67,8 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
     _nameStaffController.dispose();
     _emailStaffController.dispose();
     _phoneStaffController.dispose();
+    _cccdStaffController.dispose();
+    _addressStaffController.dispose();
     _authBloc.dispose();
     super.dispose();
   }
@@ -75,14 +80,9 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              child: Image.asset('assets/images/two_circle.png', width: 160),
-            ),
             SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 140.h),
+                padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 40.h),
                 child: Center(
                   child: SizedBox(
                     width: MediaQuery
@@ -242,9 +242,29 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                       stream: _authBloc.phoneStaffStream,
                                     ),
                                     _buildTextField(
+                                      controller: _cccdStaffController,
+                                      label: 'Số CCCD:',
+                                      stream: _authBloc.cccdStaffStream,
+                                    ),
+                                    _buildTextField(
+                                      controller: _addressStaffController,
+                                      label: 'Nơi ở:',
+                                      stream: _authBloc.addressStaffStream,
+                                    ),
+                                    _buildTextField(
                                       controller: _emailStaffController,
                                       label: 'Email:',
                                       stream: _authBloc.emailStaffStream,
+                                    ),
+                                    buildFilterDropdown(
+                                      label: "Giới tính",
+                                      items: ["Nam", "Nữ", "Khác"],
+                                      selectedValue: selectedGender,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedGender = value;
+                                        });
+                                      },
                                     ),
                                     buildFilterDropdown(
                                       label: "Vai trò",
@@ -260,7 +280,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                 )),
                           ],
                         ),
-                        SizedBox(height: 70.h,),
+                        SizedBox(height: 30.h,),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween, // Phân bố nút cách đều
                           children: [
@@ -304,13 +324,19 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                     onPressed: () {
                                       // Xóa tất cả thông tin trong các trường nhập
                                       _nameStaffController.clear();
+                                      _emailStaffController.clear();
                                       _phoneStaffController.clear();
                                       _emailStaffController.clear();
+                                      _cccdStaffController.clear();
+                                      _addressStaffController.clear();
 
                                       // Reset ảnh
                                       final avatarProvider = Provider.of<UserImageProvider>(context, listen: false);
                                       avatarProvider.resetImage();  // Reset ảnh
 
+                                      setState(() {
+                                        selectedGender = null;  // Hoặc giá trị mặc định bạn muốn
+                                      });
                                       // Reset vai trò nếu cần
                                       setState(() {
                                         _selectedRole = null;  // Hoặc giá trị mặc định bạn muốn
@@ -351,11 +377,6 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                 ),
               ),
             ),
-            Positioned(
-              top: MediaQuery.of(context).size.height/2,
-              left: 10.w,
-              child: const BackButtonWidget(),
-            ),
           ],
         ),
       ),
@@ -367,9 +388,16 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
       MsgDialog.showMsgDialog(context, "Lỗi", "Vui lòng chọn vai trò");
       return;
     }
+    if (selectedGender == null) {
+      MsgDialog.showMsgDialog(context, "Lỗi", "Vui lòng chọn giới tính");
+      return;
+    }
 
     var isValidStaff = _authBloc.isValidStaffSignUp(
       _nameStaffController.text,
+      _addressStaffController.text,
+      _cccdStaffController.text,
+      selectedGender!,
       _emailStaffController.text,
       _phoneStaffController.text,
       _selectedRole!,
@@ -398,6 +426,9 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
         body: jsonEncode({
           "email": _emailStaffController.text.trim(),
           "fullName": _nameStaffController.text.trim(),
+          "address": _nameStaffController.text.trim(),
+          "gender": selectedGender!,
+          "cccd": _nameStaffController.text.trim(),
           "phone": _phoneStaffController.text.trim(),
           "position": _selectedRole!,
         }),
@@ -424,7 +455,10 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
         "email": _emailStaffController.text.trim(),
         "fullName": _nameStaffController.text.trim(),
         "phone": _phoneStaffController.text.trim(),
+        "cccd": _cccdStaffController.text.trim(),
+        "address": _addressStaffController.text.trim(),
         "position": _selectedRole!,
+        "gender": selectedGender!,
       }, SetOptions(merge: true));
 
       LoadingDialog.hideLoadingDialog(context);
@@ -441,7 +475,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
     required Stream<String> stream,
   }) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 8.h),
+      padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 8.h),
       child: StreamBuilder<String>(
         stream: stream,
         builder: (context, snapshot) {
@@ -474,7 +508,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
     required ValueChanged<String?> onChanged,
   }) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 8.h),
+      padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 8.h),
       child: SizedBox(
         height: 60.h,
         child: Container(

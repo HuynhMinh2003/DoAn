@@ -156,10 +156,6 @@ void main() async {
                 ),
               ),
               home: MainAdminPage(), // hoặc AuthWrapper()
-              routes: {
-                '/apartmentFilterPage': (context) => ApartmentFilterPage(),
-                '/mainAdminPage': (context) => MainAdminPage(),
-              },
             ),
           ),
         );

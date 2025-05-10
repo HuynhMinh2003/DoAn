@@ -5,7 +5,10 @@ import 'package:do_an/src/models/apartment.dart';
 import 'package:do_an/src/models/contract_data.dart';
 import 'package:do_an/src/resources/add_resident_screen_page.dart';
 import 'package:do_an/src/resources/back_button.dart';
+import 'package:do_an/src/resources/contract_form_page.dart';
+import 'package:do_an/src/resources/contract_form_page_1.dart';
 import 'package:do_an/src/resources/contract_info_page.dart';
+import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
@@ -29,6 +32,8 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
 
   String? selectedBuilding;
   int? selectedFloor;
+  String searchQuery = "";
+  String? selectedContractStatus; // Biến lưu trạng thái hợp đồng ("isSale" hoặc "isRent")
 
   List<String> getAvailableBuildings() {
     return allApartments.map((a) => a.building).toSet().toList()..sort();
@@ -50,6 +55,17 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
   List<Apartment> paginatedApartments = []; // Căn hộ hiển thị trên mỗi trang
   int totalPages = 0; // Tổng số trang
   List<int> pageNumbers = []; // Danh sách số trang cần hiển thị (1, 2, 3)
+
+  // Hàm debounce để tối ưu hiệu suất tìm kiếm
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        searchQuery = query;
+        applyFilters(); // Gọi lại hàm lọc khi thay đổi giá trị tìm kiếm
+      });
+    });
+  }
 
   void updatePaginatedApartments() {
     int startIndex = (currentPage - 1) * itemsPerPage;
@@ -77,6 +93,62 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
       return -1;  // Trả về giá trị không hợp lệ
     }).where((page) => page != -1).toList();  // Lọc bỏ giá trị -1
 
+  }
+
+  void applyFilters() {
+    List<Apartment> result = allApartments;
+
+    if (selectedBuilding != null) {
+      result = result.where((a) => a.building == selectedBuilding).toList();
+    }
+
+    if (selectedFloor != null) {
+      result = result.where((a) => a.floor == selectedFloor).toList();
+    }
+
+    result = result
+        .where((a) =>
+    a.area >= selectedAreaRange.start &&
+        a.area <= selectedAreaRange.end)
+        .toList();
+
+    if (searchQuery.isNotEmpty) {
+      result = result
+          .where((a) =>
+          a.apartmentName.toLowerCase().contains(searchQuery.toLowerCase()))
+          .toList();
+    }
+
+    // Lọc theo trạng thái hợp đồng
+    if (selectedContractStatus == "isSale") {
+      result = result.where((a) => a.isSale == true).toList();
+    } else if (selectedContractStatus == "isRent") {
+      result = result.where((a) => a.isRent == true).toList();
+    }
+
+    // Cập nhật các biến trước
+    filteredApartments = result;
+    currentPage = 1;
+    updatePaginatedApartments(); // KHÔNG dùng setState bên trong hàm này nữa
+
+    // Gọi setState sau khi các biến đã được cập nhật
+    setState(() {});
+  }
+
+  List<int> getFloorsByBuilding(
+      List<Apartment> apartments, String selectedBuilding) {
+    final filtered =
+    apartments.where((apt) => apt.building == selectedBuilding);
+    final floors = filtered.map((apt) => apt.floor).toSet().toList();
+    floors.sort();
+    return floors;
+  }
+
+  List<int> getFloorsForSelectedBuilding() {
+    if (selectedBuilding == null) {
+      return [];
+    }
+    return getFloorsByBuilding(allApartments, selectedBuilding!);
   }
 
   Future<bool> deleteResidentAccount(String uid) async {
@@ -122,9 +194,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ContractInfoPage(
-                      apartmentData: apartment,
-                      contractType: 'thuê',
+                    builder: (_) => ContractFormRentPage(
                       apartmentId: apartment.id, // 👈 truyền ID
                     ),
                   ));
@@ -137,9 +207,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ContractInfoPage(
-                      apartmentData: apartment,
-                      contractType: 'mua',
+                    builder: (_) => ContractFormSalePage(
                       apartmentId: apartment.id, // 👈 truyền ID
                     ),
                   ));
@@ -153,13 +221,13 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
 
   void showApartmentContractInfoDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) async {
     final apartmentDocRef = FirebaseFirestore.instance.collection("apartments").doc(apartment.id);
-    final contractCollectionRef = apartmentDocRef.collection("contracts");
+    final contractCollectionRef = apartmentDocRef.collection("contract");
     final billWaterCollectionRef = apartmentDocRef.collection("billWater");
     final residentsCollectionRef = FirebaseFirestore.instance.collection("residents"); // Reference đến collection "residents"
 
     try {
       // Lấy hợp đồng đầu tiên
-      final contractSnapshot = await contractCollectionRef.limit(1).get();
+      final contractSnapshot = await contractCollectionRef.get();
 
       if (contractSnapshot.docs.isEmpty) {
         showDialog(
@@ -197,11 +265,14 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
             children: [
               Text("Diện tích: ${contract.area} m²", style: TextStyle(fontSize: 3.5.sp)),
               SizedBox(height: 10.h,),
-              Text("Người đại diện: ${contract.representative ?? 'Không có'}", style: TextStyle(fontSize: 3.5.sp)),
+              Text(
+                "Người đại diện: ${contract.representative?['fullName'] ?? 'Không có'}",
+                style: TextStyle(fontSize: 3.5.sp),
+              ),
               SizedBox(height: 10.h,),
               Text("Số người ở: ${contract.numberOfResidents}", style: TextStyle(fontSize: 3.5.sp)),
               SizedBox(height: 10.h,),
-              Text("Tình trạng: ${contract.contractType == 'rent' ? 'Đã được thuê' : 'Đã được mua'}", style: TextStyle(fontSize: 3.5.sp)),
+              Text("Tình trạng: ${apartment.isRent == true ? 'Đã được thuê' : 'Đã được mua'}", style: TextStyle(fontSize: 3.5.sp)),
               SizedBox(height: 10.h,),
               Text(
                 "Thời hạn: ${DateFormat('dd/MM/yyyy – HH:mm').format(contract.startDate)} đến ${contract.endDate != null ? DateFormat('dd/MM/yyyy – HH:mm').format(contract.endDate!) : '∞'}", style: TextStyle(fontSize: 3.5.sp),
@@ -404,7 +475,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     final contractRef = FirebaseFirestore.instance
         .collection("apartments")
         .doc(apartment.id)
-        .collection("contracts")
+        .collection("contract")
         .doc(contract.contractId);
 
     final residentsSnapshot = await FirebaseFirestore.instance
@@ -420,7 +491,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     final List<Map<String, dynamic>> residentList = residentsSnapshot.docs.map((doc) {
       final data = doc.data();
       final fullName = data["fullName"] ?? "Unknown";  // Tránh null cho fullName
-      final isRepresentative = fullName == contract.representative;
+      final isRepresentative = doc.id == contract.representative?["id"]; // So sánh theo id thay vì fullName
 
       return {
         "id": doc.id,
@@ -428,7 +499,6 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
         "isRepresentative": isRepresentative,
       };
     }).toList();
-
 
     String? selectedIdToRemove;
 
@@ -438,12 +508,12 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Center(child: Text("Chọn cư dân cần xóa",style: TextStyle(fontSize: 6.sp, fontFamily:"Oswald",fontWeight: FontWeight.bold))),
+              title: Center(child: Text("Chọn cư dân cần xóa", style: TextStyle(fontSize: 6.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold))),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: residentList.map((r) {
                   return RadioListTile<String>(
-                    title: Text(r["fullName"] + (r["isRepresentative"] ? " (Đại diện)" : ""),style: TextStyle(fontSize: 3.5.sp)),
+                    title: Text(r["fullName"] + (r["isRepresentative"] ? " (Đại diện)" : ""), style: TextStyle(fontSize: 3.5.sp)),
                     value: r["id"],
                     groupValue: selectedIdToRemove,
                     onChanged: (value) => setState(() => selectedIdToRemove = value),
@@ -451,135 +521,138 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                 }).toList(),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: Text("Hủy",style: TextStyle(fontSize: 3.5.sp))),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp))),
                 TextButton(
                   onPressed: selectedIdToRemove == null ? null : () async {
                     Navigator.pop(context);
 
                     if (selectedIdToRemove == null) {
-                      // Trường hợp không có cư dân nào được chọn, có thể thông báo lỗi hoặc thoát
                       return;
                     }
 
-                    final removedResident = residentList.firstWhere((r) => r["id"] == selectedIdToRemove);
-                    final isRepresentative = removedResident["isRepresentative"];
-                    final removedName = removedResident["fullName"];
+                    LoadingDialog.showLoadingDialog(context, "Đang tải ...");
 
-                    if (isRepresentative) {
-                      final others = residentList.where((r) => r["id"] != selectedIdToRemove).toList();
+                    try {
+                      final removedResident = residentList.firstWhere((r) => r["id"] == selectedIdToRemove);
+                      final isRepresentative = removedResident["isRepresentative"];
+                      final removedName = removedResident["fullName"];
 
-                      if (others.isEmpty) {
-                        MsgDialog.showMsgDialog(
-                            context,
-                            "Không thể xóa",
-                            "Đây là người đại diện duy nhất và cũng là cư dân cuối cùng trong căn hộ. "
-                                "\nVui lòng xóa hợp đồng từ giao diện chính nếu muốn xóa toàn bộ."
-                        );
-                        return;
-                      }
+                      if (isRepresentative) {
+                        final others = residentList.where((r) => r["id"] != selectedIdToRemove).toList();
 
-                      else {
-                        // Có người thay thế → chọn người đại diện mới
-                        String? newRepId;
-                        await showDialog(
-                          context: context,
-                          builder: (_) {
-                            return StatefulBuilder(
-                              builder: (context, setState) {
-                                return AlertDialog(
-                                  title: Center(child: Text("Chọn người đại diện mới",style: TextStyle(fontFamily:"Oswald",fontWeight:FontWeight.bold,fontSize: 6.sp)),),
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: others.map((r) {
-                                      return RadioListTile<String>(
-                                        title: Text(r["fullName"],style: TextStyle(fontSize: 3.5.sp)),
-                                        value: r["id"],
-                                        groupValue: newRepId,
-                                        onChanged: (value) => setState(() => newRepId = value),
-                                      );
-                                    }).toList(),
-                                  ),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.pop(context), child: Text("Hủy",style: TextStyle(fontSize: 3.5.sp))),
-                                    TextButton(
-                                      onPressed: newRepId == null ? null : () => Navigator.pop(context, newRepId),
-                                      child: Text("Xác nhận",style: TextStyle(fontSize: 3.5.sp)),
+                        if (others.isEmpty) {
+                          Navigator.pop(context); // Đóng Dialog Loading
+                          MsgDialog.showMsgDialog(
+                              context,
+                              "Không thể xóa",
+                              "Đây là người đại diện duy nhất và cũng là cư dân cuối cùng trong căn hộ. "
+                                  "\nVui lòng xóa hợp đồng từ giao diện chính nếu muốn xóa toàn bộ."
+                          );
+                          return;
+                        } else {
+                          String? newRepId;
+                          await showDialog(
+                            context: context,
+                            builder: (_) {
+                              return StatefulBuilder(
+                                builder: (context, setState) {
+                                  return AlertDialog(
+                                    title: Center(child: Text("Chọn người đại diện mới", style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 6.sp))),
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: others.map((r) {
+                                        return RadioListTile<String>(
+                                          title: Text(r["fullName"], style: TextStyle(fontSize: 3.5.sp)),
+                                          value: r["id"],
+                                          groupValue: newRepId,
+                                          onChanged: (value) => setState(() => newRepId = value),
+                                        );
+                                      }).toList(),
                                     ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        ).then((newId) async {
-                          if (newId != null) {
-                            final newRepName = others.firstWhere((r) => r["id"] == newId)["fullName"];
-                            final batch = FirebaseFirestore.instance.batch();
-                            batch.update(contractRef, {
-                              "representative": newRepName,
-                              "numberOfResidents": FieldValue.increment(-1),
-                            });
-                            batch.delete(FirebaseFirestore.instance.collection("residents").doc(selectedIdToRemove));
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(context), child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp))),
+                                      TextButton(
+                                        onPressed: newRepId == null ? null : () => Navigator.pop(context, newRepId),
+                                        child: Text("Xác nhận", style: TextStyle(fontSize: 3.5.sp)),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ).then((newId) async {
+                            if (newId != null) {
+                              final newRepName = others.firstWhere((r) => r["id"] == newId)["fullName"];
+                              final batch = FirebaseFirestore.instance.batch();
+                              batch.update(contractRef, {
+                                "representative": {"id": newId, "fullName": newRepName},
+                                "numberOfResidents": FieldValue.increment(-1),
+                              });
+                              batch.delete(FirebaseFirestore.instance.collection("residents").doc(selectedIdToRemove));
 
-                            final removedResidentSummary = {
-                              'id': removedResident["id"],
-                              'fullName': removedResident["fullName"],
-                            };
+                              final removedResidentSummary = {
+                                'id': removedResident["id"],
+                                'fullName': removedResident["fullName"],
+                              };
 
-                            batch.update(FirebaseFirestore.instance.collection("apartments").doc(apartment.id), {
-                              "residents": FieldValue.arrayRemove([removedResidentSummary]),
-                            });
+                              batch.update(FirebaseFirestore.instance.collection("apartments").doc(apartment.id), {
+                                "residents": FieldValue.arrayRemove([removedResidentSummary]),
+                              });
 
-                            batch.set(
-                              FirebaseFirestore.instance.collection("apartments").doc(apartment.id).collection("updateHistory").doc(),
-                              {
-                                "action": "Xóa cư dân & cập nhật người đại diện",
-                                "performedBy": "Admin",
-                                "residentNames": [removedName],
-                                "newRepresentative": newRepName,
-                                "timestamp": FieldValue.serverTimestamp(),
-                              },
-                            );
+                              batch.set(
+                                FirebaseFirestore.instance.collection("apartments").doc(apartment.id).collection("updateHistory").doc(),
+                                {
+                                  "action": "Xóa cư dân & cập nhật người đại diện",
+                                  "performedBy": "Admin",
+                                  "residentNames": [removedName],
+                                  "newRepresentative": {"id": newId, "fullName": newRepName},
+                                  "timestamp": FieldValue.serverTimestamp(),
+                                },
+                              );
 
-                            // Xóa tài khoản trong Firebase Authentication
-                            await deleteResidentAccount1(selectedIdToRemove!);
-
-                            await batch.commit();
-                            onRefresh();
-                          }
+                              await deleteResidentAccount1(selectedIdToRemove!);
+                              await batch.commit();
+                              onRefresh();
+                            }
+                          });
+                        }
+                      } else {
+                        final batch = FirebaseFirestore.instance.batch();
+                        batch.update(contractRef, {
+                          "numberOfResidents": FieldValue.increment(-1),
                         });
+                        batch.delete(FirebaseFirestore.instance.collection("residents").doc(selectedIdToRemove));
+
+                        final removedResidentSummary = {
+                          'id': removedResident["id"],
+                          'fullName': removedResident["fullName"],
+                        };
+
+                        batch.update(FirebaseFirestore.instance.collection("apartments").doc(apartment.id), {
+                          "residents": FieldValue.arrayRemove([removedResidentSummary]),
+                        });
+
+                        batch.set(
+                          FirebaseFirestore.instance.collection("apartments").doc(apartment.id).collection("updateHistory").doc(),
+                          {
+                            "action": "Xóa cư dân",
+                            "performedBy": "Admin",
+                            "residentNames": [removedName],
+                            "timestamp": FieldValue.serverTimestamp(),
+                          },
+                        );
+
+                        await deleteResidentAccount(selectedIdToRemove!);
+                        await batch.commit();
+                        onRefresh();
                       }
-                    } else {
-                      // Xóa cư dân thường
-                      final batch = FirebaseFirestore.instance.batch();
-                      batch.update(contractRef, {
-                        "numberOfResidents": FieldValue.increment(-1),
-                      });
-                      batch.delete(FirebaseFirestore.instance.collection("residents").doc(selectedIdToRemove));
 
-                      final removedResidentSummary = {
-                        'id': removedResident["id"],
-                        'fullName': removedResident["fullName"],
-                      };
+                      // Hiển thị thông báo thành công
+                      MsgDialog.showMsgDialog(context, "Thành công", "Cư dân đã được xóa thành công!");
+                    } catch (e) {
 
-                      batch.update(FirebaseFirestore.instance.collection("apartments").doc(apartment.id), {
-                        "residents": FieldValue.arrayRemove([removedResidentSummary]),
-                      });
-
-                      batch.set(
-                        FirebaseFirestore.instance.collection("apartments").doc(apartment.id).collection("updateHistory").doc(),
-                        {
-                          "action": "Xóa cư dân",
-                          "performedBy": "Admin",
-                          "residentNames": [removedName],
-                          "timestamp": FieldValue.serverTimestamp(),
-                        },
-                      );
-
-                      // Xóa tài khoản trong Firebase Authentication
-                      await deleteResidentAccount(selectedIdToRemove!);
-
-                      await batch.commit();
-                      onRefresh();
+                      // Hiển thị thông báo lỗi
+                      MsgDialog.showMsgDialog(context, "Lỗi", "Có lỗi xảy ra khi xóa cư dân. Vui lòng thử lại.");
                     }
                   },
                   child: Text("Xóa"),
@@ -590,9 +663,8 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
         );
       },
     );
-  }
 
-  Future<void> deleteResidentAccount1(String uid) async {
+  }  Future<void> deleteResidentAccount1(String uid) async {
     const functionUrl = 'https://deleteresidentaccount-ttrkrlo35a-uc.a.run.app';
 
     try {
@@ -621,6 +693,8 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     if (areas.isNotEmpty) {
       final min = areas.reduce(minFunction);
       final max = areas.reduce(maxFunction);
+
+      if (!mounted) return; // NGĂN gọi setState nếu widget đã bị dispose
 
       setState(() {
         minArea = min;
@@ -663,48 +737,6 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     }
   }
 
-  void applyFilters() {
-    List<Apartment> result = allApartments;
-
-    if (selectedBuilding != null) {
-      result = result.where((a) => a.building == selectedBuilding).toList();
-    }
-
-    if (selectedFloor != null) {
-      result = result.where((a) => a.floor == selectedFloor).toList();
-    }
-
-    result = result
-        .where((a) =>
-    a.area >= selectedAreaRange.start &&
-        a.area <= selectedAreaRange.end)
-        .toList();
-
-    // Cập nhật các biến trước
-    filteredApartments = result;
-    currentPage = 1;
-    updatePaginatedApartments(); // KHÔNG dùng setState bên trong hàm này nữa
-
-    // Gọi setState sau khi các biến đã được cập nhật
-    setState(() {});
-  }
-
-  List<int> getFloorsByBuilding(
-      List<Apartment> apartments, String selectedBuilding) {
-    final filtered =
-        apartments.where((apt) => apt.building == selectedBuilding);
-    final floors = filtered.map((apt) => apt.floor).toSet().toList();
-    floors.sort();
-    return floors;
-  }
-
-  List<int> getFloorsForSelectedBuilding() {
-    if (selectedBuilding == null) {
-      return [];
-    }
-    return getFloorsByBuilding(allApartments, selectedBuilding!);
-  }
-
   @override
   void initState() {
     super.initState();
@@ -741,26 +773,22 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
       body: SafeArea(
           child: Stack(
             children: [
-              Positioned(
-                top: 0,
-                left: 0,
-                child: Image.asset('assets/images/two_circle.png', width: 160),
-              ),
               SingleChildScrollView(
                 child: Padding(
-                  padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 170.h),
+                  padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 40.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        "Danh sách căn hộ",
+                        "Hợp đồng căn hộ",
                         style: TextStyle(
                           fontFamily: "Oswald",
                           fontWeight: FontWeight.w700,
                           fontSize: 12.sp,
                         ),
                       ),
-                      SizedBox(height: 40.h),
+
+                      SizedBox(height: 70.h),
                       SizedBox(
                           height: MediaQuery.of(context).size.height - 360.h ,
                           child: Row(
@@ -769,7 +797,44 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                               /// Cột bên trái: Bộ lọc
                               Expanded(
                                 child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: TextField(
+                                        decoration: InputDecoration(
+                                          labelText: "Tìm kiếm căn hộ",
+                                          hintText: "Nhập tên căn hộ",
+                                          prefixIcon: Icon(Icons.search),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(30.r),
+                                          ),
+                                        ),
+                                        onChanged: _onSearchChanged,
+                                      ),
+                                    ),
+
+                                    SizedBox(height: 30.h),
+
+                                    // DropdownButton để lọc theo trạng thái hợp đồng
+                                buildFilterDropdown<String>(
+                                  label: "Lọc theo trạng thái hợp đồng",
+                                  items: ["isSale", "isRent"],
+                                  selectedValue: selectedContractStatus,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      selectedContractStatus = value;
+                                      applyFilters(); // Gọi hàm lọc khi thay đổi trạng thái hợp đồng
+                                    });
+                                  },
+                                  itemLabelBuilder: (item) {
+                                    if (item == "isSale") return "Đã được mua";
+                                    if (item == "isRent") return "Đã được thuê";
+                                    return item;
+                                  },
+                                ),
+                                    SizedBox(height: 20.h,),
+
                                     buildFilterDropdown<String>(
                                       label: "Chọn tòa",
                                       items: getAvailableBuildings(),
@@ -782,7 +847,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                         applyFilters();
                                       },
                                     ),
-                                    SizedBox(height: 50.h),
+                                    SizedBox(height: 20.h),
                                     buildFilterDropdown<int>(
                                       label: "Chọn tầng",
                                       items: getFloorsForSelectedBuilding(),
@@ -795,17 +860,26 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                         applyFilters();
                                       },
                                     ),
-                                    SizedBox(height: 50.h),
+                                    SizedBox(height: 20.h),
                                     buildAreaFilter(),
                                   ],
                                 ),
                               ),
+
+                              // Vertical Divider
+                              VerticalDivider(
+                                color: Colors.grey, // Màu của đường ngăn cách
+                                thickness: 0.2.w, // Độ dày của đường ngăn cách
+                                width: 40.w, // Chiều rộng tổng thể của vùng ngăn cách (bao gồm cả padding nếu có)
+                              ),
+
                               Expanded(
                                 child: Column(
                                   children: [
                                     allApartments.isEmpty
-                                        ? Expanded(child: ListView.builder(
-                                      itemCount: 5,
+                                        ? Expanded(
+                                        child: ListView.builder(
+                                      itemCount: 6,
                                       itemBuilder: (context, index) => Padding(
                                         padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                                         child: Shimmer.fromColors(
@@ -823,16 +897,17 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                     ))
                                         : (filteredApartments.isEmpty
                                         ? Center(
-                                      child: Text(
+                                      child: Center(child: Text(
                                         'Không có căn hộ nào',
                                         style: TextStyle(fontSize: 5.sp, color: Colors.black54),
-                                      ),
+                                      ),)
                                     )
-                                        : Column(
+                                        :
+                                    Column(
                                       children: [
                                         // Danh sách căn hộ trong khung cuộn với chiều cao cố định
                                         SizedBox(
-                                          height: 430.h, // hoặc bất kỳ chiều cao nào bạn muốn
+                                          height: 420.h, // hoặc bất kỳ chiều cao nào bạn muốn
                                           child: ListView.builder(
                                             itemCount: paginatedApartments.length,
                                             itemBuilder: (context, index) {
@@ -864,8 +939,15 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                                   subtitle: Row(
                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
-                                                      Text('Diện tích: ${apartment.area} m²'),
-                                                      SizedBox(width: 60.w),
+                                                      // Diện tích
+                                                      Expanded(
+                                                        child: Text('Diện tích: ${apartment.area} m²'),
+                                                      ),
+
+                                                      // Spacer để đẩy trạng thái về bên phải
+                                                      const Spacer(),
+
+                                                      // Trạng thái
                                                       Row(
                                                         children: [
                                                           statusIcon,
@@ -875,6 +957,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                                       ),
                                                     ],
                                                   ),
+
                                                   onTap: () {
                                                     if (apartment.isRent == true || apartment.isSale == true) {
                                                       showApartmentContractInfoDialog(context, apartment, () {
@@ -889,13 +972,24 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                             },
                                           ),
                                         ),
-
-                                        SizedBox(height: 20.h),
-
-                                        // Phân trang cố định bên dưới
+                                        SizedBox(height: 20.h,),
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
+                                            // Nút về trang đầu
+                                            IconButton(
+                                              onPressed: currentPage > 1
+                                                  ? () {
+                                                setState(() {
+                                                  currentPage = 1;
+                                                  updatePaginatedApartments();
+                                                });
+                                              }
+                                                  : null,
+                                              icon: const Icon(Icons.first_page),
+                                            ),
+
+                                            // Nút về trang trước
                                             IconButton(
                                               onPressed: currentPage > 1
                                                   ? () {
@@ -907,6 +1001,8 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                                   : null,
                                               icon: const Icon(Icons.chevron_left),
                                             ),
+
+                                            // Các nút số trang
                                             ...pageNumbers.map((pageNum) {
                                               return Padding(
                                                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -929,6 +1025,8 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                                 ),
                                               );
                                             }).toList(),
+
+                                            // Nút sang trang sau
                                             IconButton(
                                               onPressed: currentPage < totalPages
                                                   ? () {
@@ -940,8 +1038,22 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                                   : null,
                                               icon: const Icon(Icons.chevron_right),
                                             ),
+
+                                            // Nút sang trang cuối
+                                            IconButton(
+                                              onPressed: currentPage < totalPages
+                                                  ? () {
+                                                setState(() {
+                                                  currentPage = totalPages;
+                                                  updatePaginatedApartments();
+                                                });
+                                              }
+                                                  : null,
+                                              icon: const Icon(Icons.last_page),
+                                            ),
                                           ],
-                                        ),
+                                        )
+
                                       ],
                                     )),
                                   ],
@@ -952,11 +1064,6 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                     ],
                   ),
                 ),
-              ),
-              Positioned(
-                top: MediaQuery.of(context).size.height/2,
-                left: 10.w,
-                child: const BackButtonWidget(),
               ),
             ],
           )),
@@ -970,11 +1077,9 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     required ValueChanged<T?> onChanged,
     String Function(T)? itemLabelBuilder, // <--- thêm hàm tùy chọn
   }) {
-    final size = MediaQuery.of(context).size;
-    final isLandscape = size.height < size.width;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.w, 10.h, 30.w, 8.h),
+      padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 8.h),
       child: SizedBox(
         height: 60.h,
         child: Container(
@@ -985,7 +1090,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                 label,
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: isLandscape ? 5.sp : 15.sp,
+                  fontSize: 4.sp,
                 ),
               ),
               items: items.map((item) {
@@ -997,7 +1102,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                   value: item,
                   child: Text(
                     displayText,
-                    style: TextStyle(fontSize: isLandscape ? 5.sp : 15.sp),
+                    style: TextStyle(fontSize: 4.sp),
                   ),
                 );
               }).toList(),
@@ -1013,7 +1118,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       displayText,
-                      style: TextStyle(fontSize: isLandscape ? 5.sp : 15.sp),
+                      style: TextStyle(fontSize: 4.sp),
                     ),
                   );
                 }).toList();
@@ -1022,7 +1127,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                 height: 40.h,
                 padding: EdgeInsets.symmetric(
                   vertical: 2.h,
-                  horizontal: isLandscape ? 10.w : 25.w,
+                  horizontal: 10.w ,
                 ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
@@ -1032,7 +1137,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
               ),
               dropdownStyleData: DropdownStyleData(
                 maxHeight: 200.h,
-                width: isLandscape ? 132.w : 324.w,
+                width: 142.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                   color: Color(0xFFF7FEFF),
@@ -1042,7 +1147,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
               menuItemStyleData: MenuItemStyleData(
                 height: 40.h,
                 padding: EdgeInsets.symmetric(
-                  horizontal: isLandscape ? 10.w : 27.w,
+                  horizontal:  10.w ,
                 ),
               ),
             ),
@@ -1053,11 +1158,8 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
   }
 
   Widget buildAreaFilter() {
-    final size = MediaQuery.of(context).size;
-    final isLandscape = size.height < size.width;
-
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.w, 10.h, 30.w, 8.h),
+      padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 8.h),
       // Điều chỉnh padding nếu cần
       child: SizedBox(
         height: 60.h, // Điều chỉnh chiều cao phù hợp
@@ -1073,7 +1175,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
             child: Row(
               children: [
                 Text('Diện tích',
-                    style: TextStyle(fontSize: isLandscape ? 5.sp : 15.sp)),
+                    style: TextStyle(fontSize: 4.sp)),
                 SizedBox(
                   width: 3.w,
                 ),
