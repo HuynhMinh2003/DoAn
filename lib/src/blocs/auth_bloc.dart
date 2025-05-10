@@ -22,16 +22,22 @@ class AuthBloc {
   final StreamController<String> _nameStaffController = StreamController<String>.broadcast();
   final StreamController<String> _emailStaffController = StreamController<String>.broadcast();
   final StreamController<String> _phoneStaffController = StreamController<String>.broadcast();
+  final StreamController<String> _addressStaffController = StreamController<String>.broadcast();
+  final StreamController<String> _cccdStaffController = StreamController<String>.broadcast();
 
   Stream<String> get nameStaffStream => _nameStaffController.stream;
   Stream<String> get emailStaffStream => _emailStaffController.stream;
   Stream<String> get phoneStaffStream => _phoneStaffController.stream;
+  Stream<String> get addressStaffStream => _addressStaffController.stream;
+  Stream<String> get cccdStaffStream => _cccdStaffController.stream;
 
   // cư dân
   final StreamController<String>  _nameResidentController = StreamController<String>.broadcast();
   final StreamController<String> _cccdResidentController = StreamController<String>.broadcast();
   final StreamController<String>  _phoneResidentController = StreamController<String>.broadcast();
   final StreamController<String>  _emailResidentController = StreamController<String>.broadcast();
+  final StreamController<String>  _addressResidentController = StreamController<String>.broadcast();
+
   final _birthDateController = StreamController<DateTime?>.broadcast();
 
   Stream<DateTime?> get birthDateStream => _birthDateController.stream;
@@ -39,6 +45,7 @@ class AuthBloc {
   Stream<String> get cccdResidentStream => _cccdResidentController.stream;
   Stream<String> get phoneResidentStream => _phoneResidentController.stream;
   Stream<String> get emailResidentStream => _emailResidentController.stream;
+  Stream<String> get addressResidentStream => _addressResidentController.stream;
 
   // login chung
   final StreamController<String> _emailController = StreamController<String>.broadcast();
@@ -66,6 +73,11 @@ class AuthBloc {
   void clearCccdResidentError() {
     _cccdResidentController.sink.add(""); // xóa lỗi bằng cách đẩy lại giá trị trống
   }
+
+  void clearAddressResidentError() {
+    _addressResidentController.sink.add(""); // xóa lỗi bằng cách đẩy lại giá trị trống
+  }
+
 
 
   /// Tạo mật khẩu ngẫu nhiên
@@ -164,6 +176,9 @@ class AuthBloc {
   /// Đăng ký nhân viên
   void signUpStaff({
     required String nameStaff,
+    required String addressStaff,
+    required String cccdStaff,
+    required String gender,
     required String emailStaff,
     required String phoneStaff,
     required String position,
@@ -171,11 +186,14 @@ class AuthBloc {
     required Function onSuccess,
     required Function(String) onRegisterError,
   }) {
-    if (isValidStaffSignUp(nameStaff, emailStaff, phoneStaff, position)) {
+    if (isValidStaffSignUp(nameStaff, addressStaff, cccdStaff, gender, emailStaff, phoneStaff, position)) {
       final randomPassword = generateRandomPassword();
 
       _firAuth.signUpStaff(
         nameStaff: nameStaff,
+        addressStaff: addressStaff,
+        cccdStaff: cccdStaff,
+        gender: gender,
         emailStaff: emailStaff,
         phoneStaff: phoneStaff,
         position: position,
@@ -190,7 +208,7 @@ class AuthBloc {
     }
   }
 
-  bool isValidStaffSignUp(String name, String email, String phone, String position) {
+  bool isValidStaffSignUp(String name, String address,String cccd, String gender, String email, String phone, String position) {
     bool isValid = true;
 
     if (name.isEmpty) {
@@ -198,6 +216,24 @@ class AuthBloc {
       isValid = false;
     } else {
       _nameStaffController.sink.add("");
+    }
+
+    if (address.isEmpty) {
+      _addressStaffController.sink.addError("Phải nhập địa chỉ!");
+      isValid = false;
+    } else {
+      _addressStaffController.sink.add("");
+    }
+
+    final cccdRegex = RegExp(r'^\d{12}$');
+    if (cccd.isEmpty) {
+      _cccdStaffController.sink.addError("Phải nhập số CCCD !");
+      isValid = false;
+    } else if (!cccdRegex.hasMatch(cccd)) {
+      _cccdStaffController.sink.addError("Số CCCD không hợp lệ !");
+      isValid = false;
+    } else {
+      _cccdStaffController.sink.add("");
     }
 
     final emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
@@ -225,7 +261,7 @@ class AuthBloc {
     return isValid;
   }
 
-  bool isValidStaffUpdate(String name, String phone, String position) {
+  bool isValidStaffUpdate(String name, String address,String cccd, String gender, String email,String phone, String position) {
     bool isValid = true;
 
     if (name.isEmpty) {
@@ -233,6 +269,35 @@ class AuthBloc {
       isValid = false;
     } else {
       _nameStaffController.sink.add("");
+    }
+
+    if (address.isEmpty) {
+      _addressStaffController.sink.addError("Phải nhập địa chỉ!");
+      isValid = false;
+    } else {
+      _addressStaffController.sink.add("");
+    }
+
+    final cccdRegex = RegExp(r'^\d{12}$');
+    if (cccd.isEmpty) {
+      _cccdStaffController.sink.addError("Phải nhập số CCCD !");
+      isValid = false;
+    } else if (!cccdRegex.hasMatch(cccd)) {
+      _cccdStaffController.sink.addError("Số CCCD không hợp lệ !");
+      isValid = false;
+    } else {
+      _cccdStaffController.sink.add("");
+    }
+
+    final emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+    if (email.isEmpty) {
+      _emailStaffController.sink.addError("Phải nhập email!");
+      isValid = false;
+    } else if (!emailRegex.hasMatch(email)) {
+      _emailStaffController.sink.addError("Email không hợp lệ!");
+      isValid = false;
+    } else {
+      _emailStaffController.sink.add("");
     }
 
     final phoneRegex = RegExp(r'^\d{10,15}$');
@@ -254,6 +319,8 @@ class AuthBloc {
       String emailResident,
       String phoneResident,
       String cccdResident,
+      String addressResident,
+      String genderResident,
       DateTime? birthDate,
       ) {
     bool isValid = true;
@@ -263,6 +330,13 @@ class AuthBloc {
       isValid = false;
     } else {
       _nameResidentController.sink.add("");
+    }
+
+    if (addressResident.isEmpty) {
+      _addressResidentController.sink.addError("Phải nhập địa chỉ cư dân !");
+      isValid = false;
+    } else {
+      _addressResidentController.sink.add("");
     }
 
     final emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
@@ -363,6 +437,10 @@ class AuthBloc {
   void changeCCCD(String cccd) {
     _cccdResidentController.sink.add(cccd);
   }
+  void changeAddress(String address) {
+    _addressResidentController.sink.add(address);
+  }
+
 
   void changeBirthDate(DateTime? date) {
     if (date == null) {
@@ -370,6 +448,26 @@ class AuthBloc {
     } else {
       _birthDateController.sink.add(date);
     }
+  }
+
+  // Controller cho Gender Stream
+  final _genderResidentController = StreamController<String>();
+
+  // Getter cho Stream
+  Stream<String> get genderResidentStream => _genderResidentController.stream;
+
+  // Phương thức để thay đổi giá trị Gender
+  void changeGender(String gender) {
+    if (_validateGender(gender)) {
+      _genderResidentController.sink.add(gender); // Đẩy giá trị mới vào stream
+    } else {
+      _genderResidentController.sink.addError('Vui lòng chọn giới tính hợp lệ');
+    }
+  }
+
+  // Hàm validate giá trị Gender
+  bool _validateGender(String gender) {
+    return gender == 'Nam' || gender == 'Nữ' || gender == 'Khác';
   }
 
   void dispose() {
@@ -382,11 +480,15 @@ class AuthBloc {
     _nameStaffController.close();
     _emailStaffController.close();
     _phoneStaffController.close();
+    _cccdStaffController.close();
+    _addressStaffController.close();
 
     _nameResidentController.close();
     _emailResidentController.close();
     _phoneResidentController.close();
     _cccdResidentController.close();
+    _genderResidentController.close();
+    _addressResidentController.close();
 
     _emailController.close();
     _passController.close();

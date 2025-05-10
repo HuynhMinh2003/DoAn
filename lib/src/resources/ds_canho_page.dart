@@ -25,6 +25,8 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
 
   String? selectedBuilding;
   int? selectedFloor;
+  String searchQuery = "";
+  String? selectedContractStatus;
 
   List<String> getAvailableBuildings() {
     return allApartments.map((a) => a.building).toSet().toList()..sort();
@@ -47,6 +49,17 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
   List<Apartment> paginatedApartments = []; // Căn hộ hiển thị trên mỗi trang
   int totalPages = 0; // Tổng số trang
   List<int> pageNumbers = []; // Danh sách số trang cần hiển thị (1, 2, 3)
+
+  // Hàm debounce để tối ưu hiệu suất tìm kiếm
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        searchQuery = query;
+        applyFilters(); // Gọi lại hàm lọc khi thay đổi giá trị tìm kiếm
+      });
+    });
+  }
 
   void updatePaginatedApartments() {
     int startIndex = (currentPage - 1) * itemsPerPage;
@@ -94,7 +107,20 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
         a.area <= selectedAreaRange.end)
         .toList();
 
-    // Cập nhật các biến trước
+    if (searchQuery.isNotEmpty) {
+      result = result
+          .where((a) =>
+          a.apartmentName.toLowerCase().contains(searchQuery.toLowerCase()))
+          .toList();
+    }
+
+    // Lọc theo trạng thái hợp đồng
+    if (selectedContractStatus == "contract") {
+      result = result.where((a) => a.isSale || a.isRent).toList(); // Gộp isSale và isRent
+    } else if (selectedContractStatus == "empty") {
+      result = result.where((a) => !a.isSale && !a.isRent).toList(); // Trạng thái trống
+    }
+      // Cập nhật các biến trước
     filteredApartments = result;
     currentPage = 1;
     updatePaginatedApartments(); // KHÔNG dùng setState bên trong hàm này nữa
@@ -127,7 +153,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Tòa nhà: ${apartment.building}', style: TextStyle(fontSize: 4.sp)),
+                    Text(' ${apartment.building}', style: TextStyle(fontSize: 4.sp)),
                     SizedBox(height: 10.h),
                     TextField(
                       controller: areaController,
@@ -442,14 +468,9 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
       body: SafeArea(
           child: Stack(
             children: [
-              Positioned(
-                top: 0,
-                left: 0,
-                child: Image.asset('assets/images/two_circle.png', width: 160),
-              ),
               SingleChildScrollView(
                 child: Padding(
-                  padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 170.h),
+                  padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 40.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -461,7 +482,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                           fontSize: 12.sp,
                         ),
                       ),
-                      SizedBox(height: 10.h,),
+                      SizedBox(height: 30.h,),
                       Row(
                         mainAxisSize:MainAxisSize.min,
                         children: [
@@ -488,7 +509,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                             ],
                           ),
                         ),],),
-                      SizedBox(height: 30.h),
+                      SizedBox(height: 40.h),
                       SizedBox(
                         height: MediaQuery.of(context).size.height - 360.h,
                         child: Row(
@@ -498,6 +519,39 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                             Expanded(
                               child: Column(
                                 children: [
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: TextField(
+                                      decoration: InputDecoration(
+                                        labelText: "Tìm kiếm căn hộ",
+                                        hintText: "Nhập tên căn hộ",
+                                        prefixIcon: Icon(Icons.search),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(30.r),
+                                        ),
+                                      ),
+                                      onChanged: _onSearchChanged,
+                                    ),
+                                  ),
+                                  SizedBox(height: 30.h),
+
+                                  buildFilterDropdown<String>(
+                                    label: "Lọc theo trạng thái hợp đồng",
+                                    items: ["contract", "empty"], // "contract" cho hợp đồng, "empty" cho trống
+                                    selectedValue: selectedContractStatus,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedContractStatus = value;
+                                        applyFilters(); // Gọi hàm lọc khi thay đổi trạng thái hợp đồng
+                                      });
+                                    },
+                                    itemLabelBuilder: (item) {
+                                      if (item == "contract") return "Đã có hợp đồng"; // Gộp cả isSale và isRent
+                                      if (item == "empty") return "Trống"; // Hiển thị căn hộ trống
+                                      return item;
+                                    },
+                                  ),
+                                  SizedBox(height: 20.h),
                                   buildFilterDropdown<String>(
                                     label: "Chọn tòa",
                                     items: getAvailableBuildings(),
@@ -510,7 +564,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                       applyFilters();
                                     },
                                   ),
-                                  SizedBox(height: 50.h),
+                                  SizedBox(height: 20.h),
                                   buildFilterDropdown<int>(
                                     label: "Chọn tầng",
                                     items: getFloorsForSelectedBuilding(),
@@ -523,13 +577,17 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                       applyFilters();
                                     },
                                   ),
-                                  SizedBox(height: 50.h),
+                                  SizedBox(height: 20.h),
                                   buildAreaFilter(),
                                 ],
                               ),
                             ),
                             // Cột bên phải: Danh sách căn hộ
-
+                            VerticalDivider(
+                              color: Colors.grey, // Màu của đường ngăn cách
+                              thickness: 0.2.w, // Độ dày của đường ngăn cách
+                              width: 40.w, // Chiều rộng tổng thể của vùng ngăn cách (bao gồm cả padding nếu có)
+                            ),
                             Expanded(
                               child: Column(
                                 children: [
@@ -553,10 +611,10 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                   ))
                                       : (filteredApartments.isEmpty
                                       ? Center(
-                                    child: Text(
+                                    child: Center(child: Text(
                                       'Không có căn hộ nào',
                                       style: TextStyle(fontSize: 5.sp, color: Colors.black54),
-                                    ),
+                                    ),)
                                   )
                                       : Column(
                                     children: [
@@ -572,7 +630,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
 
                                             if (apartment.isRent == true||apartment.isSale == true) {
                                               statusIcon = const Icon(Icons.assignment_turned_in, color: Colors.green);
-                                              statusText = "Đã có hợp đồng ";
+                                              statusText = "Đã có chủ ";
                                             } else {
                                               statusIcon = const Icon(Icons.home_outlined, color: Colors.grey);
                                               statusText = "Trống";
@@ -583,7 +641,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
                                               elevation: 2,
                                               child: ListTile(
-                                                contentPadding: EdgeInsets.only(left: 16.w,top: 2.h, bottom: 2.h),
+                                                contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 2.h),
                                                 title: Text(
                                                   '${apartment.building} - ${apartment.apartmentName}',
                                                   style: const TextStyle(fontWeight: FontWeight.bold),
@@ -591,8 +649,10 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                                 subtitle: Row(
                                                   crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
-                                                    Text('Diện tích: ${apartment.area} m²'),
-                                                    SizedBox(width: 60.w),
+                                                    Expanded(child: Text('Diện tích: ${apartment.area} m²')),
+
+                                                    const Spacer(),
+
                                                     Row(
                                                       children: [
                                                         statusIcon,
@@ -619,6 +679,20 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
+                                          // Nút về trang đầu
+                                          IconButton(
+                                            onPressed: currentPage > 1
+                                                ? () {
+                                              setState(() {
+                                                currentPage = 1;
+                                                updatePaginatedApartments();
+                                              });
+                                            }
+                                                : null,
+                                            icon: const Icon(Icons.first_page),
+                                          ),
+
+                                          // Nút về trang trước
                                           IconButton(
                                             onPressed: currentPage > 1
                                                 ? () {
@@ -630,6 +704,8 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                                 : null,
                                             icon: const Icon(Icons.chevron_left),
                                           ),
+
+                                          // Các nút số trang
                                           ...pageNumbers.map((pageNum) {
                                             return Padding(
                                               padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -652,6 +728,8 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                               ),
                                             );
                                           }).toList(),
+
+                                          // Nút sang trang sau
                                           IconButton(
                                             onPressed: currentPage < totalPages
                                                 ? () {
@@ -663,8 +741,21 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                                 : null,
                                             icon: const Icon(Icons.chevron_right),
                                           ),
+
+                                          // Nút sang trang cuối
+                                          IconButton(
+                                            onPressed: currentPage < totalPages
+                                                ? () {
+                                              setState(() {
+                                                currentPage = totalPages;
+                                                updatePaginatedApartments();
+                                              });
+                                            }
+                                                : null,
+                                            icon: const Icon(Icons.last_page),
+                                          ),
                                         ],
-                                      ),
+                                      )
                                     ],
                                   )
                                   ),
@@ -679,11 +770,6 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                   ),
                 ),
               ),
-              Positioned(
-                top: MediaQuery.of(context).size.height/2,
-                left: 10.w,
-                child: const BackButtonWidget(),
-              ),
             ],
           )),
     );
@@ -696,11 +782,9 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
     required ValueChanged<T?> onChanged,
     String Function(T)? itemLabelBuilder, // <--- thêm hàm tùy chọn
   }) {
-    final size = MediaQuery.of(context).size;
-    final isLandscape = size.height < size.width;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.w, 10.h, 30.w, 8.h),
+      padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 8.h),
       child: SizedBox(
         height: 60.h,
         child: Container(
@@ -711,7 +795,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                 label,
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: isLandscape ? 5.sp : 15.sp,
+                  fontSize: 4.sp,
                 ),
               ),
               items: items.map((item) {
@@ -723,7 +807,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                   value: item,
                   child: Text(
                     displayText,
-                    style: TextStyle(fontSize: isLandscape ? 5.sp : 15.sp),
+                    style: TextStyle(fontSize: 4.sp),
                   ),
                 );
               }).toList(),
@@ -739,7 +823,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       displayText,
-                      style: TextStyle(fontSize: isLandscape ? 5.sp : 15.sp),
+                      style: TextStyle(fontSize: 4.sp),
                     ),
                   );
                 }).toList();
@@ -748,7 +832,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                 height: 40.h,
                 padding: EdgeInsets.symmetric(
                   vertical: 2.h,
-                  horizontal: isLandscape ? 10.w : 25.w,
+                  horizontal: 10.w ,
                 ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
@@ -758,7 +842,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
               ),
               dropdownStyleData: DropdownStyleData(
                 maxHeight: 200.h,
-                width: isLandscape ? 132.w : 324.w,
+                width: 142.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                   color: Color(0xFFF7FEFF),
@@ -768,7 +852,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
               menuItemStyleData: MenuItemStyleData(
                 height: 40.h,
                 padding: EdgeInsets.symmetric(
-                  horizontal: isLandscape ? 10.w : 27.w,
+                  horizontal:  10.w ,
                 ),
               ),
             ),
@@ -779,11 +863,8 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
   }
 
   Widget buildAreaFilter() {
-    final size = MediaQuery.of(context).size;
-    final isLandscape = size.height < size.width;
-
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.w, 10.h, 30.w, 8.h),
+      padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 8.h),
       // Điều chỉnh padding nếu cần
       child: SizedBox(
         height: 60.h, // Điều chỉnh chiều cao phù hợp
@@ -799,7 +880,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
             child: Row(
               children: [
                 Text('Diện tích',
-                    style: TextStyle(fontSize: isLandscape ? 5.sp : 15.sp)),
+                    style: TextStyle(fontSize: 4.sp)),
                 SizedBox(
                   width: 3.w,
                 ),
