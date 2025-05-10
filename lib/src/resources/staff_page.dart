@@ -18,11 +18,6 @@ class StaffPage extends StatelessWidget {
       body: SafeArea(
         child: Stack(
           children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              child: Image.asset('assets/images/two_circle.png', width: 160),
-            ),
             SingleChildScrollView(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(100.w, 280.h, 100.w, 0.h),
@@ -38,11 +33,6 @@ class StaffPage extends StatelessWidget {
                   ],
                 ),
               ),
-            ),
-            Positioned(
-              top: MediaQuery.of(context).size.height/2,
-              left: 10.w,
-              child: const BackButtonWidget(),
             ),
           ],
         ),

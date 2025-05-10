@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/resident_info.dart';
 
-class ContractData {
+class ContractData2 {
   final String? contractId;
   final String apartmentName;
   final String building;
@@ -11,7 +11,7 @@ class ContractData {
   final String contractType;
   final DateTime startDate;
   final DateTime? endDate;
-  final DateTime? timepay;
+  final DateTime timepay;
   final int numberOfResidents;
   final List<ResidentInfo> residents;
   final String apartmentDocId;
@@ -20,12 +20,9 @@ class ContractData {
   final String? devices;  // devices trong hợp đồng
   final String? limit;    // limit của hợp đồng
   final int? price;       // giá của hợp đồng
-  final String? obligation;  // nghĩa vụ của bên thuê
-  final String? benefit;     // quyền lợi của bên thuê
-  final String? commit;
-  final String? timepayattention;
+  final String? timepayattention;  // nghĩa vụ của bên thuê
 
-  ContractData({
+  ContractData2({
     this.contractId,
     required this.apartmentName,
     required this.building,
@@ -35,7 +32,7 @@ class ContractData {
     required this.contractType,
     required this.startDate,
     this.endDate,
-    this.timepay,
+    required this.timepay,
     required this.numberOfResidents,
     required this.residents,
     required this.apartmentDocId,
@@ -44,13 +41,10 @@ class ContractData {
     this.devices,
     this.limit,
     this.price,
-    this.obligation,
-    this.benefit,
-    this.commit,
     this.timepayattention,
   });
 
-  ContractData copyWith({
+  ContractData2 copyWith({
     String? contractId,
     String? apartmentName,
     String? building,
@@ -69,12 +63,9 @@ class ContractData {
     String? devices,
     String? limit,
     int? price,
-    String? obligation,
-    String? benefit,
-    String? commit,
-    String? timepayattenion,
+    String? timepayattention,
   }) {
-    return ContractData(
+    return ContractData2(
       contractId: contractId ?? this.contractId,
       apartmentName: apartmentName ?? this.apartmentName,
       building: building ?? this.building,
@@ -93,9 +84,6 @@ class ContractData {
       devices: devices ?? this.devices,
       limit: limit ?? this.limit,
       price: price ?? this.price,
-      obligation: obligation ?? this.obligation,
-      benefit: benefit ?? this.benefit,
-      commit: commit ?? this.commit,
       timepayattention: timepayattention ?? this.timepayattention,
     );
   }
@@ -118,16 +106,13 @@ class ContractData {
       "devices": devices,
       "limit": limit,
       "price": price,
-      "obligation": obligation,
-      "benefit": benefit,
-      "commit": commit,
       "timepayattention": timepayattention,
       "createdAt": Timestamp.now(),
     };
   }
 
-  factory ContractData.fromMap(Map<String, dynamic> map, String docId, List<ResidentInfo> residents) {
-    return ContractData(
+  factory ContractData2.fromMap(Map<String, dynamic> map, String docId, List<ResidentInfo> residents) {
+    return ContractData2(
       contractId: docId,
       apartmentDocId: map['apartmentDocId'] ?? '',
       apartmentName: map['apartmentName'] ?? '',
@@ -137,8 +122,8 @@ class ContractData {
       salePrice: map['type'] == 'sale' ? map['price'] ?? 0 : 0,
       contractType: map['type'] ?? '',
       startDate: (map['startDate'] as Timestamp).toDate(),
+      timepay: (map['timepay'] as Timestamp).toDate(),
       endDate: map['endDate'] != null ? (map['endDate'] as Timestamp).toDate() : null,
-      timepay: map['timepay'] != null ? (map['timepay'] as Timestamp).toDate() : null,
       numberOfResidents: map['numberOfResidents'] ?? 0,
       residents: residents,
       representative: map['representative'] != null
@@ -148,9 +133,6 @@ class ContractData {
       devices: map['devices'],
       limit: map['limit'],
       price: map['price'],
-      obligation: map['obligation'],
-      benefit: map['benefit'],
-      commit: map['commit'],
       timepayattention: map['timepayattention'],
     );
   }
