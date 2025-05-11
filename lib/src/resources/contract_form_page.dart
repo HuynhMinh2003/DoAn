@@ -1,7 +1,7 @@
+import 'dart:html' as html;
 import 'dart:convert';
 import 'package:do_an/src/models/resident_info.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
-import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,8 +9,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:docx_template/docx_template.dart';
-import 'dart:html' as html;
-
 
 class ContractFormRentPage extends StatefulWidget {
   final String apartmentId;
@@ -645,6 +643,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         "photoUrl":"",
                         "createdAt": Timestamp.now(),
                         });
+
                         final templateData = await rootBundle.load('assets/templates/hd_thue_ch.docx');
                         print("✅ Đã tải template DOCX");
 
@@ -706,10 +705,9 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         final blob = html.Blob([fileBytes]);
                         final url = html.Url.createObjectUrlFromBlob(blob);
                         final anchor = html.AnchorElement(href: url)
-                        ..setAttribute("download", fileName)
-                        ..click();
+                          ..setAttribute("download", fileName)
+                          ..click();
                         html.Url.revokeObjectUrl(url);
-
                         LoadingDialog.hideLoadingDialog(context);
 
                         // Hiển thị dialog thành công
@@ -787,7 +785,8 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                 ),
                 SizedBox(width: 30.w),
               ],
-            )          ],
+            )
+          ],
         ),
       ),
     );
