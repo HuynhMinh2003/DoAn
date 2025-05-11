@@ -1,4 +1,4 @@
-import 'dart:html' as html;
+import 'contract_form_mobile_page.dart' if (dart.library.html) 'contract_form_web_page.dart';
 import 'dart:convert';
 import 'package:do_an/src/models/resident_info.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
@@ -702,12 +702,8 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
 
                         // Tạo file Word
                         final fileName = "thuê_${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
-                        final blob = html.Blob([fileBytes]);
-                        final url = html.Url.createObjectUrlFromBlob(blob);
-                        final anchor = html.AnchorElement(href: url)
-                          ..setAttribute("download", fileName)
-                          ..click();
-                        html.Url.revokeObjectUrl(url);
+                        await downloadWordFile(fileName, fileBytes!);
+
                         LoadingDialog.hideLoadingDialog(context);
 
                         // Hiển thị dialog thành công

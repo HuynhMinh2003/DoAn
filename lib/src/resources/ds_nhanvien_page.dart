@@ -1,5 +1,4 @@
-import 'package:excel/excel.dart' as ex;
-import 'dart:html' as html;
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/models/staffs.dart';
@@ -13,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'ds_nhanvien_mobile_page.dart' if (dart.library.html) 'ds_nhanvien_web_page.dart';
 
 class StaffListPage extends StatefulWidget {
   const StaffListPage({super.key});
@@ -403,46 +403,6 @@ class _StaffListPageState extends State<StaffListPage> {
     );
   }
 
-  Future<void> exportStaffsToExcel(List<Staff> staffs) async {
-    final excel = ex.Excel.createExcel(); // tạo file mới
-    final sheet = excel['DanhSachNhanVien']; // tạo sheet
-
-    // Dòng tiêu đề (Header)
-    final headers = [
-      ex.TextCellValue('Tên nhân viên'),
-      ex.TextCellValue('Số điện thoại'),
-      ex.TextCellValue('Địa chỉ'),
-      ex.TextCellValue('Giới tính'),
-      ex.TextCellValue('Số CCCD'),
-      ex.TextCellValue('Chức vụ'),
-      ex.TextCellValue('Email'),
-    ];
-    sheet.insertRowIterables(headers, 0); // Ghi dòng đầu tiên
-
-    // Ghi từng dòng dữ liệu
-    for (int i = 0; i < staffs.length; i++) {
-      final apt = staffs[i];
-      final row = [
-        ex.TextCellValue(apt.fullName),
-        ex.TextCellValue(apt.phone),
-        ex.TextCellValue(apt.address),
-        ex.TextCellValue(apt.gender),
-        ex.TextCellValue(apt.cccd),
-        ex.TextCellValue(apt.position),
-        ex.TextCellValue(apt.email),
-      ];
-      sheet.insertRowIterables(row, i + 1);
-    }
-
-    // Xuất file
-    final fileBytes = excel.encode();
-    final blob = html.Blob([fileBytes]);
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute("download", "DanhSachNhanVien.xlsx")
-      ..click();
-    html.Url.revokeObjectUrl(url);
-  }
   Future<bool> sendUpdatedDetailEmailFromFlutter({
     required String uid,
     required String oldEmail,
