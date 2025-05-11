@@ -686,8 +686,6 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
                           ..click();
                         html.Url.revokeObjectUrl(url);
 
-                        print("✅ File Word đã được tải về: $fileName");
-
                         LoadingDialog.hideLoadingDialog(context);
 
                         // Hiển thị dialog thành công
