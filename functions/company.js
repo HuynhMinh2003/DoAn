@@ -21,9 +21,9 @@ const createCompanyAccount = onRequest(
   },
   (req, res) => {
     corsHandler(req, res, async () => {
-      const { email, nameCompany, phone, type, description } = req.body;
+      const { email, name, phone, type, address, description } = req.body;
 
-      if (!email || !nameCompany || !phone || !type || !description) {
+      if (!email || !name || !phone || !type || !address || !description) {
         return res.status(400).send("Thiếu thông tin công ty.");
       }
 
@@ -32,17 +32,19 @@ const createCompanyAccount = onRequest(
 
         const userRecord = await admin.auth().createUser({
           email,
-          displayName: nameCompany,
+          displayName: name,
           password,
         });
 
         await admin.firestore().collection("companies").doc(userRecord.uid).set({
-          nameCompany,
+          name,
           email,
           phone,
           type,
+          address,
           fcmTokens: [],
           description,
+          imageUrl:"",
           role: 4,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
@@ -74,7 +76,7 @@ const createCompanyAccount = onRequest(
           to: email,
           subject: "Thông tin đăng nhập công ty",
           html: `
-            <p>Xin chào ${nameCompany},</p>
+            <p>Xin chào ${name},</p>
             <p>Tài khoản công ty của bạn đã được tạo.</p>
             <p>Email: ${email}</p>
             <p>Mật khẩu tạm thời: ${password}</p>
@@ -82,11 +84,15 @@ const createCompanyAccount = onRequest(
           `,
         });
 
-        res.status(200).send("Tạo tài khoản công ty và gửi email thành công.");
-      } catch (error) {
-        console.error("❌ Lỗi tạo tài khoản công ty:", error);
-        res.status(500).send("Lỗi: " + error.message);
-      }
+         // Trả về UID của nhân viên vừa tạo
+                        res.status(200).send({
+                          message: "Tạo tài khoản công ty và gửi email thành công.",
+                          uid: userRecord.uid, // Trả về UID của người dùng mới
+                        });
+                      } catch (error) {
+                        console.error("❌ Lỗi tạo tài khoản công ty:", error);
+                        res.status(500).send("Lỗi: " + error.message);
+                      }
     });
   }
 );

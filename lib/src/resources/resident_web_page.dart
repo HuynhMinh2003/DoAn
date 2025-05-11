@@ -3,9 +3,6 @@ import 'package:do_an/src/models/resident_info.dart';
 import 'package:excel/excel.dart' as ex;
 import 'dart:html' as html;
 
-import 'package:excel/excel.dart' as ex;
-import 'dart:html' as html;
-
 Future<void> exportResidentsToExcel(
     List<ResidentInfo> residents,
     List<ResidentInfo> matchedResidents,

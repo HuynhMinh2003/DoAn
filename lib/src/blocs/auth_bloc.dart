@@ -10,12 +10,14 @@ class AuthBloc {
   final StreamController<String> _emailCompanyController = StreamController<String>.broadcast();
   final StreamController<String> _phoneCompanyController = StreamController<String>.broadcast();
   final StreamController<String> _typeCompanyController = StreamController<String>.broadcast();
+  final StreamController<String> _addressCompanyController = StreamController<String>.broadcast();
   final StreamController<String> _describeCompanyController = StreamController<String>.broadcast();
 
   Stream<String> get nameCompanyStream => _nameCompanyController.stream;
   Stream<String> get emailCompanyStream => _emailCompanyController.stream;
   Stream<String> get phoneCompanyStream => _phoneCompanyController.stream;
   Stream<String> get typeCompanyStream => _typeCompanyController.stream;
+  Stream<String> get addressCompanyStream => _addressCompanyController.stream;
   Stream<String> get describeCompanyStream => _describeCompanyController.stream;
 
   // nhân viên
@@ -93,6 +95,7 @@ class AuthBloc {
       String emailCompany,
       String phoneCompany,
       String typeCompany,
+      String addressCompany,
       String describeCompany,
       ) {
     bool isValid = true;
@@ -133,6 +136,13 @@ class AuthBloc {
       _typeCompanyController.sink.add("");
     }
 
+    if (addressCompany.isEmpty) {
+      _addressCompanyController.sink.addError("Phải điền địa chỉ !");
+      isValid = false;
+    } else {
+      _addressCompanyController.sink.add("");
+    }
+
     if (describeCompany.isEmpty) {
       _describeCompanyController.sink.addError("Phải điền loại dịch vụ !");
       isValid = false;
@@ -149,11 +159,12 @@ class AuthBloc {
     required String emailCompany,
     required String phoneCompany,
     required String typeCompany,
+    required String addressCompany,
     required String describeCompany,
     required Function onSuccess,
     required Function(String) onRegisterError,
   }) {
-    if (isValidCompanySignUp(nameCompany, emailCompany, phoneCompany, typeCompany, describeCompany)) {
+    if (isValidCompanySignUp(nameCompany, emailCompany, phoneCompany, typeCompany, addressCompany, describeCompany)) {
       final randomPassword = generateRandomPassword(); // 👉 tạo mật khẩu tại đây
 
       _firAuth.signUpCompany(
@@ -161,6 +172,7 @@ class AuthBloc {
         emailCompany: emailCompany,
         phoneCompany: phoneCompany,
         typeCompany: typeCompany,
+        addressCompany: addressCompany,
         describeCompany: describeCompany,
         passwordCompany: randomPassword,
         onSuccess: () {
@@ -475,6 +487,7 @@ class AuthBloc {
     _emailCompanyController.close();
     _phoneCompanyController.close();
     _typeCompanyController.close();
+    _addressCompanyController.close();
     _describeCompanyController.close();
 
     _nameStaffController.close();

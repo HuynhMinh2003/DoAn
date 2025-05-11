@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
-import 'package:do_an/src/resources/provider/user_image_provider.dart';
+import 'package:do_an/src/resources/provider/staff_image_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +43,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
     // Kiểm tra xem widget có còn mounted không trước khi gọi resetImage
     if (mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final avatarProvider = Provider.of<UserImageProvider>(context, listen: false);
+        final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
         avatarProvider.resetImage();
       });
     }
@@ -112,7 +112,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                             SizedBox(width: 25.w,),
                             // Bên trái: ảnh
                             Center(
-                              child: Consumer<UserImageProvider>(
+                              child: Consumer<StaffImageProvider>(
                                 builder: (context, avatarProvider, child) {
                                   String? avatarUrl = avatarProvider.avatarUrl;
                                   bool hasImage = avatarUrl != null ||
@@ -165,7 +165,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                             color: Colors.white,
                                             child: InkWell(
                                               onTap: () async {
-                                                final provider = Provider.of<UserImageProvider>(context, listen: false);
+                                                final provider = Provider.of<StaffImageProvider>(context, listen: false);
                                                 await provider.pickImage();
                                                 await Future.delayed(const Duration(milliseconds: 300));
 
@@ -331,7 +331,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                       _addressStaffController.clear();
 
                                       // Reset ảnh
-                                      final avatarProvider = Provider.of<UserImageProvider>(context, listen: false);
+                                      final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
                                       avatarProvider.resetImage();  // Reset ảnh
 
                                       setState(() {
@@ -405,7 +405,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
 
     if (!isValidStaff) return;
 
-    final imageProvider = Provider.of<UserImageProvider>(context, listen: false);
+    final imageProvider = Provider.of<StaffImageProvider>(context, listen: false);
     final hasImage = (kIsWeb && imageProvider.webImageBytes != null) ||
         (!kIsWeb && imageProvider.selectedImageFile != null);
 
