@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/models/staffs.dart';
+import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:excel/excel.dart' as ex;
@@ -123,7 +124,6 @@ class _StaffListPageState extends State<StaffListPage> {
     final emailController = TextEditingController(text: staff.email);
 
     bool isEditing = false;
-    bool isLoading = false;
 
     final size = MediaQuery.of(context).size;
     final isLandscape = size.height < size.width;
@@ -154,132 +154,114 @@ class _StaffListPageState extends State<StaffListPage> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (isLoading) Center(child: CircularProgressIndicator(),),
-                          if (!isLoading) ...[
-                            Center(
-                              child: Stack(
-                                alignment: Alignment.bottomRight,
-                                children: [
-                                  CircleAvatar(
-                                    radius: 70.r,
-                                    backgroundImage: imageProvider.webImageBytes != null
-                                        ? MemoryImage(imageProvider.webImageBytes!)
-                                        : imageProvider.selectedImageFile != null
-                                        ? FileImage(imageProvider.selectedImageFile!)
-                                        : (staff.imageUrl.isNotEmpty
-                                        ? NetworkImage(staff.imageUrl)
-                                        : const AssetImage('assets/default_avatar.png')
-                                    as ImageProvider),
-                                  ),
-                                  if (isEditing)
-                                    Positioned(
-                                      bottom: 0,
-                                      right: 0,
-                                      child: IconButton(
-                                        icon: Icon(Icons.camera_alt, color: Colors.blueAccent),
-                                        onPressed: () async {
-                                          await imageProvider.pickImage();
-                                        },
-                                      ),
+                          Center(
+                            child: Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                CircleAvatar(
+                                  radius: 70.r,
+                                  backgroundImage: imageProvider.webImageBytes != null
+                                      ? MemoryImage(imageProvider.webImageBytes!)
+                                      : imageProvider.selectedImageFile != null
+                                      ? FileImage(imageProvider.selectedImageFile!)
+                                      : (staff.imageUrl.isNotEmpty
+                                      ? NetworkImage(staff.imageUrl)
+                                      : const AssetImage('assets/default_avatar.png')
+                                  as ImageProvider),
+                                ),
+                                if (isEditing)
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: IconButton(
+                                      icon: Icon(Icons.camera_alt, color: Colors.blueAccent),
+                                      onPressed: () async {
+                                        await imageProvider.pickImage();
+                                      },
                                     ),
-                                ],
+                                  ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 20.h),
+                          StreamBuilder<String>(
+                            stream: _authBloc.nameStaffStream,
+                            builder: (context, snapshot) => TextField(
+                              controller: nameController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
+                              decoration: InputDecoration(
+                                labelText: 'Họ và tên',
+                                errorText: snapshot.hasError ? snapshot.error as String : null,
                               ),
                             ),
-                            SizedBox(height: 20.h),
-                            StreamBuilder<String>(
-                              stream: _authBloc.nameStaffStream,
-                              builder: (context, snapshot) => TextField(
-                                controller: nameController,
-                                enabled: isEditing,
-                                style: TextStyle(
-                                    fontSize: isLandscape ? 3.5.sp : 15.sp),
-                                decoration: InputDecoration(
-                                  labelText: 'Họ và tên',
-                                  errorText: snapshot.hasError
-                                      ? snapshot.error as String
-                                      : null,
-                                ),
+                          ),
+                          SizedBox(height: 13.h),
+                          StreamBuilder<String>(
+                            stream: _authBloc.emailStaffStream,
+                            builder: (context, snapshot) => TextField(
+                              controller: emailController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
+                              decoration: InputDecoration(
+                                labelText: 'Email',
+                                errorText: snapshot.hasError ? snapshot.error as String : null,
                               ),
                             ),
-                            SizedBox(height: 13.h),
-                            StreamBuilder<String>(
-                              stream: _authBloc.emailStaffStream,
-                              builder: (context, snapshot) => TextField(
-                                controller: emailController,
-                                enabled: isEditing,
-                                style: TextStyle(
-                                    fontSize: isLandscape ? 3.5.sp : 15.sp),
-                                decoration: InputDecoration(
-                                  labelText: 'Email',
-                                  errorText: snapshot.hasError
-                                      ? snapshot.error as String
-                                      : null,
-                                ),
+                          ),
+                          SizedBox(height: 13.h),
+                          StreamBuilder<String>(
+                            stream: _authBloc.phoneStaffStream,
+                            builder: (context, snapshot) => TextField(
+                              controller: phoneController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
+                              decoration: InputDecoration(
+                                labelText: 'SĐT',
+                                errorText: snapshot.hasError ? snapshot.error as String : null,
                               ),
                             ),
-                            SizedBox(height: 13.h),
-                            StreamBuilder<String>(
-                              stream: _authBloc.phoneStaffStream,
-                              builder: (context, snapshot) => TextField(
-                                controller: phoneController,
-                                enabled: isEditing,
-                                style: TextStyle(
-                                    fontSize: isLandscape ? 3.5.sp : 15.sp),
-                                decoration: InputDecoration(
-                                  labelText: 'SĐT',
-                                  errorText: snapshot.hasError
-                                      ? snapshot.error as String
-                                      : null,
-                                ),
+                          ),
+                          SizedBox(height: 13.h),
+                          StreamBuilder<String>(
+                            stream: _authBloc.cccdStaffStream,
+                            builder: (context, snapshot) => TextField(
+                              controller: cccdController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
+                              decoration: InputDecoration(
+                                labelText: 'CCCD',
+                                errorText: snapshot.hasError ? snapshot.error as String : null,
                               ),
                             ),
-                            SizedBox(height: 13.h),
-                            StreamBuilder<String>(
-                              stream: _authBloc.cccdStaffStream,
-                              builder: (context, snapshot) => TextField(
-                                controller: cccdController,
-                                enabled: isEditing,
-                                style: TextStyle(
-                                    fontSize: isLandscape ? 3.5.sp : 15.sp),
-                                decoration: InputDecoration(
-                                  labelText: 'CCCD',
-                                  errorText: snapshot.hasError
-                                      ? snapshot.error as String
-                                      : null,
-                                ),
+                          ),
+                          StreamBuilder<String>(
+                            stream: _authBloc.addressStaffStream,
+                            builder: (context, snapshot) => TextField(
+                              controller: addressController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: isLandscape ? 3.5.sp : 15.sp),
+                              decoration: InputDecoration(
+                                labelText: 'Địa chỉ',
+                                errorText: snapshot.hasError ? snapshot.error as String : null,
                               ),
                             ),
-                            StreamBuilder<String>(
-                              stream: _authBloc.addressStaffStream,
-                              builder: (context, snapshot) => TextField(
-                                controller: addressController,
-                                enabled: isEditing,
-                                style: TextStyle(
-                                    fontSize: isLandscape ? 3.5.sp : 15.sp),
-                                decoration: InputDecoration(
-                                  labelText: 'Địa chỉ',
-                                  errorText: snapshot.hasError
-                                      ? snapshot.error as String
-                                      : null,
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 10.h),
-                            CustomDropdownField(
-                              label: 'Vị trí',
-                              controller: positionController,
-                              options: ['Nhân viên ghi chỉ số nước', 'Kĩ thuật viên'],
-                              isEditing: isEditing,
-                              fontSize: isLandscape ? 3.5.sp : 15.sp,
-                            ),
-                            CustomDropdownField(
-                              label: 'Giới tính',
-                              controller: genderController,
-                              options: ['Nam', 'Nữ', 'Khác'],
-                              isEditing: isEditing,
-                              fontSize: isLandscape ? 3.5.sp : 15.sp,
-                            ),
-                          ],
+                          ),
+                          SizedBox(height: 10.h),
+                          CustomDropdownField(
+                            label: 'Vị trí',
+                            controller: positionController,
+                            options: ['Nhân viên ghi chỉ số nước', 'Kĩ thuật viên'],
+                            isEditing: isEditing,
+                            fontSize: isLandscape ? 3.5.sp : 15.sp,
+                          ),
+                          CustomDropdownField(
+                            label: 'Giới tính',
+                            controller: genderController,
+                            options: ['Nam', 'Nữ', 'Khác'],
+                            isEditing: isEditing,
+                            fontSize: isLandscape ? 3.5.sp : 15.sp,
+                          ),
                         ],
                       ),
                     ),
@@ -292,36 +274,36 @@ class _StaffListPageState extends State<StaffListPage> {
                               title: Text("Xác nhận xóa"),
                               content: Text("Bạn có chắc chắn muốn xóa nhân viên này?"),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Hủy",style: TextStyle(fontSize: 4.sp))),
+                                TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Hủy", style: TextStyle(fontSize: 4.sp))),
                                 TextButton(
                                   onPressed: () => Navigator.pop(context, true),
-                                  child: Text("Xóa", style: TextStyle(color: Colors.red,fontSize: 4.sp)),
+                                  child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
                                 ),
                               ],
                             ),
                           );
 
                           if (confirm == true) {
-                            if (staff.imageUrl.isNotEmpty) {
-                              try {
+                            LoadingDialog.showLoadingDialog(context, "Đang tải...");
+                            try {
+                              if (staff.imageUrl.isNotEmpty) {
                                 final storageRef = FirebaseStorage.instance.refFromURL(staff.imageUrl);
                                 await storageRef.delete();
-                              } catch (e) {
-                                print("⚠️ Không tìm thấy hoặc không thể xóa ảnh cũ: $e");
                               }
-                            }
 
-                            // Gọi hàm xóa tài khoản từ Firebase Authentication và Cloud Function
-                            bool deleteSuccess = await deleteStaffAccount(staff.uid);
+                              bool deleteSuccess = await deleteStaffAccount(staff.uid);
 
-                            if (deleteSuccess) {
-                              // Xóa thông tin nhân viên từ Firestore
-                              await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).delete();
-                              Navigator.pop(context);
-                              onRefresh();
-                            } else {
-                              // Nếu xóa không thành công, thông báo lỗi
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lỗi khi xóa tài khoản.")));
+                              if (deleteSuccess) {
+                                await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).delete();
+                                Navigator.pop(context);
+                                onRefresh();
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lỗi khi xóa tài khoản.")));
+                              }
+                            } catch (e) {
+                              print("Error during deletion: $e");
+                            } finally {
+                              LoadingDialog.hideLoadingDialog(context);
                             }
                           }
                         },
@@ -340,62 +322,49 @@ class _StaffListPageState extends State<StaffListPage> {
                               positionController.text.trim(),
                             );
 
-                            if (!isValid) {
-                              setState(() => isLoading = false);
-                              return;
-                            }
+                            if (!isValid) return;
 
-                            setState(() => isLoading = true);
+                            LoadingDialog.showLoadingDialog(context, "Đang tải...");
+                            try {
+                              String? newImageUrl;
 
-                            String? newImageUrl;
-
-                            // ✅ Chỉ upload ảnh mới nếu có
-                            if (imageProvider.webImageBytes != null) {
-                              if (staff.imageUrl.isNotEmpty) {
-                                try {
+                              if (imageProvider.webImageBytes != null) {
+                                if (staff.imageUrl.isNotEmpty) {
                                   final storageRef = FirebaseStorage.instance.refFromURL(staff.imageUrl);
                                   await storageRef.delete();
-                                } catch (e) {
-                                  print("⚠️ Không thể xóa ảnh cũ: $e");
+                                }
+
+                                final uniqueFileName = "${DateTime.now().millisecondsSinceEpoch}_avatar.jpg";
+                                newImageUrl = await imageProvider.uploadSelectedImageAndGetUrl(staff.uid, uniqueFileName);
+                              }
+
+                              final updateData = <String, dynamic>{};
+                              final updatedFields = <String, String>{}; // Initialize with an empty map
+
+                              void compareAndAdd(String key, String newValue, String oldValue) {
+                                if (newValue != oldValue) {
+                                  updateData[key] = newValue;
+                                  updatedFields[key] = newValue;
                                 }
                               }
 
-                              final uniqueFileName = "${DateTime.now().millisecondsSinceEpoch}_avatar.jpg";
-                              newImageUrl = await imageProvider.uploadSelectedImageAndGetUrl(staff.uid, uniqueFileName);
-                            }
+                              compareAndAdd('email', emailController.text.trim(), staff.email);
+                              compareAndAdd('fullName', nameController.text.trim(), staff.fullName);
+                              compareAndAdd('phone', phoneController.text.trim(), staff.phone);
+                              compareAndAdd('position', positionController.text.trim(), staff.position);
+                              compareAndAdd('cccd', cccdController.text.trim(), staff.cccd);
+                              compareAndAdd('address', addressController.text.trim(), staff.address);
+                              compareAndAdd('gender', genderController.text.trim(), staff.gender);
 
-                            // Tạo dữ liệu cập nhật
-                            final updatedFields = <String, String>{};
-                            final updateData = <String, dynamic>{};
-
-                            // So sánh từng trường để chỉ gửi những gì thay đổi
-                            void compareAndAdd(String key, String newValue, String oldValue) {
-                              if (newValue != oldValue) {
-                                updatedFields[key] = newValue;
-                                updateData[key] = newValue;
+                              if (newImageUrl != null) {
+                                updateData['imageUrl'] = newImageUrl;
+                                updatedFields['imageUrl'] = 'Đã cập nhật ảnh'; // Add 'Đã cập nhật ảnh' to updatedFields
                               }
-                            }
 
-                            compareAndAdd('email', emailController.text.trim(), staff.email);
-                            compareAndAdd('fullName', nameController.text.trim(), staff.fullName);
-                            compareAndAdd('phone', phoneController.text.trim(), staff.phone);
-                            compareAndAdd('position', positionController.text.trim(), staff.position);
-                            compareAndAdd('cccd', cccdController.text.trim(), staff.cccd);
-                            compareAndAdd('address', addressController.text.trim(), staff.address);
-                            compareAndAdd('gender', genderController.text.trim(), staff.gender);
+                              if (updateData.isNotEmpty) {
+                                await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).update(updateData);
+                              }
 
-                            if (newImageUrl != null) {
-                              updateData['imageUrl'] = newImageUrl;
-                            }
-
-                            try {
-                              // Cập nhật Firestore
-                              await FirebaseFirestore.instance
-                                  .collection('staffs')
-                                  .doc(staff.uid)
-                                  .update(updateData);
-
-                              // Gửi email nếu có trường thay đổi
                               if (updatedFields.isNotEmpty) {
                                 await sendUpdatedDetailEmailFromFlutter(
                                   uid: staff.uid,
@@ -408,10 +377,10 @@ class _StaffListPageState extends State<StaffListPage> {
                               Navigator.pop(context);
                               onRefresh();
                             } catch (e) {
-                              print("❌ Lỗi khi cập nhật Firestore hoặc gửi email: $e");
+                              print("❌ Error during update: $e");
+                            } finally {
+                              LoadingDialog.hideLoadingDialog(context);
                             }
-
-                            setState(() => isLoading = false);
                           } else {
                             setState(() => isEditing = true);
                           }
@@ -422,8 +391,8 @@ class _StaffListPageState extends State<StaffListPage> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () => Navigator.pop(context), // Nút Đóng thêm vào đây
-                        child: Text("Đóng", style: TextStyle(fontSize: 4.sp),),
+                        onPressed: () => Navigator.pop(context),
+                        child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
                       ),
                     ],
                   );
