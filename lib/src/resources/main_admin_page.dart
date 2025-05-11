@@ -1,5 +1,6 @@
 import 'package:do_an/src/resources/chon_can_ho_page.dart';
 import 'package:do_an/src/resources/ds_canho_page.dart';
+import 'package:do_an/src/resources/ds_congty_page.dart';
 import 'package:do_an/src/resources/ds_nhanvien_page.dart';
 import 'package:do_an/src/resources/quan_li_web.dart';
 import 'package:do_an/src/resources/tao_tk_nv.dart';
@@ -175,12 +176,58 @@ class _MainAdminPageState extends State<MainAdminPage> {
 
             const Divider(thickness: 0.5, color: Colors.grey),
 
-            // Công ty dịch vụ ngoài
-            ListTile(
-              leading: const Icon(Icons.business),
-              title: Text('  Quản lí dịch vụ ngoài',
-                  style: TextStyle(fontFamily: "Oswald", fontSize: 5.sp)),
-              onTap: () => _setPage(const AddAccountCompanyPage()),
+            Theme(
+              data: Theme.of(context).copyWith(
+                dividerColor: Colors.transparent, // ❌ Tắt gạch ngang mặc định
+                splashColor: Colors.transparent, // ❌ Tắt ripple khi nhấn
+                highlightColor:
+                Colors.transparent, // ❌ Tắt highlight khi giữ lâu
+              ),
+              child: ExpansionTile(
+                leading: const Icon(Icons.business, color: Colors.black),
+                title: Text(
+                  '  Quản lí dịch vụ ngoài',
+                  style: TextStyle(fontFamily: "Oswald", fontSize: 5.sp),
+                ),
+                children: [
+                  ListTile(
+                    leading: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 12, // Độ dài gạch ngang
+                          height: 1,
+                          color: Colors.black, // Màu mờ
+                          margin: const EdgeInsets.only(
+                              right: 8), // Khoảng cách với icon
+                        ),
+                        const Icon(Icons.apartment, size: 20),
+                      ],
+                    ),
+                    title: Text('  Tạo tài khoản công ty',
+                        style: TextStyle(fontFamily: "Oswald", fontSize: 5.sp)),
+                    onTap: () => _setPage(const AddAccountCompanyPage()),
+                  ),
+                  ListTile(
+                    leading: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 12, // Độ dài gạch ngang
+                          height: 1,
+                          color: Colors.black, // Màu mờ
+                          margin: const EdgeInsets.only(
+                              right: 8), // Khoảng cách với icon
+                        ),
+                        const Icon(Icons.list_alt_outlined, size: 20),
+                      ],
+                    ),
+                    title: Text('  Danh sách công ty',
+                        style: TextStyle(fontFamily: "Oswald", fontSize: 5.sp)),
+                    onTap: () => _setPage(const CompanyListPage()),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

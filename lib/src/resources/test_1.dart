@@ -11,8 +11,7 @@ class _TestPage1State extends State<TestPage1> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body:
-      const Text("Đây là trang công ty dịch vụ"),
+      body: const Text("Đây là trang nhân viên"),
     );
   }
 }
