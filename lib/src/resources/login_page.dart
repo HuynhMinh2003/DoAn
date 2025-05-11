@@ -2,10 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
+import 'package:do_an/src/resources/main_admin_page.dart';
 import 'package:do_an/src/resources/staff_page_1.dart';
 import 'package:do_an/src/resources/quan_li_web.dart';
 import 'package:do_an/src/resources/home_first_staff_page.dart';
 import 'package:do_an/src/resources/test.dart';
+import 'package:do_an/src/resources/test_1.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -54,6 +56,41 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         // Nếu tài liệu của nhân viên chưa tồn tại, tạo mới với danh sách token
         await staffRef.set({
+          'fcmTokens': [newToken],  // Lưu mảng token FCM
+          'lastUpdated': FieldValue.serverTimestamp(),
+        });
+      }
+
+      print("FCM Token saved successfully!");
+    } catch (e) {
+      print("Error saving FCM Token: $e");
+    }
+  }
+
+  Future<void> _saveTokenCompanyToFirestore(String newToken) async {
+    final companyId = FirebaseAuth.instance.currentUser?.uid;
+    if (companyId == null) return; // Không có userId thì thoát luôn
+
+    try {
+      // Đường dẫn Firestore cho nhân viên
+      DocumentReference companyRef =
+      FirebaseFirestore.instance.collection("companies").doc(companyId);
+      DocumentSnapshot companyDoc = await companyRef.get();
+
+      if (companyDoc.exists) {
+        // Lấy danh sách token hiện tại
+        List<String> tokens = List<String>.from(companyDoc['fcmTokens'] ?? []);
+
+        if (!tokens.contains(newToken)) {
+          // Nếu token chưa tồn tại thì thêm vào danh sách
+          await companyRef.update({
+            'fcmTokens': FieldValue.arrayUnion([newToken]),
+            'lastUpdated': FieldValue.serverTimestamp(),
+          });
+        }
+      } else {
+        // Nếu tài liệu của nhân viên chưa tồn tại, tạo mới với danh sách token
+        await companyRef.set({
           'fcmTokens': [newToken],  // Lưu mảng token FCM
           'lastUpdated': FieldValue.serverTimestamp(),
         });
@@ -205,10 +242,12 @@ class _LoginPageState extends State<LoginPage> {
                     label: "Nhập email",
                     stream: _authBloc.emailStream),
 
-                _buildTextField(
-                    controller: _passController,
-                    label: "Nhập password",
-                    stream: _authBloc.passStream),
+                _buildTextField1(
+                  controller: _passController,
+                  label: 'Mật khẩu',
+                  stream: _authBloc.passStream,
+                  isPassword: true, // Đặt cờ này để kích hoạt biểu tượng con mắt
+                ),
 
                 SizedBox(height: 10.h),
 
@@ -318,10 +357,12 @@ class _LoginPageState extends State<LoginPage> {
             label: "Nhập email",
             stream: _authBloc.emailStream),
 
-        _buildTextField(
-            controller: _passController,
-            label: "Nhập password",
-            stream: _authBloc.passStream),
+        _buildTextField1(
+          controller: _passController,
+          label: 'Mật khẩu',
+          stream: _authBloc.passStream,
+          isPassword: true, // Đặt cờ này để kích hoạt biểu tượng con mắt
+        ),
 
         SizedBox(height: 10.h),
 
@@ -581,6 +622,7 @@ class _LoginPageState extends State<LoginPage> {
 
               int? role; // Biến để lưu role
 
+              // Kiểm tra trong collection staffs
               DocumentSnapshot staffDoc = await FirebaseFirestore.instance
                   .collection("staffs")
                   .doc(userId)
@@ -589,6 +631,7 @@ class _LoginPageState extends State<LoginPage> {
               if (staffDoc.exists && staffDoc.data() != null) {
                 role = staffDoc.get('role');
               } else {
+                // Kiểm tra trong collection residents
                 DocumentSnapshot residentDoc = await FirebaseFirestore.instance
                     .collection("residents")
                     .doc(userId)
@@ -596,56 +639,91 @@ class _LoginPageState extends State<LoginPage> {
 
                 if (residentDoc.exists && residentDoc.data() != null) {
                   role = residentDoc.get('role');
+                } else {
+                  // Kiểm tra trong collection companies
+                  DocumentSnapshot companyDoc = await FirebaseFirestore.instance
+                      .collection("companies")
+                      .doc(userId)
+                      .get();
+
+                  if (companyDoc.exists && companyDoc.data() != null) {
+                    role = companyDoc.get('role');
+                  }
                 }
               }
 
+              bool isMobile = !kIsWeb;
 
-              if (role != null) {
-                bool isMobile = !kIsWeb;
+              if(role==null){
+                if (FirebaseAuth.instance.currentUser?.email == 'admin@gmail.com' && isMobile) {
+                  MsgDialog.showMsgDialog(
+                    context,
+                    "Thông báo",
+                    "Tài khoản của bạn không hỗ trợ đăng nhập trên mobile",
+                  );
+                } else {
+                  // Điều hướng đến trang khác (nếu cần)
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => const MainAdminPage()),
+                  );
+                }
+              }
 
-                if (role == 1) {
+              else if (role != null) {
+                if (role == 2) {
                   if (isMobile) {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => StaffPage()),
+                      MaterialPageRoute(
+                          builder: (context) => HomeFirstStaffPage()),
                     );
+                    // Lưu FCM token nếu có
+                    if (newToken != null) {
+                      await _saveTokenToFirestore(newToken);
+                    }
                   } else {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => const AdminWebPage()),
+                    MsgDialog.showMsgDialog(
+                      context,
+                      "Thông báo",
+                      "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
                     );
-                  }
-                } else if (role == 2) {
-                  // if (isMobile) {
-                  //   Navigator.of(context).pushReplacement(
-                  //     MaterialPageRoute(builder: (context) => HomeFirstStaffPage()),
-                  //   );
-                  //   // Lưu FCM token nếu có
-                  //   if (newToken != null) {
-                  //     await _saveTokenToFirestore(newToken);
-                  //   }
-                  // } else {
-                  //   MsgDialog.showMsgDialog(
-                  //     context,
-                  //     "Thông báo",
-                  //     "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
-                  //   );
-                  // }
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => HomeFirstStaffPage()),
-                  );
-                  // Lưu FCM token nếu có
-                  if (newToken != null) {
-                    await _saveTokenToFirestore(newToken);
                   }
                 } else if (role == 3) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => TestPage()),
-                  );
-                  // Lưu FCM token nếu có
-                  if (newToken != null) {
-                    await _saveResidentTokenToFirestore(newToken);
+                  if(isMobile){
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => TestPage()),
+                    );
+                    // Lưu FCM token nếu có
+                    if (newToken != null) {
+                      await _saveResidentTokenToFirestore(newToken);
+                    }
+                  } else{
+                    MsgDialog.showMsgDialog(
+                      context,
+                      "Thông báo",
+                      "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
+                    );
+                  }
+                }else if (role == 4) {
+                  if(isMobile){
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => TestPage1()),
+                    );
+                    // Lưu FCM token nếu có
+                    if (newToken != null) {
+                      await _saveTokenCompanyToFirestore(newToken);
+                    }
+                  } else{
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => TestPage1()),
+                    );
+                    // Lưu FCM token nếu có
+                    if (newToken != null) {
+                      await _saveTokenCompanyToFirestore(newToken);
+                    }
                   }
                 }
-              } else {
+              }
+              else {
                 MsgDialog.showMsgDialog(context, "Lỗi", "Không tìm thấy role cho tài khoản này");
               }
             } else {
@@ -693,4 +771,63 @@ class _LoginPageState extends State<LoginPage> {
       );
     });
   }
-}
+
+  Widget _buildTextField1({
+    required TextEditingController controller,
+    required String label,
+    required Stream<String> stream,
+    bool isPassword = false, // Thêm cờ để xác định trường này có phải là mật khẩu hay không
+  }) {
+    return Builder(builder: (context) {
+      final size = MediaQuery.of(context).size;
+      final isLandscape = size.height < size.width;
+
+      // Biến để quản lý trạng thái hiển thị mật khẩu
+      final ValueNotifier<bool> obscureTextNotifier = ValueNotifier<bool>(isPassword);
+
+      return Padding(
+        padding: EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 8.h),
+        child: StreamBuilder<String>(
+          stream: stream,
+          builder: (context, snapshot) {
+            return ValueListenableBuilder<bool>(
+              valueListenable: obscureTextNotifier,
+              builder: (context, obscureText, child) {
+                return TextField(
+                  controller: controller,
+                  obscureText: isPassword ? obscureText : false, // Ẩn hoặc hiển thị mật khẩu
+                  style: const TextStyle(fontSize: 18, color: Colors.black),
+                  decoration: InputDecoration(
+                    labelText: label,
+                    labelStyle: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp),
+                    errorText: snapshot.hasError ? snapshot.error as String : null,
+                    contentPadding: EdgeInsets.symmetric(
+                        vertical: 2.h, horizontal: isLandscape ? 8.w : 24.w),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xffCED0D2), width: 1.w),
+                      borderRadius: BorderRadius.all(Radius.circular(30.r)),
+                    ),
+                    suffixIcon: isPassword
+                        ? Padding(
+                      padding: EdgeInsets.only(right: 10.w), // Điều chỉnh khoảng cách của con mắt với cạnh phải
+                      child: IconButton(
+                        icon: Icon(
+                          obscureText ? Icons.visibility : Icons.visibility_off,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          // Thay đổi trạng thái hiển thị mật khẩu
+                          obscureTextNotifier.value = !obscureTextNotifier.value;
+                        },
+                      ),
+                    )
+                        : null,
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      );
+    });
+  }}

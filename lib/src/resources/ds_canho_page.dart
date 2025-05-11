@@ -1,16 +1,19 @@
+export 'ds_canho_web_page.dart' if (dart.library.html) 'ds_canho_page_mobile.dart';
+
 import 'dart:async'; // Thêm import Timer
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/apartment.dart';
-import 'package:do_an/src/resources/back_button.dart';
+import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart'; // Thêm import shimmer
-import 'package:excel/excel.dart' as ex;
-import 'dart:html' as html;
+import 'package:do_an/src/resources/ds_canho_page.dart'; // Import file chính với conditional imports
+
 
 class ApartmentListPage extends StatefulWidget {
   const ApartmentListPage({Key? key}) : super(key: key);
@@ -73,7 +76,6 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
     updatePageNumbers(); // Hàm này đã không gọi setState
   }
 
-
 // Cập nhật danh sách các số trang (1, 2, 3, ...)
   void updatePageNumbers() {
     int startPage = currentPage - 1;
@@ -131,11 +133,66 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
 
   void showApartmentDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) {
     final areaController = TextEditingController(text: apartment.area.toString());
-    final rentController = TextEditingController(text: NumberFormat("#,###").format(apartment.rentPrice)); // Hiển thị có dấu phân cách
-    final saleController = TextEditingController(text: NumberFormat("#,###").format(apartment.salePrice)); // Hiển thị có dấu phân cách
+    final rentController = TextEditingController(text: NumberFormat("#,###").format(apartment.rentPrice));
+    final saleController = TextEditingController(text: NumberFormat("#,###").format(apartment.salePrice));
     final descriptionController = TextEditingController(text: apartment.description);
 
     bool isEditing = false;
+
+    // StreamControllers để quản lý lỗi
+    final StreamController<String?> areaErrorController = StreamController<String?>();
+    final StreamController<String?> rentErrorController = StreamController<String?>();
+    final StreamController<String?> saleErrorController = StreamController<String?>();
+    final StreamController<String?> descriptionErrorController = StreamController<String?>();
+
+    // Biến trạng thái lỗi
+    bool areaHasError = false;
+    bool rentHasError = false;
+    bool saleHasError = false;
+    bool descriptionHasError = false;
+
+    // Hàm kiểm tra và phát lỗi
+    void validateFields() {
+      print("Validating fields...");
+
+      if (double.tryParse(areaController.text) == null) {
+        areaErrorController.add('Diện tích phải là số.');
+        areaHasError = true;
+        print("Error: Diện tích phải là số.");
+      } else {
+        areaErrorController.add(null);
+        areaHasError = false;
+      }
+
+      if (int.tryParse(rentController.text.replaceAll(',', '')) == null) {
+        rentErrorController.add('Giá thuê phải là số.');
+        rentHasError = true;
+        print("Error: Giá thuê phải là số.");
+      } else {
+        rentErrorController.add(null);
+        rentHasError = false;
+      }
+
+      if (int.tryParse(saleController.text.replaceAll(',', '')) == null) {
+        saleErrorController.add('Giá mua phải là số.');
+        saleHasError = true;
+        print("Error: Giá mua phải là số.");
+      } else {
+        saleErrorController.add(null);
+        saleHasError = false;
+      }
+
+      if (descriptionController.text.isEmpty) {
+        descriptionErrorController.add('Mô tả không được để trống.');
+        descriptionHasError = true;
+        print("Error: Mô tả không được để trống.");
+      } else {
+        descriptionErrorController.add(null);
+        descriptionHasError = false;
+      }
+
+      print("Validation completed.");
+    }
 
     showDialog(
       context: context,
@@ -155,54 +212,88 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                   children: [
                     Text(' ${apartment.building}', style: TextStyle(fontSize: 4.sp)),
                     SizedBox(height: 10.h),
-                    TextField(
-                      controller: areaController,
-                      enabled: isEditing,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(fontSize: 4.sp), // Cỡ chữ nội dung nhập
-                      decoration: InputDecoration(
-                        labelText: 'Diện tích (m²)',
-                        labelStyle: TextStyle(fontSize: 4.sp), // Cỡ chữ label
-                      ),
-                    ),
-                    TextField(
-                      controller: rentController,
-                      enabled: isEditing,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(fontSize: 4.sp),
-                      decoration: InputDecoration(
-                        labelText: 'Giá thuê (VNĐ)',
-                        labelStyle: TextStyle(fontSize: 4.sp),
-                      ),
-                      onChanged: (value) {
-                        if (isEditing) {
-                          rentController.text = value.replaceAll(',', '');
-                        }
+
+                    // Diện tích
+                    StreamBuilder<String?>(
+                      stream: areaErrorController.stream,
+                      builder: (context, snapshot) {
+                        return TextField(
+                          controller: areaController,
+                          enabled: isEditing,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(fontSize: 4.sp),
+                          decoration: InputDecoration(
+                            labelText: 'Diện tích (m²)',
+                            labelStyle: TextStyle(fontSize: 4.sp),
+                            errorText: snapshot.data,
+                          ),
+                          onChanged: (value) {
+                            if (isEditing) validateFields();
+                          },
+                        );
                       },
                     ),
-                    TextField(
-                      controller: saleController,
-                      enabled: isEditing,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(fontSize: 4.sp),
-                      decoration: InputDecoration(
-                        labelText: 'Giá mua (VNĐ)',
-                        labelStyle: TextStyle(fontSize: 4.sp),
-                      ),
-                      onChanged: (value) {
-                        if (isEditing) {
-                          saleController.text = value.replaceAll(',', '');
-                        }
+
+                    // Giá thuê
+                    StreamBuilder<String?>(
+                      stream: rentErrorController.stream,
+                      builder: (context, snapshot) {
+                        return TextField(
+                          controller: rentController,
+                          enabled: isEditing,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(fontSize: 4.sp),
+                          decoration: InputDecoration(
+                            labelText: 'Giá thuê (VNĐ)',
+                            labelStyle: TextStyle(fontSize: 4.sp),
+                            errorText: snapshot.data,
+                          ),
+                          onChanged: (value) {
+                            if (isEditing) validateFields();
+                          },
+                        );
                       },
                     ),
-                    TextField(
-                      controller: descriptionController,
-                      enabled: isEditing,
-                      style: TextStyle(fontSize: 4.sp),
-                      decoration: InputDecoration(
-                        labelText: 'Mô tả',
-                        labelStyle: TextStyle(fontSize: 4.sp),
-                      ),
+
+                    // Giá mua
+                    StreamBuilder<String?>(
+                      stream: saleErrorController.stream,
+                      builder: (context, snapshot) {
+                        return TextField(
+                          controller: saleController,
+                          enabled: isEditing,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(fontSize: 4.sp),
+                          decoration: InputDecoration(
+                            labelText: 'Giá mua (VNĐ)',
+                            labelStyle: TextStyle(fontSize: 4.sp),
+                            errorText: snapshot.data,
+                          ),
+                          onChanged: (value) {
+                            if (isEditing) validateFields();
+                          },
+                        );
+                      },
+                    ),
+
+                    // Mô tả
+                    StreamBuilder<String?>(
+                      stream: descriptionErrorController.stream,
+                      builder: (context, snapshot) {
+                        return TextField(
+                          controller: descriptionController,
+                          enabled: isEditing,
+                          style: TextStyle(fontSize: 4.sp),
+                          decoration: InputDecoration(
+                            labelText: 'Mô tả',
+                            labelStyle: TextStyle(fontSize: 4.sp),
+                            errorText: snapshot.data,
+                          ),
+                          onChanged: (value) {
+                            if (isEditing) validateFields();
+                          },
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -210,30 +301,28 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
               actions: [
                 TextButton(
                   onPressed: () async {
-                    // Kiểm tra giá trị của isRent và isSale
                     if (apartment.isRent == true || apartment.isSale == true) {
-                      // Nếu là true thì hiển thị dialog không thể xóa
                       showDialog(
                         context: context,
                         builder: (_) => AlertDialog(
-                          title: Center(child: Text('Không thể xóa', style: TextStyle(fontFamily:"Oswald",fontSize: 7.sp,fontWeight: FontWeight.bold)),),
+                          title: Center(child: Text('Không thể xóa', style: TextStyle(fontFamily: "Oswald", fontSize: 7.sp, fontWeight: FontWeight.bold))),
                           content: Text(
                             'Căn hộ này vẫn còn hợp đồng. Không thể xóa.',
                             style: TextStyle(fontSize: 4.sp),
                           ),
                           actions: [
                             TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text('OK', style: TextStyle(fontSize: 4.sp))),
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('OK', style: TextStyle(fontSize: 4.sp)),
+                            ),
                           ],
                         ),
                       );
                     } else {
-                      // Nếu cả isRent và isSale đều là false, mới cho phép xóa
                       final confirm = await showDialog(
                         context: context,
                         builder: (_) => AlertDialog(
-                          title: Center(child: Text('Xác nhận xóa', style: TextStyle(fontFamily:"Oswald",fontSize: 7.sp,fontWeight: FontWeight.bold)),),
+                          title: Center(child: Text('Xác nhận xóa', style: TextStyle(fontFamily: "Oswald", fontSize: 7.sp, fontWeight: FontWeight.bold))),
                           content: Text('Bạn có chắc muốn xóa căn hộ này?', style: TextStyle(fontSize: 4.sp)),
                           actions: [
                             TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Hủy', style: TextStyle(fontSize: 4.sp))),
@@ -243,10 +332,13 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                       );
 
                       if (confirm == true) {
-                        // Tiến hành xóa căn hộ
+                        LoadingDialog.showLoadingDialog(context, "Đang tải ...");
+                        print("Deleting apartment...");
                         await FirebaseFirestore.instance.collection('apartments').doc(apartment.id).delete();
-                        Navigator.pop(context);  // Quay lại trang trước
-                        onRefresh();  // Cập nhật lại danh sách sau khi xóa
+                        print("Apartment deleted.");
+                        LoadingDialog.hideLoadingDialog(context);
+                        Navigator.pop(context);
+                        onRefresh();
                       }
                     }
                   },
@@ -256,27 +348,44 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                 TextButton(
                   onPressed: () async {
                     if (isEditing) {
-                      // Lưu cập nhật, chuyển giá thành dạng số sau khi chỉnh sửa
-                      await FirebaseFirestore.instance.collection('apartments').doc(apartment.id).update({
-                        'area': double.tryParse(areaController.text) ?? apartment.area,
-                        'rentPrice': int.tryParse(rentController.text.replaceAll(',', '')) ?? apartment.rentPrice,
-                        'salePrice': int.tryParse(saleController.text.replaceAll(',', '')) ?? apartment.salePrice,
-                        'description': descriptionController.text,
-                      });
-                      Navigator.pop(context);
-                      onRefresh();
+                      print("Attempting to save data...");
+                      validateFields();
+
+                      // Kiểm tra nếu có lỗi
+                      if (areaHasError || rentHasError || saleHasError || descriptionHasError) {
+                        print("Validation failed. Cannot save.");
+                        return;
+                      }
+
+                      LoadingDialog.showLoadingDialog(context, "Đang tải...");
+                      try {
+                        print("Saving data to Firestore...");
+                        await FirebaseFirestore.instance.collection('apartments').doc(apartment.id).update({
+                          'area': double.tryParse(areaController.text) ?? apartment.area,
+                          'rentPrice': int.tryParse(rentController.text.replaceAll(',', '')) ?? apartment.rentPrice,
+                          'salePrice': int.tryParse(saleController.text.replaceAll(',', '')) ?? apartment.salePrice,
+                          'description': descriptionController.text,
+                        });
+                        print("Data saved successfully.");
+                        LoadingDialog.hideLoadingDialog(context);
+                        Navigator.pop(context);
+                        onRefresh();
+                      } catch (e) {
+                        print("Error while saving: $e");
+                        LoadingDialog.hideLoadingDialog(context);
+                      }
                     } else {
-                      // Bật chế độ sửa
                       setState(() {
+                        print("Switching to edit mode...");
                         isEditing = true;
                       });
                     }
                   },
-                  child: Text(isEditing ? "Lưu" : "Sửa",style: TextStyle(fontSize: 4.sp)),
+                  child: Text(isEditing ? "Lưu" : "Sửa", style: TextStyle(fontSize: 4.sp)),
                 ),
                 TextButton(
-                  onPressed: () => Navigator.pop(context), // Nút Đóng thêm vào đây
-                  child: Text("Đóng", style: TextStyle(fontSize: 4.sp),),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
                 ),
               ],
             );
@@ -354,86 +463,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
     return getFloorsByBuilding(allApartments, selectedBuilding!);
   }
 
-  Future<void> importApartmentsFromExcelWeb() async {
-    final uploadInput = html.FileUploadInputElement()..accept = '.xlsx';
-    uploadInput.click();
 
-    uploadInput.onChange.listen((event) {
-      final file = uploadInput.files!.first;
-      final reader = html.FileReader();
-
-      reader.readAsArrayBuffer(file);
-
-      reader.onLoadEnd.listen((e) async {
-        final bytes = reader.result as List<int>;
-        final excel = ex.Excel.decodeBytes(bytes);
-        final sheet = excel.tables[excel.tables.keys.first];
-        if (sheet == null) return;
-
-        for (int i = 1; i < sheet.rows.length; i++) {
-          final row = sheet.rows[i];
-          final apartmentData = {
-            'apartmentName': row[0]?.value.toString() ?? '',
-            'area': double.tryParse(row[1]?.value.toString() ?? '0') ?? 0.0,
-            'building': row[2]?.value.toString() ?? '',
-            'description': row[3]?.value.toString() ?? '',
-            'rentPrice': int.tryParse(row[4]?.value.toString() ?? '0') ?? 0,
-            'salePrice': int.tryParse(row[5]?.value.toString() ?? '0') ?? 0,
-            'isRent': false,
-            'isSale': false,
-            'residents': [],
-          };
-
-          await FirebaseFirestore.instance.collection('apartments').add(apartmentData);
-
-        }
-        loadApartmentsFromFirestore();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Thêm căn hộ thành công!', style: TextStyle(fontSize: 4.sp),)),
-        );
-
-      });
-    });
-  }
-
-  Future<void> exportApartmentsToExcel(List<Apartment> apartments) async {
-    final excel = ex.Excel.createExcel(); // tạo file mới
-    final sheet = excel['DanhSachCanHo']; // tạo sheet
-
-    // Dòng tiêu đề (Header)
-    final headers = [
-      ex.TextCellValue('Tên căn hộ'),
-      ex.TextCellValue('Diện tích'),
-      ex.TextCellValue('Tòa nhà'),
-      ex.TextCellValue('Mô tả'),
-      ex.TextCellValue('Giá thuê'),
-      ex.TextCellValue('Giá bán'),
-    ];
-    sheet.insertRowIterables(headers, 0); // Ghi dòng đầu tiên
-
-    // Ghi từng dòng dữ liệu
-    for (int i = 0; i < apartments.length; i++) {
-      final apt = apartments[i];
-      final row = [
-        ex.TextCellValue(apt.apartmentName),
-        ex.DoubleCellValue(apt.area as double),
-        ex.TextCellValue(apt.building),
-        ex.TextCellValue(apt.description),
-        ex.IntCellValue(apt.rentPrice),
-        ex.IntCellValue(apt.salePrice),
-      ];
-      sheet.insertRowIterables(row, i + 1);
-    }
-
-    // Xuất file
-    final fileBytes = excel.encode();
-    final blob = html.Blob([fileBytes]);
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute("download", "DanhSachCanHo.xlsx")
-      ..click();
-    html.Url.revokeObjectUrl(url);
-  }
 
   @override
   void initState() {
@@ -487,7 +517,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                         mainAxisSize:MainAxisSize.min,
                         children: [
                         ElevatedButton(
-                        onPressed: importApartmentsFromExcelWeb,
+                        onPressed: ()=> importApartmentsFromExcel,
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [

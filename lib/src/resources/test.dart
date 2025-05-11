@@ -12,7 +12,7 @@ class _TestPageState extends State<TestPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body:
-      const Text("data"),
+      const Text("Đây là trang cư dân"),
     );
   }
 }
