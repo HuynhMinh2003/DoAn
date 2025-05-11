@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/models/staffs.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
-import 'package:do_an/src/resources/provider/user_image_provider.dart';
+import 'package:do_an/src/resources/provider/staff_image_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -133,8 +133,8 @@ class _StaffListPageState extends State<StaffListPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return ChangeNotifierProvider(
-              create: (_) => UserImageProvider(),
-              child: Consumer<UserImageProvider>(
+              create: (_) => StaffImageProvider(),
+              child: Consumer<StaffImageProvider>(
                 builder: (context, imageProvider, _) {
                   return AlertDialog(
                     title: Text(

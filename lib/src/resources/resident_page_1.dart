@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/src/resources/base_resident_info.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/provider/staff_image_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,26 +7,25 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:do_an/base_staff_info.dart';
 
-class StaffPage1 extends StatefulWidget {
-  const StaffPage1({super.key});
+class ResidentPage extends StatefulWidget {
+  const ResidentPage({super.key});
 
   @override
-  State<StaffPage1> createState() => _StaffPage1State();
+  State<ResidentPage> createState() => _ResidentPageState();
 }
 
-class _StaffPage1State extends BaseStaffInfoScreen<StaffPage1> {
+class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
   @override
   void initState() {
     super.initState();
-    final staffId = FirebaseAuth.instance.currentUser?.uid;
-    if (staffId != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Provider.of<StaffImageProvider>(context, listen: false)
-            .loadImageByStaffId(staffId);
-      });
-    }
+    final residentId = FirebaseAuth.instance.currentUser?.uid;
+    // if (residentId != null) {
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     Provider.of<UserImageProvider>(context, listen: false)
+    //         .loadImageByStaffId(staffId);
+    //   });
+    // }
   }
 
   Future<void> _removeFcmToken() async {
@@ -40,7 +40,7 @@ class _StaffPage1State extends BaseStaffInfoScreen<StaffPage1> {
       }
 
       DocumentReference userRef =
-      FirebaseFirestore.instance.collection('staffs').doc(userId);
+      FirebaseFirestore.instance.collection('residents').doc(userId);
       DocumentSnapshot userDoc = await userRef.get();
 
       if (!userDoc.exists) {
@@ -124,7 +124,7 @@ class _StaffPage1State extends BaseStaffInfoScreen<StaffPage1> {
                 bottomRight: Radius.circular(30.r),
               ),
             ),
-            color: Color(0xFF03A293),
+            color: Colors.blueAccent,
             child: Stack(
               children: [
                 Positioned(
@@ -152,31 +152,24 @@ class _StaffPage1State extends BaseStaffInfoScreen<StaffPage1> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SizedBox(height: 100.h),
-                      CircleAvatar(
-                        radius: 50.r,
-                        backgroundImage: avatarUrl != null
-                            ? NetworkImage(avatarUrl)
-                            : null,
-                        child: avatarUrl == null
-                            ? const Icon(Icons.person, size: 50)
-                            : null,
-                      ),
-                      SizedBox(height: 10.h),
+                      // CircleAvatar(
+                      //   radius: 50.r,
+                      //   backgroundImage: avatarUrl != null
+                      //       ? NetworkImage(avatarUrl)
+                      //       : null,
+                      //   child: avatarUrl == null
+                      //       ? const Icon(Icons.person, size: 50)
+                      //       : null,
+                      // ),
+                      SizedBox(height: 60.h),
                       Text(
-                        "Xin chào, ${staffInfo?.fullName ?? "người dùng"}",
+                        "Xin chào, ${residentInfo?.fullName ?? "người dùng"}",
                         style: TextStyle(
                             fontFamily: "Oswald",
                             fontSize: 25.sp,
                             color: Colors.white),
                       ),
                       SizedBox(height: 10.h),
-                      Text(
-                        "${staffInfo?.position ?? "Chức vụ không rõ"}",
-                        style: TextStyle(
-                            fontFamily: "Oswald",
-                            fontSize: 20.sp,
-                            color: Colors.white),
-                      ),
                     ],
                   ),
                 ),

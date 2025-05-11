@@ -1,5 +1,5 @@
 // import 'package:do_an/base_staff_info.dart';
-// import 'package:do_an/src/resources/provider/user_image_provider.dart';
+// import 'package:do_an/src/resources/provider/staff_image_provider.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
+import 'package:do_an/src/resources/home_first_resident_page.dart';
 import 'package:do_an/src/resources/main_admin_page.dart';
 import 'package:do_an/src/resources/staff_page_1.dart';
 import 'package:do_an/src/resources/quan_li_web.dart';
@@ -690,7 +691,7 @@ class _LoginPageState extends State<LoginPage> {
                 } else if (role == 3) {
                   if(isMobile){
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => TestPage()),
+                      MaterialPageRoute(builder: (context) => HomeFirstResidentPage()),
                     );
                     // Lưu FCM token nếu có
                     if (newToken != null) {
@@ -732,7 +733,7 @@ class _LoginPageState extends State<LoginPage> {
           },
         onSignInError: (msg) {
           LoadingDialog.hideLoadingDialog(context);
-          MsgDialog.showMsgDialog(context, "Đăng nhập", "msg");
+          MsgDialog.showMsgDialog(context, "Đăng nhập", msg);
         },
       );
     }
