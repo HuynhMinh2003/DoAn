@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 
-class UserImageProvider extends ChangeNotifier {
+class StaffImageProvider extends ChangeNotifier {
   String? _avatarUrl;
 
   String? get avatarUrl => _avatarUrl;
@@ -25,7 +25,7 @@ class UserImageProvider extends ChangeNotifier {
 
   Uint8List? get webImageBytes => _webImageBytes;
 
-  UserImageProvider() {
+  StaffImageProvider() {
     _fetchAvatar();
   }
 

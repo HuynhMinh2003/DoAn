@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/firebase_options.dart';
 import 'package:do_an/src/resources/login_page.dart';
+import 'package:do_an/src/resources/main_admin_page.dart';
+import 'package:do_an/src/resources/provider/company_image_provider.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
-import 'package:do_an/src/resources/provider/user_image_provider.dart';
+import 'package:do_an/src/resources/provider/staff_image_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -118,7 +120,8 @@ void main() async {
           providers: [
             ChangeNotifierProvider(create: (_) => ResidentProvider()),
             ChangeNotifierProvider(create: (_) => UserDataProvider()),
-            ChangeNotifierProvider(create: (_) => UserImageProvider()),
+            ChangeNotifierProvider(create: (_) => StaffImageProvider()),
+            ChangeNotifierProvider(create: (_) => CompanyImageProvider()),
             ChangeNotifierProvider(create: (_) => ContractNotifier()),
           ],
           child: MyApp(
@@ -143,7 +146,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: LoginPage(), // hoặc AuthWrapper()
+              home: MainAdminPage(), // hoặc AuthWrapper()
             ),
           ),
         );
