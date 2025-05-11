@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
+import 'package:do_an/src/resources/resident_web_page.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +12,7 @@ import 'package:do_an/src/models/apartment.dart';
 import 'package:do_an/src/models/resident_info.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart';
+import 'resident_mobile_page.dart' if (dart.library.html) 'resident_web_page.dart';
 
 class ResidentPage extends StatefulWidget {
   const ResidentPage({super.key});
@@ -547,6 +549,17 @@ class _ResidentPageState extends State<ResidentPage> {
                         fontFamily: "Oswald",
                         fontWeight: FontWeight.w700,
                         fontSize: 12.sp,
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => exportResidentsToExcel(residents, matchedResidents, apartments),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.upload),
+                          SizedBox(width: 5.w,),
+                          Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
+                        ],
                       ),
                     ),
                     SizedBox(height: 40.h),
