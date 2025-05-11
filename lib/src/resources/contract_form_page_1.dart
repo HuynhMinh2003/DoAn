@@ -1,3 +1,4 @@
+import 'contract_form_mobile1_page.dart' if (dart.library.html) 'contract_form_web1_page.dart';
 import 'dart:convert';
 import 'package:do_an/src/models/resident_info.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
@@ -9,8 +10,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:docx_template/docx_template.dart';
-import 'dart:html' as html;
-
 
 class ContractFormSalePage extends StatefulWidget {
   final String apartmentId;
@@ -678,13 +677,8 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
                         }
 
                         // Tạo file Word
-                        final fileName = "mua_${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
-                        final blob = html.Blob([fileBytes]);
-                        final url = html.Url.createObjectUrlFromBlob(blob);
-                        final anchor = html.AnchorElement(href: url)
-                          ..setAttribute("download", fileName)
-                          ..click();
-                        html.Url.revokeObjectUrl(url);
+                        final fileName = "thuê_${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
+                        await downloadWordFile(fileName, fileBytes!);
 
                         LoadingDialog.hideLoadingDialog(context);
 
