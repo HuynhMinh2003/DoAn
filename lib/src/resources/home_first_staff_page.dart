@@ -1,6 +1,6 @@
 import 'package:do_an/base_staff_info.dart';
 import 'package:do_an/src/resources/staff_page_1.dart';
-import 'package:do_an/src/resources/test.dart';
+import 'package:do_an/src/resources/test_1.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -42,8 +42,8 @@ class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
 
     final List<Widget> tabs = [
     // const HomePage(),
-      StaffPage(),
-      TestPage(),
+      StaffPage1(),
+      TestPage1(),
     ];
 
     return Scaffold(

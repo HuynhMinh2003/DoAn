@@ -9,6 +9,7 @@ const { deleteStaffAccount } = require("./deleteStaff");
 const { deleteCompanyAccount } = require("./deleteCompany");
 const { sendUpdatedDetailEmail } = require("./sendUpdatedDetailEmail");
 const { sendUpdatedDetailEmail1 } = require("./sendUpdatedDetailEmail1");
+const { sendUpdatedDetailEmail2 } = require("./sendUpdatedDetailEmail2");
 
 
 // Export tất cả các function Cloud Functions
@@ -20,3 +21,4 @@ exports.deleteResidentAccount = deleteResidentAccount;
 exports.deleteCompanyAccount = deleteCompanyAccount;
 exports.sendUpdatedDetailEmail = sendUpdatedDetailEmail;
 exports.sendUpdatedDetailEmail1 = sendUpdatedDetailEmail1;
+exports.sendUpdatedDetailEmail2 = sendUpdatedDetailEmail2;

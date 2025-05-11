@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
-import 'package:do_an/src/resources/resident_web_page.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -539,7 +538,7 @@ class _ResidentPageState extends State<ResidentPage> {
           children: [
             SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 70.h),
+                padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 40.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -551,6 +550,7 @@ class _ResidentPageState extends State<ResidentPage> {
                         fontSize: 12.sp,
                       ),
                     ),
+                    SizedBox(height: 30.h),
                     ElevatedButton(
                       onPressed: () => exportResidentsToExcel(residents, matchedResidents, apartments),
                       child: Row(
