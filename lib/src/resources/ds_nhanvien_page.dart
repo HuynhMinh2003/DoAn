@@ -1,20 +1,18 @@
+import 'package:excel/excel.dart' as ex;
+import 'dart:html' as html;
 import 'dart:convert';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/models/staffs.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/provider/user_image_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:excel/excel.dart' as ex;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:http/http.dart' as http;
-import 'dart:html' as html;
-
 
 class StaffListPage extends StatefulWidget {
   const StaffListPage({super.key});
@@ -405,37 +403,6 @@ class _StaffListPageState extends State<StaffListPage> {
     );
   }
 
-  Future<bool> sendUpdatedDetailEmailFromFlutter({
-    required String uid,
-    required String oldEmail,
-    required String newEmail,
-    required Map<String, String> updatedFields,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse("https://sendupdateddetailemail1-ttrkrlo35a-uc.a.run.app"), // <-- Cloud Function URL đã deploy
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'uid': uid,
-          'oldEmail': oldEmail,
-          'newEmail': newEmail,
-          'updatedFields': updatedFields,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        print("✅ Cập nhật & gửi email thông báo thành công.");
-        return true;
-      } else {
-        print("❌ Lỗi từ server: ${response.body}");
-        return false;
-      }
-    } catch (e) {
-      print("❌ Exception khi gọi Cloud Function: $e");
-      return false;
-    }
-  }
-
   Future<void> exportStaffsToExcel(List<Staff> staffs) async {
     final excel = ex.Excel.createExcel(); // tạo file mới
     final sheet = excel['DanhSachNhanVien']; // tạo sheet
@@ -475,6 +442,36 @@ class _StaffListPageState extends State<StaffListPage> {
       ..setAttribute("download", "DanhSachNhanVien.xlsx")
       ..click();
     html.Url.revokeObjectUrl(url);
+  }
+  Future<bool> sendUpdatedDetailEmailFromFlutter({
+    required String uid,
+    required String oldEmail,
+    required String newEmail,
+    required Map<String, String> updatedFields,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("https://sendupdateddetailemail1-ttrkrlo35a-uc.a.run.app"), // <-- Cloud Function URL đã deploy
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'uid': uid,
+          'oldEmail': oldEmail,
+          'newEmail': newEmail,
+          'updatedFields': updatedFields,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print("✅ Cập nhật & gửi email thông báo thành công.");
+        return true;
+      } else {
+        print("❌ Lỗi từ server: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Exception khi gọi Cloud Function: $e");
+      return false;
+    }
   }
 
   @override
