@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/apartment.dart';
 import 'package:do_an/src/models/contract_data.dart';
 import 'package:do_an/src/resources/add_resident_screen_page.dart';
-import 'package:do_an/src/resources/back_button.dart';
 import 'package:do_an/src/resources/contract_form_page.dart';
 import 'package:do_an/src/resources/contract_form_page_1.dart';
 import 'package:do_an/src/resources/contract_info_page.dart';
@@ -406,7 +405,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                       value: e,
                       child: Text(
                         '$e người',
-                        style: TextStyle(fontSize: 4.5.sp),
+                        style: TextStyle(fontSize: 3.sp),
                       ),
                     );
                   }).toList(),

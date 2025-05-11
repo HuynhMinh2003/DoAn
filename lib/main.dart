@@ -155,7 +155,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: MainAdminPage(), // hoặc AuthWrapper()
+              home: LoginPage(), // hoặc AuthWrapper()
             ),
           ),
         );
