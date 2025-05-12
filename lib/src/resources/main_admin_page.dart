@@ -32,17 +32,17 @@ class _MainAdminPageState extends State<MainAdminPage> {
               style: TextStyle(
                   fontFamily: "Oswald",
                   fontWeight: FontWeight.bold,
-                  fontSize: 25.sp),
+                  fontSize: 7.sp),
             ),
           ),
           content: Text(
             'Bạn có chắc chắn muốn đăng xuất không?',
-            style: TextStyle(fontSize: 13.sp),
+            style: TextStyle(fontSize: 4.sp),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Hủy', style: TextStyle(fontSize: 14.sp)),
+              child: Text('Hủy', style: TextStyle(fontSize: 4.sp)),
             ),
             TextButton(
               onPressed: () async {
@@ -54,7 +54,7 @@ class _MainAdminPageState extends State<MainAdminPage> {
                       (route) => false,
                 );
               },
-              child: Text('Đồng ý', style: TextStyle(fontSize: 14.sp)),
+              child: Text('Đồng ý', style: TextStyle(fontSize: 4.sp)),
             ),
           ],
         );
