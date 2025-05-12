@@ -1,5 +1,6 @@
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:pool/pool.dart';
 
 import 'contract_form_mobile_page.dart' if (dart.library.html) 'contract_form_web_page.dart';
 import 'dart:convert';
@@ -195,7 +196,8 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
     final dateFormat = DateFormat('dd/MM/yyyy');
     final currencyFormat = NumberFormat.decimalPattern('vi');
     return Scaffold(
-      appBar: AppBar(title: Text('      Nhập thông tin hợp đồng', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),)),
+      backgroundColor: Color(0xFFF7FEFF),
+      appBar: AppBar(title: Text('      Nhập thông tin hợp đồng', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: Color(0xFFF7FEFF),),
       body: SingleChildScrollView(
         padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 20.h),
         child: Column(
@@ -527,7 +529,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
             SizedBox(height: 20.h),
 
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(
                   height: 60.h,
@@ -547,46 +549,38 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         String commitment = commitmentController.text;
                         String duties = dutiesController.text;
 
-                        // Gửi yêu cầu tạo tài khoản cho từng cư dân
-                        for (int i = 0; i < residents.length; i++) {
-                          try {
-                            final response = await http.post(
-                              Uri.parse(
-                                  'https://createresidentaccount-ttrkrlo35a-uc.a.run.app'),
-                              headers: {'Content-Type': 'application/json'},
-                              body: json.encode({
-                                'email': residents[i].email,
-                                'fullName': residents[i].fullName,
-                                'cccd': residents[i].cccd,
-                                'address': residents[i].address,
-                                'gender': residents[i].gender,
-                                'phone': residents[i].phone,
-                                'birthDate':
-                                residents[i].birthDate?.toIso8601String(),
-                                'apartmentId': apartmentId,
-                              }),
-                            );
+                        final pool = Pool(3); // Tối đa 3 yêu cầu cùng lúc
 
-                            if (response.statusCode == 200) {
-                              final responseData = json.decode(response.body);
-                              final residentId =
-                              responseData['residentId']; // Lấy residentId từ response
+                        await Future.wait(residents.map((resident) async {
+                          return pool.withResource(() async {
+                            try {
+                              final response = await http.post(
+                                Uri.parse('https://createresidentaccount-ttrkrlo35a-uc.a.run.app'),
+                                headers: {'Content-Type': 'application/json'},
+                                body: json.encode({
+                                  'email': resident.email,
+                                  'fullName': resident.fullName,
+                                  'cccd': resident.cccd,
+                                  'address': resident.address,
+                                  'gender': resident.gender,
+                                  'phone': resident.phone,
+                                  'birthDate': resident.birthDate?.toIso8601String(),
+                                  'apartmentId': apartmentId,
+                                }),
+                              );
 
-                              // Gán lại vào resident
-                              residents[i].residentId = residentId;
-
-                              print(
-                                  "✅ Tạo tài khoản cho ${residents[i].fullName} thành công. ID: $residentId");
-                            } else {
-                              print("❌ Lỗi tạo tài khoản: ${response.body}");
-                              throw Exception("Tạo tài khoản thất bại");
+                              if (response.statusCode == 200) {
+                                final data = json.decode(response.body);
+                                resident.residentId = data['residentId'];
+                                print("✅ Tạo ${resident.fullName} OK");
+                              } else {
+                                print("❌ Lỗi: ${response.body}");
+                              }
+                            } catch (e) {
+                              print("❌ Lỗi gửi cho ${resident.fullName}: $e");
                             }
-                          } catch (e) {
-                            print(
-                                "❌ Lỗi tạo tài khoản cho ${residents[i].fullName}: $e");
-                            throw Exception("Tạo tài khoản thất bại");
-                          }
-                        }
+                          });
+                        }));
 
                         // Tạo dữ liệu hợp đồng
                         Map<String, dynamic> contractData = {

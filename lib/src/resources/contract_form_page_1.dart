@@ -1,4 +1,5 @@
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
+import 'package:pool/pool.dart';
 import 'package:provider/provider.dart';
 
 import 'contract_form_mobile1_page.dart' if (dart.library.html) 'contract_form_web1_page.dart';
@@ -42,7 +43,7 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
   String apartmentName = '';
   double area = 0;
   String building = '';
-  int rentPrice = 0;
+  int salePrice = 0;
 
   // Các controller cho thông tin khác
   final purposeController = TextEditingController();
@@ -71,7 +72,7 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
         apartmentName = data['apartmentName'];
         area = data['area']?.toDouble() ?? 0.0;
         building = data['building'];
-        rentPrice = data['rentPrice'];
+        salePrice = data['salePrice'];
       });
     }
   }
@@ -190,7 +191,8 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
     final dateFormat = DateFormat('dd/MM/yyyy');
     final currencyFormat = NumberFormat.decimalPattern('vi');
     return Scaffold(
-      appBar: AppBar(title: Text('      Nhập thông tin hợp đồng', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),)),
+      backgroundColor: Color(0xFFF7FEFF),
+      appBar: AppBar(title: Text('      Nhập thông tin hợp đồng', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: Color(0xFFF7FEFF),),
       body: SingleChildScrollView(
         padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 20.h),
         child: Column(
@@ -243,7 +245,7 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
                 Text("$building    /    ",style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
                 Text("Diện tích: ${area.toStringAsFixed(1)} m²    /    ",style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
                 Text(
-                  "Giá thuê: ${currencyFormat.format(rentPrice)} VNĐ/tháng",
+                  "Giá mua: ${currencyFormat.format(salePrice)} VNĐ",
                   style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),
                 )
               ],
@@ -510,7 +512,7 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
             SizedBox(height: 30.h,),
 
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(
                   height: 60.h,
@@ -528,45 +530,38 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
                         String limitations = limitationsController.text;
                         String timepayattention = timepayattentionController.text;
 
-                        // Gửi yêu cầu tạo tài khoản cho từng cư dân
-                        for (int i = 0; i < residents.length; i++) {
-                          try {
-                            final response = await http.post(
-                              Uri.parse('https://createresidentaccount-ttrkrlo35a-uc.a.run.app'),
-                              headers: {'Content-Type': 'application/json'},
-                              body: json.encode({
-                                'email': residents[i].email,
-                                'fullName': residents[i].fullName,
-                                'cccd': residents[i].cccd,
-                                'address': residents[i].address,
-                                'gender': residents[i].gender,
-                                'phone': residents[i].phone,
-                                'birthDate': residents[i].birthDate?.toIso8601String(),
-                                'apartmentId': apartmentId,
-                              }),
-                            );
+                        final pool = Pool(3); // Tối đa 3 yêu cầu cùng lúc
 
-                            if (response.statusCode == 200) {
-                              final responseData = json.decode(response.body);
-                              final residentId = responseData['residentId']; // Lấy residentId từ response
+                        await Future.wait(residents.map((resident) async {
+                          return pool.withResource(() async {
+                            try {
+                              final response = await http.post(
+                                Uri.parse('https://createresidentaccount-ttrkrlo35a-uc.a.run.app'),
+                                headers: {'Content-Type': 'application/json'},
+                                body: json.encode({
+                                  'email': resident.email,
+                                  'fullName': resident.fullName,
+                                  'cccd': resident.cccd,
+                                  'address': resident.address,
+                                  'gender': resident.gender,
+                                  'phone': resident.phone,
+                                  'birthDate': resident.birthDate?.toIso8601String(),
+                                  'apartmentId': apartmentId,
+                                }),
+                              );
 
-                              // Gán lại vào resident
-                              residents[i].residentId = residentId;
-
-                              print("✅ Tạo tài khoản cho ${residents[i].fullName} thành công. ID: $residentId");
-                            } else {
-                              print("❌ Lỗi tạo tài khoản: ${response.body}");
-                              // Nếu có lỗi khi tạo tài khoản, dừng lại và không tiếp tục lưu vào Firestore
-                              MsgDialog.showMsgDialog(context, "Lỗi", "Tạo tài khoản thất bại");
-                              return;
+                              if (response.statusCode == 200) {
+                                final data = json.decode(response.body);
+                                resident.residentId = data['residentId'];
+                                print("✅ Tạo ${resident.fullName} OK");
+                              } else {
+                                print("❌ Lỗi: ${response.body}");
+                              }
+                            } catch (e) {
+                              print("❌ Lỗi gửi cho ${resident.fullName}: $e");
                             }
-                          } catch (e) {
-                            print("❌ Lỗi tạo tài khoản cho ${residents[i].fullName}: $e");
-                            // Nếu có lỗi khi gửi yêu cầu, dừng lại và không tiếp tục lưu vào Firestore
-                            MsgDialog.showMsgDialog(context, "Lỗi", "Tạo tài khoản thất bại");
-                            return;
-                          }
-                        }
+                          });
+                        }));
 
                         // Tạo dữ liệu hợp đồng
                         Map<String, dynamic> contractData = {
@@ -574,7 +569,7 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
                           'apartmentName': apartmentName,
                           'building': building,
                           'area': area,
-                          'rentPrice': rentPrice,
+                          'salePrice': salePrice,
                           'startDate': startDate,
                           'purpose': purpose,
                           'devices': devices,
@@ -640,7 +635,7 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
                           ..add(TextContent("apartment_name", apartmentName))
                           ..add(TextContent("building", building))
                           ..add(TextContent("area", area.toString()))
-                          ..add(TextContent("price", currencyFormat.format(rentPrice)))
+                          ..add(TextContent("price", currencyFormat.format(salePrice)))
                           ..add(TextContent("start_date", formatCustomDate(startDate!)))
                           ..add(TextContent("representative", representative.fullName))
                           ..add(TextContent("purpose",  purpose))
