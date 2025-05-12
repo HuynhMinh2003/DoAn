@@ -6,7 +6,6 @@ import 'package:do_an/src/models/contract_data.dart';
 import 'package:do_an/src/resources/add_resident_screen_page.dart';
 import 'package:do_an/src/resources/contract_form_page.dart';
 import 'package:do_an/src/resources/contract_form_page_1.dart';
-import 'package:do_an/src/resources/contract_info_page.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
@@ -181,6 +180,8 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 10.h,),
+            Text('${apartment.building}', style: TextStyle(fontSize: 4.sp),),
+            SizedBox(height: 30.h,),
             Text('Diện tích: ${apartment.area} m²', style: TextStyle(fontSize: 4.sp),),
             SizedBox(height: 30.h,),
             Text(apartment.description, style: TextStyle(fontSize: 4.sp)),
@@ -223,7 +224,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     final contractCollectionRef = apartmentDocRef.collection("contract");
     final billWaterCollectionRef = apartmentDocRef.collection("billWater");
     final residentsCollectionRef = FirebaseFirestore.instance.collection("residents"); // Reference đến collection "residents"
-
+    final updateHistoryCollectionRef = apartmentDocRef.collection("updateHistory");
     try {
       // Lấy hợp đồng đầu tiên
       final contractSnapshot = await contractCollectionRef.get();
@@ -247,6 +248,8 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
       final billWaterSnapshot = await billWaterCollectionRef.limit(1).get();
       String billWaterInfo = "Chưa có hóa đơn nước";
 
+      final updateHistorySnapshot = await updateHistoryCollectionRef.limit(1).get();
+
       if (billWaterSnapshot.docs.isNotEmpty) {
         final billDoc = billWaterSnapshot.docs.first;
         // Xử lý thông tin hóa đơn nước nếu cần
@@ -257,81 +260,214 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
         context: context,
         barrierDismissible: false,
         builder: (_) => AlertDialog(
-          title: Center(child: Text("Phòng ${contract.apartmentName}",style: TextStyle(fontSize: 7.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold))),
+          title: Center(
+            child: Text(
+              "Phòng ${contract.apartmentName}",
+              style: TextStyle(fontSize: 7.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Diện tích: ${contract.area} m²", style: TextStyle(fontSize: 3.5.sp)),
-              SizedBox(height: 10.h,),
-              Text(
-                "Người đại diện: ${contract.representative?['fullName'] ?? 'Không có'}",
-                style: TextStyle(fontSize: 3.5.sp),
-              ),
-              SizedBox(height: 10.h,),
-              Text("Số người ở: ${contract.numberOfResidents}", style: TextStyle(fontSize: 3.5.sp)),
-              SizedBox(height: 10.h,),
-              Text("Tình trạng: ${apartment.isRent == true ? 'Đã được thuê' : 'Đã được mua'}", style: TextStyle(fontSize: 3.5.sp)),
-              SizedBox(height: 10.h,),
-              Text(
-                "Thời hạn: ${DateFormat('dd/MM/yyyy – HH:mm').format(contract.startDate)} đến ${contract.endDate != null ? DateFormat('dd/MM/yyyy – HH:mm').format(contract.endDate!) : '∞'}", style: TextStyle(fontSize: 3.5.sp),
-              ),
+              if (apartment.isRent == true) ...[
+                Text("Diện tích: ${contract.area} m²", style: TextStyle(fontSize: 3.5.sp)),
+                SizedBox(height: 10.h),
+                Text(
+                  "Người đại diện: ${contract.representative?['fullName']?.trim().isNotEmpty == true ? contract.representative!['fullName'] : 'Không có'}",
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text("Số người ở: ${contract.numberOfResidents}", style: TextStyle(fontSize: 3.5.sp)),
+                SizedBox(height: 10.h),
+                Text(
+                  'Đồ đạc, vận dụng đi kèm: ${contract.devices?.trim().isNotEmpty == true ? contract.devices : "Không có"}',
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  'Quyền lợi chung: ${contract.benefit?.trim().isNotEmpty == true ? contract.benefit : "Không có"}',
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  'Cam kết chung: ${contract.commit?.trim().isNotEmpty == true ? contract.commit : "Không có"}',
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  'Nghĩa vụ chung: ${contract.duties?.trim().isNotEmpty == true ? contract.duties : "Không có"}',
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  'Hạn chế: ${contract.limit?.trim().isNotEmpty == true ? contract.limit : "Không có"}',
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text('Mục đích ở: ${contract.purpose}', style: TextStyle(fontSize: 3.5.sp)),
+                SizedBox(height: 10.h),
+                Text("Tình trạng: ${apartment.isRent == true ? 'Đã được thuê' : 'Đã được mua'}", style: TextStyle(fontSize: 3.5.sp)),
+                SizedBox(height: 10.h),
+                Text('Thời gian kí: ${contract.createdAt}', style: TextStyle(fontSize: 3.5.sp)),
+                SizedBox(height: 10.h),
+                Text(
+                  "Có hiệu lực từ: ${DateFormat('dd/MM/yyyy – HH:mm').format(contract.startDate)} đến ${contract.endDate != null ? DateFormat('dd/MM/yyyy – HH:mm').format(contract.endDate!) : '∞'}",
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+              ] else ...[
+                Text("Diện tích: ${contract.area} m²", style: TextStyle(fontSize: 3.5.sp)),
+                SizedBox(height: 10.h),
+                Text(
+                  "Người đại diện: ${contract.representative?['fullName']?.trim().isNotEmpty == true ? contract.representative!['fullName'] : 'Không có'}",
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text("Số người ở: ${contract.numberOfResidents}", style: TextStyle(fontSize: 3.5.sp)),
+                SizedBox(height: 10.h),
+                Text(
+                  'Đồ đạc, vận dụng đi kèm: ${contract.devices?.trim().isNotEmpty == true ? contract.devices : "Không có"}',
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  'Hạn chế: ${contract.limit?.trim().isNotEmpty == true ? contract.limit : "Không có"}',
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  'Thời hạn thanh toán: ${contract.timepay != null ? DateFormat('dd/MM/yyyy – HH:mm').format(contract.timepay!) : "Không có"}',
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  'Đợt thanh toán: ${contract.timepayattention?.trim().isNotEmpty == true ? contract.timepayattention : "Không có"}',
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text('Mục đích ở: ${contract.purpose}', style: TextStyle(fontSize: 3.5.sp)),
+                SizedBox(height: 10.h),
+                Text("Tình trạng: ${apartment.isRent == true ? 'Đã được thuê' : 'Đã được mua'}", style: TextStyle(fontSize: 3.5.sp)),
+                SizedBox(height: 10.h),
+                Text('Thời gian kí: ${contract.createdAt}', style: TextStyle(fontSize: 3.5.sp)),
+                SizedBox(height: 10.h),
+                Text(
+                  "Có hiệu lực từ: ${DateFormat('dd/MM/yyyy – HH:mm').format(contract.startDate)} đến ${contract.endDate != null ? DateFormat('dd/MM/yyyy – HH:mm').format(contract.endDate!) : '∞'}",
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+              ],
             ],
           ),
+
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 4.sp),),
-            ),
             TextButton(
               onPressed: () async {
                 final confirm = await showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
-                    title: Center(child: Text("Xác nhận xóa", style: TextStyle(fontSize: 6.sp,fontFamily: "Oswald",fontWeight: FontWeight.bold)),),
-                    content: Text("Bạn có chắc chắn muốn xóa hợp đồng và hóa đơn nước của căn hộ này không?", style: TextStyle(fontSize: 4.sp)),
+                    title: Center(
+                      child: Text(
+                        "Xác nhận xóa",
+                        style: TextStyle(fontSize: 6.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    content: Text(
+                      "Bạn có chắc chắn muốn xóa hợp đồng và hóa đơn nước của căn hộ này không?",
+                      style: TextStyle(fontSize: 4.sp),
+                    ),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Hủy", style: TextStyle(fontSize: 4.sp))),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
+                      ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
+                        child: Text(
+                          "Xóa",
+                          style: TextStyle(color: Colors.red, fontSize: 3.sp),
+                        ),
                       ),
                     ],
                   ),
                 );
 
                 if (confirm == true) {
-                  // 1. Xóa hợp đồng
-                  await contractDoc.reference.delete();
+                  try {
+                    // Hiển thị dialog loading
+                    // LoadingDialog.showLoadingDialog(context, "Đang tải ...");
 
-                  // 2. Xóa hóa đơn nước
-                  final billWaterDoc = billWaterSnapshot.docs.isNotEmpty ? billWaterSnapshot.docs.first : null;
-                  if (billWaterDoc != null) {
-                    await billWaterDoc.reference.delete();
+                    // 1. Xóa hợp đồng
+                    await contractDoc.reference.delete();
+
+                    // 2. Xóa hóa đơn nước
+                    final billWaterDoc = billWaterSnapshot.docs.isNotEmpty ? billWaterSnapshot.docs.first : null;
+                    if (billWaterDoc != null) {
+                      await billWaterDoc.reference.delete();
+                    }
+
+                    final updateHistoryDoc =
+                    updateHistorySnapshot.docs.isNotEmpty ? updateHistorySnapshot.docs.first : null;
+                    if (updateHistoryDoc != null) {
+                      await updateHistoryDoc.reference.delete();
+                    }
+
+                    final residentsSnapshot = await residentsCollectionRef.where('apartmentId', isEqualTo: apartment.id).get();
+                    for (var residentDoc in residentsSnapshot.docs) {
+                      await residentDoc.reference.delete();
+                    }
+
+                    for (var residentDoc in residentsSnapshot.docs) {
+                      final uid = residentDoc.id;
+                      await deleteResidentAccount(uid); // Gọi hàm đã tách
+                    }
+
+                    // 3. Cập nhật trạng thái căn hộ
+                    await apartmentDocRef.update({'isRent': false, 'isSale': false, 'residents': []});
+
+                    // Đóng dialog loading
+                    // LoadingDialog.hideLoadingDialog(context);
+
+                    // Đóng dialog xác nhận
+                    Navigator.pop(context);
+
+                    // Làm mới giao diện
+                    onRefresh();
+                  } catch (e) {
+                    // Ẩn dialog loading nếu xảy ra lỗi
+                    // LoadingDialog.hideLoadingDialog(context);
+
+                    // Hiển thị thông báo lỗi
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: Text("Lỗi", style: TextStyle(fontSize: 5.sp, fontWeight: FontWeight.bold)),
+                        content: Text("Đã xảy ra lỗi: $e", style: TextStyle(fontSize: 4.sp)),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                          ),
+                        ],
+                      ),
+                    );
                   }
-
-                  final residentsSnapshot = await residentsCollectionRef.where('apartmentId', isEqualTo: apartment.id).get();
-                  for (var residentDoc in residentsSnapshot.docs) {
-                    await residentDoc.reference.delete();
-                  }
-
-                  for (var residentDoc in residentsSnapshot.docs) {
-                    final uid = residentDoc.id;
-                    await deleteResidentAccount(uid); // Gọi hàm đã tách
-                  }
-
-                  // 3. Cập nhật trạng thái căn hộ
-                  await apartmentDocRef.update({'isRent': false, 'isSale':false, 'residents':[]});
-
-                  Navigator.pop(context);
-                  onRefresh();
                 }
               },
-              child: Text("Xóa hợp đồng", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
+              child: Text(
+                "Xóa hợp đồng",
+                style: TextStyle(color: Colors.red, fontSize: 3.sp),
+              ),
+            ),            TextButton(
+              onPressed: () => showUpdateResidentsDialog(context, apartment, contract, onRefresh),
+              child: Text("Cập nhật cư dân", style: TextStyle(fontSize: 3.sp)),
             ),
             TextButton(
-              onPressed: () => showUpdateResidentsDialog(context, apartment, contract, onRefresh),
-              child: Text("Cập nhật cư dân", style: TextStyle(fontSize: 4.sp)),
+              onPressed: () => _showUpdateHistoryDialog(context, updateHistoryCollectionRef),
+              child: Text("Xem lịch sử thay đổi", style: TextStyle(fontSize: 3.sp)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.sp)),
             ),
           ],
         ),
@@ -344,6 +480,100 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
           title: Text("Lỗi", style: TextStyle(fontSize: 6.sp)),
           content: Text("Không thể thực hiện thao tác xóa hợp đồng.", style: TextStyle(fontSize: 4.sp)),
           actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("Đóng", style: TextStyle(fontSize: 4.sp)))],
+        ),
+      );
+    }
+  }
+
+  void _showUpdateHistoryDialog(BuildContext context, CollectionReference updateHistoryCollectionRef) async {
+    try {
+      // Lấy dữ liệu lịch sử từ Firestore
+      final updateHistorySnapshot = await updateHistoryCollectionRef.orderBy("timestamp", descending: true).get();
+
+      if (updateHistorySnapshot.docs.isEmpty) {
+        // Hiển thị thông báo nếu không có lịch sử
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: Text("Lịch sử thay đổi", style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold)),
+            content: Text("Chưa có gì thay đổi.", style: TextStyle(fontSize: 4.sp)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      // Hiển thị danh sách lịch sử
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Center(child: Text("Lịch sử thay đổi", style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold),)),
+          content: SizedBox(
+            width: 80.w,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: updateHistorySnapshot.docs.length,
+              itemBuilder: (context, index) {
+                final history = updateHistorySnapshot.docs[index].data() as Map<String, dynamic>;
+                final action = history['action'] ?? "Không xác định";
+                final performedBy = history['performedBy'] ?? "Không xác định";
+                final residentNames = (history['residentNames'] as List?)?.join(", ") ?? "Không có";
+                final newRepresentative = history['newRepresentative'] != null
+                    ? history['newRepresentative']['fullName']
+                    : "Không có";
+                final timestamp = (history['timestamp'] as Timestamp?)?.toDate();
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Hành động: $action", style: TextStyle(fontSize: 4.sp)),
+                      Text("Thực hiện bởi: $performedBy", style: TextStyle(fontSize: 4.sp)),
+                      Text("Cư dân liên quan: $residentNames", style: TextStyle(fontSize: 4.sp)),
+                      Text("Người đại diện mới: $newRepresentative", style: TextStyle(fontSize: 4.sp)),
+                      Text(
+                        "Thời gian: ${timestamp != null ? DateFormat('dd/MM/yyyy – HH:mm').format(timestamp) : "Không xác định"}",
+                        style: TextStyle(fontSize: 4.sp),
+                      ),
+                      Divider(
+                        thickness: 0.1,       // Đặt độ dày của đường kẻ
+                        indent: 10.0,         // Khoảng cách từ mép trái đến đường kẻ
+                        endIndent: 10.0,      // Khoảng cách từ mép phải đến đường kẻ
+                        color: Colors.black,   // Màu sắc của đường kẻ
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      print("❌ Lỗi khi hiển thị lịch sử thay đổi: $e");
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text("Lỗi", style: TextStyle(fontSize: 6.sp)),
+          content: Text("Không thể tải lịch sử thay đổi.", style: TextStyle(fontSize: 4.sp)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+            ),
+          ],
         ),
       );
     }
@@ -758,7 +988,6 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     }
   }
 
-
   @override
   void dispose(){
     _debounce?.cancel();
@@ -773,7 +1002,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
           child: Stack(
             children: [
               SingleChildScrollView(
-                child: Padding(
+                child: ConstrainedBox(constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height,),child: Padding(
                   padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 40.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -795,73 +1024,75 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                             children: [
                               /// Cột bên trái: Bộ lọc
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: TextField(
-                                        decoration: InputDecoration(
-                                          labelText: "Tìm kiếm căn hộ",
-                                          hintText: "Nhập tên căn hộ",
-                                          prefixIcon: Icon(Icons.search),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(30.r),
+                                child: SingleChildScrollView(
+                                  child:  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: TextField(
+                                          decoration: InputDecoration(
+                                            labelText: "Tìm kiếm căn hộ",
+                                            hintText: "Nhập tên căn hộ",
+                                            prefixIcon: Icon(Icons.search),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(30.r),
+                                            ),
                                           ),
+                                          onChanged: _onSearchChanged,
                                         ),
-                                        onChanged: _onSearchChanged,
                                       ),
-                                    ),
 
-                                    SizedBox(height: 30.h),
+                                      SizedBox(height: 30.h),
 
-                                    // DropdownButton để lọc theo trạng thái hợp đồng
-                                buildFilterDropdown<String>(
-                                  label: "Lọc theo trạng thái hợp đồng",
-                                  items: ["isSale", "isRent"],
-                                  selectedValue: selectedContractStatus,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      selectedContractStatus = value;
-                                      applyFilters(); // Gọi hàm lọc khi thay đổi trạng thái hợp đồng
-                                    });
-                                  },
-                                  itemLabelBuilder: (item) {
-                                    if (item == "isSale") return "Đã được mua";
-                                    if (item == "isRent") return "Đã được thuê";
-                                    return item;
-                                  },
-                                ),
-                                    SizedBox(height: 20.h,),
+                                      // DropdownButton để lọc theo trạng thái hợp đồng
+                                      buildFilterDropdown<String>(
+                                        label: "Lọc theo trạng thái hợp đồng",
+                                        items: ["isSale", "isRent"],
+                                        selectedValue: selectedContractStatus,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedContractStatus = value;
+                                            applyFilters(); // Gọi hàm lọc khi thay đổi trạng thái hợp đồng
+                                          });
+                                        },
+                                        itemLabelBuilder: (item) {
+                                          if (item == "isSale") return "Đã được mua";
+                                          if (item == "isRent") return "Đã được thuê";
+                                          return item;
+                                        },
+                                      ),
+                                      SizedBox(height: 20.h,),
 
-                                    buildFilterDropdown<String>(
-                                      label: "Chọn tòa",
-                                      items: getAvailableBuildings(),
-                                      selectedValue: selectedBuilding,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          selectedBuilding = value;
-                                          selectedFloor = null;
-                                        });
-                                        applyFilters();
-                                      },
-                                    ),
-                                    SizedBox(height: 20.h),
-                                    buildFilterDropdown<int>(
-                                      label: "Chọn tầng",
-                                      items: getFloorsForSelectedBuilding(),
-                                      selectedValue: selectedFloor,
-                                      itemLabelBuilder: (floor) => "Tầng $floor",
-                                      onChanged: (value) {
-                                        setState(() {
-                                          selectedFloor = value;
-                                        });
-                                        applyFilters();
-                                      },
-                                    ),
-                                    SizedBox(height: 20.h),
-                                    buildAreaFilter(),
-                                  ],
+                                      buildFilterDropdown<String>(
+                                        label: "Chọn tòa",
+                                        items: getAvailableBuildings(),
+                                        selectedValue: selectedBuilding,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedBuilding = value;
+                                            selectedFloor = null;
+                                          });
+                                          applyFilters();
+                                        },
+                                      ),
+                                      SizedBox(height: 20.h),
+                                      buildFilterDropdown<int>(
+                                        label: "Chọn tầng",
+                                        items: getFloorsForSelectedBuilding(),
+                                        selectedValue: selectedFloor,
+                                        itemLabelBuilder: (floor) => "Tầng $floor",
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedFloor = value;
+                                          });
+                                          applyFilters();
+                                        },
+                                      ),
+                                      SizedBox(height: 20.h),
+                                      buildAreaFilter(),
+                                    ],
+                                  ),
                                 ),
                               ),
 
@@ -873,196 +1104,225 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                               ),
 
                               Expanded(
-                                child: Column(
-                                  children: [
-                                    allApartments.isEmpty
-                                        ? Expanded(
-                                        child: ListView.builder(
-                                      itemCount: 6,
-                                      itemBuilder: (context, index) => Padding(
-                                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                                        child: Shimmer.fromColors(
-                                          baseColor: Colors.grey[300]!,
-                                          highlightColor: Colors.grey[100]!,
-                                          child: Container(
-                                            height: 80.h,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(8.r),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ))
-                                        : (filteredApartments.isEmpty
-                                        ? Center(
-                                      child: Center(child: Text(
-                                        'Không có căn hộ nào',
-                                        style: TextStyle(fontSize: 5.sp, color: Colors.black54),
-                                      ),)
-                                    )
-                                        :
-                                    Column(
-                                      children: [
-                                        // Danh sách căn hộ trong khung cuộn với chiều cao cố định
-                                        SizedBox(
-                                          height: 420.h, // hoặc bất kỳ chiều cao nào bạn muốn
+                                  child: Column(
+                                    children: [
+                                      allApartments.isEmpty
+                                          ? Expanded(
                                           child: ListView.builder(
-                                            itemCount: paginatedApartments.length,
-                                            itemBuilder: (context, index) {
-                                              final apartment = paginatedApartments[index];
-                                              Icon statusIcon;
-                                              String statusText;
-
-                                              if (apartment.isRent == true) {
-                                                statusIcon = const Icon(Icons.vpn_key, color: Colors.orange);
-                                                statusText = "Đã được thuê";
-                                              } else if (apartment.isSale == true) {
-                                                statusIcon = const Icon(Icons.shopping_bag, color: Colors.green);
-                                                statusText = "Đã được mua";
-                                              } else {
-                                                statusIcon = const Icon(Icons.home_outlined, color: Colors.grey);
-                                                statusText = "Trống";
-                                              }
-
-                                              return Card(
-                                                color: const Color(0xFFF7FEFF),
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                                                elevation: 2,
-                                                child: ListTile(
-                                                  contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 2.h),
-                                                  title: Text(
-                                                    '${apartment.building} - ${apartment.apartmentName}',
-                                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                            itemCount: 6,
+                                            itemBuilder: (context, index) => Padding(
+                                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                              child: Shimmer.fromColors(
+                                                baseColor: Colors.grey[300]!,
+                                                highlightColor: Colors.grey[100]!,
+                                                child: Container(
+                                                  height: 80.h,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius: BorderRadius.circular(8.r),
                                                   ),
-                                                  subtitle: Row(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      // Diện tích
-                                                      Expanded(
-                                                        child: Text('Diện tích: ${apartment.area} m²'),
-                                                      ),
-
-                                                      // Spacer để đẩy trạng thái về bên phải
-                                                      const Spacer(),
-
-                                                      // Trạng thái
-                                                      Row(
-                                                        children: [
-                                                          statusIcon,
-                                                          SizedBox(width: 4.w),
-                                                          Text(statusText, style: const TextStyle(color: Colors.black54)),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-
-                                                  onTap: () {
-                                                    if (apartment.isRent == true || apartment.isSale == true) {
-                                                      showApartmentContractInfoDialog(context, apartment, () {
-                                                        loadApartmentsFromFirestore();
-                                                      });
-                                                    } else {
-                                                      showApartmentDialog(context, apartment);
-                                                    }
-                                                  },
                                                 ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                        SizedBox(height: 20.h,),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                              ),
+                                            ),
+                                          ))
+                                          : (filteredApartments.isEmpty
+                                          ? Center(
+                                          child: Center(child: Text(
+                                            'Không có căn hộ nào',
+                                            style: TextStyle(fontSize: 5.sp, color: Colors.black54),
+                                          ),)
+                                      )
+                                          :
+                                      Expanded(
+                                        child: ListView(
                                           children: [
-                                            // Nút về trang đầu
-                                            IconButton(
-                                              onPressed: currentPage > 1
-                                                  ? () {
-                                                setState(() {
-                                                  currentPage = 1;
-                                                  updatePaginatedApartments();
-                                                });
-                                              }
-                                                  : null,
-                                              icon: const Icon(Icons.first_page),
-                                            ),
+                                            Column(
+                                              children: [
+                                                ...paginatedApartments.map((apartment) {
+                                                  // Xác định trạng thái căn hộ
+                                                  Icon statusIcon;
+                                                  String statusText;
 
-                                            // Nút về trang trước
-                                            IconButton(
-                                              onPressed: currentPage > 1
-                                                  ? () {
-                                                setState(() {
-                                                  currentPage--;
-                                                  updatePaginatedApartments();
-                                                });
-                                              }
-                                                  : null,
-                                              icon: const Icon(Icons.chevron_left),
-                                            ),
+                                                  if (apartment.isRent == true) {
+                                                    statusIcon = const Icon(Icons.vpn_key, color: Colors.orange);
+                                                    statusText = "Đã được thuê";
+                                                  } else if (apartment.isSale == true) {
+                                                    statusIcon = const Icon(Icons.shopping_bag, color: Colors.green);
+                                                    statusText = "Đã được mua";
+                                                  } else {
+                                                    statusIcon = const Icon(Icons.home_outlined, color: Colors.grey);
+                                                    statusText = "Trống";
+                                                  }
 
-                                            // Các nút số trang
-                                            ...pageNumbers.map((pageNum) {
-                                              return Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                                child: ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: currentPage == pageNum ? Colors.blue : Colors.grey[300],
-                                                    foregroundColor: currentPage == pageNum ? Colors.white : Colors.black,
-                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(8),
+                                                  return FutureBuilder<QuerySnapshot>(
+                                                    future: FirebaseFirestore.instance
+                                                        .collection('apartments')
+                                                        .doc(apartment.id)
+                                                        .collection('contract')
+                                                        .get(),
+                                                    builder: (context, snapshot) {
+                                                      String? representativeName;
+
+                                                      if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+                                                        final contractData = snapshot.data!.docs.first.data() as Map<String, dynamic>;
+                                                        representativeName = contractData['representative']?['fullName'] ?? "Không có";
+                                                      }
+
+                                                      return Card(
+                                                        color: const Color(0xFFF7FEFF),
+                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                                                        elevation: 2,
+                                                        child: ListTile(
+                                                          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 2.h),
+                                                          subtitle: Row(
+                                                            mainAxisAlignment: MainAxisAlignment.start,
+                                                            children: [
+                                                              Expanded(
+                                                                child: Column(
+                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                  children: [
+                                                                    Text(
+                                                                      '${apartment.building} - ${apartment.apartmentName}',
+                                                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                                                    ),
+                                                                    SizedBox(height: 4.h),
+                                                                    // Diện tích
+                                                                    Text('Diện tích: ${apartment.area} m²'),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              const Spacer(),
+                                                              Column(
+                                                                children: [
+                                                                  Row(
+                                                                    children: [
+                                                                      statusIcon,
+                                                                      SizedBox(width: 4.w),
+                                                                      Text(statusText, style: const TextStyle(color: Colors.black54)),
+                                                                    ],
+                                                                  ),
+
+                                                                  // Đại diện nếu căn hộ không trống
+                                                                  if (apartment.isRent == true || apartment.isSale == true) ...[
+                                                                    SizedBox(height: 4.h),
+                                                                    Text(
+                                                                      'Người đại diện: $representativeName',
+                                                                      style: const TextStyle(color: Colors.black87),
+                                                                    ),
+                                                                  ],
+                                                                ],
+                                                              )
+                                                            ],
+                                                          ),
+                                                          onTap: () {
+                                                            if (apartment.isRent == true || apartment.isSale == true) {
+                                                              showApartmentContractInfoDialog(context, apartment, loadApartmentsFromFirestore);
+                                                            } else {
+                                                              showApartmentDialog(context, apartment);
+                                                            }
+                                                          },
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                }).toList(),
+
+                                                // Row chứa các nút phân trang
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    // Nút về trang đầu
+                                                    IconButton(
+                                                      onPressed: currentPage > 1
+                                                          ? () {
+                                                        setState(() {
+                                                          currentPage = 1;
+                                                          updatePaginatedApartments();
+                                                        });
+                                                      }
+                                                          : null,
+                                                      icon: const Icon(Icons.first_page),
                                                     ),
-                                                  ),
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      currentPage = pageNum;
-                                                      updatePaginatedApartments();
-                                                    });
-                                                  },
-                                                  child: Text('$pageNum'),
+
+                                                    // Nút về trang trước
+                                                    IconButton(
+                                                      onPressed: currentPage > 1
+                                                          ? () {
+                                                        setState(() {
+                                                          currentPage--;
+                                                          updatePaginatedApartments();
+                                                        });
+                                                      }
+                                                          : null,
+                                                      icon: const Icon(Icons.chevron_left),
+                                                    ),
+
+                                                    // Các nút số trang
+                                                    ...pageNumbers.map((pageNum) {
+                                                      return Padding(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                                        child: ElevatedButton(
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: currentPage == pageNum ? Colors.blue : Colors.grey[300],
+                                                            foregroundColor: currentPage == pageNum ? Colors.white : Colors.black,
+                                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(8),
+                                                            ),
+                                                          ),
+                                                          onPressed: () {
+                                                            setState(() {
+                                                              currentPage = pageNum;
+                                                              updatePaginatedApartments();
+                                                            });
+                                                          },
+                                                          child: Text('$pageNum'),
+                                                        ),
+                                                      );
+                                                    }).toList(),
+
+                                                    // Nút sang trang sau
+                                                    IconButton(
+                                                      onPressed: currentPage < totalPages
+                                                          ? () {
+                                                        setState(() {
+                                                          currentPage++;
+                                                          updatePaginatedApartments();
+                                                        });
+                                                      }
+                                                          : null,
+                                                      icon: const Icon(Icons.chevron_right),
+                                                    ),
+
+                                                    // Nút sang trang cuối
+                                                    IconButton(
+                                                      onPressed: currentPage < totalPages
+                                                          ? () {
+                                                        setState(() {
+                                                          currentPage = totalPages;
+                                                          updatePaginatedApartments();
+                                                        });
+                                                      }
+                                                          : null,
+                                                      icon: const Icon(Icons.last_page),
+                                                    ),
+                                                  ],
                                                 ),
-                                              );
-                                            }).toList(),
-
-                                            // Nút sang trang sau
-                                            IconButton(
-                                              onPressed: currentPage < totalPages
-                                                  ? () {
-                                                setState(() {
-                                                  currentPage++;
-                                                  updatePaginatedApartments();
-                                                });
-                                              }
-                                                  : null,
-                                              icon: const Icon(Icons.chevron_right),
-                                            ),
-
-                                            // Nút sang trang cuối
-                                            IconButton(
-                                              onPressed: currentPage < totalPages
-                                                  ? () {
-                                                setState(() {
-                                                  currentPage = totalPages;
-                                                  updatePaginatedApartments();
-                                                });
-                                              }
-                                                  : null,
-                                              icon: const Icon(Icons.last_page),
-                                            ),
+                                              ],
+                                            )
                                           ],
-                                        )
-
-                                      ],
-                                    )),
-                                  ],
-                                )
+                                        ),
+                                      )
+                                      ),
+                                    ],
+                                  )
                               )
                             ],
                           )),
                     ],
                   ),
-                ),
+                ))
+                ,
               ),
             ],
           )),

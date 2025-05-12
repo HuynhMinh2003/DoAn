@@ -21,9 +21,11 @@ class ContractData {
   final String? limit;    // limit của hợp đồng
   final int? price;       // giá của hợp đồng
   final String? obligation;  // nghĩa vụ của bên thuê
+  final String? duties;  // nghĩa vụ của bên thuê
   final String? benefit;     // quyền lợi của bên thuê
   final String? commit;
   final String? timepayattention;
+  final DateTime createdAt; // Thêm trường createdAt kiểu DateTime
 
   ContractData({
     this.contractId,
@@ -45,9 +47,11 @@ class ContractData {
     this.limit,
     this.price,
     this.obligation,
+    this.duties,
     this.benefit,
     this.commit,
     this.timepayattention,
+    required this.createdAt, // Bắt buộc truyền createdAt
   });
 
   ContractData copyWith({
@@ -70,9 +74,11 @@ class ContractData {
     String? limit,
     int? price,
     String? obligation,
+    String? duties,
     String? benefit,
     String? commit,
     String? timepayattenion,
+    DateTime? createdAt, // Thêm createdAt vào copyWith
   }) {
     return ContractData(
       contractId: contractId ?? this.contractId,
@@ -94,9 +100,11 @@ class ContractData {
       limit: limit ?? this.limit,
       price: price ?? this.price,
       obligation: obligation ?? this.obligation,
+      duties: duties ?? this.duties,
       benefit: benefit ?? this.benefit,
       commit: commit ?? this.commit,
       timepayattention: timepayattention ?? this.timepayattention,
+      createdAt: createdAt ?? this.createdAt, // Bổ sung createdAt
     );
   }
 
@@ -119,10 +127,11 @@ class ContractData {
       "limit": limit,
       "price": price,
       "obligation": obligation,
+      "duties": duties,
       "benefit": benefit,
       "commit": commit,
       "timepayattention": timepayattention,
-      "createdAt": Timestamp.now(),
+      "createdAt": Timestamp.fromDate(createdAt), // Chuyển đổi DateTime sang Timestamp
     };
   }
 
@@ -149,10 +158,11 @@ class ContractData {
       limit: map['limit'],
       price: map['price'],
       obligation: map['obligation'],
+      duties: map['duties'],
       benefit: map['benefit'],
       commit: map['commit'],
       timepayattention: map['timepayattention'],
+      createdAt: (map['createdAt'] as Timestamp).toDate(), // Chuyển đổi Timestamp sang DateTime
     );
   }
-
 }
