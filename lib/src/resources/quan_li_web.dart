@@ -80,7 +80,7 @@ class _AdminWebPageState extends State<AdminWebPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 5.h),
               // Main Content
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,13 +101,22 @@ class _AdminWebPageState extends State<AdminWebPage> {
                                 color: Colors.blue,
                               ),
                             ),
-                            SizedBox(width: 10.w),
+                            SizedBox(width: 5.w),
                             Expanded(
                               child: StatisticCard(
                                 icon: Icons.check_box,
                                 label: "Đã bán",
                                 value: soldCount,
                                 color: Colors.green,
+                              ),
+                            ),
+                            SizedBox(width: 5.w),
+                            Expanded(
+                              child: StatisticCard(
+                                icon: Icons.check_box,
+                                label: "Đang trống",
+                                value: vacantCount,
+                                color: Colors.grey.shade400,
                               ),
                             ),
                           ],
@@ -213,7 +222,7 @@ class _AdminWebPageState extends State<AdminWebPage> {
                       ],
                     ),
                   ),
-                  SizedBox(width: 10.w), // Space between Expanded sections
+                  SizedBox(width: 6.w), // Space between Expanded sections
                   Expanded(
                     flex: 1,
                     child: Column(
