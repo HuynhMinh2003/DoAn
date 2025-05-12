@@ -244,11 +244,12 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        appBar: AppBar(title: Text('      Nhập thông tin cư dân', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: Color(0xFFF7FEFF),),
         backgroundColor: Color(0xFFF7FEFF),
       body:SafeArea(child: Stack(
         children: [
           Padding(
-              padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 70.h),
+              padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 20.h),
           child: Column(
             children: [
               Text(
@@ -259,7 +260,7 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
                   fontSize: 12.sp,
                 ),
               ),
-              SizedBox(height: 40.h),
+              SizedBox(height: 20.h),
               Expanded(child: ListView.builder(
                 itemCount: widget.count,
                 itemBuilder: (context, index) {
