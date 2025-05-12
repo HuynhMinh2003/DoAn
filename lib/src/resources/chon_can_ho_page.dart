@@ -747,7 +747,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    contractNotifier = Provider.of<ContractNotifier>(context, listen: false);
+    contractNotifier = Provider.of<ContractNotifier>(context, listen: true);
 
     if (contractNotifier.contractCreated) {
       // Đợi sau build mới gọi reset để tránh lỗi

@@ -1,3 +1,6 @@
+import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
+import 'package:provider/provider.dart';
+
 import 'contract_form_mobile_page.dart' if (dart.library.html) 'contract_form_web_page.dart';
 import 'dart:convert';
 import 'package:do_an/src/models/resident_info.dart';
@@ -721,8 +724,11 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                               actions: [
                                 TextButton(
                                   onPressed: () {
+                                    Provider.of<ContractNotifier>(context, listen: false).markAsCreated();
+
                                     Navigator.pop(context); // Đóng dialog
-                                    Navigator.pop(context); // Quay lại trang trước
+                                    Navigator.pop(context);
+                                    // Quay lại trang trước
                                   },
                                   child: Text("Đồng ý",
                                       style: TextStyle(fontSize: 4.sp)),
