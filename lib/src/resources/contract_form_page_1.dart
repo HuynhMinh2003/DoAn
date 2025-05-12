@@ -1,3 +1,6 @@
+import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
+import 'package:provider/provider.dart';
+
 import 'contract_form_mobile1_page.dart' if (dart.library.html) 'contract_form_web1_page.dart';
 import 'dart:convert';
 import 'package:do_an/src/models/resident_info.dart';
@@ -677,7 +680,7 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
                         }
 
                         // Tạo file Word
-                        final fileName = "thuê_${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
+                        final fileName = "mua_${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
                         await downloadWordFile(fileName, fileBytes!);
 
                         LoadingDialog.hideLoadingDialog(context);
@@ -697,6 +700,8 @@ class _ContractFormSalePageState extends State<ContractFormSalePage> {
                               actions: [
                                 TextButton(
                                   onPressed: () {
+                                    Provider.of<ContractNotifier>(context, listen: false).markAsCreated();
+
                                     Navigator.pop(context); // Đóng dialog
                                     Navigator.pop(context); // Quay lại trang trước
                                   },
