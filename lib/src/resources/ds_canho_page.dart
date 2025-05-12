@@ -494,308 +494,331 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
       body: SafeArea(
           child: Stack(
             children: [
-              SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 40.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+          SingleChildScrollView(
+          child: ConstrainedBox(
+          constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height,
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 40.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              "Danh sách căn hộ",
+              style: TextStyle(
+                fontFamily: "Oswald",
+                fontWeight: FontWeight.w700,
+                fontSize: 12.sp,
+              ),
+            ),
+            SizedBox(height: 30.h),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton(
+                  onPressed: () => importApartmentsFromExcel,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      Icon(Icons.add),
+                      SizedBox(width: 5.w),
                       Text(
-                        "Danh sách căn hộ",
+                        'Thêm file',
                         style: TextStyle(
-                          fontFamily: "Oswald",
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12.sp,
-                        ),
-                      ),
-                      SizedBox(height: 30.h,),
-                      Row(
-                        mainAxisSize:MainAxisSize.min,
-                        children: [
-                        ElevatedButton(
-                        onPressed: ()=> importApartmentsFromExcel,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.add),
-                            SizedBox(width: 5.w,),
-                            Text('Thêm file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
-                          ],
-                        ),
-                      ),
-                        SizedBox(width: 20.w,),
-                        ElevatedButton(
-                          onPressed: () => exportApartmentsToExcel(filteredApartments),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.upload),
-                              SizedBox(width: 5.w,),
-                              Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
-                            ],
-                          ),
-                        ),],),
-                      SizedBox(height: 40.h),
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height - 360.h,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Cột bên trái: Bộ lọc
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: TextField(
-                                      decoration: InputDecoration(
-                                        labelText: "Tìm kiếm căn hộ",
-                                        hintText: "Nhập tên căn hộ",
-                                        prefixIcon: Icon(Icons.search),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(30.r),
-                                        ),
-                                      ),
-                                      onChanged: _onSearchChanged,
-                                    ),
-                                  ),
-                                  SizedBox(height: 30.h),
-
-                                  buildFilterDropdown<String>(
-                                    label: "Lọc theo trạng thái hợp đồng",
-                                    items: ["contract", "empty"], // "contract" cho hợp đồng, "empty" cho trống
-                                    selectedValue: selectedContractStatus,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedContractStatus = value;
-                                        applyFilters(); // Gọi hàm lọc khi thay đổi trạng thái hợp đồng
-                                      });
-                                    },
-                                    itemLabelBuilder: (item) {
-                                      if (item == "contract") return "Đã có hợp đồng"; // Gộp cả isSale và isRent
-                                      if (item == "empty") return "Trống"; // Hiển thị căn hộ trống
-                                      return item;
-                                    },
-                                  ),
-                                  SizedBox(height: 20.h),
-                                  buildFilterDropdown<String>(
-                                    label: "Chọn tòa",
-                                    items: getAvailableBuildings(),
-                                    selectedValue: selectedBuilding,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedBuilding = value;
-                                        selectedFloor = null;
-                                      });
-                                      applyFilters();
-                                    },
-                                  ),
-                                  SizedBox(height: 20.h),
-                                  buildFilterDropdown<int>(
-                                    label: "Chọn tầng",
-                                    items: getFloorsForSelectedBuilding(),
-                                    selectedValue: selectedFloor,
-                                    itemLabelBuilder: (floor) => "Tầng $floor",
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedFloor = value;
-                                      });
-                                      applyFilters();
-                                    },
-                                  ),
-                                  SizedBox(height: 20.h),
-                                  buildAreaFilter(),
-                                ],
-                              ),
-                            ),
-                            // Cột bên phải: Danh sách căn hộ
-                            VerticalDivider(
-                              color: Colors.grey, // Màu của đường ngăn cách
-                              thickness: 0.2.w, // Độ dày của đường ngăn cách
-                              width: 40.w, // Chiều rộng tổng thể của vùng ngăn cách (bao gồm cả padding nếu có)
-                            ),
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  allApartments.isEmpty
-                                      ? Expanded(child: ListView.builder(
-                                    itemCount: 5,
-                                    itemBuilder: (context, index) => Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                                      child: Shimmer.fromColors(
-                                        baseColor: Colors.grey[300]!,
-                                        highlightColor: Colors.grey[100]!,
-                                        child: Container(
-                                          height: 80.h,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(8.r),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ))
-                                      : (filteredApartments.isEmpty
-                                      ? Center(
-                                    child: Center(child: Text(
-                                      'Không có căn hộ nào',
-                                      style: TextStyle(fontSize: 5.sp, color: Colors.black54),
-                                    ),)
-                                  )
-                                      : Column(
-                                    children: [
-                                      // Danh sách căn hộ trong khung cuộn với chiều cao cố định
-                                      SizedBox(
-                                        height: 430.h, // hoặc bất kỳ chiều cao nào bạn muốn
-                                        child: ListView.builder(
-                                          itemCount: paginatedApartments.length,
-                                          itemBuilder: (context, index) {
-                                            final apartment = paginatedApartments[index];
-                                            Icon statusIcon;
-                                            String statusText;
-
-                                            if (apartment.isRent == true||apartment.isSale == true) {
-                                              statusIcon = const Icon(Icons.assignment_turned_in, color: Colors.green);
-                                              statusText = "Đã có chủ ";
-                                            } else {
-                                              statusIcon = const Icon(Icons.home_outlined, color: Colors.grey);
-                                              statusText = "Trống";
-                                            }
-
-                                            return Card(
-                                              color: const Color(0xFFF7FEFF),
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                                              elevation: 2,
-                                              child: ListTile(
-                                                contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 2.h),
-                                                title: Text(
-                                                  '${apartment.building} - ${apartment.apartmentName}',
-                                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                                ),
-                                                subtitle: Row(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Expanded(child: Text('Diện tích: ${apartment.area} m²')),
-
-                                                    const Spacer(),
-
-                                                    Row(
-                                                      children: [
-                                                        statusIcon,
-                                                        SizedBox(width: 4.w),
-                                                        Text(statusText, style: const TextStyle(color: Colors.black54)),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                                onTap: () {
-                                                  showApartmentDialog(context, apartment, () {
-                                                    loadApartmentsFromFirestore();
-                                                  });
-                                                },
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-
-                                      SizedBox(height: 20.h),
-
-                                      // Phân trang cố định bên dưới
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          // Nút về trang đầu
-                                          IconButton(
-                                            onPressed: currentPage > 1
-                                                ? () {
-                                              setState(() {
-                                                currentPage = 1;
-                                                updatePaginatedApartments();
-                                              });
-                                            }
-                                                : null,
-                                            icon: const Icon(Icons.first_page),
-                                          ),
-
-                                          // Nút về trang trước
-                                          IconButton(
-                                            onPressed: currentPage > 1
-                                                ? () {
-                                              setState(() {
-                                                currentPage--;
-                                                updatePaginatedApartments();
-                                              });
-                                            }
-                                                : null,
-                                            icon: const Icon(Icons.chevron_left),
-                                          ),
-
-                                          // Các nút số trang
-                                          ...pageNumbers.map((pageNum) {
-                                            return Padding(
-                                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                              child: ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: currentPage == pageNum ? Colors.blue : Colors.grey[300],
-                                                  foregroundColor: currentPage == pageNum ? Colors.white : Colors.black,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  ),
-                                                ),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    currentPage = pageNum;
-                                                    updatePaginatedApartments();
-                                                  });
-                                                },
-                                                child: Text('$pageNum'),
-                                              ),
-                                            );
-                                          }).toList(),
-
-                                          // Nút sang trang sau
-                                          IconButton(
-                                            onPressed: currentPage < totalPages
-                                                ? () {
-                                              setState(() {
-                                                currentPage++;
-                                                updatePaginatedApartments();
-                                              });
-                                            }
-                                                : null,
-                                            icon: const Icon(Icons.chevron_right),
-                                          ),
-
-                                          // Nút sang trang cuối
-                                          IconButton(
-                                            onPressed: currentPage < totalPages
-                                                ? () {
-                                              setState(() {
-                                                currentPage = totalPages;
-                                                updatePaginatedApartments();
-                                              });
-                                            }
-                                                : null,
-                                            icon: const Icon(Icons.last_page),
-                                          ),
-                                        ],
-                                      )
-                                    ],
-                                  )
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                          ],
+                          fontSize: 4.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
                       ),
                     ],
                   ),
                 ),
+                SizedBox(width: 20.w),
+                ElevatedButton(
+                  onPressed: () => exportApartmentsToExcel(filteredApartments),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.upload),
+                      SizedBox(width: 5.w),
+                      Text(
+                        'Xuất file',
+                        style: TextStyle(
+                          fontSize: 4.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 40.h),
+            SizedBox(
+              height: MediaQuery.of(context).size.height - 360.h,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Cột bên trái: Bộ lọc
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: TextField(
+                              decoration: InputDecoration(
+                                labelText: "Tìm kiếm căn hộ",
+                                labelStyle: TextStyle(fontSize: 4.sp),
+                                hintText: "Nhập tên căn hộ",
+                                prefixIcon: Icon(Icons.search),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30.r),
+                                ),
+                              ),
+                              onChanged: _onSearchChanged,
+                            ),
+                          ),
+                          SizedBox(height: 30.h),
+                          buildFilterDropdown<String>(
+                            label: "Lọc theo trạng thái hợp đồng",
+                            items: ["contract", "empty"],
+                            selectedValue: selectedContractStatus,
+                            onChanged: (value) {
+                              setState(() {
+                                selectedContractStatus = value;
+                                applyFilters();
+                              });
+                            },
+                            itemLabelBuilder: (item) {
+                              if (item == "contract") return "Đã có hợp đồng";
+                              if (item == "empty") return "Trống";
+                              return item;
+                            },
+                          ),
+                          SizedBox(height: 20.h),
+                          buildFilterDropdown<String>(
+                            label: "Chọn tòa",
+                            items: getAvailableBuildings(),
+                            selectedValue: selectedBuilding,
+                            onChanged: (value) {
+                              setState(() {
+                                selectedBuilding = value;
+                                selectedFloor = null;
+                              });
+                              applyFilters();
+                            },
+                          ),
+                          SizedBox(height: 20.h),
+                          buildFilterDropdown<int>(
+                            label: "Chọn tầng",
+                            items: getFloorsForSelectedBuilding(),
+                            selectedValue: selectedFloor,
+                            itemLabelBuilder: (floor) => "Tầng $floor",
+                            onChanged: (value) {
+                              setState(() {
+                                selectedFloor = value;
+                              });
+                              applyFilters();
+                            },
+                          ),
+                          SizedBox(height: 20.h),
+                          buildAreaFilter(),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Cột bên phải: Danh sách căn hộ
+                  VerticalDivider(
+                    color: Colors.grey,
+                    thickness: 0.2.w,
+                    width: 40.w,
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        if (allApartments.isEmpty)
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: 5,
+                              itemBuilder: (context, index) => Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                child: Shimmer.fromColors(
+                                  baseColor: Colors.grey[300]!,
+                                  highlightColor: Colors.grey[100]!,
+                                  child: Container(
+                                    height: 80.h,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        else if (filteredApartments.isEmpty)
+                          Center(
+                            child: Text(
+                              'Không có căn hộ nào',
+                              style: TextStyle(
+                                fontSize: 5.sp,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          )
+                        else
+                          Expanded(
+                            child: ListView(
+                              children: [
+                                ...paginatedApartments.map((apartment) {
+                                  Icon statusIcon;
+                                  String statusText;
+
+                                  if (apartment.isRent == true || apartment.isSale == true) {
+                                    statusIcon = const Icon(Icons.assignment_turned_in, color: Colors.green);
+                                    statusText = "Đã có chủ ";
+                                  } else {
+                                    statusIcon = const Icon(Icons.home_outlined, color: Colors.grey);
+                                    statusText = "Trống";
+                                  }
+
+                                  return Card(
+                                    color: const Color(0xFFF7FEFF),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                                    elevation: 2,
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 2.h),
+                                      title: Text(
+                                        '${apartment.building} - ${apartment.apartmentName}',
+                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                      subtitle: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Text('Diện tích: ${apartment.area} m²'),
+                                          ),
+                                          const Spacer(),
+                                          Row(
+                                            children: [
+                                              statusIcon,
+                                              SizedBox(width: 4.w),
+                                              Text(
+                                                statusText,
+                                                style: const TextStyle(color: Colors.black54),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      onTap: () {
+                                        showApartmentDialog(context, apartment, () {
+                                          loadApartmentsFromFirestore();
+                                        });
+                                      },
+                                    ),
+                                  );
+                                }).toList(),
+                                // Phân trang cố định bên dưới
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // Nút về trang đầu
+                                    IconButton(
+                                      onPressed: currentPage > 1
+                                          ? () {
+                                        setState(() {
+                                          currentPage = 1;
+                                          updatePaginatedApartments();
+                                        });
+                                      }
+                                          : null,
+                                      icon: const Icon(Icons.first_page),
+                                    ),
+
+                                    // Nút về trang trước
+                                    IconButton(
+                                      onPressed: currentPage > 1
+                                          ? () {
+                                        setState(() {
+                                          currentPage--;
+                                          updatePaginatedApartments();
+                                        });
+                                      }
+                                          : null,
+                                      icon: const Icon(Icons.chevron_left),
+                                    ),
+
+                                    // Các nút số trang
+                                    ...pageNumbers.map((pageNum) {
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: currentPage == pageNum ? Colors.blue : Colors.grey[300],
+                                            foregroundColor: currentPage == pageNum ? Colors.white : Colors.black,
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              currentPage = pageNum;
+                                              updatePaginatedApartments();
+                                            });
+                                          },
+                                          child: Text('$pageNum'),
+                                        ),
+                                      );
+                                    }).toList(),
+
+                                    // Nút sang trang sau
+                                    IconButton(
+                                      onPressed: currentPage < totalPages
+                                          ? () {
+                                        setState(() {
+                                          currentPage++;
+                                          updatePaginatedApartments();
+                                        });
+                                      }
+                                          : null,
+                                      icon: const Icon(Icons.chevron_right),
+                                    ),
+
+                                    // Nút sang trang cuối
+                                    IconButton(
+                                      onPressed: currentPage < totalPages
+                                          ? () {
+                                        setState(() {
+                                          currentPage = totalPages;
+                                          updatePaginatedApartments();
+                                        });
+                                      }
+                                          : null,
+                                      icon: const Icon(Icons.last_page),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                      ],
+                    ),
+                  ),
+                ],
               ),
+            ),
+          ],
+        ),
+      ),
+    ),
+          )
+
             ],
           )),
     );

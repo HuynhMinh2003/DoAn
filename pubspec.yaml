@@ -65,6 +65,7 @@ dependencies:
   dropdown_button2: ^2.3.9
   cloud_functions: ^5.4.0
   uuid: ^4.5.1
+  pool: ^1.5.1
   shimmer: ^3.0.0
   email_validator: ^3.0.0
 #  docx_template: ^0.4.0
@@ -74,6 +75,9 @@ dependencies:
   go_router: ^15.1.1
   collapsible_sidebar: ^2.0.7
   fl_chart: ^0.40.6
+  web: ^1.1.1
+  js: ^0.6.7
+
 
 dev_dependencies:
   flutter_test:
@@ -111,6 +115,7 @@ flutter:
     - assets/images/company.png
     - assets/images/contract.png
     - assets/images/home.png
+    - assets/images/house.png
     - assets/images/list_room.png
     - assets/images/list_staff.png
     - assets/images/staff.png
