@@ -76,7 +76,6 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FEFF),
       body: SafeArea(
         child: Stack(
           children: [
@@ -481,7 +480,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
         builder: (context, snapshot) {
           return TextField(
             controller: controller,
-            style: TextStyle(fontSize: 4.sp, color: Colors.black),
+            style: TextStyle(fontSize: 4.sp),
             decoration: InputDecoration(
               labelText: label,
               labelStyle: TextStyle(
@@ -491,7 +490,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
               contentPadding:
               EdgeInsets.symmetric(vertical: 2.h, horizontal: 10.w),
               border: OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xffCED0D2), width: 1.w),
+                borderSide: BorderSide(width: 1.w),
                 borderRadius: BorderRadius.all(Radius.circular(30.r)),
               ),
             ),
@@ -517,7 +516,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
               isExpanded: true,
               hint: Text(
                 label+":",
-                style: TextStyle(color: Colors.black, fontSize: 4.sp),
+                style: TextStyle(fontSize: 4.sp),
               ),
               items: items.map((item) {
                 return DropdownMenuItem(
@@ -535,7 +534,6 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                   border: Border.all(color: Color(0xe2707070)),
-                  color: Color(0xFFF7FEFF),
                 ),
               ),
               dropdownStyleData: DropdownStyleData(
@@ -543,7 +541,6 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                 width: 130.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
-                  color: Color(0xFFF7FEFF),
                 ),
                 elevation: 4,
               ),

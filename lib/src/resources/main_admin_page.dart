@@ -348,7 +348,7 @@ class _MainAdminPageState extends State<MainAdminPage> {
                       ],
                     ),
                     title: Text(
-                      ' Giá dịch vụ',
+                      ' Thông tin dịch vụ',
                       style: TextStyle(fontFamily: "Oswald", fontSize: 5.sp),
                     ),
                     // onTap: () => _setPage(const ApartmentFilterPage()),
@@ -367,7 +367,7 @@ class _MainAdminPageState extends State<MainAdminPage> {
                         const Icon(Icons.plumbing, size: 20),
                       ],
                     ),
-                    title: Text(' Các dịch vụ chung cư',
+                    title: Text(' Hợp đồng dịch vụ chung cư',
                         style: TextStyle(fontFamily: "Oswald", fontSize: 5.sp)),
                     // onTap: () => _setPage(const ApartmentListPage()),
                   ),

@@ -429,7 +429,6 @@ class _CompanyListPageState extends State<CompanyListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF7FEFF),
       body: SafeArea(
         child: Stack(
           children: [
