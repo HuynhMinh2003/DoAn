@@ -16,7 +16,6 @@ class LoadingDialog {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20.r), // Thêm ClipRRect để đảm bảo bo tròn
           child: Container(
-            color: Colors.white,
             height: isLandscape ? 200.h:150.h,
             width: 80.w, // Cố định chiều rộng của dialog để dễ nhìn
             child: Column(
