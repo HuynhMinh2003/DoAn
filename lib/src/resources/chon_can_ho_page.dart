@@ -997,7 +997,6 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF7FEFF),
       body: SafeArea(
           child: Stack(
             children: [
@@ -1348,7 +1347,6 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
               hint: Text(
                 label,
                 style: TextStyle(
-                  color: Colors.black,
                   fontSize: 4.sp,
                 ),
               ),
@@ -1391,7 +1389,6 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                   border: Border.all(color: Color(0xe2707070)),
-                  color: Color(0xFFF7FEFF),
                 ),
               ),
               dropdownStyleData: DropdownStyleData(
@@ -1399,7 +1396,6 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                 width: 142.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
-                  color: Color(0xFFF7FEFF),
                 ),
                 elevation: 4,
               ),
@@ -1426,7 +1422,6 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30.r),
             border: Border.all(color: Color(0xe2707070)),
-            color: Color(0xFFF7FEFF), // Màu nền nhẹ
           ),
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.w),
