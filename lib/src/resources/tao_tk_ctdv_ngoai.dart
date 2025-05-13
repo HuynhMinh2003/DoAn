@@ -58,7 +58,6 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FEFF),
       body: SafeArea(
         child: Stack(
           children: [

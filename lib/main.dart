@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/firebase_options.dart';
+import 'package:do_an/screens/main/main_screen.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/main_admin_page.dart';
 import 'package:do_an/src/resources/provider/company_image_provider.dart';
@@ -12,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:do_an/src/app.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
@@ -20,6 +22,9 @@ import 'package:flutter/foundation.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'constants.dart';
+import 'controllers/menu_app_controller.dart';
 
 // Cấu hình Firebase
 const firebaseOptions = FirebaseOptions(
@@ -123,14 +128,17 @@ void main() async {
             ChangeNotifierProvider(create: (_) => StaffImageProvider()),
             ChangeNotifierProvider(create: (_) => CompanyImageProvider()),
             ChangeNotifierProvider(create: (_) => ContractNotifier()),
+            ChangeNotifierProvider(create: (_) => MenuAppController()),
           ],
           child: MyApp(
             AuthBloc(),
             MaterialApp(
               navigatorKey: navigatorKey,
               debugShowCheckedModeBanner: false,
-              theme: ThemeData(
-                fontFamily: 'Montserrat',
+              theme: ThemeData.dark().copyWith(
+                scaffoldBackgroundColor: bgColor,
+                textTheme: Theme.of(context).textTheme.apply(bodyColor: Colors.white),
+                canvasColor: secondaryColor,
               ),
               builder: (context, child) => MediaQuery(
                 data: MediaQuery.of(context).copyWith(
@@ -146,7 +154,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: LoginPage(), // hoặc AuthWrapper()
+              home: MainScreen(), // hoặc AuthWrapper()
             ),
           ),
         );
