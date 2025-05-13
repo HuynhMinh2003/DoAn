@@ -532,7 +532,6 @@ class _ResidentPageState extends State<ResidentPage> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FEFF),
       body: SafeArea(
         child: Stack(
           children: [

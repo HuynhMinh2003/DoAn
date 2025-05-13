@@ -16,6 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../screens/main/main_screen.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -222,6 +224,7 @@ class _LoginPageState extends State<LoginPage> {
                     fontFamily: "Oswald",
                     fontWeight: FontWeight.w700,
                     fontSize: 15.sp,
+                    color: Colors.black,
                   ),
                 ),
 
@@ -328,6 +331,7 @@ class _LoginPageState extends State<LoginPage> {
             fontFamily: "Oswald",
             fontWeight: FontWeight.w700,
             fontSize: 40.sp,
+            color: Colors.black,
           ),
         ),
 
@@ -665,7 +669,7 @@ class _LoginPageState extends State<LoginPage> {
                 } else {
                   // Điều hướng đến trang khác (nếu cần)
                   Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const MainAdminPage()),
+                    MaterialPageRoute(builder: (context) => MainScreen()),
                   );
                 }
               }

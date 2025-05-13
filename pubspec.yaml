@@ -104,35 +104,9 @@ flutter:
 
   assets:
     - assets/service_account.json
-    - assets/images/image_login.svg
-    - assets/images/image_signup_cty.svg
-    - assets/images/image_signup_nv.svg
-    - assets/images/info_contract.svg
-    - assets/images/info_resident.svg
-    - assets/images/confirm_contract.svg
-    - assets/images/add_staff.png
-    - assets/images/building.png
-    - assets/images/company.png
-    - assets/images/contract.png
-    - assets/images/home.png
-    - assets/images/house.png
-    - assets/images/list_room.png
-    - assets/images/list_staff.png
-    - assets/images/staff.png
-    - assets/images/people.png
-    - assets/images/two_circle.png
-    - assets/images/anh_nen.jpg
-    - assets/images/two_circle_green.png
-    - assets/images/image_staff.svg
-    - assets/images/image_resident.svg
-    - assets/images/image_room.svg
-    - assets/images/image_manage_contract.svg
-    - assets/images/image_list_room.svg
-    - assets/images/image_list_staff.svg
-    - assets/images/image_add_staff.svg
-    - assets/images/image_company.svg
-    - assets/templates/hd_mua_ch.docx
-    - assets/templates/hd_thue_ch.docx
+    - assets/images/
+    - assets/icons/
+    - assets/templates/
 
   fonts:
     - family: Poppins
