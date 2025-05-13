@@ -437,7 +437,6 @@ class _StaffListPageState extends State<StaffListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF7FEFF),
       body: SafeArea(
         child: Stack(
           children: [
@@ -537,111 +536,76 @@ class _StaffListPageState extends State<StaffListPage> {
                     child: _staffList.isEmpty
                         ? const Center(child: Text("Không có nhân viên nào"))
                         : SingleChildScrollView(
-                      child: GridView.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 30.h,
-                          crossAxisSpacing: 5.w,
-                          childAspectRatio: 6 / 2.5,
-                        ),
-                        itemCount: _staffList.length,
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          final staff = _staffList[index];
-                          return GestureDetector(
-                            onTap: () => showStaffDialog(context, staff, (){
-                              _fetchStaff();
-                            }),
-                            child: Container(
-                              padding: EdgeInsets.fromLTRB(1.w,25.h,1.w,0.w),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12.r),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.3),
-                                    blurRadius: 6.r,
-                                    offset: Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        SizedBox(width: 5.w),
-                                        Stack(
-                                          children: [
-                                            // Ảnh nhân viên
-                                            Container(
-                                              width: 17.w,
-                                              height: 80.h,
-                                              child: CircleAvatar(
-                                                radius: 8.r,
-                                                backgroundImage: staff.imageUrl.isNotEmpty
-                                                    ? NetworkImage(staff.imageUrl)
-                                                    : null,
-                                                child: staff.imageUrl.isEmpty
-                                                    ? Icon(Icons.person, size: 40.w)
-                                                    : null,
-                                              ),
-                                            ),
-                                            // Trạng thái hoạt động
-                                            Positioned(
-                                              bottom: 0, // Căn dưới cùng
-                                              right: 0, // Căn phải
-                                              child: Container(
-                                                width: 5.w, // Kích thước vòng tròn trạng thái
-                                                height: 5.w,
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  color: staff.isFree ? Colors.green : Colors.red, // Xanh lá nếu isFree, đỏ nếu không
-                                                  border: Border.all(
-                                                    color: Colors.white, // Viền trắng để tách khỏi ảnh
-                                                    width: 1.0,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
+                      scrollDirection: Axis.vertical, // Enable vertical scrolling
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal, // Enable horizontal scrolling for wide tables
+                        child: DataTable(
+                          columns: const [
+                            DataColumn(label: Text('Ảnh')),
+                            DataColumn(label: Text('Tên nhân viên')),
+                            DataColumn(label: Text('Chức vụ')),
+                            DataColumn(label: Text('Trạng thái')),
+                          ],
+                          rows: _staffList.map((staff) {
+                            return DataRow(
+                              cells: [
+                                DataCell(
+                                  Container(
+                                    width: 50.w,
+                                    height: 50.h,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      child: staff.imageUrl.isNotEmpty
+                                          ? Image.network(
+                                        staff.imageUrl,
+                                        fit: BoxFit.cover,
+                                      )
+                                          : Container(
+                                        color: Colors.grey.shade300,
+                                        child: Icon(
+                                          Icons.person,
+                                          size: 20.sp,
+                                          color: Colors.grey,
                                         ),
-                                        SizedBox(width: 5.w),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                staff.fullName,
-                                                style: TextStyle(
-                                                  fontFamily: "Oswald",
-                                                  fontSize: 4.5.sp,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              SizedBox(height: 10.h),
-                                              Text(
-                                                staff.position,
-                                                style: TextStyle(
-                                                  fontSize: 3.sp,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),                            ),
-                          );
-                        },
+                                DataCell(
+                                  Text(
+                                    staff.fullName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  onTap: () => showStaffDialog(context, staff, () {
+                                    _fetchStaff();
+                                  }),
+                                ),
+                                DataCell(
+                                  Text(staff.position),
+                                ),
+                                DataCell(
+                                  Container(
+                                    width: 10.w,
+                                    height: 10.w,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: staff.isFree ? Colors.green : Colors.red,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 1.0,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  )                ],
               ),
 
             )
@@ -673,7 +637,7 @@ class _StaffListPageState extends State<StaffListPage> {
               isExpanded: true,
               hint: Text(
                 label,
-                style: TextStyle(color: Colors.black, fontSize: 4.sp ),
+                style: TextStyle(fontSize: 4.sp ),
               ),
               items: items.map((item) {
                 return DropdownMenuItem(
@@ -692,7 +656,6 @@ class _StaffListPageState extends State<StaffListPage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                   border: Border.all(color: Color(0xe2707070)),
-                  color: Color(0xFFF7FEFF),
                 ),
               ),
               dropdownStyleData: DropdownStyleData(
@@ -700,7 +663,6 @@ class _StaffListPageState extends State<StaffListPage> {
                 width: 147.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
-                  color: Color(0xFFF7FEFF),
                 ),
                 elevation: 4,
               ),
