@@ -48,17 +48,21 @@ class _ChartState extends State<Chart> {
         }
       }
 
-      setState(() {
-        rented = tempRented;
-        sold = tempSold;
-        available = tempAvailable;
-        isLoading = false; // Kết thúc quá trình tải dữ liệu
-      });
+      if (mounted) {
+        setState(() {
+          rented = tempRented;
+          sold = tempSold;
+          available = tempAvailable;
+          isLoading = false; // Kết thúc quá trình tải dữ liệu
+        });
+      }
     } catch (e) {
       print("Error fetching data: $e");
-      setState(() {
-        isLoading = false; // Kết thúc quá trình tải dữ liệu kể cả khi lỗi
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false; // Kết thúc quá trình tải dữ liệu kể cả khi lỗi
+        });
+      }
     }
   }
 

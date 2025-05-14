@@ -75,6 +75,7 @@ class FirAuth {
     required String nameStaff,
     required String addressStaff,
     required String cccdStaff,
+    required String birthDateStaff,
     required String gender,
     required String emailStaff,
     required String phoneStaff,

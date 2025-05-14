@@ -1,5 +1,6 @@
 import 'dart:async'; // Thêm import Timer
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/custom_paginated_table.dart';
 import 'package:do_an/src/models/apartment.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
@@ -9,7 +10,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'ds_canho_mobile_page.dart' if (dart.library.html) 'ds_canho_web_page.dart';
-
 
 class ApartmentListPage extends StatefulWidget {
   const ApartmentListPage({super.key});
@@ -94,7 +94,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
         return a.apartmentName.compareTo(b.apartmentName);
       });
 
-      if (mounted) {
+      if (mounted) { // Kiểm tra widget có còn tồn tại
         setState(() {
           allApartments = apartments;
           filteredApartments = apartments; // Mặc định tất cả căn hộ
@@ -106,561 +106,6 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
     }
   }
 
-  List<String> getAvailableBuildings() {
-    return allApartments.map((a) => a.building).toSet().toList()..sort();
-  }
-  // Hàm debounce để tối ưu hiệu suất tìm kiếm
-  void _onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      setState(() {
-        searchQuery = query;
-        applyFilters(); // Gọi lại hàm lọc khi thay đổi giá trị tìm kiếm
-      });
-    });
-  }
-
-  void applyFilters() {
-    List<Apartment> result = allApartments;
-
-    if (selectedBuilding != null) {
-      result = result.where((a) => a.building == selectedBuilding).toList();
-    }
-
-    if (selectedFloor != null) {
-      result = result.where((a) => a.floor == selectedFloor).toList();
-    }
-
-    result = result
-        .where((a) =>
-    a.area >= selectedAreaRange.start &&
-        a.area <= selectedAreaRange.end)
-        .toList();
-
-    if (searchQuery.isNotEmpty) {
-      result = result
-          .where((a) =>
-          a.apartmentName.toLowerCase().contains(searchQuery.toLowerCase()))
-          .toList();
-    }
-
-    // Lọc theo trạng thái hợp đồng
-    if (selectedContractStatus == "contract") {
-      result = result.where((a) => a.isSale || a.isRent).toList(); // Gộp isSale và isRent
-    } else if (selectedContractStatus == "empty") {
-      result = result.where((a) => !a.isSale && !a.isRent).toList(); // Trạng thái trống
-    }
-      // Cập nhật các biến trước
-    filteredApartments = result;
-    currentPage = 1;
-    updatePaginatedApartments(); // KHÔNG dùng setState bên trong hàm này nữa
-
-    // Gọi setState sau khi các biến đã được cập nhật
-    setState(() {});
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    loadApartmentsFromFirestore();
-    fetchAreaRangeFromFirestore();
-    filteredApartments = allApartments;
-    currentPage = 1;
-    updatePaginatedApartments();
-  }
-
-  Future<void> fetchAreaRangeFromFirestore() async {
-    final snapshot = await FirebaseFirestore.instance.collection('apartments').get();
-    final areas = snapshot.docs
-        .map((doc) => (doc['area'] as num).toDouble())
-        .toList();
-
-    if (areas.isNotEmpty) {
-      final min = areas.reduce(minFunction);
-      final max = areas.reduce(maxFunction);
-
-      setState(() {
-        minArea = min;
-        maxArea = max;
-        selectedAreaRange = RangeValues(minArea, maxArea);
-      });
-    }
-  }
-
-  List<int> getFloorsByBuilding(
-      List<Apartment> apartments, String selectedBuilding) {
-    final filtered =
-    apartments.where((apt) => apt.building == selectedBuilding);
-    final floors = filtered.map((apt) => apt.floor).toSet().toList();
-    floors.sort();
-    return floors;
-  }
-
-  List<int> getFloorsForSelectedBuilding() {
-    if (selectedBuilding == null) {
-      return [];
-    }
-    return getFloorsByBuilding(allApartments, selectedBuilding!);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Gán chỉ 1 lần
-    contractNotifier = Provider.of<ContractNotifier>(context, listen: false);
-    // Reload nếu có hợp đồng mới
-    if (contractNotifier.contractCreated) {
-      loadApartmentsFromFirestore();
-      contractNotifier.reset();
-    }
-  }
-
-  @override
-  void dispose(){
-    _debounce?.cancel();
-    super.dispose();
-
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-          child: Stack(
-            children: [
-          SingleChildScrollView(
-          child: ConstrainedBox(
-          constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height,
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(left: 10.w, right: 10.w, top: 40.h, bottom: 10.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Phần tiêu đề
-                Flexible(
-                  flex: 1,
-                  child: Text(
-                    "Danh sách căn hộ",
-                    style: TextStyle(
-                      fontSize: 6.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 20.w), // Khoảng cách giữa tiêu đề và tìm kiếm
-
-                // Ô tìm kiếm
-                Flexible(
-                  flex: 2,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      labelText: "Tìm kiếm căn hộ",
-                      labelStyle: TextStyle(fontSize: 4.sp),
-                      hintText: "Nhập tên căn hộ",
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30.r),
-                      ),
-                    ),
-                    onChanged: _onSearchChanged,
-                  ),
-                ),
-                SizedBox(width: 20.w), // Khoảng cách giữa tìm kiếm và nút
-
-                // Nút Thêm file
-                Flexible(
-                  flex: 1,
-                  child: ElevatedButton(
-                    onPressed: () => importApartmentsFromExcel,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add),
-                        SizedBox(width: 5.w),
-                        Text(
-                          'Thêm file',
-                          style: TextStyle(
-                            fontSize: 4.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(width: 10.w), // Khoảng cách giữa hai nút
-
-                // Nút Xuất file
-                Flexible(
-                  flex: 1,
-                  child: ElevatedButton(
-                    onPressed: () => exportApartmentsToExcel(filteredApartments),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.upload),
-                        SizedBox(width: 5.w),
-                        Text(
-                          'Xuất file',
-                          style: TextStyle(
-                            fontSize: 4.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 40.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: buildFilterDropdown<String>(
-                  label: "Trạng thái",
-                  items: ["contract", "empty"],
-                  selectedValue: selectedContractStatus,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedContractStatus = value;
-                      applyFilters();
-                    });
-                  },
-                  itemLabelBuilder: (item) {
-                    if (item == "contract") return "Đã có hợp đồng";
-                    if (item == "empty") return "Trống";
-                    return item;
-                  },
-                ),
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: buildFilterDropdown<String>(
-                  label: "Chọn tòa",
-                  items: getAvailableBuildings(),
-                  selectedValue: selectedBuilding,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedBuilding = value;
-                      selectedFloor = null;
-                    });
-                    applyFilters();
-                  },
-                ),
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: buildFilterDropdown<int>(
-                  label: "Chọn tầng",
-                  items: getFloorsForSelectedBuilding(),
-                  selectedValue: selectedFloor,
-                  itemLabelBuilder: (floor) => "Tầng $floor",
-                  onChanged: (value) {
-                    setState(() {
-                      selectedFloor = value;
-                    });
-                    applyFilters();
-                  },
-                ),
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: buildAreaFilter(),
-              ),
-            ],
-          ),
-            SizedBox(height: 10.h,),
-            SizedBox(
-              height: MediaQuery.of(context).size.height - 150.h,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return Column(
-                    children: [
-                      if (allApartments.isEmpty)
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              'Không có căn hộ nào',
-                              style: TextStyle(fontSize: 4.sp, color: Colors.black54),
-                            ),
-                          ),
-                        )
-                      else
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minWidth: constraints.maxWidth, // Đặt chiều rộng tối thiểu bằng chiều rộng cha
-                                maxWidth: constraints.maxWidth, // Đặt chiều rộng tối đa bằng chiều rộng cha
-                              ),
-                              child: PaginatedDataTable(
-                                columns: [
-                                  DataColumn(label: Text("Tòa", style: TextStyle(fontSize: 4.sp))),
-                                  DataColumn(label: Text("Tên căn hộ", style: TextStyle(fontSize: 4.sp))),
-                                  DataColumn(label: Text("Tầng", style: TextStyle(fontSize: 4.sp))),
-                                  DataColumn(label: Text("Diện tích", style: TextStyle(fontSize: 4.sp))),
-                                  DataColumn(label: Text("Mô tả", style: TextStyle(fontSize: 4.sp))),
-                                  DataColumn(label: Text("Trạng thái dịch vụ", style: TextStyle(fontSize: 4.sp))),
-                                  DataColumn(label: Text("Hành động", style: TextStyle(fontSize: 4.sp))),
-                                ],
-                                rowsPerPage: itemsPerPage,
-                                source: _ApartmentsDataSource(paginatedApartments, context, loadApartmentsFromFirestore),
-                                showFirstLastButtons: false,
-                                onPageChanged: (page) {
-                                  setState(() {
-                                    currentPage = (page ~/ itemsPerPage) + 1;
-                                    updatePaginatedApartments();
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                      // Phân trang
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            onPressed: currentPage > 1
-                                ? () {
-                              setState(() {
-                                currentPage = 1;
-                                updatePaginatedApartments();
-                              });
-                            }
-                                : null,
-                            icon: Icon(Icons.first_page),
-                          ),
-                          IconButton(
-                            onPressed: currentPage > 1
-                                ? () {
-                              setState(() {
-                                currentPage--;
-                                updatePaginatedApartments();
-                              });
-                            }
-                                : null,
-                            icon: Icon(Icons.chevron_left),
-                          ),
-                          Text("Trang $currentPage / $totalPages"),
-                          IconButton(
-                            onPressed: currentPage < totalPages
-                                ? () {
-                              setState(() {
-                                currentPage++;
-                                updatePaginatedApartments();
-                              });
-                            }
-                                : null,
-                            icon: Icon(Icons.chevron_right),
-                          ),
-                          IconButton(
-                            onPressed: currentPage < totalPages
-                                ? () {
-                              setState(() {
-                                currentPage = totalPages;
-                                updatePaginatedApartments();
-                              });
-                            }
-                                : null,
-                            icon: Icon(Icons.last_page),
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-              ),
-            )
-          ],
-        ),
-      ),
-    ),
-          )
-
-            ],
-          )),
-    );
-  }
-
-  Widget buildFilterDropdown<T>({
-    required String label,
-    required List<T> items,
-    required T? selectedValue,
-    required ValueChanged<T?> onChanged,
-    String Function(T)? itemLabelBuilder, // <--- thêm hàm tùy chọn
-  }) {
-
-    return SizedBox(
-      height: 60.h,
-      child: Container(
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton2<T>(
-            isExpanded: true,
-            hint: Text(
-              label,
-              style: TextStyle(
-                fontSize: 4.sp,
-              ),
-            ),
-            items: items.map((item) {
-              final displayText = itemLabelBuilder != null
-                  ? itemLabelBuilder(item)
-                  : item.toString();
-
-              return DropdownMenuItem<T>(
-                value: item,
-                child: Text(
-                  displayText,
-                  style: TextStyle(fontSize: 4.sp),
-                ),
-              );
-            }).toList(),
-            value: selectedValue,
-            onChanged: onChanged,
-            selectedItemBuilder: (context) {
-              return items.map((item) {
-                final displayText = itemLabelBuilder != null
-                    ? itemLabelBuilder(item)
-                    : item.toString();
-
-                return Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    displayText,
-                    style: TextStyle(fontSize: 4.sp),
-                  ),
-                );
-              }).toList();
-            },
-            buttonStyleData: ButtonStyleData(
-              height: 40.h,
-              padding: EdgeInsets.symmetric(
-                vertical: 0.h,
-                horizontal: 10.w ,
-              ),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30.r),
-                border: Border.all(color: Color(0xe2707070)),
-              ),
-            ),
-            dropdownStyleData: DropdownStyleData(
-              maxHeight: 200.h,
-              width: 80.w,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30.r),
-              ),
-              elevation: 4,
-            ),
-            menuItemStyleData: MenuItemStyleData(
-              height: 40.h,
-              padding: EdgeInsets.symmetric(
-                horizontal:  10.w ,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildAreaFilter() {
-    return SizedBox(
-      height: 60.h, // Điều chỉnh chiều cao phù hợp
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30.r),
-          border: Border.all(color: Color(0xe2707070)),
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
-          // Điều chỉnh padding ngang
-          child: Row(
-            children: [
-              Text('Diện tích',
-                  style: TextStyle(fontSize: 4.sp)),
-              SizedBox(
-                width: 3.w,
-              ),
-              Expanded(
-                child: RangeSlider(
-                  values: selectedAreaRange,
-                  min: minArea,
-                  max: maxArea,
-                  divisions: (maxArea - minArea).toInt(),
-                  labels: RangeLabels(
-                    '${selectedAreaRange.start.round()} m²',
-                    '${selectedAreaRange.end.round()} m²',
-                  ),
-                  onChanged: (values) {
-                    setState(() {
-                      selectedAreaRange = values;
-                    });
-
-                    if (_debounce?.isActive ?? false) _debounce!.cancel();
-                    _debounce = Timer(const Duration(milliseconds: 300), () {
-                      applyFilters();
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Lớp hỗ trợ cho PaginatedDataTable
-class _ApartmentsDataSource extends DataTableSource {
-  final List<Apartment> apartments;
-  final BuildContext context; // Thêm context
-  final VoidCallback onRefresh; // Hàm tải lại dữ liệu
-
-  _ApartmentsDataSource(this.apartments, this.context, this.onRefresh);
-
-  @override
-  DataRow? getRow(int index) {
-    if (index >= apartments.length) return null;
-    final apartment = apartments[index];
-    final status = apartment.isRent
-        ? 'Đã thuê'
-        : (apartment.isSale ? "Đã bán" : "Chưa kích hoạt");
-
-    return DataRow(cells: [
-      DataCell(Text(apartment.building,style: TextStyle(fontSize: 4.sp))),
-      DataCell(Text(apartment.apartmentName,style: TextStyle(fontSize: 4.sp))),
-      DataCell(Text("${apartment.floor}",style: TextStyle(fontSize: 4.sp))),
-      DataCell(Text("${apartment.area} m²",style: TextStyle(fontSize: 4.sp))),
-      DataCell(Text("${apartment.description}",style: TextStyle(fontSize: 4.sp))),
-      DataCell(Text(status)),
-      DataCell(
-        Row(children: [
-          IconButton(
-    icon: Icon(Icons.edit, color: Colors.blue),
-    onPressed: () {
-    showEditApartmentDialog(context, apartment, onRefresh);
-    },
-    ),
-          IconButton(
-            icon: Icon(Icons.delete, color: Colors.red),
-            onPressed: () {
-              showDeleteApartmentDialog(context, apartment, onRefresh);
-            },
-          ),],)
-
-      ),
-    ]);
-  }
   void showDeleteApartmentDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) async {
     if (apartment.isRent || apartment.isSale) {
       // Hiển thị thông báo không thể xóa
@@ -926,12 +371,601 @@ class _ApartmentsDataSource extends DataTableSource {
     );
   }
 
-  @override
-  bool get isRowCountApproximate => false;
+  void showApartmentDialog(BuildContext context, Apartment apartment) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text("Phòng ${apartment.apartmentName}", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp),),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 10.h,),
+            Text('${apartment.building}', style: TextStyle(fontSize: 4.sp),),
+            SizedBox(height: 30.h,),
+            Text('Diện tích: ${apartment.area} m²', style: TextStyle(fontSize: 4.sp),),
+            SizedBox(height: 30.h,),
+            Text(apartment.description, style: TextStyle(fontSize: 4.sp)),
+          ],
+        ),
+        actions: [
+          // TextButton(
+          //   onPressed: () {
+          //     Navigator.pop(context);
+          //     Navigator.push(
+          //         context,
+          //         MaterialPageRoute(
+          //           builder: (_) => ContractFormRentPage(
+          //             apartmentId: apartment.id, // 👈 truyền ID
+          //           ),
+          //         ));
+          //   },
+          //   child: Text("Thuê", style: TextStyle(fontSize: 3.5.sp),),
+          // ),
+        ],
+      ),
+    );
+  }
+
+  List<String> getAvailableBuildings() {
+    return allApartments.map((a) => a.building).toSet().toList()..sort();
+  }
+  // Hàm debounce để tối ưu hiệu suất tìm kiếm
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        searchQuery = query;
+        applyFilters(); // Gọi lại hàm lọc khi thay đổi giá trị tìm kiếm
+      });
+    });
+  }
+
+  void applyFilters() {
+    List<Apartment> result = allApartments;
+
+    if (selectedBuilding != null) {
+      result = result.where((a) => a.building == selectedBuilding).toList();
+    }
+
+    if (selectedFloor != null) {
+      result = result.where((a) => a.floor == selectedFloor).toList();
+    }
+
+    result = result
+        .where((a) =>
+    a.area >= selectedAreaRange.start &&
+        a.area <= selectedAreaRange.end)
+        .toList();
+
+    if (searchQuery.isNotEmpty) {
+      result = result
+          .where((a) =>
+          a.apartmentName.toLowerCase().contains(searchQuery.toLowerCase()))
+          .toList();
+    }
+
+    // Lọc theo trạng thái hợp đồng
+    if (selectedContractStatus == "contract") {
+      result = result.where((a) => a.isSale || a.isRent).toList(); // Gộp isSale và isRent
+    } else if (selectedContractStatus == "empty") {
+      result = result.where((a) => !a.isSale && !a.isRent).toList(); // Trạng thái trống
+    }
+
+    // Cập nhật các biến trước
+    filteredApartments = result;
+    currentPage = 1;
+    updatePaginatedApartments(); // KHÔNG dùng setState bên trong hàm này nữa
+
+    // Gọi setState sau khi các biến đã được cập nhật
+    if (mounted) { // Kiểm tra widget có còn tồn tại
+      setState(() {});
+    }
+  }
 
   @override
-  int get rowCount => apartments.length;
+  void initState() {
+    super.initState();
+    loadApartmentsFromFirestore();
+    fetchAreaRangeFromFirestore();
+    filteredApartments = allApartments;
+    currentPage = 1;
+    updatePaginatedApartments();
+  }
+
+  Future<void> fetchAreaRangeFromFirestore() async {
+    final snapshot = await FirebaseFirestore.instance.collection('apartments').get();
+    final areas = snapshot.docs
+        .map((doc) => (doc['area'] as num).toDouble())
+        .toList();
+
+    if (areas.isNotEmpty) {
+      final min = areas.reduce(minFunction);
+      final max = areas.reduce(maxFunction);
+
+      if (mounted) { // Kiểm tra widget có còn tồn tại
+        setState(() {
+          minArea = min;
+          maxArea = max;
+          selectedAreaRange = RangeValues(minArea, maxArea);
+        });
+      }
+    }
+  }
+
+  List<int> getFloorsByBuilding(
+      List<Apartment> apartments, String selectedBuilding) {
+    final filtered =
+    apartments.where((apt) => apt.building == selectedBuilding);
+    final floors = filtered.map((apt) => apt.floor).toSet().toList();
+    floors.sort();
+    return floors;
+  }
+
+  List<int> getFloorsForSelectedBuilding() {
+    if (selectedBuilding == null) {
+      return [];
+    }
+    return getFloorsByBuilding(allApartments, selectedBuilding!);
+  }
 
   @override
-  int get selectedRowCount => 0;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Gán chỉ 1 lần
+    contractNotifier = Provider.of<ContractNotifier>(context, listen: false);
+    // Reload nếu có hợp đồng mới
+    if (contractNotifier.contractCreated) {
+      loadApartmentsFromFirestore();
+      contractNotifier.reset();
+    }
+  }
+
+  @override
+  void dispose(){
+    _debounce?.cancel();
+    super.dispose();
+
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+          child: Stack(
+            children: [
+          SingleChildScrollView(
+          child: ConstrainedBox(
+          constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height,
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(left: 10.w, right: 10.w, top: 40.h, bottom: 10.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Phần tiêu đề
+                Flexible(
+                  flex: 1,
+                  child: Text(
+                    "Danh sách căn hộ",
+                    style: TextStyle(
+                      fontSize: 6.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 20.w), // Khoảng cách giữa tiêu đề và tìm kiếm
+
+                // Ô tìm kiếm
+                Flexible(
+                  flex: 2,
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: "Tìm kiếm căn hộ",
+                      labelStyle: TextStyle(fontSize: 4.sp),
+                      hintText: "Nhập tên căn hộ",
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.r),
+                      ),
+                    ),
+                    onChanged: _onSearchChanged,
+                  ),
+                ),
+                SizedBox(width: 20.w), // Khoảng cách giữa tìm kiếm và nút
+
+                // Nút Thêm file
+                Flexible(
+                  flex: 1,
+                  child: ElevatedButton(
+                    onPressed: () => importApartmentsFromExcel,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add),
+                        SizedBox(width: 5.w),
+                        Text(
+                          'Thêm file',
+                          style: TextStyle(
+                            fontSize: 4.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.w), // Khoảng cách giữa hai nút
+
+                // Nút Xuất file
+                Flexible(
+                  flex: 1,
+                  child: ElevatedButton(
+                    onPressed: () => exportApartmentsToExcel(filteredApartments),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.upload),
+                        SizedBox(width: 5.w),
+                        Text(
+                          'Xuất file',
+                          style: TextStyle(
+                            fontSize: 4.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20.h),
+            Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: buildFilterDropdown<String>(
+                  label: "Trạng thái",
+                  items: ["contract", "empty"],
+                  selectedValue: selectedContractStatus,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedContractStatus = value;
+                      applyFilters();
+                    });
+                  },
+                  itemLabelBuilder: (item) {
+                    if (item == "contract") return "Đã có hợp đồng";
+                    if (item == "empty") return "Trống";
+                    return item;
+                  },
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: buildFilterDropdown<String>(
+                  label: "Chọn tòa",
+                  items: getAvailableBuildings(),
+                  selectedValue: selectedBuilding,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedBuilding = value;
+                      selectedFloor = null;
+                    });
+                    applyFilters();
+                  },
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: buildFilterDropdown<int>(
+                  label: "Chọn tầng",
+                  items: getFloorsForSelectedBuilding(),
+                  selectedValue: selectedFloor,
+                  itemLabelBuilder: (floor) => "Tầng $floor",
+                  onChanged: (value) {
+                    setState(() {
+                      selectedFloor = value;
+                    });
+                    applyFilters();
+                  },
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: buildAreaFilter(),
+              ),
+            ],
+          ),
+            SizedBox(height: 20.h,),
+            SizedBox(
+              height: MediaQuery.of(context).size.height - 150.h,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Column(
+                    children: [
+                      if (allApartments.isEmpty)
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              'Không có căn hộ nào',
+                              style: TextStyle(fontSize: 4.sp, color: Colors.black54),
+                            ),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: constraints.maxWidth, // Đặt chiều rộng tối thiểu bằng chiều rộng cha
+                                maxWidth: constraints.maxWidth, // Đặt chiều rộng tối đa bằng chiều rộng cha
+                              ),
+                              child: CustomPaginatedTable(
+                                columns: [
+                                  DataColumn(label: Text("Tòa", style: TextStyle(fontSize: 4.sp))),
+                                  DataColumn(label: Text("Tên căn hộ", style: TextStyle(fontSize: 4.sp))),
+                                  DataColumn(label: Text("Tầng", style: TextStyle(fontSize: 4.sp))),
+                                  DataColumn(label: Text("Diện tích", style: TextStyle(fontSize: 4.sp))),
+                                  DataColumn(label: Text("Mô tả", style: TextStyle(fontSize: 4.sp))),
+                                  DataColumn(label: Text("Trạng thái dịch vụ", style: TextStyle(fontSize: 4.sp))),
+                                  DataColumn(label: Text("Hành động", style: TextStyle(fontSize: 4.sp))),
+                                ],
+                                rows: filteredApartments.map((apartment) {
+                                  final status = apartment.isRent
+                                      ? 'Đã thuê'
+                                      : (apartment.isSale ? "Đã bán" : "Chưa kích hoạt");
+
+                                  return DataRow(cells: [
+                                    DataCell(Text(apartment.building, style: TextStyle(fontSize: 4.sp))),
+                                    DataCell(Text(apartment.apartmentName, style: TextStyle(fontSize: 4.sp))),
+                                    DataCell(Text("${apartment.floor}", style: TextStyle(fontSize: 4.sp))),
+                                    DataCell(Text("${apartment.area} m²", style: TextStyle(fontSize: 4.sp))),
+                                    DataCell(Text(apartment.description, style: TextStyle(fontSize: 4.sp))),
+                                    DataCell(Text(status)),
+                                    DataCell(
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(Icons.edit, color: Colors.blue),
+                                            onPressed: () {
+                                              showEditApartmentDialog(context, apartment, loadApartmentsFromFirestore);
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: Icon(Icons.delete, color: Colors.red),
+                                            onPressed: () {
+                                              showDeleteApartmentDialog(context, apartment, loadApartmentsFromFirestore);
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: Icon(Icons.add, color: Colors.grey),
+                                            onPressed: () {
+                                              showApartmentDialog(context, apartment);
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ]);
+                                }).toList(),
+                                rowsPerPage: itemsPerPage,
+                                availableRowsPerPage: [5, 10, 20, 50], // Các tùy chọn số dòng mỗi trang
+                                onRowsPerPageChanged: (value) {
+                                  setState(() {
+                                    itemsPerPage = value ?? 10; // Cập nhật số dòng mỗi trang
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            )
+          ],
+        ),
+      ),
+    ),
+          )
+
+            ],
+          )),
+    );
+  }
+
+  Widget buildFilterDropdown<T>({
+    required String label,
+    required List<T> items,
+    required T? selectedValue,
+    required ValueChanged<T?> onChanged,
+    String Function(T)? itemLabelBuilder, // <--- thêm hàm tùy chọn
+  }) {
+
+    return SizedBox(
+      height: 60.h,
+      child: Container(
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton2<T>(
+            isExpanded: true,
+            hint: Text(
+              label,
+              style: TextStyle(
+                fontSize: 4.sp,
+              ),
+            ),
+            items: items.map((item) {
+              final displayText = itemLabelBuilder != null
+                  ? itemLabelBuilder(item)
+                  : item.toString();
+
+              return DropdownMenuItem<T>(
+                value: item,
+                child: Text(
+                  displayText,
+                  style: TextStyle(fontSize: 4.sp),
+                ),
+              );
+            }).toList(),
+            value: selectedValue,
+            onChanged: onChanged,
+            selectedItemBuilder: (context) {
+              return items.map((item) {
+                final displayText = itemLabelBuilder != null
+                    ? itemLabelBuilder(item)
+                    : item.toString();
+
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    displayText,
+                    style: TextStyle(fontSize: 4.sp),
+                  ),
+                );
+              }).toList();
+            },
+            buttonStyleData: ButtonStyleData(
+              height: 40.h,
+              padding: EdgeInsets.symmetric(
+                vertical: 0.h,
+                horizontal: 10.w ,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30.r),
+                border: Border.all(color: Color(0xe2707070)),
+              ),
+            ),
+            dropdownStyleData: DropdownStyleData(
+              maxHeight: 200.h,
+              width: 80.w,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30.r),
+              ),
+              elevation: 4,
+            ),
+            menuItemStyleData: MenuItemStyleData(
+              height: 40.h,
+              padding: EdgeInsets.symmetric(
+                horizontal:  10.w ,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildAreaFilter() {
+    return SizedBox(
+      height: 60.h, // Điều chỉnh chiều cao phù hợp
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30.r),
+          border: Border.all(color: Color(0xe2707070)),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10.w),
+          // Điều chỉnh padding ngang
+          child: Row(
+            children: [
+              Text('Diện tích',
+                  style: TextStyle(fontSize: 4.sp)),
+              SizedBox(
+                width: 3.w,
+              ),
+              Expanded(
+                child: RangeSlider(
+                  values: selectedAreaRange,
+                  min: minArea,
+                  max: maxArea,
+                  divisions: (maxArea - minArea).toInt(),
+                  labels: RangeLabels(
+                    '${selectedAreaRange.start.round()} m²',
+                    '${selectedAreaRange.end.round()} m²',
+                  ),
+                  onChanged: (values) {
+                    setState(() {
+                      selectedAreaRange = values;
+                    });
+
+                    if (_debounce?.isActive ?? false) _debounce!.cancel();
+                    _debounce = Timer(const Duration(milliseconds: 300), () {
+                      applyFilters();
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
+
+// Lớp hỗ trợ cho PaginatedDataTable
+// class _ApartmentsDataSource extends DataTableSource {
+//   final List<Apartment> apartments;
+//   final BuildContext context; // Thêm context
+//   final VoidCallback onRefresh; // Hàm tải lại dữ liệu
+//
+//   _ApartmentsDataSource(this.apartments, this.context, this.onRefresh);
+//
+//   @override
+//   DataRow? getRow(int index) {
+//     if (index >= apartments.length) return null;
+//     final apartment = apartments[index];
+//     final status = apartment.isRent
+//         ? 'Đã thuê'
+//         : (apartment.isSale ? "Đã bán" : "Chưa kích hoạt");
+//
+//     return DataRow(cells: [
+//       DataCell(Text(apartment.building,style: TextStyle(fontSize: 4.sp))),
+//       DataCell(Text(apartment.apartmentName,style: TextStyle(fontSize: 4.sp))),
+//       DataCell(Text("${apartment.floor}",style: TextStyle(fontSize: 4.sp))),
+//       DataCell(Text("${apartment.area} m²",style: TextStyle(fontSize: 4.sp))),
+//       DataCell(Text("${apartment.description}",style: TextStyle(fontSize: 4.sp))),
+//       DataCell(Text(status)),
+//       DataCell(
+//         Row(children: [
+//           IconButton(
+//     icon: Icon(Icons.edit, color: Colors.blue),
+//     onPressed: () {
+//     showEditApartmentDialog(context, apartment, onRefresh);
+//     },
+//     ),
+//           IconButton(
+//             icon: Icon(Icons.delete, color: Colors.red),
+//             onPressed: () {
+//               showDeleteApartmentDialog(context, apartment, onRefresh);
+//             },
+//           ),
+//           IconButton(
+//             icon: Icon(Icons.add, color: Colors.grey),
+//             onPressed: () {
+//               showApartmentDialog(context, apartment);
+//             },
+//           ),
+//         ],)
+//
+//       ),
+//     ]);
+//   }
+//
+//   @override
+//   bool get isRowCountApproximate => false;
+//
+//   @override
+//   int get rowCount => apartments.length;
+//
+//   @override
+//   int get selectedRowCount => 0;
+// }
