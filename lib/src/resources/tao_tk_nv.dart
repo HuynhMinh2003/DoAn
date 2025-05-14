@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/constants.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
@@ -26,6 +27,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
   final TextEditingController _phoneStaffController = TextEditingController();
   final TextEditingController _cccdStaffController = TextEditingController();
   final TextEditingController _addressStaffController = TextEditingController();
+  DateTime? birthDate;
 
   final AuthBloc _authBloc = AuthBloc();
 
@@ -103,7 +105,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                           textAlign: TextAlign.center,
                         ),
                         SizedBox(
-                          height: 30.h,
+                          height: 50.h,
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -224,7 +226,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                 },
                               ),
                             ),
-                            SizedBox(width: 60.w,),
+                            SizedBox(width: 30.w,),
                             // Bên phải: form login
                             Expanded(
                                 child: Column(
@@ -245,6 +247,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                       label: 'Số CCCD:',
                                       stream: _authBloc.cccdStaffStream,
                                     ),
+                                    _buildDatePickerButton(),
                                     _buildTextField(
                                       controller: _addressStaffController,
                                       label: 'Nơi ở:',
@@ -255,31 +258,37 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                       label: 'Email:',
                                       stream: _authBloc.emailStaffStream,
                                     ),
-                                    buildFilterDropdown(
-                                      label: "Giới tính",
-                                      items: ["Nam", "Nữ", "Khác"],
-                                      selectedValue: selectedGender,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          selectedGender = value;
-                                        });
-                                      },
-                                    ),
-                                    buildFilterDropdown(
-                                      label: "Vai trò",
-                                      items: _roleItems,
-                                      selectedValue: _selectedRole,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _selectedRole = value;
-                                        });
-                                      },
-                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(child: buildFilterDropdown(
+                                          label: "Giới tính",
+                                          items: ["Nam", "Nữ", "Khác"],
+                                          selectedValue: selectedGender,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedGender = value;
+                                            });
+                                          },
+                                        ),),
+                                        SizedBox(width: 5.w,),
+                                        Expanded(child: buildFilterDropdown(
+                                          label: "Vai trò",
+                                          items: _roleItems,
+                                          selectedValue: _selectedRole,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _selectedRole = value;
+                                            });
+                                          },
+                                        ),)
+                                      ],
+                                    )
                                   ],
                                 )),
                           ],
                         ),
-                        SizedBox(height: 30.h,),
+                        SizedBox(height: 50.h,),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween, // Phân bố nút cách đều
                           children: [
@@ -292,7 +301,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                     _onSignUpStaffClicked();
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF2D80F8),
+                                    backgroundColor: const Color(0xFF007BFF), // Màu xanh dương sáng
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30.r),
                                     ),
@@ -307,7 +316,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                       fontFamily: "Oswald",
                                       fontWeight: FontWeight.w700,
                                       fontSize: 7.sp,
-                                      color: Colors.white,
+                                      color: Colors.white, // Màu chữ trắng
                                       height: 1.h,
                                     ),
                                     textAlign: TextAlign.center,
@@ -320,29 +329,33 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                               child: SizedBox(
                                 height: 60.h,
                                 child: ElevatedButton(
-                                    onPressed: () {
-                                      // Xóa tất cả thông tin trong các trường nhập
-                                      _nameStaffController.clear();
-                                      _emailStaffController.clear();
-                                      _phoneStaffController.clear();
-                                      _emailStaffController.clear();
-                                      _cccdStaffController.clear();
-                                      _addressStaffController.clear();
+                                  onPressed: () {
+                                    // Xóa tất cả thông tin trong các trường nhập
+                                    _nameStaffController.clear();
+                                    _emailStaffController.clear();
+                                    _phoneStaffController.clear();
+                                    _emailStaffController.clear();
+                                    _cccdStaffController.clear();
+                                    _addressStaffController.clear();
 
-                                      // Reset ảnh
-                                      final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
-                                      avatarProvider.resetImage();  // Reset ảnh
+                                    // Reset ảnh
+                                    final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
+                                    avatarProvider.resetImage();  // Reset ảnh
 
-                                      setState(() {
-                                        selectedGender = null;  // Hoặc giá trị mặc định bạn muốn
-                                      });
-                                      // Reset vai trò nếu cần
-                                      setState(() {
-                                        _selectedRole = null;  // Hoặc giá trị mặc định bạn muốn
-                                      });
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF2D80F8),
+                                    setState(() {
+                                      selectedGender = null;  // Hoặc giá trị mặc định bạn muốn
+                                    });
+                                    // Reset vai trò nếu cần
+                                    setState(() {
+                                      _selectedRole = null;  // Hoặc giá trị mặc định bạn muốn
+                                    });
+                                    setState(() {
+                                      birthDate = null; // Đặt biến `birthDate` về null
+                                    });
+                                    _authBloc.updateBirthDate(null); // Cập nhật giá trị trong Stream về null
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF6C757D), // Màu xám trung tính
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30.r),
                                     ),
@@ -357,7 +370,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                       fontFamily: "Oswald",
                                       fontWeight: FontWeight.w700,
                                       fontSize: 7.sp,
-                                      color: Colors.white,
+                                      color: Colors.white, // Màu chữ trắng
                                       height: 1.h,
                                     ),
                                     textAlign: TextAlign.center,
@@ -366,10 +379,8 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                               ),
                             ),
                             SizedBox(width: 20.w), // Tùy chọn nếu bạn muốn có khoảng cách giữa các nút
-
                           ],
                         )
-
                       ],
                     ),
                   ),
@@ -396,6 +407,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
       _nameStaffController.text,
       _addressStaffController.text,
       _cccdStaffController.text,
+      birthDate,
       selectedGender!,
       _emailStaffController.text,
       _phoneStaffController.text,
@@ -426,8 +438,11 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
           "email": _emailStaffController.text.trim(),
           "fullName": _nameStaffController.text.trim(),
           "address": _nameStaffController.text.trim(),
+          "birthDate": birthDate != null
+              ? "${birthDate!.year}-${birthDate!.month.toString().padLeft(2, '0')}-${birthDate!.day.toString().padLeft(2, '0')}"
+              : null, // Đảm bảo birthDate không bị null
           "gender": selectedGender!,
-          "cccd": _nameStaffController.text.trim(),
+          "cccd": _cccdStaffController.text.trim(),
           "phone": _phoneStaffController.text.trim(),
           "position": _selectedRole!,
         }),
@@ -453,6 +468,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
         "imageUrl": imageUrl,
         "email": _emailStaffController.text.trim(),
         "fullName": _nameStaffController.text.trim(),
+        "birthDate": birthDate,
         "phone": _phoneStaffController.text.trim(),
         "cccd": _cccdStaffController.text.trim(),
         "address": _addressStaffController.text.trim(),
@@ -538,7 +554,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
               ),
               dropdownStyleData: DropdownStyleData(
                 maxHeight: 200.h,
-                width: 130.w,
+                width: 70.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                 ),
@@ -555,4 +571,88 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
     );
   }
 
+  Widget _buildDatePickerButton() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 2.h),
+      child: StreamBuilder<DateTime?>(
+        stream: _authBloc.birthDateStaffStream,
+        builder: (context, snapshot) {
+          final hasError = snapshot.hasError;
+
+          return SizedBox(
+            height: 60.h, // đủ chỗ cho cả button + lỗi
+            child: Stack(
+              clipBehavior: Clip.none, // cho lỗi có thể "tràn" ra ngoài
+              children: [
+                SizedBox(
+                  height: 50.h,
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime(2000),
+                        firstDate: DateTime(1950),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          birthDate = picked;
+                          _authBloc.updateBirthDate(picked);
+                        });
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: bgColor, // Thay đổi màu nền thành màu xám
+                      elevation: 0,
+                      alignment: Alignment.centerLeft,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
+                        side: BorderSide(
+                          color: hasError ? Color(0xFFD32F2F) : Colors.white,
+                          width: 0.17.w,
+                        ),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 10.w),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (birthDate != null)
+                          Text(
+                            'Ngày sinh:',
+                            style: TextStyle(
+                              fontSize: 3.sp,
+                            ),
+                          ),
+                        Text(
+                          birthDate == null
+                              ? "Ngày sinh:"
+                              : "${birthDate!.toLocal()}".split(' ')[0],
+                          style: TextStyle(
+                            fontSize: 4.sp, color: Colors.grey
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                if (hasError)
+                  Positioned(
+                    left: 10.w,
+                    bottom: -18.h, // tràn ra ngoài một chút
+                    child: Text(
+                      snapshot.error as String,
+                      style: TextStyle(color: Colors.red, fontSize: 3.sp),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
