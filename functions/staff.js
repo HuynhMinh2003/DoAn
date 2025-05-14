@@ -22,9 +22,9 @@ const createStaffAccount = onRequest(
   },
   (req, res) => {
     corsHandler(req, res, async () => {
-      const { email, fullName, address, gender, cccd, phone, position} = req.body;
+      const { email, fullName, address, birthDate, gender, cccd, phone, position} = req.body;
 
-      if (!email || !fullName || !address|| !gender|| !cccd|| !phone || !position ) {
+      if (!email || !fullName || !address|| !birthDate|| !gender || !cccd|| !phone || !position ) {
         return res.status(400).send("Thiếu thông tin nhân viên.");
       }
 
@@ -43,10 +43,12 @@ const createStaffAccount = onRequest(
           fcmTokens: [],
           phone,
           cccd,
+          birthDate,
           gender,
           address,
           position,
           imageUrl: "",
+          isExit:false,
           isFree:true,
           role: 2,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -75,7 +77,7 @@ const createStaffAccount = onRequest(
         });
 
         await transporter.sendMail({
-          from: `"Apartment Admin" <${await SENDER_EMAIL.value()}>`,
+          from: `"Bản quản lí chung cư" <${await SENDER_EMAIL.value()}>`,
           to: email,
           subject: "Thông tin đăng nhập nhân viên",
           html: `

@@ -2,6 +2,8 @@ import 'package:do_an/src/models/staffs.dart';
 import 'package:excel/excel.dart' as ex;
 import 'dart:html' as html;
 
+import 'package:intl/intl.dart';
+
 Future<void> exportStaffsToExcel(List<Staff> staffs) async {
   final excel = ex.Excel.createExcel(); // tạo file mới
   final sheet = excel['DanhSachNhanVien']; // tạo sheet
@@ -10,6 +12,7 @@ Future<void> exportStaffsToExcel(List<Staff> staffs) async {
   final headers = [
     ex.TextCellValue('Tên nhân viên'),
     ex.TextCellValue('Số điện thoại'),
+    ex.TextCellValue('Ngày sinh'),
     ex.TextCellValue('Địa chỉ'),
     ex.TextCellValue('Giới tính'),
     ex.TextCellValue('Số CCCD'),
@@ -24,7 +27,11 @@ Future<void> exportStaffsToExcel(List<Staff> staffs) async {
     final row = [
       ex.TextCellValue(apt.fullName),
       ex.TextCellValue(apt.phone),
-      ex.TextCellValue(apt.address),
+      ex.TextCellValue(
+        apt.birthDate != null
+            ? DateFormat('dd/MM/yyyy').format(apt.birthDate!) // Format ngày/tháng/năm
+            : "N/A", // Nếu birthDate là null, hiển thị "N/A"
+      ),      ex.TextCellValue(apt.address),
       ex.TextCellValue(apt.gender),
       ex.TextCellValue(apt.cccd),
       ex.TextCellValue(apt.position),

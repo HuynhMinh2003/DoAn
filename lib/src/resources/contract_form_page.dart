@@ -1,7 +1,6 @@
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pool/pool.dart';
-
 import 'contract_form_mobile_page.dart' if (dart.library.html) 'contract_form_web_page.dart';
 import 'dart:convert';
 import 'package:do_an/src/models/resident_info.dart';
