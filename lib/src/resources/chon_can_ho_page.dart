@@ -1001,10 +1001,11 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
           child: Stack(
             children: [
               SingleChildScrollView(
-                child: ConstrainedBox(constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height,),child: Padding(
-                  padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 40.h),
+                child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height,),child: Padding(
+                  padding: EdgeInsets.only(left: 10.w, right: 10.w, top: 40.h),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         "Hợp đồng căn hộ",
