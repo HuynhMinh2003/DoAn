@@ -45,6 +45,7 @@ const createCompanyAccount = onRequest(
           fcmTokens: [],
           description,
           imageUrl:"",
+          isExit:false,
           role: 4,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
