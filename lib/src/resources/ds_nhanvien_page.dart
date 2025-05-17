@@ -147,10 +147,10 @@ class _StaffListPageState extends State<StaffListPage> {
     }
   }
 
-  void showViewStaffDialog(BuildContext context, Staff staff) {
+  void showViewStaffDialog(BuildContext context, Staff staff, VoidCallback onRefresh) {
     showDialog(
       context: context,
-      barrierDismissible: false, // Không cho phép đóng khi nhấn bên ngoài
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           title: Text(
@@ -165,10 +165,9 @@ class _StaffListPageState extends State<StaffListPage> {
           ),
           content: SingleChildScrollView(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Ảnh đại diện
                 Center(
                   child: CircleAvatar(
                     radius: 70.r,
@@ -178,7 +177,6 @@ class _StaffListPageState extends State<StaffListPage> {
                   ),
                 ),
                 SizedBox(height: 20.h),
-                // Thông tin nhân viên
                 buildInfoRow("Họ và tên:", staff.fullName),
                 buildInfoRow("Email:", staff.email),
                 buildInfoRow("Giới tính:", staff.gender),
@@ -192,12 +190,42 @@ class _StaffListPageState extends State<StaffListPage> {
                 buildInfoRow("Địa chỉ:", staff.address),
                 buildInfoRow("Số điện thoại:", staff.phone),
                 buildInfoRow("Vị trí:", staff.position),
+                if(staff.isExit)
+                buildInfoRow(
+                  "Ngày nghỉ công việc:",
+                  staff.leaveAt != null
+                      ? DateFormat('dd/MM/yyyy – HH:mm').format(staff.leaveAt!.toDate())
+                      : "Chưa có",
+                ),
               ],
             ),
           ),
           actions: [
+            // Hiện nút "Khôi phục tài khoản" nếu nhân viên đã nghỉ
+            if (staff.isExit)
+              TextButton(
+                onPressed: () async {
+                  LoadingDialog.showLoadingDialog(context, "Đang tải...");
+                  try {
+                    await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).update({
+                      'isExit': false,
+                      'leaveAt': null,
+                      'lastUpdated': Timestamp.now(),
+                    });
+                    LoadingDialog.hideLoadingDialog(context);
+                    Navigator.pop(context);
+                    onRefresh(); // Cập nhật lại UI
+                  } catch (e) {
+                    LoadingDialog.hideLoadingDialog(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Lỗi khi khôi phục tài khoản.", style: TextStyle(fontSize: 4.sp))),
+                    );
+                  }
+                },
+                child: Text("Khôi phục tài khoản", style: TextStyle(fontSize: 4.sp, color: Colors.green)),
+              ),
             TextButton(
-              onPressed: () => Navigator.pop(context), // Đóng hộp thoại
+              onPressed: () => Navigator.pop(context),
               child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
             ),
           ],
@@ -209,7 +237,7 @@ class _StaffListPageState extends State<StaffListPage> {
   /// Hàm hỗ trợ để hiển thị thông tin dưới dạng hàng
   Widget buildInfoRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 15.h),
+      padding: EdgeInsets.symmetric(vertical: 10.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -260,29 +288,29 @@ class _StaffListPageState extends State<StaffListPage> {
                       style: TextStyle(
                         fontFamily: "Oswald",
                         fontWeight: FontWeight.bold,
-                        fontSize: 7.sp ,
+                        fontSize: 9.sp ,
                         color: Colors.blueAccent,
                       ),
                     ),
                     content: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Stack(
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 5.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // AVATAR ở trên cùng
+                            Stack(
                               alignment: Alignment.bottomRight,
                               children: [
                                 CircleAvatar(
-                                  radius: 70.r,
+                                  radius: 80.r,
                                   backgroundImage: imageProvider.webImageBytes != null
                                       ? MemoryImage(imageProvider.webImageBytes!)
                                       : imageProvider.selectedImageFile != null
                                       ? FileImage(imageProvider.selectedImageFile!)
                                       : (staff.imageUrl.isNotEmpty
                                       ? NetworkImage(staff.imageUrl)
-                                      : const AssetImage('assets/default_avatar.png')
-                                  as ImageProvider),
+                                      : const AssetImage('assets/default_avatar.png') as ImageProvider),
                                 ),
                                 if (isEditing)
                                   Positioned(
@@ -297,110 +325,152 @@ class _StaffListPageState extends State<StaffListPage> {
                                   ),
                               ],
                             ),
-                          ),
-                          SizedBox(height: 10.h),
-                          StreamBuilder<String>(
-                            stream: _authBloc.nameStaffStream,
-                            builder: (context, snapshot) => TextField(
-                              controller: nameController,
-                              enabled: isEditing,
-                              style: TextStyle(fontSize: 3.5.sp ),
-                              decoration: InputDecoration(
-                                labelText: 'Họ và tên',
-                                errorText: snapshot.hasError ? snapshot.error as String : null,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 13.h),
-                          StreamBuilder<String>(
-                            stream: _authBloc.emailStaffStream,
-                            builder: (context, snapshot) => TextField(
-                              controller: emailController,
-                              enabled: isEditing,
-                              style: TextStyle(fontSize: 3.5.sp ),
-                              decoration: InputDecoration(
-                                labelText: 'Email',
-                                errorText: snapshot.hasError ? snapshot.error as String : null,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 13.h),
-                          StreamBuilder<String?>(
-                            stream: _authBloc.birthDateErrorStream, // Lắng nghe lỗi
-                            builder: (context, snapshot) {
-                              return GestureDetector(
-                                onTap: isEditing
-                                    ? () async {
-                                  final pickedDate = await showDatePicker(
-                                    context: context,
-                                    initialDate: DateTime.now(),
-                                    firstDate: DateTime(1900),
-                                    lastDate: DateTime.now(),
-                                  );
-                                  if (pickedDate != null) {
-                                    _authBloc.updateBirthDate1(pickedDate); // Cập nhật ngày sinh
-                                    birthDateController.text =
-                                        DateFormat('dd/MM/yyyy').format(pickedDate); // Cập nhật TextField
-                                  }
-                                }
-                                    : null,
-                                child: AbsorbPointer(
-                                  absorbing: !isEditing,
-                                  child: TextField(
-                                    controller: birthDateController,
+
+                            SizedBox(height: 30.h),
+
+                            // THÔNG TIN bên dưới
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Họ và tên + Email
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: StreamBuilder<String>(
+                                        stream: _authBloc.nameStaffStream,
+                                        builder: (context, snapshot) => TextField(
+                                          controller: nameController,
+                                          enabled: isEditing,
+                                          decoration: InputDecoration(
+                                            labelText: 'Họ và tên',
+                                            errorText: snapshot.hasError ? snapshot.error as String : null,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: StreamBuilder<String>(
+                                        stream: _authBloc.emailStaffStream,
+                                        builder: (context, snapshot) => TextField(
+                                          controller: emailController,
+                                          enabled: isEditing,
+                                          decoration: InputDecoration(
+                                            labelText: 'Email',
+                                            errorText: snapshot.hasError ? snapshot.error as String : null,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                SizedBox(height: 20.h),
+
+                                // Ngày sinh + CCCD
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: StreamBuilder<String?>(
+                                        stream: _authBloc.birthDateErrorStream,
+                                        builder: (context, snapshot) {
+                                          return GestureDetector(
+                                            onTap: isEditing
+                                                ? () async {
+                                              final pickedDate = await showDatePicker(
+                                                context: context,
+                                                initialDate: DateTime.now(),
+                                                firstDate: DateTime(1900),
+                                                lastDate: DateTime.now(),
+                                              );
+                                              if (pickedDate != null) {
+                                                _authBloc.updateBirthDate1(pickedDate);
+                                                birthDateController.text =
+                                                    DateFormat('dd/MM/yyyy').format(pickedDate);
+                                              }
+                                            }
+                                                : null,
+                                            child: AbsorbPointer(
+                                              absorbing: !isEditing,
+                                              child: TextField(
+                                                controller: birthDateController,
+                                                enabled: isEditing,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Ngày sinh',
+                                                  errorText: snapshot.data,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: StreamBuilder<String>(
+                                        stream: _authBloc.cccdStaffStream,
+                                        builder: (context, snapshot) => TextField(
+                                          controller: cccdController,
+                                          enabled: isEditing,
+                                          decoration: InputDecoration(
+                                            labelText: 'CCCD',
+                                            errorText: snapshot.hasError ? snapshot.error as String : null,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                SizedBox(height: 20.h),
+
+                                // Giới tính + Vị trí
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: CustomDropdownField(
+                                        label: 'Giới tính',
+                                        controller: genderController,
+                                        options: ['Nam', 'Nữ', 'Khác'],
+                                        isEditing: isEditing,
+                                        fontSize: 3.5.sp,
+                                      ),
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: CustomDropdownField(
+                                        label: 'Vị trí',
+                                        controller: positionController,
+                                        options: ['Nhân viên ghi chỉ số nước', 'Kĩ thuật viên'],
+                                        isEditing: isEditing,
+                                        fontSize: 3.5.sp,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                SizedBox(height: 20.h),
+
+                                // Địa chỉ
+                                StreamBuilder<String>(
+                                  stream: _authBloc.addressStaffStream,
+                                  builder: (context, snapshot) => TextField(
+                                    controller: addressController,
                                     enabled: isEditing,
                                     decoration: InputDecoration(
-                                      labelText: 'Ngày sinh',
-                                      errorText: snapshot.data, // Hiển thị lỗi nếu có
+                                      labelText: 'Địa chỉ',
+                                      errorText: snapshot.hasError ? snapshot.error as String : null,
                                     ),
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                          SizedBox(height: 13.h),
-                          StreamBuilder<String>(
-                            stream: _authBloc.cccdStaffStream,
-                            builder: (context, snapshot) => TextField(
-                              controller: cccdController,
-                              enabled: isEditing,
-                              style: TextStyle(fontSize: 3.5.sp),
-                              decoration: InputDecoration(
-                                labelText: 'CCCD',
-                                errorText: snapshot.hasError ? snapshot.error as String : null,
-                              ),
+                              ],
                             ),
-                          ),
-                          StreamBuilder<String>(
-                            stream: _authBloc.addressStaffStream,
-                            builder: (context, snapshot) => TextField(
-                              controller: addressController,
-                              enabled: isEditing,
-                              style: TextStyle(fontSize: 3.5.sp ),
-                              decoration: InputDecoration(
-                                labelText: 'Địa chỉ',
-                                errorText: snapshot.hasError ? snapshot.error as String : null,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 10.h),
-                          CustomDropdownField(
-                            label: 'Vị trí',
-                            controller: positionController,
-                            options: ['Nhân viên ghi chỉ số nước', 'Kĩ thuật viên'],
-                            isEditing: isEditing,
-                            fontSize: 3.5.sp ,
-                          ),
-                          SizedBox(height: 10.h),
-                          CustomDropdownField(
-                            label: 'Giới tính',
-                            controller: genderController,
-                            options: ['Nam', 'Nữ', 'Khác'],
-                            isEditing: isEditing,
-                            fontSize: 3.5.sp ,
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      )
+
+
+
                     ),
                     actions: [
                       TextButton(
@@ -478,6 +548,7 @@ class _StaffListPageState extends State<StaffListPage> {
                               }
 
                               if (updateData.isNotEmpty) {
+                                updateData['isUpdate'] = Timestamp.now();
                                 await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).update(updateData);
                               }
 
@@ -531,7 +602,7 @@ class _StaffListPageState extends State<StaffListPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Xác nhận xóa", style: TextStyle(fontSize: 5.sp),),
+          title: Center(child: Text("Xác nhận xóa", style: TextStyle(fontSize: 5.sp),),),
           content: Text("Bạn có chắc chắn muốn xóa nhân viên \"${staff.fullName}\" không?", style: TextStyle(fontSize: 4.sp)),
           actions: [
             TextButton(
@@ -541,15 +612,13 @@ class _StaffListPageState extends State<StaffListPage> {
             TextButton(
               onPressed: () async {
                 try {
-                  bool deleteSuccess = await deleteStaffAccount(staff.uid);
+                  await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).update({
+                    'isExit': true,
+                    'leaveAt': Timestamp.now(),
+                  });
 
-                  if (deleteSuccess) {
-                    // await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).delete();
-                    Navigator.pop(context);
-                    onRefresh();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lỗi khi xóa tài khoản.", style: TextStyle(fontSize: 4.sp))));
-                  }
+                  Navigator.pop(context);
+                  onRefresh();
                 } catch (e) {
                   print("Error during deletion: $e");
                   LoadingDialog.hideLoadingDialog(context); // Đóng loading dialog nếu xảy ra lỗi
@@ -680,7 +749,7 @@ class _StaffListPageState extends State<StaffListPage> {
                       children: [
                         Expanded(
                           child: buildFilterDropdown(
-                            label: "Lọc theo trạng thái nhân viên",
+                            label: "Lọc theo trạng thái công việc",
                             items: _employmentStatusItems,
                             selectedValue: _selectedEmploymentStatus,
                             onChanged: (value) {
@@ -707,7 +776,7 @@ class _StaffListPageState extends State<StaffListPage> {
                     ),),
                       SizedBox(width: 20.w), // Khoảng cách giữa tiêu đề và tìm kiếm
                       Expanded(child: buildFilterDropdown(
-                        label: "Lọc theo trạng thái",
+                        label: "Lọc theo trạng thái rảnh",
                         items: _statusItems,
                         selectedValue: _selectedStatus,
                         onChanged: (value) {
@@ -776,13 +845,19 @@ class _StaffListPageState extends State<StaffListPage> {
                   showDeleteStaffDialog(context, staff, _fetchStaff);
                 },
               ),
+              IconButton(
+                icon: Icon(Icons.info_outline, color: Colors.white),
+                onPressed: () {
+                  showViewStaffDialog(context, staff, _fetchStaff);
+                },
+              ),
             ],
             // Hiển thị icon "info" nếu isExit = true (đã nghỉ việc)
             if (staff.isExit)
               IconButton(
                 icon: Icon(Icons.info_outline, color: Colors.white),
                 onPressed: () {
-                  showViewStaffDialog(context, staff);
+                  showViewStaffDialog(context, staff, _fetchStaff);
                 },
               ),
                                                 ],

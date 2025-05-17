@@ -83,7 +83,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
           children: [
             SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 40.h),
+                padding: EdgeInsets.only(left: 50.w, right: 40.w, top: 40.h),
                 child: Center(
                   child: SizedBox(
                     width: MediaQuery
@@ -437,7 +437,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
         body: jsonEncode({
           "email": _emailStaffController.text.trim(),
           "fullName": _nameStaffController.text.trim(),
-          "address": _nameStaffController.text.trim(),
+          "address": _addressStaffController.text.trim(),
           "birthDate": birthDate != null
               ? "${birthDate!.year}-${birthDate!.month.toString().padLeft(2, '0')}-${birthDate!.day.toString().padLeft(2, '0')}"
               : null, // Đảm bảo birthDate không bị null

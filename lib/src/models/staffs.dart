@@ -16,7 +16,8 @@ class Staff {
   final String gender;
   final int role;
   final Timestamp createdAt;
-  final bool isExit; // Thêm trường isExit
+  final bool isExit;
+  final Timestamp? leaveAt; // 👉 Thêm leaveAt
 
   Staff({
     required this.uid,
@@ -34,10 +35,10 @@ class Staff {
     required this.gender,
     required this.role,
     required this.createdAt,
-    required this.isExit, // Thêm isExit vào constructor
+    required this.isExit,
+    this.leaveAt, // 👉 Constructor
   });
 
-  /// Factory method to create a Staff object from Firestore data.
   factory Staff.fromFirestore(DocumentSnapshot doc) {
     final json = doc.data() as Map<String, dynamic>;
 
@@ -47,8 +48,8 @@ class Staff {
       fcmTokens: List<String>.from(json['fcmTokens'] ?? []),
       imageUrl: json['imageUrl'] ?? '',
       isFree: json['isFree'] ?? false,
-      birthDate: json['birthDate'] != null ? (json['birthDate'] as Timestamp).toDate() : null, // Convert Timestamp to DateTime
-      lastUpdated: json['lastUpdated'] != null ? json['lastUpdated'] as Timestamp : Timestamp.fromMillisecondsSinceEpoch(0), // Default value if null
+      birthDate: json['birthDate'] != null ? (json['birthDate'] as Timestamp).toDate() : null,
+      lastUpdated: json['lastUpdated'] != null ? json['lastUpdated'] as Timestamp : Timestamp.fromMillisecondsSinceEpoch(0),
       fullName: json['fullName'] ?? '',
       phone: json['phone'] ?? '',
       cccd: json['cccd'] ?? '',
@@ -56,19 +57,19 @@ class Staff {
       position: json['position'] ?? '',
       gender: json['gender'] ?? '',
       role: json['role'] ?? 0,
-      createdAt: json['createdAt'] != null ? json['createdAt'] as Timestamp : Timestamp.fromMillisecondsSinceEpoch(0), // Default value if null
-      isExit: json['isExit'] ?? false, // Thêm isExit vào factory method
+      createdAt: json['createdAt'] != null ? json['createdAt'] as Timestamp : Timestamp.fromMillisecondsSinceEpoch(0),
+      isExit: json['isExit'] ?? false,
+      leaveAt: json['leaveAt'] != null ? json['leaveAt'] as Timestamp : null, // 👉
     );
   }
 
-  /// Converts the Staff object into a JSON representation for Firestore.
   Map<String, dynamic> toJson() {
     return {
       'email': email,
       'fcmTokens': fcmTokens,
       'imageUrl': imageUrl,
       'isFree': isFree,
-      'birthDate': birthDate != null ? Timestamp.fromDate(birthDate!) : null, // Convert DateTime to Timestamp
+      'birthDate': birthDate != null ? Timestamp.fromDate(birthDate!) : null,
       'lastUpdated': lastUpdated,
       'fullName': fullName,
       'phone': phone,
@@ -78,7 +79,8 @@ class Staff {
       'gender': gender,
       'role': role,
       'createdAt': createdAt,
-      'isExit': isExit, // Thêm isExit vào toJson method
+      'isExit': isExit,
+      'leaveAt': leaveAt, // 👉 Thêm vào Firestore
     };
   }
 }
