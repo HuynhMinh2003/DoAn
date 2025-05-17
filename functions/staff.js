@@ -49,8 +49,10 @@ const createStaffAccount = onRequest(
           position,
           imageUrl: "",
           isExit:false,
+          leaveAt: null,
           isFree:true,
           role: 2,
+          lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 

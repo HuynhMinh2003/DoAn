@@ -69,8 +69,7 @@ Future<void> exportApartmentsToExcel(List<Apartment> apartments) async {
       ex.DoubleCellValue(apt.area as double),
       ex.TextCellValue(apt.building),
       ex.TextCellValue(apt.description),
-      ex.IntCellValue(apt.rentPrice),
-      ex.IntCellValue(apt.salePrice),
+
     ];
     sheet.insertRowIterables(row, i + 1);
   }
