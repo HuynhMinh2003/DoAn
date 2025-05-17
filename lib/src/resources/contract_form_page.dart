@@ -44,13 +44,13 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
   String building = '';
   int rentPrice = 0;
 
-  // Các controller cho thông tin khác
-  final purposeController = TextEditingController();
-  final devicesController = TextEditingController();
-  final limitationsController = TextEditingController();
-  final benefitsController = TextEditingController();
-  final commitmentController = TextEditingController();
-  final dutiesController = TextEditingController();
+  // // Các controller cho thông tin khác
+  // final purposeController = TextEditingController();
+  // final devicesController = TextEditingController();
+  // final limitationsController = TextEditingController();
+  // final benefitsController = TextEditingController();
+  // final commitmentController = TextEditingController();
+  // final dutiesController = TextEditingController();
 
   final residentCountController = TextEditingController();
   int? representativeIndex;
@@ -494,36 +494,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                 );
               },
             ),
-            // Các trường nhập thông tin hợp đồng khác
-            TextField(
-              controller: purposeController,
-              decoration: InputDecoration(labelText: 'Mục đích thuê',labelStyle: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
-            ),
-            SizedBox(height: 30.h,),
-            TextField(
-              controller: devicesController,
-              decoration: InputDecoration(labelText: 'Đồ đạc, thiết bị đi kèm (nếu có)',labelStyle: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
-            ),
-            SizedBox(height: 30.h,),
-            TextField(
-              controller: limitationsController,
-              decoration: InputDecoration(labelText: 'Hạn chế (nếu có)',labelStyle: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
-            ),
-            SizedBox(height: 30.h,),
-            TextField(
-              controller: benefitsController,
-              decoration: InputDecoration(labelText: 'Lợi ích thỏa thuận (nếu có)',labelStyle: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
-            ),
-            SizedBox(height: 30.h,),
-            TextField(
-              controller: commitmentController,
-              decoration: InputDecoration(labelText: 'Cam kết (nếu có)',labelStyle: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
-            ),
-            SizedBox(height: 30.h,),
-            TextField(
-              controller: dutiesController,
-              decoration: InputDecoration(labelText: 'Nghĩa vụ thỏa thuận (nếu có)',labelStyle: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
-            ),
 
             SizedBox(height: 20.h),
 
@@ -539,14 +509,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                       try {
                         // Đảm bảo bạn có thông tin căn hộ như apartmentId để tạo đường dẫn chính xác.
                         String apartmentId = widget.apartmentId;
-
-                        // Lấy giá trị từ các controller
-                        String purpose = purposeController.text;
-                        String devices = devicesController.text;
-                        String limitations = limitationsController.text;
-                        String benefits = benefitsController.text;
-                        String commitment = commitmentController.text;
-                        String duties = dutiesController.text;
 
                         final pool = Pool(3); // Tối đa 3 yêu cầu cùng lúc
 
@@ -587,15 +549,8 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           'apartmentName': apartmentName,
                           'building': building,
                           'area': area,
-                          'rentPrice': rentPrice,
                           'startDate': startDate,
                           'endDate': endDate,
-                          'purpose': purpose,
-                          'devices': devices,
-                          'limitations': limitations,
-                          'benefits': benefits,
-                          'commitment': commitment,
-                          'duties': duties,
                           "numberOfResidents": residents.length,
                           "createdAt": Timestamp.now(),
                         };
@@ -657,34 +612,34 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         ..add(TextContent("area", area.toString()))
                         ..add(TextContent("price", currencyFormat.format(rentPrice)))
                         ..add(TextContent("start_date", formatCustomDate(startDate!)))
-                        ..add(TextContent("representative", representative.fullName))
-                        ..add(TextContent("end_date",  formatCustomDate(endDate!)))
-                        ..add(TextContent("purpose",  purpose))
-                        ..add(TextContent("devices",  devices))
-                        ..add(TextContent("limit",  limitations))
-                        ..add(TextContent("obligation",  duties))
-                        ..add(TextContent("benefit",  benefits))
-                        ..add(TextContent("commit",  commitment));
+                        ..add(TextContent("representative_fullName", representative.fullName))
+                        ..add(TextContent("representative_birthDate", formatCustomDate(representative.birthDate!)))
+                        ..add(TextContent("representative_gender", representative.gender))
+                        ..add(TextContent("representative_phone", representative.phone))
+                        ..add(TextContent("representative_cccd", representative.cccd))
+                        ..add(TextContent("representative_email", representative.email))
+                        ..add(TextContent("representative_address", representative.address))
+                        ..add(TextContent("end_date",  formatCustomDate(endDate!)));
 
                         print("✅ Đã thêm thông tin chính");
 
                         // === Danh sách cư dân ===
-                        final residentsList = <PlainContent>[];
+                        // final residentsList = <PlainContent>[];
 
-                        for (final r in List<ResidentInfo>.from(residents)) {
-                        final residentContent = PlainContent("residents")
-                        ..add(TextContent("resident_name", "Họ và tên: " + r.fullName))
-                        ..add(TextContent("resident_cccd", "Số CCCD: " + r.cccd))
-                        ..add(TextContent("resident_gender", "Giới tính: " + r.cccd))
-                        ..add(TextContent("resident_birthdate", "Ngày sinh: " + r.cccd))
-                        ..add(TextContent("resident_address", "Địa chỉ: " + r.cccd))
-                        ..add(TextContent("resident_phone", "Số điện thoại: " + r.phone));
-
-                        residentsList.add(residentContent);
-                        }
-
-                        // residents là tag list, resident là mỗi item trong list
-                        content.add(ListContent("residents", residentsList));
+                        // for (final r in List<ResidentInfo>.from(residents)) {
+                        // final residentContent = PlainContent("residents")
+                        // ..add(TextContent("resident_name", "Họ và tên: " + r.fullName))
+                        // ..add(TextContent("resident_cccd", "Số CCCD: " + r.cccd))
+                        // ..add(TextContent("resident_gender", "Giới tính: " + r.cccd))
+                        // ..add(TextContent("resident_birthdate", "Ngày sinh: " + r.cccd))
+                        // ..add(TextContent("resident_address", "Địa chỉ: " + r.cccd))
+                        // ..add(TextContent("resident_phone", "Số điện thoại: " + r.phone));
+                        //
+                        // residentsList.add(residentContent);
+                        // }
+                        //
+                        // // residents là tag list, resident là mỗi item trong list
+                        // content.add(ListContent("residents", residentsList));
 
                         final fileBytes = await docx.generate(content);
                         print("Đã tạo file bytes từ DocxTemplate");
@@ -697,7 +652,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         }
 
                         // Tạo file Word
-                        final fileName = "thuê_${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
+                        final fileName = "Hợp đồng dịch vụ căn hộ ${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
                         await downloadWordFile(fileName, fileBytes!);
 
                         LoadingDialog.hideLoadingDialog(context);
