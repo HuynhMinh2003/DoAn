@@ -554,13 +554,13 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                   child: Text(
                     "Danh sách căn hộ",
                     style: TextStyle(
-                      fontSize: 6.sp,
-                      fontWeight: FontWeight.bold,
+                      fontFamily: "Oswald",
+                      fontWeight: FontWeight.w700,
+                      fontSize: 7.sp,
                     ),
                   ),
                 ),
-                SizedBox(width: 20.w), // Khoảng cách giữa tiêu đề và tìm kiếm
-
+                SizedBox(width: 5.w,),
                 // Ô tìm kiếm
                 Flexible(
                   flex: 2,
@@ -577,8 +577,6 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                     onChanged: _onSearchChanged,
                   ),
                 ),
-                SizedBox(width: 20.w), // Khoảng cách giữa tìm kiếm và nút
-
                 // Nút Thêm file
                 Flexible(
                   flex: 1,
@@ -600,8 +598,6 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                     ),
                   ),
                 ),
-                SizedBox(width: 10.w), // Khoảng cách giữa hai nút
-
                 // Nút Xuất file
                 Flexible(
                   flex: 1,
@@ -623,6 +619,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                     ),
                   ),
                 ),
+                SizedBox(width: 5.w,)
               ],
             ),
             SizedBox(height: 20.h),

@@ -292,7 +292,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween, // Phân bố nút cách đều
                           children: [
-                            SizedBox(width: 10.w), // Tùy chọn nếu bạn muốn có khoảng cách giữa các nút
+                            SizedBox(width: 20.w), // Tùy chọn nếu bạn muốn có khoảng cách giữa các nút
                             Expanded(
                               child: SizedBox(
                                 height: 60.h,
@@ -301,7 +301,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                     _onSignUpStaffClicked();
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF007BFF), // Màu xanh dương sáng
+                                    backgroundColor: secondaryColor, // Màu xanh dương sáng
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30.r),
                                     ),
@@ -355,7 +355,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                     _authBloc.updateBirthDate(null); // Cập nhật giá trị trong Stream về null
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF6C757D), // Màu xám trung tính
+                                    backgroundColor: secondaryColor, // Màu xám trung tính
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30.r),
                                     ),

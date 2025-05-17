@@ -1,3 +1,4 @@
+import 'package:do_an/custom_paginated_table.dart';
 import 'package:do_an/src/models/company_info.dart';
 import 'package:do_an/src/resources/provider/company_image_provider.dart';
 import 'package:flutter/foundation.dart';
@@ -23,14 +24,46 @@ class CompanyListPage extends StatefulWidget {
 class _CompanyListPageState extends State<CompanyListPage> {
   final AuthBloc _authBloc = AuthBloc();
 
-  String? _selectedPosition;
-  List<String> _positionItems = [];
   List<CompanyInfo> _companyList = [];
   List<CompanyInfo> _allCompanyList = []; // Lưu danh sách đầy đủ của nhân viên
-  String? _selectedStatus;
-  final List<String> _statusItems = ["Tất cả", "Đang rảnh", "Đang bận"];
+
+  String? _selectedCompanyStatus;
+  List<String> _companyStatusItems = ["Tất cả", "Đang hợp tác", "Đã thôi"]; // Các giá trị trạng thái nhân viên
+
   String _searchQueryName = ""; // Biến lưu trữ giá trị tìm kiếm
   String _searchQueryType = ""; // Biến lưu trữ giá trị tìm kiếm
+  int itemsPerPage = 10;
+  int currentPage = 1;
+  int totalPages = 0;
+  List<CompanyInfo> paginatedCompanies = [];
+  List<int> pageNumbers = [];
+
+  void updatePaginatedCompanies() {
+    setState(() {
+      int startIndex = (currentPage - 1) * itemsPerPage;
+      int endIndex = startIndex + itemsPerPage;
+      if (endIndex > _companyList.length) {
+        endIndex = _companyList.length;
+      }
+
+      paginatedCompanies = _companyList.sublist(startIndex, endIndex);
+      totalPages = (_companyList.length / itemsPerPage).ceil();
+      updatePageNumbers();
+    });
+  }
+
+  void updatePageNumbers() {
+    int startPage = currentPage - 1;
+    if (startPage < 0) startPage = 0;
+
+    pageNumbers = List.generate(3, (index) {
+      int page = startPage + index;
+      if (page < totalPages) {
+        return page + 1;
+      }
+      return -1;
+    }).where((page) => page != -1).toList();
+  }
 
   @override
   void initState() {
@@ -68,9 +101,17 @@ class _CompanyListPageState extends State<CompanyListPage> {
           .toList();
     }
 
-    setState(() {
-      _companyList = filteredList;
-    });
+    if (_selectedCompanyStatus != null && _selectedCompanyStatus != "Tất cả") {
+      final isWorking = _selectedCompanyStatus == "Đang hợp tác";
+      filteredList = filteredList.where((company) => company.isExit != isWorking).toList();
+    }
+
+    if(mounted){
+      setState(() {
+        _companyList = filteredList;
+        updatePaginatedCompanies();
+      });
+    }
   }
 
   Future<bool> deleteCompanyAccount(String uid) async {
@@ -395,6 +436,392 @@ class _CompanyListPageState extends State<CompanyListPage> {
     );
   }
 
+  void showEditCompanyDialog(BuildContext context, CompanyInfo company, VoidCallback onRefresh) {
+    final nameController = TextEditingController(text: company.name);
+    final phoneController = TextEditingController(text: company.phone);
+    final addressController = TextEditingController(text: company.address);
+    final emailController = TextEditingController(text: company.email);
+    final typeController = TextEditingController(text: company.type);
+    final describeController = TextEditingController(text: company.description);
+
+    bool isEditing = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return ChangeNotifierProvider(
+              create: (_) => CompanyImageProvider(),
+              child: Consumer<CompanyImageProvider>(
+                builder: (context, imageProvider, _) {
+                  return AlertDialog(
+                    title: Text(
+                      "Thông tin công ty",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: "Oswald",
+                        fontWeight: FontWeight.bold,
+                        fontSize: 7.sp,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12.r), // Bo góc nhẹ (có thể điều chỉnh bán kính)
+                                  child: Container(
+                                    width: 140.r, // Chiều rộng (tương tự với đường kính của CircleAvatar)
+                                    height: 140.r, // Chiều cao (tương tự với đường kính của CircleAvatar)
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey.shade300, width: 0.5.w), // Tùy chỉnh viền
+                                    ),
+                                    child: imageProvider.webImageBytes != null
+                                        ? Image.memory(
+                                      imageProvider.webImageBytes!,
+                                      fit: BoxFit.cover, // Đảm bảo ảnh khớp với hình vuông
+                                    )
+                                        : imageProvider.selectedImageFile != null
+                                        ? Image.file(
+                                      imageProvider.selectedImageFile!,
+                                      fit: BoxFit.cover, // Đảm bảo ảnh khớp với hình vuông
+                                    )
+                                        : (company.imageUrl.isNotEmpty
+                                        ? Image.network(
+                                      company.imageUrl,
+                                      fit: BoxFit.cover, // Đảm bảo ảnh khớp với hình vuông
+                                    )
+                                        : Image.asset(
+                                      'assets/default_avatar.png',
+                                      fit: BoxFit.cover, // Đảm bảo ảnh khớp với hình vuông
+                                    )),
+                                  ),
+                                ),
+                                if (isEditing)
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: IconButton(
+                                      icon: Icon(Icons.camera_alt, color: Colors.blueAccent),
+                                      onPressed: () async {
+                                        await imageProvider.pickImage();
+                                      },
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 20.h),
+                          StreamBuilder<String>(
+                            stream: _authBloc.nameCompanyStream,
+                            builder: (context, snapshot) => TextField(
+                              controller: nameController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: 3.5.sp),
+                              decoration: InputDecoration(
+                                labelText: 'Tên công ty',
+                                errorText: snapshot.hasError ? snapshot.error as String : null,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 13.h),
+                          StreamBuilder<String>(
+                            stream: _authBloc.emailCompanyStream,
+                            builder: (context, snapshot) => TextField(
+                              controller: emailController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: 3.5.sp ),
+                              decoration: InputDecoration(
+                                labelText: 'Email',
+                                errorText: snapshot.hasError ? snapshot.error as String : null,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 13.h),
+                          StreamBuilder<String>(
+                            stream: _authBloc.phoneCompanyStream,
+                            builder: (context, snapshot) => TextField(
+                              controller: phoneController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: 3.5.sp),
+                              decoration: InputDecoration(
+                                labelText: 'SĐT',
+                                errorText: snapshot.hasError ? snapshot.error as String : null,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 13.h),
+                          StreamBuilder<String>(
+                            stream: _authBloc.addressCompanyStream,
+                            builder: (context, snapshot) => TextField(
+                              controller: addressController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: 3.5.sp),
+                              decoration: InputDecoration(
+                                labelText: 'Địa chỉ',
+                                errorText: snapshot.hasError ? snapshot.error as String : null,
+                              ),
+                            ),
+                          ),
+                          StreamBuilder<String>(
+                            stream: _authBloc.typeCompanyStream,
+                            builder: (context, snapshot) => TextField(
+                              controller: typeController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: 3.5.sp ),
+                              decoration: InputDecoration(
+                                labelText: 'Loại dịch vụ',
+                                errorText: snapshot.hasError ? snapshot.error as String : null,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 10.h),
+                          StreamBuilder<String>(
+                            stream: _authBloc.describeCompanyStream,
+                            builder: (context, snapshot) => TextField(
+                              controller: describeController,
+                              enabled: isEditing,
+                              style: TextStyle(fontSize: 3.5.sp ),
+                              decoration: InputDecoration(
+                                labelText: 'Mô tả',
+                                errorText: snapshot.hasError ? snapshot.error as String : null,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () async {
+                          if (isEditing) {
+                            final isValid = _authBloc.isValidCompanySignUp(
+                              nameController.text.trim(),
+                              emailController.text.trim(),
+                              phoneController.text.trim(),
+                              typeController.text.trim(),
+                              addressController.text.trim(),
+                              describeController.text.trim(),
+                            );
+
+                            if (!isValid) return;
+
+                            LoadingDialog.showLoadingDialog(context, "Đang tải...");
+                            try {
+                              String? newImageUrl;
+
+                              if (imageProvider.webImageBytes != null) {
+                                if (company.imageUrl.isNotEmpty) {
+                                  final storageRef = FirebaseStorage.instance.refFromURL(company.imageUrl);
+                                  await storageRef.delete();
+                                }
+
+                                final uniqueFileName = "${DateTime.now().millisecondsSinceEpoch}_avatar.jpg";
+                                newImageUrl = await imageProvider.uploadSelectedImageAndGetUrl(company.companyId!, uniqueFileName);
+                              }
+
+                              final updateData = <String, dynamic>{};
+                              final updatedFields = <String, String>{}; // Initialize with an empty map
+
+                              void compareAndAdd(String key, String newValue, String oldValue) {
+                                if (newValue != oldValue) {
+                                  updateData[key] = newValue;
+                                  updatedFields[key] = newValue;
+                                }
+                              }
+
+                              compareAndAdd('email', emailController.text.trim(), company.email);
+                              compareAndAdd('name', nameController.text.trim(), company.name);
+                              compareAndAdd('phone', phoneController.text.trim(), company.phone);
+                              compareAndAdd('address', addressController.text.trim(), company.address);
+                              compareAndAdd('type', typeController.text.trim(), company.type);
+                              compareAndAdd('description', describeController.text.trim(), company.description);
+
+                              if (newImageUrl != null) {
+                                updateData['imageUrl'] = newImageUrl;
+                                updatedFields['imageUrl'] = 'Đã cập nhật ảnh'; // Add 'Đã cập nhật ảnh' to updatedFields
+                              }
+
+                              if (updateData.isNotEmpty) {
+                                await FirebaseFirestore.instance.collection('companies').doc(company.companyId!).update(updateData);
+                              }
+
+                              if (updatedFields.isNotEmpty) {
+                                await sendUpdatedDetailEmailFromFlutter(
+                                  uid: company.companyId!,
+                                  oldEmail: company.email,
+                                  newEmail: emailController.text.trim(),
+                                  updatedFields: updatedFields,
+                                );
+                              }
+
+                              Navigator.pop(context);
+                              onRefresh();
+                            } catch (e) {
+                              print("❌ Error during update: $e");
+                            } finally {
+                              LoadingDialog.hideLoadingDialog(context);
+                            }
+                          } else {
+                            setState(() => isEditing = true);
+                          }
+                        },
+                        child: Text(
+                          isEditing ? "Lưu" : "Sửa",
+                          style: TextStyle(fontSize: 4.sp),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void showDeleteCompanyDialog(BuildContext context, CompanyInfo company, VoidCallback onRefresh) async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Xác nhận xóa", style: TextStyle(fontSize: 5.sp),),
+          content: Text("Bạn có chắc chắn muốn xóa công ty \"${company.name}\" không?", style: TextStyle(fontSize: 4.sp)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), // Đóng hộp thoại
+              child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
+            ),
+            TextButton(
+              onPressed: () async {
+                LoadingDialog.showLoadingDialog(context, "Đang tải ...");
+                try {
+                  bool deleteSuccess = await deleteCompanyAccount(company.companyId!);
+
+                  if (deleteSuccess) {
+                    // await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).delete();
+                    LoadingDialog.hideLoadingDialog(context);
+                    Navigator.pop(context);
+                    onRefresh();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lỗi khi xóa tài khoản.", style: TextStyle(fontSize: 4.sp))));
+                  }
+                } catch (e) {
+                  print("Error during deletion: $e");
+                  LoadingDialog.hideLoadingDialog(context); // Đóng loading dialog nếu xảy ra lỗi
+                }
+              },
+              child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showViewCompanyDialog(BuildContext context, CompanyInfo company) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            "Thông tin công ty",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: "Oswald",
+              fontWeight: FontWeight.bold,
+              fontSize: 7.sp,
+              color: Colors.blueAccent,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12.r),
+                    child: Container(
+                      width: 140.r,
+                      height: 140.r,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300, width: 0.5.w),
+                      ),
+                      child: company.imageUrl.isNotEmpty
+                          ? Image.network(
+                        company.imageUrl,
+                        fit: BoxFit.cover,
+                      )
+                          : Image.asset(
+                        'assets/default_avatar.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                Text(
+                  "Tên công ty: ${company.name}",
+                  style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  "Email: ${company.email}",
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  "Số điện thoại: ${company.phone}",
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  "Địa chỉ: ${company.address}",
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  "Loại dịch vụ: ${company.type}",
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  "Mô tả: ${company.description}",
+                  style: TextStyle(fontSize: 3.5.sp),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                "Đóng",
+                style: TextStyle(fontSize: 4.sp),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<bool> sendUpdatedDetailEmailFromFlutter({
     required String uid,
     required String oldEmail,
@@ -433,189 +860,179 @@ class _CompanyListPageState extends State<CompanyListPage> {
         child: Stack(
           children: [
             SingleChildScrollView(
+                child: ConstrainedBox(constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
                 child: Padding(
-                  padding: EdgeInsets.only(left: 30.w, right: 20.w, top: 40.h),
+                  padding: EdgeInsets.only(left: 10.w, right: 10.w, top: 40.h),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Danh sách công ty',
-                        style: TextStyle(
-                          fontFamily: "Oswald",
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12.sp,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                        Flexible(flex:1,child:  Text(
+                          'Danh sách công ty',
+                          style: TextStyle(
+                            fontFamily: "Oswald",
+                            fontWeight: FontWeight.w700,
+                            fontSize: 7.sp,
+                          ),
+                        ),),
+                        Flexible(flex:1,child: ElevatedButton(
+                          onPressed: () => exportCompaniesToExcel(_companyList),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.upload),
+                              SizedBox(width: 5.w,),
+                              Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
+                            ],
+                          ),
+                        ),)
+                      ],),
+                      SizedBox(height: 10.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: buildFilterDropdown(
+                              label: "Lọc theo trạng thái công ty",
+                              items: _companyStatusItems,
+                              selectedValue: _selectedCompanyStatus,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedCompanyStatus = value;
+                                  _filterCompany();
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(width: 20.w,),
+
+                          Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            labelText: "Tìm kiếm theo tên",
+                            hintText: "Nhập tên công ty",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30.r),
+                            ),
+                            prefixIcon: Icon(Icons.search),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _searchQueryName = value;
+                              _filterCompany(); // Lọc danh sách khi nhập
+                            });
+                          },
                         ),
                       ),
-                      SizedBox(height: 20.h),
-                      ElevatedButton(
-                        onPressed: () => exportCompaniesToExcel(_companyList),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.upload),
-                            SizedBox(width: 5.w,),
-                            Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 30.h),
+                        SizedBox(width: 20.w,),
+                        Expanded(
+                          child: TextField(
+                            decoration: InputDecoration(
+                              labelText: "Tìm kiếm theo loại dịch vụ",
+                              hintText: "Nhập loại dịch vụ",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30.r),
+                              ),
+                              prefixIcon: Icon(Icons.search),
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                _searchQueryType = value;
+                                _filterCompany(); // Lọc danh sách khi nhập
+                              });
+                            },
+                          ),
+                        ),],),
+                      SizedBox(height: 20.h,),
                       SizedBox(
                         height: MediaQuery.of(context).size.height - 360.h ,
-                        child:  Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: TextField(
-                                        decoration: InputDecoration(
-                                          labelText: "Tìm kiếm theo tên",
-                                          hintText: "Nhập tên công ty",
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(30.r),
+                        child:  LayoutBuilder(
+                          builder: (context,constraints){
+                            return Column(
+                              children: [
+                                
+                                  if(_companyList.isEmpty)
+                                      Expanded(child: Center(child: Text("Không có công ty nào"),))
+                                      else
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            minWidth: constraints.maxWidth, // Đặt chiều rộng tối thiểu bằng chiều rộng cha
+                                            maxWidth: constraints.maxWidth, // Đặt chiều rộng tối đa bằng chiều rộng cha
                                           ),
-                                          prefixIcon: Icon(Icons.search),
-                                        ),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _searchQueryName = value;
-                                            _filterCompany(); // Lọc danh sách khi nhập
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    SizedBox(height: 60.h,),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: TextField(
-                                        decoration: InputDecoration(
-                                          labelText: "Tìm kiếm theo loại dịch vụ",
-                                          hintText: "Nhập loại dịch vụ",
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(30.r),
-                                          ),
-                                          prefixIcon: Icon(Icons.search),
-                                        ),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _searchQueryType = value;
-                                            _filterCompany(); // Lọc danh sách khi nhập
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            VerticalDivider(
-                              color: Colors.grey, // Màu của đường ngăn cách
-                              thickness: 0.2.w, // Độ dày của đường ngăn cách
-                              width: 40.w, // Chiều rộng tổng thể của vùng ngăn cách (bao gồm cả padding nếu có)
-                            ),
-
-                            Expanded(
-                              child: _companyList.isEmpty
-                                  ? const Center(child: Text("Không có công ty nào"))
-                                  : SingleChildScrollView(
-                                child: GridView.builder(
-                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 1,
-                                    mainAxisSpacing: 30.h,
-                                    crossAxisSpacing: 3.w,
-                                    childAspectRatio: 6 / 1.3,
-                                  ),
-                                  itemCount: _companyList.length,
-                                  shrinkWrap: true,
-                                  physics: NeverScrollableScrollPhysics(),
-                                  itemBuilder: (context, index) {
-                                    final company = _companyList[index];
-                                    return GestureDetector(
-                                      onTap: () => showCompanyDialog(context, company, (){
-                                        _fetchCompany();
-                                      }),
-                                      child: Container(
-                                        padding: EdgeInsets.fromLTRB(5.w,25.h,1.w,0.w),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12.r),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.grey.withOpacity(0.3),
-                                              blurRadius: 6.r,
-                                              offset: Offset(0, 3),
-                                            ),
-                                          ],
-                                        ),
-                                        child: SingleChildScrollView(
-                                          child: Column(
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  SizedBox(width: 5.w),
-
-                                                  Container(
-                                                    width: 17.w,
-                                                    height: 80.h,
-                                                    child: ClipRRect(
-                                                      borderRadius: BorderRadius.circular(8.r), // Adjust this value for rounded corners
-                                                      child: company.imageUrl.isNotEmpty
-                                                          ? Image.network(
-                                                        company.imageUrl,
-                                                        fit: BoxFit.cover, // Ensures the image fits within the container
-                                                      )
-                                                          : Container(
-                                                        color: Colors.grey.shade300, // Background color for placeholder
-                                                        child: Icon(Icons.person, size: 40.w, color: Colors.grey), // Placeholder icon
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(width: 10.w),
-                                                  Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Text(
-                                                          company.name,
-                                                          style: TextStyle(
-                                                            fontFamily: "Oswald",
-                                                            fontSize: 5.5.sp,
-                                                            fontWeight: FontWeight.bold,
-                                                          ),
-                                                          overflow: TextOverflow.ellipsis,
+                                          child: CustomPaginatedTable(
+                                            columns: [
+                                              DataColumn(label: Text("Tên công ty", style: TextStyle(fontSize: 4.sp))),
+                                              DataColumn(label: Text("Email", style: TextStyle(fontSize: 4.sp))),
+                                              DataColumn(label: Text("Loại hình", style: TextStyle(fontSize: 4.sp))),
+                                              DataColumn(label: Text('Địa chỉ', style: TextStyle(fontSize: 4.sp))),
+                                              DataColumn(label: Text('Số điện thoại', style: TextStyle(fontSize: 4.sp))),
+                                              DataColumn(label: Text("Thao tác", style: TextStyle(fontSize: 4.sp))),
+                                            ],
+                                            rows: _companyList.map((company) {
+                                              return DataRow(cells: [
+                                                DataCell(Text(company.name, style: TextStyle(fontSize: 4.sp))),
+                                                DataCell(Text(company.email, style: TextStyle(fontSize: 4.sp))),
+                                                DataCell(Text(company.type, style: TextStyle(fontSize: 4.sp))),
+                                                DataCell(Text(company.address, style: TextStyle(fontSize: 4.sp))),
+                                                DataCell(Text(company.phone, style: TextStyle(fontSize: 4.sp))),
+                                                DataCell(
+                                                  Row(
+                                                    children: [
+                                                      if (!company.isExit) ...[
+                                                        IconButton(
+                                                          icon: Icon(Icons.edit, color: Colors.blue),
+                                                          onPressed: () {
+                                                            showEditCompanyDialog(context, company, _fetchCompany);
+                                                          },
                                                         ),
-                                                        SizedBox(height: 10.h),
-                                                        Text(
-                                                          company.type,
-                                                          style: TextStyle(
-                                                            fontSize: 4.sp,
-                                                          ),
+                                                        IconButton(
+                                                          icon: Icon(Icons.delete, color: Colors.red),
+                                                          onPressed: () {
+                                                            showDeleteCompanyDialog(context, company, _fetchCompany);
+                                                          },
                                                         ),
                                                       ],
-                                                    ),
+                                                      // Hiển thị icon "info" nếu isExit = true (đã nghỉ việc)
+                                                      if (company.isExit)
+                                                        IconButton(
+                                                          icon: Icon(Icons.info_outline, color: Colors.white),
+                                                          onPressed: () {
+                                                            showViewCompanyDialog(context, company);
+                                                          },
+                                                        ),
+                                                    ],
                                                   ),
-                                                ],
-                                              ),
-                                            ],
+                                                ),
+                                              ]);
+                                            }).toList(),
+                                            rowsPerPage: itemsPerPage,
+                                            availableRowsPerPage: [5, 10, 20, 50], // Các tùy chọn số hàng mỗi trang
+                                            onRowsPerPageChanged: (value) {
+                                              setState(() {
+                                                itemsPerPage = value ?? 10; // Cập nhật số hàng mỗi trang
+                                                currentPage = 1; // Reset về trang đầu
+                                                updatePaginatedCompanies();
+                                              });
+                                            },
                                           ),
-                                        ),                            ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
+                                        ),
+                                      ),
+                                    )
+                              ],
+                            );
+                          },
                         ),
 
                       )
                     ],
                   ),
-                )
+                ),)
             ),
           ],
         ),
@@ -632,7 +1049,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
     required ValueChanged<T?> onChanged,
   }) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 8.h),
+      padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0.h),
       child: SizedBox(
         height: 60.h,
         child: Container(
@@ -641,7 +1058,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
               isExpanded: true,
               hint: Text(
                 label,
-                style: TextStyle(color: Colors.black, fontSize: 4.sp ),
+                style: TextStyle(fontSize: 4.sp ),
               ),
               items: items.map((item) {
                 return DropdownMenuItem(
@@ -659,8 +1076,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
                 padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 10.w ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
-                  border: Border.all(color: Color(0xe2707070)),
-                  color: Color(0xFFF7FEFF),
+                  border: Border.all(color: Colors.grey),
                 ),
               ),
               dropdownStyleData: DropdownStyleData(
@@ -668,7 +1084,6 @@ class _CompanyListPageState extends State<CompanyListPage> {
                 width: 147.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
-                  color: Color(0xFFF7FEFF),
                 ),
                 elevation: 4,
               ),

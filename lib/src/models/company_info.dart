@@ -8,6 +8,7 @@ class CompanyInfo {
   final String phone;
   final String type;
   final String address;
+  final bool isExit;
   final List<String> fcmTokens;
   final String description;
 
@@ -19,6 +20,7 @@ class CompanyInfo {
     required this.phone,
     required this.type,
     required this.address,
+    required this.isExit,
     required this.fcmTokens,
     required this.description,
   });
@@ -33,6 +35,7 @@ class CompanyInfo {
       phone: map['phone'] ?? '',
       type: map['type'] ?? '',
       address: map['address'] ?? '',
+      isExit: map['isExit'] ?? false, // Corrected to default to false
       fcmTokens: List<String>.from(map['fcmTokens'] ?? []), // Corrected to handle List<String>
       description: map['description'] ?? '',
     );
@@ -47,6 +50,7 @@ class CompanyInfo {
       'phone': phone,
       'type': type,
       'address': address,
+      'isExit': isExit,
       'fcmTokens': fcmTokens, // Added fcmTokens
       'description': description,
     };
@@ -61,6 +65,7 @@ class CompanyInfo {
     String? phone,
     String? type,
     String? address,
+    bool? isExit, // Corrected to use bool instead of Bool
     List<String>? fcmTokens, // Added fcmTokens
     String? description,
   }) {
@@ -72,6 +77,7 @@ class CompanyInfo {
       phone: phone ?? this.phone,
       type: type ?? this.type,
       address: address ?? this.address,
+      isExit: isExit ?? this.isExit, // Corrected to use the current value
       fcmTokens: fcmTokens ?? this.fcmTokens,
       description: description ?? this.description,
     );
@@ -89,6 +95,7 @@ class CompanyInfo {
       phone: json['phone'] ?? '',
       type: json['type'] ?? '',
       address: json['address'] ?? '',
+      isExit: json['isExit'] ?? false, // Correct to default to false
       fcmTokens: List<String>.from(json['fcmTokens'] ?? []), // Correctly handles List<String>
       description: json['description'] ?? '',
     );
