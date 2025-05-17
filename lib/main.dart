@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/firebase_options.dart';
 import 'package:do_an/screens/main/main_screen.dart';
+import 'package:do_an/src/resources/add_service_form_page.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/main_admin_page.dart';
 import 'package:do_an/src/resources/provider/company_image_provider.dart';
@@ -154,7 +155,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: MainScreen(), // hoặc AuthWrapper()
+              home: AddServiceForm(), // hoặc AuthWrapper()
             ),
           ),
         );
