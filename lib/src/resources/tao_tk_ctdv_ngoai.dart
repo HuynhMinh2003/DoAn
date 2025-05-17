@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/constants.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
@@ -82,7 +83,7 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                           ),
                         ),
                         SizedBox(
-                          height: 30.h,
+                          height: 50.h,
                         ),
                         Row(mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -202,7 +203,7 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                               },
                             ),
                           ),
-                          SizedBox(width: 60.w,),
+                          SizedBox(width: 30.w,),
                           // Bên phải: form login
                           Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center,children: [ _buildTextField(
                             controller: _nameCompanyController,
@@ -242,7 +243,7 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween, // Phân bố nút cách đều
                           children:[
-                          SizedBox(width: 10.w), // Tùy chọn nếu bạn muốn có khoảng cách giữa các nút
+                          SizedBox(width: 20.w), // Tùy chọn nếu bạn muốn có khoảng cách giữa các nút
                           Expanded(
                               child: SizedBox(
                                 height: 60.h,
@@ -252,7 +253,7 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
-                                    const Color(0xFF2D80F8),
+                                    secondaryColor,
                                     shape: RoundedRectangleBorder(
                                       borderRadius:
                                       BorderRadius.circular(30.r),
@@ -276,7 +277,7 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                                 ),
                               ),
                             ),
-                            SizedBox(width: 20.w),
+                            SizedBox(width: 60.w),
                             // Khoảng cách giữa 2 nút
                             Expanded(
                               child: SizedBox(
@@ -297,7 +298,7 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
-                                    const Color(0xFF2D80F8),
+                                    secondaryColor,
                                     shape: RoundedRectangleBorder(
                                       borderRadius:
                                       BorderRadius.circular(30.r),
@@ -321,6 +322,7 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
                                 ),
                               ),
                             ),
+                            SizedBox(width: 20.w),
                           ],
                         ),
                       ],
@@ -416,13 +418,13 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
     required Stream<String> stream,
   }) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 8.h),
+      padding: EdgeInsets.fromLTRB(0.w, 15.h, 0.w, 15.h),
       child: StreamBuilder<String>(
         stream: stream,
         builder: (context, snapshot) {
           return TextField(
             controller: controller,
-            style: TextStyle(fontSize: 4.sp, color: Colors.black),
+            style: TextStyle(fontSize: 4.sp),
             decoration: InputDecoration(
               labelText: label,
               labelStyle: TextStyle(
