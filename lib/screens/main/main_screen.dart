@@ -55,7 +55,7 @@ class _MainScreenState extends State<MainScreen> {
             // SideMenu hiển thị với kích thước thay đổi dựa trên trạng thái isMenuOpen
             AnimatedContainer(
               duration: Duration(milliseconds: 300), // Hoạt ảnh mượt mà
-              width: isMenuOpen ? 250 : 70, // 250 khi mở, 70 khi đóng
+              width: isMenuOpen ? 258 : 70, // 250 khi mở, 70 khi đóng
               child: SideMenu(
                 isMenuOpen: isMenuOpen,
                 onMenuItemPressed: updateScreen, // Truyền callback để thay đổi màn hình
