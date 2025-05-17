@@ -33,11 +33,12 @@ const deleteCompanyAccount = onRequest(
         // 🔥 Xóa người dùng khỏi Authentication
         await admin.auth().deleteUser(uid);
 
-        // 🔥 Xóa dữ liệu người dùng khỏi Firestore collection "residents"
-        await admin.firestore().collection("companies").doc(uid).delete();
-
+        // 🔄 Cập nhật trường `isExit` thành `true` trong Firestore
+        await admin.firestore().collection("companies").doc(uid).update({
+        isExit: true,
+        });
         res.status(200).send({
-          message: `Đã xóa tài khoản và dữ liệu người dùng có UID: ${uid}.`,
+          message: `Đã xóa tài khoản và dữ liệu công ty có UID: ${uid}.`,
         });
       } catch (error) {
         console.error("❌ Lỗi khi xóa tài khoản người dùng:", error);
