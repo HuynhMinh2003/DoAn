@@ -58,6 +58,8 @@ const createResidentAccount = onRequest(
           email,
           apartmentId,
           role: 3,
+          isExit: false,
+          leaveAt : null,
           fcmTokens: [],
           imageUrl: '',
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
