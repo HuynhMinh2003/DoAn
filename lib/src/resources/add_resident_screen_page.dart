@@ -12,7 +12,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class AddResidentsScreen extends StatefulWidget {
   final int count;
   final Apartment apartment;
-  final ContractData contract;
+  final Contract contract;
   final VoidCallback onComplete;
 
   const AddResidentsScreen({

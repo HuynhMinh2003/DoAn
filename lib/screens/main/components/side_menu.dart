@@ -10,6 +10,8 @@ import 'package:do_an/src/resources/tao_tk_nv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../src/resources/ds_hopdong_canho_page.dart';
+
 class SideMenu extends StatelessWidget {
   final bool isMenuOpen; // Nhận trạng thái mở/đóng từ MainScreen
   final Function(Widget) onMenuItemPressed; // Callback để thay đổi màn hình
@@ -51,7 +53,7 @@ class SideMenu extends StatelessWidget {
                     title: "Hợp đồng căn hộ",
                     svgSrc: "assets/icons/menu_tran.svg",
                     press: () {
-                      onMenuItemPressed(ApartmentFilterPage()); // Chuyển sang Dashboard
+                      onMenuItemPressed(ContractListPage()); // Chuyển sang Dashboard
                     },
                     isMenuOpen: isMenuOpen,
                   ),
