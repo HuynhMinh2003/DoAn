@@ -46,7 +46,7 @@ const createCompanyAccount = onRequest(
           description,
           imageUrl:"",
           isExit:false,
-          role: 4,
+          role: 5,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 

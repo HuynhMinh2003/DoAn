@@ -40,11 +40,9 @@ Future<void> exportResidentsToExcel(
         apartmentName: 'N/A',
         building: '',
         area: 0,
-        rentPrice: 0,
-        salePrice: 0,
         description: '',
-        isRent: false,
-        isSale: false,
+        status: '',
+        currentContractId: '',
         residents: [],
       ),
     );
