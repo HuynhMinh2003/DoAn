@@ -1,3 +1,4 @@
+import 'package:do_an/constants.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pool/pool.dart';
@@ -36,6 +37,10 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
     return 'ngày ${date.day.toString().padLeft(2, '0')} tháng ${date.month.toString().padLeft(2, '0')} năm ${date.year}';
   }
 
+  String formatCustomBirthDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
   List<ResidentInfo> residents = [];
 
   // Thông tin căn hộ
@@ -45,12 +50,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
   int rentPrice = 0;
 
   // // Các controller cho thông tin khác
-  // final purposeController = TextEditingController();
-  // final devicesController = TextEditingController();
-  // final limitationsController = TextEditingController();
-  // final benefitsController = TextEditingController();
-  // final commitmentController = TextEditingController();
-  // final dutiesController = TextEditingController();
+  final purposeController = TextEditingController();
 
   final residentCountController = TextEditingController();
   int? representativeIndex;
@@ -73,7 +73,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
         apartmentName = data['apartmentName'];
         area = data['area']?.toDouble() ?? 0.0;
         building = data['building'];
-        rentPrice = data['rentPrice'];
       });
     }
   }
@@ -190,13 +189,83 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
     }
   }
 
+  Future<Map<String, int>> getLatestParkingFees() async {
+    final Map<String, int> latestFees = {};
+    final vehicleTypesSnapshot = await FirebaseFirestore.instance
+        .collection('services')
+        .doc('parking')
+        .collection('vehicleTypes')
+        .get();
+
+    final futures = vehicleTypesSnapshot.docs.map((doc) async {
+      final vehicleType = doc.id;
+      final feeHistorySnapshot = await doc.reference
+          .collection('feeHistory')
+          .orderBy('effectiveFrom', descending: true)
+          .limit(1)
+          .get();
+      if (feeHistorySnapshot.docs.isNotEmpty) {
+        final fee = feeHistorySnapshot.docs.first.data()['fee'] as int;
+        latestFees[vehicleType] = fee;
+      }
+    });
+
+    await Future.wait(futures);
+    return latestFees;
+  }
+
+  Future<int?> getLatestManagementFee() async {
+    try {
+      final feeHistorySnapshot = await FirebaseFirestore.instance
+          .collection('services')
+          .doc('managementFee')
+          .collection('feeHistory')
+          .orderBy('effectiveFrom', descending: true)
+          .limit(1)
+          .get();
+
+      if (feeHistorySnapshot.docs.isNotEmpty) {
+        final latestFee = feeHistorySnapshot.docs.first.data()['feePerM2'] as int;
+        return latestFee;
+      } else {
+        return null; // Không có dữ liệu
+      }
+    } catch (e) {
+      print('Lỗi khi lấy management fee: $e');
+      return null; // Hoặc throw nếu muốn xử lý phía trên
+    }
+  }
+
+  Future<Map<String, dynamic>?> checkExistingResident(String cccd, String email) async {
+    final query = await FirebaseFirestore.instance
+        .collection("residents")
+        .where("cccd", isEqualTo: cccd)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      return query.docs.first.data();
+    }
+
+    final queryByEmail = await FirebaseFirestore.instance
+        .collection("residents")
+        .where("email", isEqualTo: email)
+        .limit(1)
+        .get();
+
+    if (queryByEmail.docs.isNotEmpty) {
+      return queryByEmail.docs.first.data();
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd/MM/yyyy');
     final currencyFormat = NumberFormat.decimalPattern('vi');
     return Scaffold(
-      backgroundColor: Color(0xFFF7FEFF),
-      appBar: AppBar(title: Text('      Nhập thông tin hợp đồng', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: Color(0xFFF7FEFF),),
+      appBar: AppBar(title: Text('      Nhập thông tin hợp đồng', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: bgColor,),
       body: SingleChildScrollView(
         padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 20.h),
         child: Column(
@@ -281,10 +350,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                 Text("Tên căn hộ: $apartmentName    /    ",style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),),
                 Text("$building    /    ",style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
                 Text("Diện tích: ${area.toStringAsFixed(1)} m²    /    ",style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
-                Text(
-                  "Giá thuê: ${currencyFormat.format(rentPrice)} VNĐ/tháng",
-                  style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),
-                )
               ],
             ),
             SizedBox(height: 30.h,),
@@ -497,6 +562,13 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
 
             SizedBox(height: 20.h),
 
+            TextField(
+              controller: purposeController,
+              decoration: InputDecoration(labelText: 'Mục đích thuê',labelStyle: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
+            ),
+
+            SizedBox(height: 20.h),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -504,17 +576,81 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                   height: 60.h,
                   child: ElevatedButton(
                     onPressed: () async {
-                      LoadingDialog.showLoadingDialog(context,"Đang tải ...");
+                      LoadingDialog.showLoadingDialog(context, "Đang tải ...");
 
                       try {
-                        // Đảm bảo bạn có thông tin căn hộ như apartmentId để tạo đường dẫn chính xác.
                         String apartmentId = widget.apartmentId;
+                        String purpose = purposeController.text;
 
-                        final pool = Pool(3); // Tối đa 3 yêu cầu cùng lúc
+                        final pool = Pool(3); // Giới hạn 3 request đồng thời
 
-                        await Future.wait(residents.map((resident) async {
-                          return pool.withResource(() async {
+                        // === 1. Tạo hợp đồng trước để lấy contractId ===
+                        Map<String, dynamic> contractData = {
+                          "apartmentDocId": apartmentId,
+                          'apartmentName': apartmentName,
+                          'building': building,
+                          'area': area,
+                          'purpose': purpose,
+                          'startDate': Timestamp.fromDate(startDate!),
+                          'endDate': Timestamp.fromDate(endDate!),
+                          "numberOfResidents": residents.length,
+                          "createdAt": Timestamp.now(),
+                          "isActive": true,
+                        };
+
+                        DocumentReference contractRef = await _firestore.collection('contracts').add(contractData);
+                        String contractId = contractRef.id;
+
+                        List<ResidentInfo> failedResidents = [];
+
+                        for (final resident in residents) {
+                          await pool.withResource(() async {
                             try {
+                              // === 1. Kiểm tra cư dân đã tồn tại bằng CCCD hoặc Email ===
+                              final existingData = await checkExistingResident(resident.cccd, resident.email);
+
+                              if (existingData != null) {
+                                final shouldRestore = await showDialog<bool>(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Center(child: Text("Cư dân đã tồn tại", style: TextStyle(fontSize: 5.sp),),),
+                                      content: Text(
+                                        "${resident.fullName} đã tồn tại trong hệ thống.\nBạn có muốn khôi phục lại thông tin này không?", style: TextStyle(fontSize: 4.sp)
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(false),
+                                          child: Text("Tạo mới", style: TextStyle(fontSize: 4.sp)),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(true),
+                                          child: Text("Khôi phục", style: TextStyle(fontSize: 4.sp)),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(null), // Hủy
+                                          child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+
+                                if (shouldRestore == null) {
+                                  // Người dùng chọn "Hủy" → thoát hẳn khỏi vòng lặp hoặc đánh dấu thất bại để sửa lại
+                                  failedResidents.add(resident);
+                                  return; // hoặc break; nếu bạn muốn dừng toàn bộ quá trình
+                                }
+
+                                if (shouldRestore == true) {
+                                  // Khôi phục residentId và các thông tin cần
+                                  resident.residentId = existingData['residentId']; // hoặc doc.id nếu bạn dùng id document
+                                  print("🔁 Khôi phục cư dân: ${resident.fullName}");
+                                  return; // Bỏ qua tạo mới
+                                }
+                              }
+
+                              // === 2. Gọi API tạo cư dân mới ===
                               final response = await http.post(
                                 Uri.parse('https://createresidentaccount-ttrkrlo35a-uc.a.run.app'),
                                 headers: {'Content-Type': 'application/json'},
@@ -527,6 +663,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                   'phone': resident.phone,
                                   'birthDate': resident.birthDate?.toIso8601String(),
                                   'apartmentId': apartmentId,
+                                  'contractId': contractId,
                                 }),
                               );
 
@@ -535,178 +672,131 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                 resident.residentId = data['residentId'];
                                 print("✅ Tạo ${resident.fullName} OK");
                               } else {
-                                print("❌ Lỗi: ${response.body}");
+                                print("❌ Lỗi response: ${response.body}");
+                                failedResidents.add(resident);
                               }
                             } catch (e) {
-                              print("❌ Lỗi gửi cho ${resident.fullName}: $e");
+                              print("❌ Lỗi xử lý ${resident.fullName}: $e");
+                              failedResidents.add(resident);
                             }
                           });
-                        }));
-
-                        // Tạo dữ liệu hợp đồng
-                        Map<String, dynamic> contractData = {
-                          "apartmentDocId": apartmentId,
-                          'apartmentName': apartmentName,
-                          'building': building,
-                          'area': area,
-                          'startDate': startDate,
-                          'endDate': endDate,
-                          "numberOfResidents": residents.length,
-                          "createdAt": Timestamp.now(),
-                        };
-
-                        // ✅ Thêm người đại diện
-                        final representative = residents[representativeIndex!];
-                        contractData['representative'] = {
-                          'id': representative.residentId,
-                          'fullName': representative.fullName,
-                        };
-
-                        DocumentReference contractRef = await _firestore
-                            .collection('apartments')
-                            .doc(apartmentId)
-                            .collection('contract')
-                            .add(contractData);
-
-                        // Cập nhật danh sách cư dân vào Firestore
-                        final residentObjects = residents.map((r) => {
-                          'fullName': r.fullName,
-                          'id': r.residentId, // Lưu ID của cư dân
-                        }).toList();
-
-                        final apartmentRef = FirebaseFirestore.instance
-                            .collection("apartments")
-                            .doc(apartmentId);
-
-                        await apartmentRef.update({
-                          "isRent": true,
-                          "residents": FieldValue.arrayUnion(residentObjects),
-                        });
-
-                        // Tạo hóa đơn nước đầu tiên
-                        final billRef =
-                        apartmentRef.collection("billWater").doc();
-                        await billRef.set({
-                        "month": DateFormat("yyyy-MM").format(DateTime.now()),
-                        "oldMeterReading": 0,
-                        "newMeterReading": 0,
-                        "totalAmount":0,
-                        "photoUrl":"",
-                        "createdAt": Timestamp.now(),
-                        });
-
-                        final templateData = await rootBundle.load('assets/templates/hd_thue_ch.docx');
-                        print("✅ Đã tải template DOCX");
-
-                        // Tạo DocxTemplate từ template đã tải
-                        final docx = await DocxTemplate.fromBytes(templateData.buffer.asUint8List());
-                        print("✅ Đã tạo DocxTemplate");
-
-                        final content = Content();
-                        print("✅ Bắt đầu tạo nội dung");
-
-                        // Thêm thông tin chính vào contract
-                        content
-                        ..add(TextContent("apartment_name", apartmentName))
-                        ..add(TextContent("building", building))
-                        ..add(TextContent("area", area.toString()))
-                        ..add(TextContent("price", currencyFormat.format(rentPrice)))
-                        ..add(TextContent("start_date", formatCustomDate(startDate!)))
-                        ..add(TextContent("representative_fullName", representative.fullName))
-                        ..add(TextContent("representative_birthDate", formatCustomDate(representative.birthDate!)))
-                        ..add(TextContent("representative_gender", representative.gender))
-                        ..add(TextContent("representative_phone", representative.phone))
-                        ..add(TextContent("representative_cccd", representative.cccd))
-                        ..add(TextContent("representative_email", representative.email))
-                        ..add(TextContent("representative_address", representative.address))
-                        ..add(TextContent("end_date",  formatCustomDate(endDate!)));
-
-                        print("✅ Đã thêm thông tin chính");
-
-                        // === Danh sách cư dân ===
-                        // final residentsList = <PlainContent>[];
-
-                        // for (final r in List<ResidentInfo>.from(residents)) {
-                        // final residentContent = PlainContent("residents")
-                        // ..add(TextContent("resident_name", "Họ và tên: " + r.fullName))
-                        // ..add(TextContent("resident_cccd", "Số CCCD: " + r.cccd))
-                        // ..add(TextContent("resident_gender", "Giới tính: " + r.cccd))
-                        // ..add(TextContent("resident_birthdate", "Ngày sinh: " + r.cccd))
-                        // ..add(TextContent("resident_address", "Địa chỉ: " + r.cccd))
-                        // ..add(TextContent("resident_phone", "Số điện thoại: " + r.phone));
-                        //
-                        // residentsList.add(residentContent);
-                        // }
-                        //
-                        // // residents là tag list, resident là mỗi item trong list
-                        // content.add(ListContent("residents", residentsList));
-
-                        final fileBytes = await docx.generate(content);
-                        print("Đã tạo file bytes từ DocxTemplate");
-
-                        // Kiểm tra fileBytes có hợp lệ không
-                        if (fileBytes == null) {
-                        print("Lỗi: Không thể tạo file bytes.");
-                        } else {
-                        print("File bytes hợp lệ.");
                         }
 
-                        // Tạo file Word
-                        final fileName = "Hợp đồng dịch vụ căn hộ ${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
-                        await downloadWordFile(fileName, fileBytes!);
+                        // === 3. Cập nhật representative ===
+                        final representative = residents[representativeIndex!];
+                        await contractRef.update({
+                          'representative': {
+                            'id': representative.residentId,
+                            'fullName': representative.fullName,
+                          }
+                        });
+
+                        // === 4. Cập nhật residents vào apartments ===
+                        final residentObjects = residents.map((r) => {
+                          'fullName': r.fullName,
+                          'id': r.residentId,
+                          'isActive': true,
+                        }).toList();
+
+                        final apartmentRef = _firestore.collection("apartments").doc(apartmentId);
+                        await apartmentRef.update({
+                          "status": 'Đang cho thuê',
+                          "residents": FieldValue.arrayUnion(residentObjects),
+                          "currentContractId": contractId
+                        });
+
+                        // === 5. Tạo hóa đơn nước đầu tiên ===
+                        final billRef = contractRef.collection("billWater").doc();
+                        await billRef.set({
+                          "month": DateFormat("yyyy-MM").format(DateTime.now()),
+                          "oldMeterReading": 0,
+                          "photoUrl1": "",
+                          "newMeterReading": 0,
+                          "photoUrl2": "",
+                          "totalAmount": 0,
+                          "createdAt": Timestamp.now(),
+                        });
+
+                      final contractHistoryRef = contractRef.collection("contractHistory").doc();
+                      await contractHistoryRef.set({
+                        "action": "Kí hợp đồng mới ",
+                        "performedBy": "Admin",
+                        "representativeName": representative.fullName,
+                        "timestamp": FieldValue.serverTimestamp(),
+                      });
+
+                        // === 6. Tạo file hợp đồng DOCX ===
+                        final templateData = await rootBundle.load('assets/templates/hd_dichvu.docx');
+                        final docx = await DocxTemplate.fromBytes(templateData.buffer.asUint8List());
+                        final content = Content();
+
+                        final latestFeesParking = await getLatestParkingFees();
+                        final latestFeesManagement = await getLatestManagementFee();
+
+                        content
+                          ..add(TextContent("apartment_name", apartmentName))
+                          ..add(TextContent("building", building))
+                          ..add(TextContent("area", area.toString()))
+                          ..add(TextContent("start_date", formatCustomDate(startDate!)))
+                          ..add(TextContent("end_date", formatCustomDate(endDate!)))
+                          ..add(TextContent("representative_fullName", representative.fullName))
+                          ..add(TextContent("representative_birthDate", formatCustomBirthDate(representative.birthDate!)))
+                          ..add(TextContent("representative_gender", representative.gender))
+                          ..add(TextContent("representative_phone", representative.phone))
+                          ..add(TextContent("representative_cccd", representative.cccd))
+                          ..add(TextContent("representative_email", representative.email))
+                          ..add(TextContent("representative_address", representative.address))
+                          ..add(TextContent("bike_roofed_fee", currencyFormat.format(latestFeesParking["bike_roofed"] ?? 0)))
+                          ..add(TextContent("bike_unroofed_fee", currencyFormat.format(latestFeesParking["bike_unroofed"] ?? 0)))
+                          ..add(TextContent("car_unroofed_fee", currencyFormat.format(latestFeesParking["car_unroofed"] ?? 0)))
+                          ..add(TextContent("car_roofed_fee", currencyFormat.format(latestFeesParking["car_roofed"] ?? 0)))
+                          ..add(TextContent("motobike_roofed_fee", currencyFormat.format(latestFeesParking["motobike_roofed"] ?? 0)))
+                          ..add(TextContent("motorbike_unroofed_fee", currencyFormat.format(latestFeesParking["motorbike_unroofed"] ?? 0)))
+                          ..add(TextContent("management_fee", currencyFormat.format(latestFeesManagement ?? 0)));
+
+                        final fileBytes = await docx.generate(content);
+                        if (fileBytes != null) {
+                          final fileName = "Hợp đồng dịch vụ căn hộ ${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
+                          await downloadWordFile(fileName, fileBytes);
+                        }
 
                         LoadingDialog.hideLoadingDialog(context);
 
-                        // Hiển thị dialog thành công
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: Center(child: Text(
-                                "Thành công",
-                                style: TextStyle(fontSize: 5.sp),
-                              ),),
-                              content: Text(
-                                  "Hợp đồng đã được tạo thành công!",
-                                  style: TextStyle(fontSize: 4.sp)),
+                              title: Center(child: Text("Thành công", style: TextStyle(fontSize: 5.sp))),
+                              content: Text("Hợp đồng đã được tạo thành công!", style: TextStyle(fontSize: 4.sp)),
                               actions: [
                                 TextButton(
                                   onPressed: () {
                                     Provider.of<ContractNotifier>(context, listen: false).markAsCreated();
-
                                     Navigator.pop(context); // Đóng dialog
-                                    Navigator.pop(context);
-                                    // Quay lại trang trước
+                                    Navigator.pop(context); // Quay lại trang trước
                                   },
-                                  child: Text("Đồng ý",
-                                      style: TextStyle(fontSize: 4.sp)),
+                                  child: Text("Đồng ý", style: TextStyle(fontSize: 4.sp)),
                                 ),
                               ],
                             );
                           },
                         );
                       } catch (e) {
-                        // Xử lý lỗi
                         print("❌ Lỗi: $e");
+                        LoadingDialog.hideLoadingDialog(context);
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: Center(child: Text(
-                                "Thất bại",
-                                style: TextStyle(fontSize: 5.sp),
-                              ),),
-                              content: Text(
-                                  "Hợp đồng tạo thất bại!",
-                                  style: TextStyle(fontSize: 4.sp)),
+                              title: Center(child: Text("Thất bại", style: TextStyle(fontSize: 5.sp))),
+                              content: Text("Hợp đồng tạo thất bại!", style: TextStyle(fontSize: 4.sp)),
                               actions: [
                                 TextButton(
                                   onPressed: () {
                                     Navigator.pop(context); // Đóng dialog
                                     Navigator.pop(context); // Quay lại trang trước
                                   },
-                                  child: Text("Đồng ý",
-                                      style: TextStyle(fontSize: 4.sp)),
+                                  child: Text("Đồng ý", style: TextStyle(fontSize: 4.sp)),
                                 ),
                               ],
                             );

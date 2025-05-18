@@ -1,5 +1,5 @@
-import 'package:do_an/src/resources/chon_can_ho_page.dart';
 import 'package:do_an/src/resources/ds_canho_page.dart';
+import 'package:do_an/src/resources/ds_hopdong_canho_page.dart';
 import 'package:do_an/src/resources/ds_nhanvien_page.dart';
 import 'package:do_an/src/resources/quan_li_web.dart';
 import 'package:do_an/src/resources/tao_tk_nv.dart';
@@ -11,7 +11,7 @@ final GoRouter router = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(path: '/', builder: (_, __) => const AdminWebPage()),
-    GoRoute(path: '/hop-dong', builder: (_, __) => const ApartmentFilterPage()),
+    GoRoute(path: '/hop-dong', builder: (_, __) => const ContractListPage()),
     GoRoute(path: '/danh-sach-phong', builder: (_, __) => const ApartmentListPage()),
     GoRoute(path: '/tao-nhan-vien', builder: (_, __) => const AddAccountStaffPage()),
     GoRoute(path: '/ds-nhan-vien', builder: (_, __) => const StaffListPage()),

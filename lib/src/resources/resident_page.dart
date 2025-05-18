@@ -507,11 +507,9 @@ class _ResidentPageState extends State<ResidentPage> {
           apartmentName: '',
           building: '',
           area: 0,
-          rentPrice: 0,
-          salePrice: 0,
           description: '',
-          isRent: false,
-          isSale: false,
+          status: '',
+          currentContractId: '',
           residents: [],
         ),
       );

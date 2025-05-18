@@ -118,10 +118,10 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     }
 
     // Lọc theo trạng thái hợp đồng
-    if (selectedContractStatus == "isSale") {
-      result = result.where((a) => a.isSale == true).toList();
-    } else if (selectedContractStatus == "isRent") {
-      result = result.where((a) => a.isRent == true).toList();
+    if (selectedContractStatus == "status") {
+      result = result.where((a) => a.status == 'Trống').toList();
+    } else if (selectedContractStatus == "status") {
+      result = result.where((a) => a.status == 'Đã được thuê').toList();
     }
 
     // Cập nhật các biến trước
@@ -242,7 +242,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
       }
 
       final contractDoc = contractSnapshot.docs.first;
-      final contract = ContractData.fromMap(contractDoc.data(), contractDoc.id, []);
+      final contract = Contract.fromMap(contractDoc.data(), contractDoc.id, []);
 
       // Lấy hóa đơn nước đầu tiên
       final billWaterSnapshot = await billWaterCollectionRef.limit(1).get();
@@ -270,7 +270,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (apartment.isRent == true) ...[
+              if (apartment.status == 'Trống') ...[
                 Text("Diện tích: ${contract.area} m²", style: TextStyle(fontSize: 3.5.sp)),
                 SizedBox(height: 10.h),
                 Text(
@@ -280,34 +280,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                 SizedBox(height: 10.h),
                 Text("Số người ở: ${contract.numberOfResidents}", style: TextStyle(fontSize: 3.5.sp)),
                 SizedBox(height: 10.h),
-                Text(
-                  'Đồ đạc, vận dụng đi kèm: ${contract.devices?.trim().isNotEmpty == true ? contract.devices : "Không có"}',
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  'Quyền lợi chung: ${contract.benefit?.trim().isNotEmpty == true ? contract.benefit : "Không có"}',
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  'Cam kết chung: ${contract.commit?.trim().isNotEmpty == true ? contract.commit : "Không có"}',
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  'Nghĩa vụ chung: ${contract.duties?.trim().isNotEmpty == true ? contract.duties : "Không có"}',
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  'Hạn chế: ${contract.limit?.trim().isNotEmpty == true ? contract.limit : "Không có"}',
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
                 Text('Mục đích ở: ${contract.purpose}', style: TextStyle(fontSize: 3.5.sp)),
-                SizedBox(height: 10.h),
-                Text("Tình trạng: ${apartment.isRent == true ? 'Đã được thuê' : 'Đã được mua'}", style: TextStyle(fontSize: 3.5.sp)),
                 SizedBox(height: 10.h),
                 Text('Thời gian kí: ${contract.createdAt}', style: TextStyle(fontSize: 3.5.sp)),
                 SizedBox(height: 10.h),
@@ -325,29 +298,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                 SizedBox(height: 10.h),
                 Text("Số người ở: ${contract.numberOfResidents}", style: TextStyle(fontSize: 3.5.sp)),
                 SizedBox(height: 10.h),
-                Text(
-                  'Đồ đạc, vận dụng đi kèm: ${contract.devices?.trim().isNotEmpty == true ? contract.devices : "Không có"}',
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  'Hạn chế: ${contract.limit?.trim().isNotEmpty == true ? contract.limit : "Không có"}',
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  'Thời hạn thanh toán: ${contract.timepay != null ? DateFormat('dd/MM/yyyy – HH:mm').format(contract.timepay!) : "Không có"}',
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  'Đợt thanh toán: ${contract.timepayattention?.trim().isNotEmpty == true ? contract.timepayattention : "Không có"}',
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
                 Text('Mục đích ở: ${contract.purpose}', style: TextStyle(fontSize: 3.5.sp)),
-                SizedBox(height: 10.h),
-                Text("Tình trạng: ${apartment.isRent == true ? 'Đã được thuê' : 'Đã được mua'}", style: TextStyle(fontSize: 3.5.sp)),
                 SizedBox(height: 10.h),
                 Text('Thời gian kí: ${contract.createdAt}', style: TextStyle(fontSize: 3.5.sp)),
                 SizedBox(height: 10.h),
@@ -579,7 +530,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     }
   }
 
-  void showUpdateResidentsDialog(BuildContext context, Apartment apartment, ContractData contract, VoidCallback onRefresh) {
+  void showUpdateResidentsDialog(BuildContext context, Apartment apartment, Contract contract, VoidCallback onRefresh) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -608,7 +559,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     );
   }
 
-  void showAddResidentsFlow(BuildContext context, Apartment apartment, ContractData contract, VoidCallback onRefresh) async {
+  void showAddResidentsFlow(BuildContext context, Apartment apartment, Contract contract, VoidCallback onRefresh) async {
     int maxCanAdd = 10 - contract.numberOfResidents;
     int? numberToAdd;
 
@@ -700,7 +651,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
     });
   }
 
-  void showRemoveResidentsDialog(BuildContext context, Apartment apartment, ContractData contract, VoidCallback onRefresh) async {
+  void showRemoveResidentsDialog(BuildContext context, Apartment apartment, Contract contract, VoidCallback onRefresh) async {
     final contractRef = FirebaseFirestore.instance
         .collection("apartments")
         .doc(apartment.id)
@@ -1143,15 +1094,12 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                                   Icon statusIcon;
                                                   String statusText;
 
-                                                  if (apartment.isRent == true) {
-                                                    statusIcon = const Icon(Icons.vpn_key, color: Colors.orange);
-                                                    statusText = "Đã được thuê";
-                                                  } else if (apartment.isSale == true) {
-                                                    statusIcon = const Icon(Icons.shopping_bag, color: Colors.green);
-                                                    statusText = "Đã được mua";
-                                                  } else {
+                                                  if (apartment.status == 'Trống') {
                                                     statusIcon = const Icon(Icons.home_outlined, color: Colors.grey);
                                                     statusText = "Trống";
+                                                  } else {
+                                                    statusIcon = const Icon(Icons.shopping_bag, color: Colors.green);
+                                                    statusText = "Đã được mua";
                                                   }
 
                                                   return FutureBuilder<QuerySnapshot>(
@@ -1203,7 +1151,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                                                   ),
 
                                                                   // Đại diện nếu căn hộ không trống
-                                                                  if (apartment.isRent == true || apartment.isSale == true) ...[
+                                                                  if (apartment.status == 'Trống') ...[
                                                                     SizedBox(height: 4.h),
                                                                     Text(
                                                                       'Người đại diện: $representativeName',
@@ -1215,7 +1163,7 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
                                                             ],
                                                           ),
                                                           onTap: () {
-                                                            if (apartment.isRent == true || apartment.isSale == true) {
+                                                            if (apartment.status == 'Trống') {
                                                               showApartmentContractInfoDialog(context, apartment, loadApartmentsFromFirestore);
                                                             } else {
                                                               showApartmentDialog(context, apartment);
