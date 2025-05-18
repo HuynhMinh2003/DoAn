@@ -22,10 +22,20 @@ const createStaffAccount = onRequest(
   },
   (req, res) => {
     corsHandler(req, res, async () => {
-      const { email, fullName, address, birthDate, gender, cccd, phone, position} = req.body;
+      const { email, fullName, address, birthDate, gender, cccd, phone, position } = req.body;
 
-      if (!email || !fullName || !address|| !birthDate|| !gender || !cccd|| !phone || !position ) {
+      if (!email || !fullName || !address || !birthDate || !gender || !cccd || !phone || !position) {
         return res.status(400).send("Thiếu thông tin nhân viên.");
+      }
+
+      // Xác định role dựa theo vị trí
+      let role;
+      if (position === "Kĩ thuật viên") {
+        role = 2;
+      } else if (position === "Nhân viên ghi chỉ số nước") {
+        role = 3;
+      } else {
+        return res.status(400).send("Vị trí không hợp lệ.");
       }
 
       try {
@@ -48,10 +58,10 @@ const createStaffAccount = onRequest(
           address,
           position,
           imageUrl: "",
-          isExit:false,
+          isExit: false,
           leaveAt: null,
-          isFree:true,
-          role: 2,
+          isFree: true,
+          role: role, // Gán role theo position
           lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
@@ -91,15 +101,14 @@ const createStaffAccount = onRequest(
           `,
         });
 
-        // Trả về UID của nhân viên vừa tạo
-                res.status(200).send({
-                  message: "Tạo tài khoản nhân viên và gửi email thành công.",
-                  uid: userRecord.uid, // Trả về UID của người dùng mới
-                });
-              } catch (error) {
-                console.error("❌ Lỗi tạo tài khoản nhân viên:", error);
-                res.status(500).send("Lỗi: " + error.message);
-              }
+        res.status(200).send({
+          message: "Tạo tài khoản nhân viên và gửi email thành công.",
+          uid: userRecord.uid,
+        });
+      } catch (error) {
+        console.error("❌ Lỗi tạo tài khoản nhân viên:", error);
+        res.status(500).send("Lỗi: " + error.message);
+      }
     });
   }
 );

@@ -7,8 +7,8 @@ import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'contract_form_page.dart';
 import 'ds_canho_mobile_page.dart' if (dart.library.html) 'ds_canho_web_page.dart';
 
 class ApartmentListPage extends StatefulWidget {
@@ -106,306 +106,239 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
     }
   }
 
-  // void showDeleteApartmentDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) async {
-  //   if (apartment.isRent || apartment.isSale) {
-  //     // Hiển thị thông báo không thể xóa
-  //     showDialog(
-  //       context: context,
-  //       builder: (_) => AlertDialog(
-  //         title: Center(child: Text('Không thể xóa',style: TextStyle(fontSize: 5.sp),),),
-  //         content: Text('Căn hộ này vẫn còn hợp đồng!',style: TextStyle(fontSize: 4.sp)),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context),
-  //             child: Text('OK'),
-  //           ),
-  //         ],
-  //       ),
-  //     );
-  //     return;
-  //   }
-  //
-  //   // Hiển thị hộp thoại xác nhận xóa
-  //   final confirm = await showDialog(
-  //     context: context,
-  //     builder: (_) => AlertDialog(
-  //       title: Center(child: Text('Xác nhận xóa', style: TextStyle(fontSize: 5.sp),),),
-  //       content: Text('Bạn có chắc muốn xóa căn hộ này không?', style: TextStyle(fontSize: 4.sp)),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Navigator.pop(context, false),
-  //           child: Text('Hủy', style: TextStyle(fontSize: 4.sp)),
-  //         ),
-  //         TextButton(
-  //           onPressed: () => Navigator.pop(context, true),
-  //           child: Text('Xóa', style: TextStyle(fontSize: 4.sp)),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  //
-  //   if (confirm == true) {
-  //     // Thực hiện xóa căn hộ
-  //     LoadingDialog.showLoadingDialog(context, "Đang tải ...");
-  //     await FirebaseFirestore.instance.collection('apartments').doc(apartment.id).delete();
-  //     LoadingDialog.hideLoadingDialog(context);
-  //     onRefresh(); // Tải lại dữ liệu
-  //   }
-  // }
-  //
-  // void showEditApartmentDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) {
-  //   final areaController = TextEditingController(text: apartment.area.toString());
-  //   final rentController = TextEditingController(text: NumberFormat("#,###").format(apartment.rentPrice));
-  //   final saleController = TextEditingController(text: NumberFormat("#,###").format(apartment.salePrice));
-  //   final descriptionController = TextEditingController(text: apartment.description);
-  //
-  //   bool isEditing = false;
-  //
-  //   // StreamControllers để quản lý lỗi
-  //   final StreamController<String?> areaErrorController = StreamController<String?>();
-  //   final StreamController<String?> rentErrorController = StreamController<String?>();
-  //   final StreamController<String?> saleErrorController = StreamController<String?>();
-  //   final StreamController<String?> descriptionErrorController = StreamController<String?>();
-  //
-  //   // Biến trạng thái lỗi
-  //   bool areaHasError = false;
-  //   bool rentHasError = false;
-  //   bool saleHasError = false;
-  //   bool descriptionHasError = false;
-  //
-  //   // Hàm kiểm tra và phát lỗi
-  //   void validateFields() {
-  //     print("Validating fields...");
-  //
-  //     if (double.tryParse(areaController.text) == null) {
-  //       areaErrorController.add('Diện tích phải là số.');
-  //       areaHasError = true;
-  //       print("Error: Diện tích phải là số.");
-  //     } else {
-  //       areaErrorController.add(null);
-  //       areaHasError = false;
-  //     }
-  //
-  //     if (int.tryParse(rentController.text.replaceAll(',', '')) == null) {
-  //       rentErrorController.add('Giá thuê phải là số.');
-  //       rentHasError = true;
-  //       print("Error: Giá thuê phải là số.");
-  //     } else {
-  //       rentErrorController.add(null);
-  //       rentHasError = false;
-  //     }
-  //
-  //     if (int.tryParse(saleController.text.replaceAll(',', '')) == null) {
-  //       saleErrorController.add('Giá mua phải là số.');
-  //       saleHasError = true;
-  //       print("Error: Giá mua phải là số.");
-  //     } else {
-  //       saleErrorController.add(null);
-  //       saleHasError = false;
-  //     }
-  //
-  //     if (descriptionController.text.isEmpty) {
-  //       descriptionErrorController.add('Mô tả không được để trống.');
-  //       descriptionHasError = true;
-  //       print("Error: Mô tả không được để trống.");
-  //     } else {
-  //       descriptionErrorController.add(null);
-  //       descriptionHasError = false;
-  //     }
-  //
-  //     print("Validation completed.");
-  //   }
-  //
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (context) {
-  //       return StatefulBuilder(
-  //         builder: (context, setState) {
-  //           return AlertDialog(
-  //             title: Text(
-  //               "Thông tin phòng ${apartment.apartmentName}",
-  //               textAlign: TextAlign.center,
-  //               style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp),
-  //             ),
-  //             content: SingleChildScrollView(
-  //               child: Column(
-  //                 mainAxisSize: MainAxisSize.min,
-  //                 children: [
-  //                   Text(' ${apartment.building}', style: TextStyle(fontSize: 4.sp)),
-  //                   SizedBox(height: 10.h),
-  //
-  //                   // Diện tích
-  //                   StreamBuilder<String?>(
-  //                     stream: areaErrorController.stream,
-  //                     builder: (context, snapshot) {
-  //                       return TextField(
-  //                         controller: areaController,
-  //                         enabled: isEditing,
-  //                         keyboardType: TextInputType.number,
-  //                         style: TextStyle(fontSize: 4.sp),
-  //                         decoration: InputDecoration(
-  //                           labelText: 'Diện tích (m²)',
-  //                           labelStyle: TextStyle(fontSize: 4.sp),
-  //                           errorText: snapshot.data,
-  //                         ),
-  //                         onChanged: (value) {
-  //                           if (isEditing) validateFields();
-  //                         },
-  //                       );
-  //                     },
-  //                   ),
-  //
-  //                   // Giá thuê
-  //                   StreamBuilder<String?>(
-  //                     stream: rentErrorController.stream,
-  //                     builder: (context, snapshot) {
-  //                       return TextField(
-  //                         controller: rentController,
-  //                         enabled: isEditing,
-  //                         keyboardType: TextInputType.number,
-  //                         style: TextStyle(fontSize: 4.sp),
-  //                         decoration: InputDecoration(
-  //                           labelText: 'Giá thuê (VNĐ)',
-  //                           labelStyle: TextStyle(fontSize: 4.sp),
-  //                           errorText: snapshot.data,
-  //                         ),
-  //                         onChanged: (value) {
-  //                           if (isEditing) validateFields();
-  //                         },
-  //                       );
-  //                     },
-  //                   ),
-  //
-  //                   // Giá mua
-  //                   StreamBuilder<String?>(
-  //                     stream: saleErrorController.stream,
-  //                     builder: (context, snapshot) {
-  //                       return TextField(
-  //                         controller: saleController,
-  //                         enabled: isEditing,
-  //                         keyboardType: TextInputType.number,
-  //                         style: TextStyle(fontSize: 4.sp),
-  //                         decoration: InputDecoration(
-  //                           labelText: 'Giá mua (VNĐ)',
-  //                           labelStyle: TextStyle(fontSize: 4.sp),
-  //                           errorText: snapshot.data,
-  //                         ),
-  //                         onChanged: (value) {
-  //                           if (isEditing) validateFields();
-  //                         },
-  //                       );
-  //                     },
-  //                   ),
-  //
-  //                   // Mô tả
-  //                   StreamBuilder<String?>(
-  //                     stream: descriptionErrorController.stream,
-  //                     builder: (context, snapshot) {
-  //                       return TextField(
-  //                         controller: descriptionController,
-  //                         enabled: isEditing,
-  //                         style: TextStyle(fontSize: 4.sp),
-  //                         decoration: InputDecoration(
-  //                           labelText: 'Mô tả',
-  //                           labelStyle: TextStyle(fontSize: 4.sp),
-  //                           errorText: snapshot.data,
-  //                         ),
-  //                         onChanged: (value) {
-  //                           if (isEditing) validateFields();
-  //                         },
-  //                       );
-  //                     },
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-  //             actions: [
-  //               TextButton(
-  //                 onPressed: () async {
-  //                   if (isEditing) {
-  //                     print("Attempting to save data...");
-  //                     validateFields();
-  //
-  //                     // Kiểm tra nếu có lỗi
-  //                     if (areaHasError || rentHasError || saleHasError || descriptionHasError) {
-  //                       print("Validation failed. Cannot save.");
-  //                       return;
-  //                     }
-  //
-  //                     LoadingDialog.showLoadingDialog(context, "Đang tải...");
-  //                     try {
-  //                       print("Saving data to Firestore...");
-  //                       await FirebaseFirestore.instance.collection('apartments').doc(apartment.id).update({
-  //                         'area': double.tryParse(areaController.text) ?? apartment.area,
-  //                         'rentPrice': int.tryParse(rentController.text.replaceAll(',', '')) ?? apartment.rentPrice,
-  //                         'salePrice': int.tryParse(saleController.text.replaceAll(',', '')) ?? apartment.salePrice,
-  //                         'description': descriptionController.text,
-  //                       });
-  //                       print("Data saved successfully.");
-  //                       LoadingDialog.hideLoadingDialog(context);
-  //                       Navigator.pop(context);
-  //                       onRefresh();
-  //                     } catch (e) {
-  //                       print("Error while saving: $e");
-  //                       LoadingDialog.hideLoadingDialog(context);
-  //                     }
-  //                   } else {
-  //                     setState(() {
-  //                       print("Switching to edit mode...");
-  //                       isEditing = true;
-  //                     });
-  //                   }
-  //                 },
-  //                 child: Text(isEditing ? "Lưu" : "Sửa", style: TextStyle(fontSize: 4.sp)),
-  //               ),
-  //               TextButton(
-  //                 onPressed: () => Navigator.pop(context),
-  //                 child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
-  //               ),
-  //             ],
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
-  //
-  // void showApartmentDialog(BuildContext context, Apartment apartment) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (_) => AlertDialog(
-  //       title: Text("Phòng ${apartment.apartmentName}", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp),),
-  //       content: Column(
-  //         mainAxisSize: MainAxisSize.min,
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           SizedBox(height: 10.h,),
-  //           Text('${apartment.building}', style: TextStyle(fontSize: 4.sp),),
-  //           SizedBox(height: 30.h,),
-  //           Text('Diện tích: ${apartment.area} m²', style: TextStyle(fontSize: 4.sp),),
-  //           SizedBox(height: 30.h,),
-  //           Text(apartment.description, style: TextStyle(fontSize: 4.sp)),
-  //         ],
-  //       ),
-  //       actions: [
-  //         // TextButton(
-  //         //   onPressed: () {
-  //         //     Navigator.pop(context);
-  //         //     Navigator.push(
-  //         //         context,
-  //         //         MaterialPageRoute(
-  //         //           builder: (_) => ContractFormRentPage(
-  //         //             apartmentId: apartment.id, // 👈 truyền ID
-  //         //           ),
-  //         //         ));
-  //         //   },
-  //         //   child: Text("Thuê", style: TextStyle(fontSize: 3.5.sp),),
-  //         // ),
-  //       ],
-  //     ),
-  //   );
-  // }
+  void showDeleteApartmentDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) async {
+    if (apartment.status== 'Đã được thuê') {
+      // Hiển thị thông báo không thể xóa
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Center(child: Text('Không thể xóa',style: TextStyle(fontSize: 5.sp),),),
+          content: Text('Căn hộ này vẫn còn hợp đồng!',style: TextStyle(fontSize: 4.sp)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Hiển thị hộp thoại xác nhận xóa
+    final confirm = await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Center(child: Text('Xác nhận xóa', style: TextStyle(fontSize: 5.sp),),),
+        content: Text('Bạn có chắc muốn xóa căn hộ này không?', style: TextStyle(fontSize: 4.sp)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Hủy', style: TextStyle(fontSize: 4.sp)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Xóa', style: TextStyle(fontSize: 4.sp)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      // Thực hiện xóa căn hộ
+      LoadingDialog.showLoadingDialog(context, "Đang tải ...");
+      await FirebaseFirestore.instance.collection('apartments').doc(apartment.id).delete();
+      LoadingDialog.hideLoadingDialog(context);
+      onRefresh(); // Tải lại dữ liệu
+    }
+  }
+
+  void showEditApartmentDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) {
+    final areaController = TextEditingController(text: apartment.area.toString());
+    final descriptionController = TextEditingController(text: apartment.description);
+
+    bool isEditing = false;
+
+    // StreamControllers để quản lý lỗi
+    final StreamController<String?> areaErrorController = StreamController<String?>();
+    final StreamController<String?> descriptionErrorController = StreamController<String?>();
+
+    // Biến trạng thái lỗi
+    bool areaHasError = false;
+    bool descriptionHasError = false;
+
+    // Hàm kiểm tra và phát lỗi
+    void validateFields() {
+      print("Validating fields...");
+
+      if (double.tryParse(areaController.text) == null) {
+        areaErrorController.add('Diện tích phải là số.');
+        areaHasError = true;
+        print("Error: Diện tích phải là số.");
+      } else {
+        areaErrorController.add(null);
+        areaHasError = false;
+      }
+
+      if (descriptionController.text.isEmpty) {
+        descriptionErrorController.add('Mô tả không được để trống.');
+        descriptionHasError = true;
+        print("Error: Mô tả không được để trống.");
+      } else {
+        descriptionErrorController.add(null);
+        descriptionHasError = false;
+      }
+
+      print("Validation completed.");
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(
+                "Thông tin phòng ${apartment.apartmentName}",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(' ${apartment.building}', style: TextStyle(fontSize: 4.sp)),
+                    SizedBox(height: 10.h),
+
+                    // Diện tích
+                    StreamBuilder<String?>(
+                      stream: areaErrorController.stream,
+                      builder: (context, snapshot) {
+                        return TextField(
+                          controller: areaController,
+                          enabled: isEditing,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(fontSize: 4.sp),
+                          decoration: InputDecoration(
+                            labelText: 'Diện tích (m²)',
+                            labelStyle: TextStyle(fontSize: 4.sp),
+                            errorText: snapshot.data,
+                          ),
+                          onChanged: (value) {
+                            if (isEditing) validateFields();
+                          },
+                        );
+                      },
+                    ),
+
+                    // Mô tả
+                    StreamBuilder<String?>(
+                      stream: descriptionErrorController.stream,
+                      builder: (context, snapshot) {
+                        return TextField(
+                          controller: descriptionController,
+                          enabled: isEditing,
+                          style: TextStyle(fontSize: 4.sp),
+                          decoration: InputDecoration(
+                            labelText: 'Mô tả',
+                            labelStyle: TextStyle(fontSize: 4.sp),
+                            errorText: snapshot.data,
+                          ),
+                          onChanged: (value) {
+                            if (isEditing) validateFields();
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    if (isEditing) {
+                      print("Attempting to save data...");
+                      validateFields();
+
+                      // Kiểm tra nếu có lỗi
+                      if (areaHasError || descriptionHasError) {
+                        print("Validation failed. Cannot save.");
+                        return;
+                      }
+
+                      LoadingDialog.showLoadingDialog(context, "Đang tải...");
+                      try {
+                        print("Saving data to Firestore...");
+                        await FirebaseFirestore.instance.collection('apartments').doc(apartment.id).update({
+                          'area': double.tryParse(areaController.text) ?? apartment.area,
+                          'description': descriptionController.text,
+                          'isUpdate': Timestamp.now(),
+                        });
+                        print("Data saved successfully.");
+                        LoadingDialog.hideLoadingDialog(context);
+                        Navigator.pop(context);
+                        onRefresh();
+                      } catch (e) {
+                        print("Error while saving: $e");
+                        LoadingDialog.hideLoadingDialog(context);
+                      }
+                    } else {
+                      setState(() {
+                        print("Switching to edit mode...");
+                        isEditing = true;
+                      });
+                    }
+                  },
+                  child: Text(isEditing ? "Lưu" : "Sửa", style: TextStyle(fontSize: 4.sp)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void showApartmentDialog(BuildContext context, Apartment apartment) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text("Phòng ${apartment.apartmentName}", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp),),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 10.h,),
+            Text('${apartment.building}', style: TextStyle(fontSize: 4.sp),),
+            SizedBox(height: 30.h,),
+            Text('Diện tích: ${apartment.area} m²', style: TextStyle(fontSize: 4.sp),),
+            SizedBox(height: 30.h,),
+            Text(apartment.description, style: TextStyle(fontSize: 4.sp)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ContractFormRentPage(
+                      apartmentId: apartment.id, // 👈 truyền ID
+                    ),
+                  ));
+            },
+            child: Text("Thuê", style: TextStyle(fontSize: 3.5.sp),),
+          ),
+        ],
+      ),
+    );
+  }
 
   List<String> getAvailableBuildings() {
     return allApartments.map((a) => a.building).toSet().toList()..sort();
@@ -445,20 +378,19 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
           .toList();
     }
 
-    // // Lọc theo trạng thái hợp đồng
-    // if (selectedContractStatus == "contract") {
-    //   result = result.where((a) => a.isSale || a.isRent).toList(); // Gộp isSale và isRent
-    // } else if (selectedContractStatus == "empty") {
-    //   result = result.where((a) => !a.isSale && !a.isRent).toList(); // Trạng thái trống
-    // }
+    // ✅ Lọc theo trạng thái hợp đồng (hỗ trợ "all", "contract", "empty")
+    if (selectedContractStatus == "contract") {
+      result = result.where((a) => a.status == 'Đang cho thuê').toList();
+    } else if (selectedContractStatus == "empty") {
+      result = result.where((a) => a.status == 'Trống').toList();
+    }
+    // Nếu là "all" hoặc null thì không lọc thêm
 
-    // Cập nhật các biến trước
     filteredApartments = result;
     currentPage = 1;
-    updatePaginatedApartments(); // KHÔNG dùng setState bên trong hàm này nữa
+    updatePaginatedApartments();
 
-    // Gọi setState sau khi các biến đã được cập nhật
-    if (mounted) { // Kiểm tra widget có còn tồn tại
+    if (mounted) {
       setState(() {});
     }
   }
@@ -629,7 +561,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
               Expanded(
                 child: buildFilterDropdown<String>(
                   label: "Trạng thái",
-                  items: ["contract", "empty"],
+                  items: ["all", "contract", "empty"],
                   selectedValue: selectedContractStatus,
                   onChanged: (value) {
                     setState(() {
@@ -638,7 +570,8 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                     });
                   },
                   itemLabelBuilder: (item) {
-                    if (item == "contract") return "Đã có hợp đồng";
+                    if (item == "all") return "Tất cả";
+                    if (item == "contract") return "Đang cho thuê";
                     if (item == "empty") return "Trống";
                     return item;
                   },
@@ -715,36 +648,32 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                   DataColumn(label: Text("Hành động", style: TextStyle(fontSize: 4.sp))),
                                 ],
                                 rows: filteredApartments.map((apartment) {
-                                  // final status = apartment.isRent
-                                  //     ? 'Đã thuê'
-                                  //     : (apartment.isSale ? "Đã bán" : "Chưa kích hoạt");
-
                                   return DataRow(cells: [
                                     DataCell(Text(apartment.building, style: TextStyle(fontSize: 4.sp))),
                                     DataCell(Text(apartment.apartmentName, style: TextStyle(fontSize: 4.sp))),
                                     DataCell(Text("${apartment.floor}", style: TextStyle(fontSize: 4.sp))),
                                     DataCell(Text("${apartment.area} m²", style: TextStyle(fontSize: 4.sp))),
                                     DataCell(Text(apartment.description, style: TextStyle(fontSize: 4.sp))),
-                                    DataCell(Text(apartment.description, style: TextStyle(fontSize: 4.sp))),
+                                    DataCell(Text(apartment.status, style: TextStyle(fontSize: 4.sp))),
                                     DataCell(
                                       Row(
                                         children: [
                                           IconButton(
                                             icon: Icon(Icons.edit, color: Colors.blue),
                                             onPressed: () {
-                                              // showEditApartmentDialog(context, apartment, loadApartmentsFromFirestore);
+                                              showEditApartmentDialog(context, apartment, loadApartmentsFromFirestore);
                                             },
                                           ),
                                           IconButton(
                                             icon: Icon(Icons.delete, color: Colors.red),
                                             onPressed: () {
-                                              // showDeleteApartmentDialog(context, apartment, loadApartmentsFromFirestore);
+                                              showDeleteApartmentDialog(context, apartment, loadApartmentsFromFirestore);
                                             },
                                           ),
                                           IconButton(
-                                            icon: Icon(Icons.add, color: Colors.grey),
+                                            icon: Icon(Icons.info_outline, color: Colors.grey),
                                             onPressed: () {
-                                              // showApartmentDialog(context, apartment);
+                                              showApartmentDialog(context, apartment);
                                             },
                                           ),
                                         ],
@@ -907,62 +836,3 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
     );
   }
 }
-
-// Lớp hỗ trợ cho PaginatedDataTable
-// class _ApartmentsDataSource extends DataTableSource {
-//   final List<Apartment> apartments;
-//   final BuildContext context; // Thêm context
-//   final VoidCallback onRefresh; // Hàm tải lại dữ liệu
-//
-//   _ApartmentsDataSource(this.apartments, this.context, this.onRefresh);
-//
-//   @override
-//   DataRow? getRow(int index) {
-//     if (index >= apartments.length) return null;
-//     final apartment = apartments[index];
-//     final status = apartment.isRent
-//         ? 'Đã thuê'
-//         : (apartment.isSale ? "Đã bán" : "Chưa kích hoạt");
-//
-//     return DataRow(cells: [
-//       DataCell(Text(apartment.building,style: TextStyle(fontSize: 4.sp))),
-//       DataCell(Text(apartment.apartmentName,style: TextStyle(fontSize: 4.sp))),
-//       DataCell(Text("${apartment.floor}",style: TextStyle(fontSize: 4.sp))),
-//       DataCell(Text("${apartment.area} m²",style: TextStyle(fontSize: 4.sp))),
-//       DataCell(Text("${apartment.description}",style: TextStyle(fontSize: 4.sp))),
-//       DataCell(Text(status)),
-//       DataCell(
-//         Row(children: [
-//           IconButton(
-//     icon: Icon(Icons.edit, color: Colors.blue),
-//     onPressed: () {
-//     showEditApartmentDialog(context, apartment, onRefresh);
-//     },
-//     ),
-//           IconButton(
-//             icon: Icon(Icons.delete, color: Colors.red),
-//             onPressed: () {
-//               showDeleteApartmentDialog(context, apartment, onRefresh);
-//             },
-//           ),
-//           IconButton(
-//             icon: Icon(Icons.add, color: Colors.grey),
-//             onPressed: () {
-//               showApartmentDialog(context, apartment);
-//             },
-//           ),
-//         ],)
-//
-//       ),
-//     ]);
-//   }
-//
-//   @override
-//   bool get isRowCountApproximate => false;
-//
-//   @override
-//   int get rowCount => apartments.length;
-//
-//   @override
-//   int get selectedRowCount => 0;
-// }

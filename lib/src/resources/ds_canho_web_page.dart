@@ -29,10 +29,9 @@ Future<void> importApartmentsFromExcel(BuildContext context) async {
           'area': double.tryParse(row[1]?.value.toString() ?? '0') ?? 0.0,
           'building': row[2]?.value.toString() ?? '',
           'description': row[3]?.value.toString() ?? '',
-          'rentPrice': int.tryParse(row[4]?.value.toString() ?? '0') ?? 0,
-          'salePrice': int.tryParse(row[5]?.value.toString() ?? '0') ?? 0,
-          'isRent': false,
-          'isSale': false,
+          'status': 'Trống',
+          'currentContractId': null,
+          'isUpdate': null,
           'residents': [],
         };
 
@@ -56,8 +55,7 @@ Future<void> exportApartmentsToExcel(List<Apartment> apartments) async {
     ex.TextCellValue('Diện tích'),
     ex.TextCellValue('Tòa nhà'),
     ex.TextCellValue('Mô tả'),
-    ex.TextCellValue('Giá thuê'),
-    ex.TextCellValue('Giá bán'),
+    ex.TextCellValue('Trạng thái'),
   ];
   sheet.insertRowIterables(headers, 0); // Ghi dòng đầu tiên
 
@@ -69,6 +67,7 @@ Future<void> exportApartmentsToExcel(List<Apartment> apartments) async {
       ex.DoubleCellValue(apt.area as double),
       ex.TextCellValue(apt.building),
       ex.TextCellValue(apt.description),
+      ex.TextCellValue(apt.status),
 
     ];
     sheet.insertRowIterables(row, i + 1);
