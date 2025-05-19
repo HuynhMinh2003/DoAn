@@ -3,19 +3,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ResidentSummary {
   final String id;
   final String fullName;
-  final bool isActive; // dùng bool thay vì String
 
   ResidentSummary({
     required this.id,
     required this.fullName,
-    required this.isActive,
   });
 
   factory ResidentSummary.fromJson(Map<String, dynamic> json) {
     return ResidentSummary(
       id: json['id'] ?? '',
       fullName: json['fullName'] ?? '',
-      isActive: json['isActive'] ?? true, // giá trị mặc định là true
     );
   }
 
@@ -23,7 +20,6 @@ class ResidentSummary {
     return {
       'id': id,
       'fullName': fullName,
-      'isActive': isActive,
     };
   }
 }
