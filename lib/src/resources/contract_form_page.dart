@@ -610,44 +610,38 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                               final existingData = await checkExistingResident(resident.cccd, resident.email);
 
                               if (existingData != null) {
-                                final shouldRestore = await showDialog<bool>(
+                                final shouldProceed = await showDialog<bool>(
                                   context: context,
                                   builder: (BuildContext context) {
                                     return AlertDialog(
-                                      title: Center(child: Text("Cư dân đã tồn tại", style: TextStyle(fontSize: 5.sp),),),
+                                      title: Center(
+                                        child: Text("Cư dân đã tồn tại", style: TextStyle(fontSize: 5.sp)),
+                                      ),
                                       content: Text(
-                                        "${resident.fullName} đã tồn tại trong hệ thống.\nBạn có muốn khôi phục lại thông tin này không?", style: TextStyle(fontSize: 4.sp)
+                                        "${resident.fullName} đã tồn tại trong hệ thống.\nBạn có muốn khôi phục lại thông tin này không?",
+                                        style: TextStyle(fontSize: 4.sp),
                                       ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.of(context).pop(false),
-                                          child: Text("Tạo mới", style: TextStyle(fontSize: 4.sp)),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.of(context).pop(true),
-                                          child: Text("Khôi phục", style: TextStyle(fontSize: 4.sp)),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.of(context).pop(null), // Hủy
+                                          onPressed: () => Navigator.of(context).pop(false), // Hủy
                                           child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(true), // Khôi phục
+                                          child: Text("Khôi phục", style: TextStyle(fontSize: 4.sp)),
                                         ),
                                       ],
                                     );
                                   },
                                 );
 
-                                if (shouldRestore == null) {
-                                  // Người dùng chọn "Hủy" → thoát hẳn khỏi vòng lặp hoặc đánh dấu thất bại để sửa lại
+                                if (shouldProceed != true) {
+                                  print("⛔ Người dùng chọn Hủy, bỏ qua ${resident.fullName}");
                                   failedResidents.add(resident);
-                                  return; // hoặc break; nếu bạn muốn dừng toàn bộ quá trình
+                                  return;
                                 }
 
-                                if (shouldRestore == true) {
-                                  // Khôi phục residentId và các thông tin cần
-                                  resident.residentId = existingData['residentId']; // hoặc doc.id nếu bạn dùng id document
-                                  print("🔁 Khôi phục cư dân: ${resident.fullName}");
-                                  return; // Bỏ qua tạo mới
-                                }
+                                print("🔁 Người dùng chọn Khôi phục — tiếp tục tạo mới tài khoản cho ${resident.fullName}");
                               }
 
                               // === 2. Gọi API tạo cư dân mới ===
@@ -695,7 +689,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         final residentObjects = residents.map((r) => {
                           'fullName': r.fullName,
                           'id': r.residentId,
-                          'isActive': true,
                         }).toList();
 
                         final apartmentRef = _firestore.collection("apartments").doc(apartmentId);

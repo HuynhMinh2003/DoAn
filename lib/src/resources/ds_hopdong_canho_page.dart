@@ -1,5 +1,6 @@
 import 'dart:async'; // Thêm import Timer
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/constants.dart';
 import 'package:do_an/custom_paginated_table.dart';
 import 'package:do_an/src/models/apartment.dart';
 import 'package:do_an/src/models/contract_data.dart';
@@ -10,7 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'add_resident_screen_page.dart';
 import 'contract_form_page.dart';
+import 'dialog/msg_dialog.dart';
 import 'ds_canho_mobile_page.dart'
     if (dart.library.html) 'ds_canho_web_page.dart';
 
@@ -49,6 +52,33 @@ class _ContractListPageState extends State<ContractListPage> {
   int totalPages = 0; // Tổng số trang
   List<int> pageNumbers = []; // Danh sách số trang cần hiển thị (1, 2, 3)
 
+  bool _isDialogShowing = false;
+
+  Map<String, String> representativeNames = {};
+
+  Future<void> fetchRepresentativeNames(List<Apartment> apartments) async {
+    for (final apartment in apartments) {
+      final doc = await FirebaseFirestore.instance
+          .collection('apartments')
+          .doc(apartment.id)
+          .get();
+
+      final contractId = doc.data()?['currentContractId'];
+      if (contractId != null) {
+        final contractDoc = await FirebaseFirestore.instance
+            .collection('contracts')
+            .doc(contractId)
+            .get();
+
+        final rep = contractDoc.data()?['representative'];
+        final fullName = rep?['fullName'];
+        if (fullName != null) {
+          representativeNames[apartment.id] = fullName;
+        }
+      }
+    }
+  }
+
   void updatePaginatedApartments() {
     setState(() {
       int startIndex = (currentPage - 1) * itemsPerPage;
@@ -82,7 +112,7 @@ class _ContractListPageState extends State<ContractListPage> {
   Future<void> loadApartmentsFromFirestore() async {
     try {
       final snapshot =
-          await FirebaseFirestore.instance.collection('apartments').get();
+      await FirebaseFirestore.instance.collection('apartments').get();
       final contractSnapshot = await FirebaseFirestore.instance
           .collection('contracts')
           .where('isActive', isEqualTo: true)
@@ -124,12 +154,14 @@ class _ContractListPageState extends State<ContractListPage> {
           updatePaginatedApartments();
         });
       }
+      await fetchRepresentativeNames(apartments);
     } catch (e) {
       print('Error loading apartments: $e');
     }
   }
 
-  void showApartmentDialog(BuildContext context, Apartment apartment) {
+  Future<void> showApartmentDialog(
+      BuildContext context, Apartment apartment) async {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -243,7 +275,7 @@ class _ContractListPageState extends State<ContractListPage> {
     }
   }
 
-  void showApartmentContractInfoDialog(BuildContext context,
+  Future<void> showApartmentContractInfoDialog(BuildContext context,
       Apartment apartment, Contract contract, VoidCallback onRefresh) async {
     final apartmentDocRef =
         FirebaseFirestore.instance.collection("apartments").doc(apartment.id);
@@ -289,7 +321,7 @@ class _ContractListPageState extends State<ContractListPage> {
           .doc(contract.contractId);
       final billWaterCollectionRef = contractRef.collection("billWater");
       final updateHistoryCollectionRef =
-          contractRef.collection("updateHistory");
+          contractRef.collection("contractHistory");
 
 // ✅ Truy vấn hóa đơn nước đầu tiên
       final billWaterSnapshot = await billWaterCollectionRef.limit(1).get();
@@ -324,6 +356,9 @@ class _ContractListPageState extends State<ContractListPage> {
                 "Người đại diện: ${contract.representative?['fullName']?.trim().isNotEmpty == true ? contract.representative!['fullName'] : 'Không có'}",
                 style: TextStyle(fontSize: 3.5.sp),
               ),
+              SizedBox(height: 10.h),
+              Text('Số người ở: ${contract.numberOfResidents}',
+                  style: TextStyle(fontSize: 3.5.sp)),
               SizedBox(height: 10.h),
               Text('Mục đích ở: ${contract.purpose}',
                   style: TextStyle(fontSize: 3.5.sp)),
@@ -433,13 +468,13 @@ class _ContractListPageState extends State<ContractListPage> {
               ),
             ),
             TextButton(
-              // onPressed: () => showUpdateResidentsDialog(context, apartment, contract, onRefresh),
-              onPressed: () {},
+              onPressed: () => showUpdateResidentsDialog(
+                  context, apartment, contract, onRefresh),
               child: Text("Cập nhật cư dân", style: TextStyle(fontSize: 3.sp)),
             ),
             TextButton(
-              // onPressed: () => _showUpdateHistoryDialog(context, updateHistoryCollectionRef),
-              onPressed: () {},
+              onPressed: () =>
+                  _showUpdateHistoryDialog(context, updateHistoryCollectionRef),
               child: Text("Xem lịch sử thay đổi",
                   style: TextStyle(fontSize: 3.sp)),
             ),
@@ -468,36 +503,50 @@ class _ContractListPageState extends State<ContractListPage> {
     }
   }
 
-  void showRemoveResidentsDialog(BuildContext context, Apartment apartment, Contract contract, VoidCallback onRefresh) async {
-    final contractRef = FirebaseFirestore.instance
-        .collection("apartments")
-        .doc(apartment.id)
-        .collection("contract")
-        .doc(contract.contractId);
+  void showUpdateResidentsDialog(BuildContext context, Apartment apartment,
+      Contract contract, VoidCallback onRefresh) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Center(
+          child: Text("Cập nhật thành viên",
+              style: TextStyle(
+                  fontSize: 6.sp,
+                  fontFamily: "Oswald",
+                  fontWeight: FontWeight.bold)),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                showAddResidentsFlow(context, apartment, contract, onRefresh);
+              },
+              child:
+                  Text("Thêm thành viên", style: TextStyle(fontSize: 3.5.sp)),
+            ),
+            SizedBox(
+              height: 10.h,
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                showRemoveResidentsDialog(
+                    context, apartment, contract, onRefresh);
+              },
+              child: Text("Xóa thành viên", style: TextStyle(fontSize: 3.5.sp)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-    final residentsSnapshot = await FirebaseFirestore.instance
-        .collection("residents")
-        .where("apartmentId", isEqualTo: apartment.id)
-        .get();
-
-    if (residentsSnapshot.docs.isEmpty) {
-      // Xử lý khi không có cư dân trong căn hộ này
-      return;
-    }
-
-    final List<Map<String, dynamic>> residentList = residentsSnapshot.docs.map((doc) {
-      final data = doc.data();
-      final fullName = data["fullName"] ?? "Unknown";  // Tránh null cho fullName
-      final isRepresentative = doc.id == contract.representative?["id"]; // So sánh theo id thay vì fullName
-
-      return {
-        "id": doc.id,
-        "fullName": fullName,
-        "isRepresentative": isRepresentative,
-      };
-    }).toList();
-
-    String? selectedIdToRemove;
+  void showAddResidentsFlow(BuildContext context, Apartment apartment,
+      Contract contract, VoidCallback onRefresh) async {
+    int maxCanAdd = 10 - contract.numberOfResidents;
+    int? numberToAdd;
 
     await showDialog(
       context: context,
@@ -505,179 +554,565 @@ class _ContractListPageState extends State<ContractListPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Center(child: Text("Chọn cư dân cần xóa", style: TextStyle(fontSize: 6.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold))),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: residentList.map((r) {
-                  return RadioListTile<String>(
-                    title: Text(r["fullName"] + (r["isRepresentative"] ? " (Đại diện)" : ""), style: TextStyle(fontSize: 3.5.sp)),
-                    value: r["id"],
-                    groupValue: selectedIdToRemove,
-                    onChanged: (value) => setState(() => selectedIdToRemove = value),
-                  );
-                }).toList(),
+              title: Text("Chọn số người cần thêm",
+                  style: TextStyle(
+                      fontSize: 6.sp,
+                      fontFamily: "Oswald",
+                      fontWeight: FontWeight.bold)),
+              content: DropdownButtonHideUnderline(
+                child: DropdownButton2<int>(
+                  isExpanded: true,
+                  hint: Text(
+                    'Chọn số người',
+                    style: TextStyle(
+                      fontSize: 3.5.sp,
+                      color: Colors.white,
+                    ),
+                  ),
+                  value: numberToAdd,
+                  // Biến bạn đang dùng
+                  items: List.generate(maxCanAdd, (i) => i + 1).map((e) {
+                    return DropdownMenuItem<int>(
+                      value: e,
+                      child: Text(
+                        '$e người',
+                        style: TextStyle(fontSize: 4.sp),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setState(() => numberToAdd = value!),
+                  buttonStyleData: ButtonStyleData(
+                    height: 40.h,
+                    width: double.infinity,
+                    // hoặc width: 40.w nếu bạn muốn cố định
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14.r),
+                      color: bgColor,
+                      border: Border.all(
+                        color: bgColor,
+                        width: 0.1.w,
+                      ),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 6.w),
+                  ),
+                  iconStyleData: IconStyleData(
+                    icon:
+                        const Icon(Icons.arrow_drop_down, color: Colors.white),
+                    iconSize: 4.5.sp,
+                  ),
+                  dropdownStyleData: DropdownStyleData(
+                    maxHeight: 150.h,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14.r),
+                      color: bgColor,
+                    ),
+                  ),
+                  menuItemStyleData: MenuItemStyleData(
+                    height: 40.h,
+                    padding: EdgeInsets.symmetric(horizontal: 6.w),
+                  ),
+                ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp))),
                 TextButton(
-                  onPressed: selectedIdToRemove == null ? null : () async {
-                    Navigator.pop(context);
-
-                    if (selectedIdToRemove == null) {
-                      return;
-                    }
-
-                    LoadingDialog.showLoadingDialog(context, "Đang tải ...");
-
-                    try {
-                      final removedResident = residentList.firstWhere((r) => r["id"] == selectedIdToRemove);
-                      final isRepresentative = removedResident["isRepresentative"];
-                      final removedName = removedResident["fullName"];
-
-                      if (isRepresentative) {
-                        final others = residentList.where((r) => r["id"] != selectedIdToRemove).toList();
-
-                        if (others.isEmpty) {
-                          Navigator.pop(context); // Đóng Dialog Loading
-                          MsgDialog.showMsgDialog(
-                              context,
-                              "Không thể xóa",
-                              "Đây là người đại diện duy nhất và cũng là cư dân cuối cùng trong căn hộ. "
-                                  "\nVui lòng xóa hợp đồng từ giao diện chính nếu muốn xóa toàn bộ."
-                          );
-                          return;
-                        } else {
-                          String? newRepId;
-                          await showDialog(
-                            context: context,
-                            builder: (_) {
-                              return StatefulBuilder(
-                                builder: (context, setState) {
-                                  return AlertDialog(
-                                    title: Center(child: Text("Chọn người đại diện mới", style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 6.sp))),
-                                    content: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: others.map((r) {
-                                        return RadioListTile<String>(
-                                          title: Text(r["fullName"], style: TextStyle(fontSize: 3.5.sp)),
-                                          value: r["id"],
-                                          groupValue: newRepId,
-                                          onChanged: (value) => setState(() => newRepId = value),
-                                        );
-                                      }).toList(),
-                                    ),
-                                    actions: [
-                                      TextButton(onPressed: () => Navigator.pop(context), child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp))),
-                                      TextButton(
-                                        onPressed: newRepId == null ? null : () => Navigator.pop(context, newRepId),
-                                        child: Text("Xác nhận", style: TextStyle(fontSize: 3.5.sp)),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                          ).then((newId) async {
-                            if (newId != null) {
-                              final newRepName = others.firstWhere((r) => r["id"] == newId)["fullName"];
-                              final batch = FirebaseFirestore.instance.batch();
-                              batch.update(contractRef, {
-                                "representative": {"id": newId, "fullName": newRepName},
-                                "numberOfResidents": FieldValue.increment(-1),
-                              });
-                              batch.delete(FirebaseFirestore.instance.collection("residents").doc(selectedIdToRemove));
-
-                              final removedResidentSummary = {
-                                'id': removedResident["id"],
-                                'fullName': removedResident["fullName"],
-                              };
-
-                              batch.update(FirebaseFirestore.instance.collection("apartments").doc(apartment.id), {
-                                "residents": FieldValue.arrayRemove([removedResidentSummary]),
-                              });
-
-                              batch.set(
-                                FirebaseFirestore.instance.collection("apartments").doc(apartment.id).collection("updateHistory").doc(),
-                                {
-                                  "action": "Xóa cư dân & cập nhật người đại diện",
-                                  "performedBy": "Admin",
-                                  "residentNames": [removedName],
-                                  "newRepresentative": {"id": newId, "fullName": newRepName},
-                                  "timestamp": FieldValue.serverTimestamp(),
-                                },
-                              );
-
-                              await deleteResidentAccount1(selectedIdToRemove!);
-                              await batch.commit();
-                              onRefresh();
-                            }
-                          });
-                        }
-                      } else {
-                        final batch = FirebaseFirestore.instance.batch();
-                        batch.update(contractRef, {
-                          "numberOfResidents": FieldValue.increment(-1),
-                        });
-                        batch.delete(FirebaseFirestore.instance.collection("residents").doc(selectedIdToRemove));
-
-                        final removedResidentSummary = {
-                          'id': removedResident["id"],
-                          'fullName': removedResident["fullName"],
-                        };
-
-                        batch.update(FirebaseFirestore.instance.collection("apartments").doc(apartment.id), {
-                          "residents": FieldValue.arrayRemove([removedResidentSummary]),
-                        });
-
-                        batch.set(
-                          FirebaseFirestore.instance.collection("apartments").doc(apartment.id).collection("updateHistory").doc(),
-                          {
-                            "action": "Xóa cư dân",
-                            "performedBy": "Admin",
-                            "residentNames": [removedName],
-                            "timestamp": FieldValue.serverTimestamp(),
-                          },
-                        );
-
-                        await deleteResidentAccount(selectedIdToRemove!);
-                        await batch.commit();
-                        onRefresh();
-                      }
-
-                      // Hiển thị thông báo thành công
-                      MsgDialog.showMsgDialog(context, "Thành công", "Cư dân đã được xóa thành công!");
-                    } catch (e) {
-
-                      // Hiển thị thông báo lỗi
-                      MsgDialog.showMsgDialog(context, "Lỗi", "Có lỗi xảy ra khi xóa cư dân. Vui lòng thử lại.");
-                    }
-                  },
-                  child: Text("Xóa"),
-                ),
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp))),
+                if (numberToAdd != null)
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, numberToAdd),
+                    child: Text("Tiếp tục", style: TextStyle(fontSize: 3.5.sp)),
+                  ),
               ],
             );
           },
         );
       },
-    );
+    ).then((value) {
+      if (value != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AddResidentsScreen(
+              count: value,
+              apartment: apartment,
+              contract: contract,
+              onComplete: onRefresh,
+            ),
+          ),
+        );
+      }
+    });
+  }
 
-  }  Future<void> deleteResidentAccount1(String uid) async {
-    const functionUrl = 'https://deleteresidentaccount-ttrkrlo35a-uc.a.run.app';
+  void showRemoveResidentsDialog(BuildContext context, Apartment apartment,
+      Contract contract, VoidCallback onRefresh) async {
+    final apartmentDocRef =
+        FirebaseFirestore.instance.collection("apartments").doc(apartment.id);
 
     try {
-      final response = await http.post(
-        Uri.parse(functionUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'uid': uid}),
-      );
+      // Lấy document apartment
+      final apartmentDoc = await apartmentDocRef.get();
 
-      if (response.statusCode == 200) {
-        print("✅ Tài khoản đã bị xóa: ${response.body}");
-      } else {
-        print("❌ Lỗi khi xóa tài khoản: ${response.body}");
+      if (!apartmentDoc.exists) {
+        print("Căn hộ không tồn tại.");
+        return;
       }
+
+      final currentContractId = apartmentDoc.data()?["currentContractId"];
+
+      if (currentContractId == null || currentContractId.isEmpty) {
+        print("Không có currentContractId.");
+        return;
+      }
+
+      final contractDocRef = FirebaseFirestore.instance
+          .collection("contracts")
+          .doc(currentContractId);
+
+      final contractSnapshot = await contractDocRef.get();
+
+      if (!contractSnapshot.exists) {
+        print("Hợp đồng không tồn tại.");
+        return;
+      }
+
+      final residentsSnapshot = await FirebaseFirestore.instance
+          .collection("residents")
+          .where("apartmentId", isEqualTo: apartment.id)
+          .where("isExit", isEqualTo: false)
+          .get();
+
+      if (residentsSnapshot.docs.isEmpty) {
+        // Xử lý khi không có cư dân trong căn hộ này
+        return;
+      }
+
+      final List<Map<String, dynamic>> residentList =
+          residentsSnapshot.docs.map((doc) {
+        final data = doc.data();
+        final fullName =
+            data["fullName"] ?? "Unknown"; // Tránh null cho fullName
+        final isRepresentative = doc.id ==
+            contract.representative?["id"]; // So sánh theo id thay vì fullName
+
+        return {
+          "id": doc.id,
+          "fullName": fullName,
+          "isRepresentative": isRepresentative,
+        };
+      }).toList();
+
+      String? selectedIdToRemove;
+
+      await showDialog(
+        context: context,
+        builder: (_) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Center(
+                    child: Text("Chọn cư dân cần xóa",
+                        style: TextStyle(
+                            fontSize: 6.sp,
+                            fontFamily: "Oswald",
+                            fontWeight: FontWeight.bold))),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: residentList.map((r) {
+                    return RadioListTile<String>(
+                      title: Text(
+                          r["fullName"] +
+                              (r["isRepresentative"] ? " (Đại diện)" : ""),
+                          style: TextStyle(fontSize: 3.5.sp)),
+                      value: r["id"],
+                      groupValue: selectedIdToRemove,
+                      onChanged: (value) =>
+                          setState(() => selectedIdToRemove = value),
+                    );
+                  }).toList(),
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp))),
+                  TextButton(
+                    onPressed: selectedIdToRemove == null
+                        ? null
+                        : () async {
+                            Navigator.pop(context);
+
+                            if (selectedIdToRemove == null) {
+                              return;
+                            }
+
+                            // LoadingDialog.showLoadingDialog(context, "Đang tải ...");
+
+                            try {
+                              final removedResident = residentList.firstWhere(
+                                  (r) => r["id"] == selectedIdToRemove);
+                              final isRepresentative =
+                                  removedResident["isRepresentative"];
+                              final removedName = removedResident["fullName"];
+
+                              if (isRepresentative) {
+                                final others = residentList
+                                    .where((r) => r["id"] != selectedIdToRemove)
+                                    .toList();
+
+                                if (others.isEmpty) {
+                                  // Navigator.pop(context); // Đóng Dialog Loading
+                                  MsgDialog.showMsgDialog(
+                                      context,
+                                      "Không thể xóa",
+                                      "Đây là người đại diện duy nhất và cũng là cư dân cuối cùng trong căn hộ. "
+                                          "\nVui lòng xóa hợp đồng từ giao diện chính nếu muốn xóa toàn bộ.");
+                                  return;
+                                } else {
+                                  String? newRepId;
+                                  await showDialog(
+                                    context: context,
+                                    builder: (_) {
+                                      return StatefulBuilder(
+                                        builder: (context, setState) {
+                                          return AlertDialog(
+                                            title: Center(
+                                                child: Text(
+                                                    "Chọn người đại diện mới",
+                                                    style: TextStyle(
+                                                        fontFamily: "Oswald",
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 6.sp))),
+                                            content: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: others.map((r) {
+                                                return RadioListTile<String>(
+                                                  title: Text(r["fullName"],
+                                                      style: TextStyle(
+                                                          fontSize: 3.5.sp)),
+                                                  value: r["id"],
+                                                  groupValue: newRepId,
+                                                  onChanged: (value) =>
+                                                      setState(() =>
+                                                          newRepId = value),
+                                                );
+                                              }).toList(),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                  child: Text("Hủy",
+                                                      style: TextStyle(
+                                                          fontSize: 3.5.sp))),
+                                              TextButton(
+                                                onPressed: newRepId == null
+                                                    ? null
+                                                    : () => Navigator.pop(
+                                                        context, newRepId),
+                                                child: Text("Xác nhận",
+                                                    style: TextStyle(
+                                                        fontSize: 3.5.sp)),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ).then((newId) async {
+                                    if (newId != null) {
+                                      final newRepName = others.firstWhere(
+                                          (r) => r["id"] == newId)["fullName"];
+                                      final batch =
+                                          FirebaseFirestore.instance.batch();
+                                      batch.update(contractDocRef, {
+                                        "representative": {
+                                          "id": newId,
+                                          "fullName": newRepName
+                                        },
+                                        "numberOfResidents":
+                                            FieldValue.increment(-1),
+                                      });
+                                      batch.update(
+                                        FirebaseFirestore.instance
+                                            .collection("residents")
+                                            .doc(selectedIdToRemove),
+                                        {
+                                          'isExit': true,
+                                          'leaveAt': Timestamp.now(),
+                                        },
+                                      );
+                                      // Cập nhật leftAt trong contractHistory của resident (nếu tồn tại entry có contractId khớp)
+                                      final residentHistoryRef =
+                                          FirebaseFirestore.instance
+                                              .collection("residents")
+                                              .doc(selectedIdToRemove)
+                                              .collection("contractHistory");
+
+                                      final residentHistorySnapshot =
+                                          await residentHistoryRef
+                                              .where("contractId",
+                                                  isEqualTo: currentContractId)
+                                              .limit(1)
+                                              .get();
+
+                                      if (residentHistorySnapshot
+                                          .docs.isNotEmpty) {
+                                        final docId = residentHistorySnapshot
+                                            .docs.first.id;
+                                        batch.update(
+                                            residentHistoryRef.doc(docId), {
+                                          "leftAt": Timestamp.now(),
+                                        });
+                                      }
+
+                                      final removedResidentSummary = {
+                                        'id': removedResident["id"],
+                                        'fullName': removedResident["fullName"],
+                                      };
+
+                                      batch.update(
+                                          FirebaseFirestore.instance
+                                              .collection("apartments")
+                                              .doc(apartment.id),
+                                          {
+                                            "residents": FieldValue.arrayRemove(
+                                                [removedResidentSummary]),
+                                          });
+
+                                      batch.set(
+                                        FirebaseFirestore.instance
+                                            .collection("contracts")
+                                            .doc(contract.contractId)
+                                            .collection("contractHistory")
+                                            .doc(),
+                                        {
+                                          "action":
+                                              "Xóa cư dân & cập nhật người đại diện",
+                                          "performedBy": "Admin",
+                                          "residentNames": [removedName],
+                                          "newRepresentative": {
+                                            "id": newId,
+                                            "fullName": newRepName
+                                          },
+                                          "timestamp":
+                                              FieldValue.serverTimestamp(),
+                                        },
+                                      );
+
+                                      // await deleteResidentAccount1(selectedIdToRemove!);
+                                      await batch.commit();
+                                      onRefresh();
+                                    }
+                                  });
+                                }
+                              } else {
+                                final batch =
+                                    FirebaseFirestore.instance.batch();
+                                batch.update(contractDocRef, {
+                                  "numberOfResidents": FieldValue.increment(-1),
+                                });
+                                batch.update(
+                                  FirebaseFirestore.instance
+                                      .collection("residents")
+                                      .doc(selectedIdToRemove),
+                                  {
+                                    'isExit': true,
+                                    'leaveAt': Timestamp.now(),
+                                  },
+                                );
+                                // Cập nhật leftAt trong contractHistory của resident (nếu tồn tại entry có contractId khớp)
+                                final residentHistoryRef = FirebaseFirestore
+                                    .instance
+                                    .collection("residents")
+                                    .doc(selectedIdToRemove)
+                                    .collection("contractHistory");
+
+                                final residentHistorySnapshot =
+                                    await residentHistoryRef
+                                        .where("contractId",
+                                            isEqualTo: currentContractId)
+                                        .limit(1)
+                                        .get();
+
+                                if (residentHistorySnapshot.docs.isNotEmpty) {
+                                  final docId =
+                                      residentHistorySnapshot.docs.first.id;
+                                  batch.update(residentHistoryRef.doc(docId), {
+                                    "leftAt": Timestamp.now(),
+                                  });
+                                }
+
+                                final removedResidentSummary = {
+                                  'id': removedResident["id"],
+                                  'fullName': removedResident["fullName"],
+                                };
+
+                                batch.update(
+                                    FirebaseFirestore.instance
+                                        .collection("apartments")
+                                        .doc(apartment.id),
+                                    {
+                                      "residents": FieldValue.arrayRemove(
+                                          [removedResidentSummary]),
+                                    });
+
+                                batch.set(
+                                  FirebaseFirestore.instance
+                                      .collection("contracts")
+                                      .doc(contract.contractId)
+                                      .collection("contractHistory")
+                                      .doc(),
+                                  {
+                                    "action": "Xóa cư dân",
+                                    "performedBy": "Admin",
+                                    "residentNames": [removedName],
+                                    "timestamp": FieldValue.serverTimestamp(),
+                                  },
+                                );
+
+                                await batch.commit();
+                                onRefresh();
+                              }
+
+                              // Hiển thị thông báo thành công
+                              MsgDialog.showMsgDialog(context, "Thành công",
+                                  "Cư dân đã được xóa thành công!");
+                            } catch (e) {
+                              // Hiển thị thông báo lỗi
+                              MsgDialog.showMsgDialog(context, "Lỗi",
+                                  "Có lỗi xảy ra khi xóa cư dân. Vui lòng thử lại.");
+                            }
+                          },
+                    child: Text("Xóa"),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
     } catch (e) {
-      print("❌ Exception khi gọi Cloud Function: $e");
+      print("Lỗi khi truy vấn hợp đồng: $e");
+    }
+  }
+
+  void _showUpdateHistoryDialog(BuildContext context,
+      CollectionReference updateHistoryCollectionRef) async {
+    try {
+      // Lấy dữ liệu lịch sử từ Firestore
+      final updateHistorySnapshot = await updateHistoryCollectionRef
+          .orderBy("timestamp", descending: true)
+          .get();
+
+      if (updateHistorySnapshot.docs.isEmpty) {
+        // Hiển thị thông báo nếu không có lịch sử
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: Text("Lịch sử thay đổi",
+                style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold)),
+            content:
+                Text("Chưa có gì thay đổi.", style: TextStyle(fontSize: 4.sp)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      // Hiển thị danh sách lịch sử
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Center(
+              child: Text(
+            "Lịch sử thay đổi",
+            style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold),
+          )),
+          content: SizedBox(
+            width: 80.w,
+            child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: updateHistorySnapshot.docs.length,
+                itemBuilder: (context, index) {
+                  final history = updateHistorySnapshot.docs[index].data()
+                      as Map<String, dynamic>;
+                  final action = history['action'];
+                  final performedBy = history['performedBy'];
+                  final representativeName = history['representativeName'];
+                  final residentNamesList = history['residentNames'] as List?;
+                  final newRepresentative =
+                      history['newRepresentative']?['fullName'];
+                  final timestamp =
+                      (history['timestamp'] as Timestamp?)?.toDate();
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (action != null)
+                          Text("Hành động: $action",
+                              style: TextStyle(fontSize: 4.sp)),
+                        if (performedBy != null)
+                          Text("Thực hiện bởi: $performedBy",
+                              style: TextStyle(fontSize: 4.sp)),
+                        if (residentNamesList != null &&
+                            residentNamesList.isNotEmpty)
+                          Text(
+                              "Cư dân liên quan: ${residentNamesList.join(", ")}",
+                              style: TextStyle(fontSize: 4.sp)),
+                        if (newRepresentative != null)
+                          Text("Người đại diện mới: $newRepresentative",
+                              style: TextStyle(fontSize: 4.sp)),
+                        if (representativeName != null)
+                          Text("Người đại diện: $representativeName",
+                              style: TextStyle(fontSize: 4.sp)),
+                        if (timestamp != null)
+                          Text(
+                            "Thời gian: ${DateFormat('dd/MM/yyyy – HH:mm').format(timestamp)}",
+                            style: TextStyle(fontSize: 4.sp),
+                          ),
+                        Divider(
+                          thickness: 0.1,
+                          indent: 10.0,
+                          endIndent: 10.0,
+                          color: Colors.black,
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      print("❌ Lỗi khi hiển thị lịch sử thay đổi: $e");
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text("Lỗi", style: TextStyle(fontSize: 6.sp)),
+          content: Text("Không thể tải lịch sử thay đổi.",
+              style: TextStyle(fontSize: 4.sp)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -771,7 +1206,7 @@ class _ContractListPageState extends State<ContractListPage> {
                         Flexible(
                           flex: 1,
                           child: Text(
-                            "Danh sách căn hộ",
+                            "Quản lí hợp đồng",
                             style: TextStyle(
                               fontFamily: "Oswald",
                               fontWeight: FontWeight.w700,
@@ -920,8 +1355,8 @@ class _ContractListPageState extends State<ContractListPage> {
                                     child: Text(
                                       'Không có căn hộ nào',
                                       style: TextStyle(
-                                          fontSize: 4.sp,
-                                          color: Colors.black54),
+                                        fontSize: 4.sp,
+                                      ),
                                     ),
                                   ),
                                 )
@@ -954,11 +1389,11 @@ class _ContractListPageState extends State<ContractListPage> {
                                                   style: TextStyle(
                                                       fontSize: 4.sp))),
                                           DataColumn(
-                                              label: Text("Mô tả",
+                                              label: Text("Trạng thái dịch vụ",
                                                   style: TextStyle(
                                                       fontSize: 4.sp))),
                                           DataColumn(
-                                              label: Text("Trạng thái dịch vụ",
+                                              label: Text("Người đại diện",
                                                   style: TextStyle(
                                                       fontSize: 4.sp))),
                                           DataColumn(
@@ -988,12 +1423,10 @@ class _ContractListPageState extends State<ContractListPage> {
                                                 "${apartment.area} m²",
                                                 style:
                                                     TextStyle(fontSize: 4.sp))),
-                                            DataCell(Text(apartment.description,
+                                            DataCell(Text("${apartment.status}",
                                                 style:
                                                     TextStyle(fontSize: 4.sp))),
-                                            DataCell(Text(apartment.status,
-                                                style:
-                                                    TextStyle(fontSize: 4.sp))),
+                                            DataCell(Text(representativeNames[apartment.id] ?? '-', style: TextStyle(fontSize: 4.sp))),
                                             DataCell(
                                               Row(
                                                 children: [
@@ -1005,47 +1438,63 @@ class _ContractListPageState extends State<ContractListPage> {
                                                       color: Colors.grey,
                                                     ),
                                                     onPressed: () async {
-                                                      if (isRented &&
-                                                          hasContract) {
-                                                        final query =
-                                                            await FirebaseFirestore
-                                                                .instance
-                                                                .collection(
-                                                                    'contracts')
-                                                                .where(
-                                                                    'apartmentDocId',
-                                                                    isEqualTo:
-                                                                        apartment
-                                                                            .id)
-                                                                .where(
-                                                                    'isActive',
-                                                                    isEqualTo:
-                                                                        true)
-                                                                .limit(1)
-                                                                .get();
+                                                      if (_isDialogShowing)
+                                                        return;
+                                                      _isDialogShowing = true;
 
-                                                        if (query
-                                                            .docs.isNotEmpty) {
-                                                          final contract =
-                                                              Contract.fromMap(
-                                                                  query.docs
-                                                                      .first
-                                                                      .data(),
-                                                                  query.docs
-                                                                      .first.id,
-                                                                  []);
-                                                          showApartmentContractInfoDialog(
+                                                      try {
+                                                        if (isRented &&
+                                                            hasContract) {
+                                                          final query = await FirebaseFirestore
+                                                              .instance
+                                                              .collection(
+                                                                  'contracts')
+                                                              .where(
+                                                                  'apartmentDocId',
+                                                                  isEqualTo:
+                                                                      apartment
+                                                                          .id)
+                                                              .where('isActive',
+                                                                  isEqualTo:
+                                                                      true)
+                                                              .limit(1)
+                                                              .get();
+
+                                                          if (query.docs
+                                                              .isNotEmpty) {
+                                                            final contract =
+                                                                Contract
+                                                                    .fromMap(
+                                                              query.docs.first
+                                                                  .data(),
+                                                              query.docs.first
+                                                                  .id,
+                                                              [],
+                                                            );
+
+                                                            // ĐẢM BẢO AWAIT ĐÂY
+                                                            await showApartmentContractInfoDialog(
                                                               context,
                                                               apartment,
                                                               contract,
-                                                              loadApartmentsFromFirestore);
+                                                              loadApartmentsFromFirestore,
+                                                            );
+                                                          }
+                                                        } else {
+                                                          // ĐẢM BẢO AWAIT ĐÂY
+                                                          await showApartmentDialog(
+                                                              context,
+                                                              apartment);
                                                         }
-                                                      } else {
-                                                        showApartmentDialog(
-                                                            context, apartment);
+                                                      } catch (e) {
+                                                        print(
+                                                            'Lỗi hiển thị dialog: $e');
+                                                      } finally {
+                                                        _isDialogShowing =
+                                                            false;
                                                       }
                                                     },
-                                                  ),
+                                                  )
                                                 ],
                                               ),
                                             ),
