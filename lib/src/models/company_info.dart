@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CompanyInfo {
-  final String? companyId; // Optional, if fetched from Firestore
+  final String? companyId;
   final String name;
   final String email;
   final String imageUrl;
@@ -11,6 +11,8 @@ class CompanyInfo {
   final bool isExit;
   final List<String> fcmTokens;
   final String description;
+  final Timestamp? leaveAt;
+  final Timestamp lastUpdated;
 
   CompanyInfo({
     this.companyId,
@@ -23,9 +25,11 @@ class CompanyInfo {
     required this.isExit,
     required this.fcmTokens,
     required this.description,
+    this.leaveAt,
+    required this.lastUpdated,
   });
 
-  // Create an instance from Firestore data
+  // ✅ From Firestore map
   factory CompanyInfo.fromMap(Map<String, dynamic> map, [String? docId]) {
     return CompanyInfo(
       companyId: docId,
@@ -35,13 +39,15 @@ class CompanyInfo {
       phone: map['phone'] ?? '',
       type: map['type'] ?? '',
       address: map['address'] ?? '',
-      isExit: map['isExit'] ?? false, // Corrected to default to false
-      fcmTokens: List<String>.from(map['fcmTokens'] ?? []), // Corrected to handle List<String>
+      isExit: map['isExit'] ?? false,
+      fcmTokens: List<String>.from(map['fcmTokens'] ?? []),
       description: map['description'] ?? '',
+      leaveAt: map['leaveAt'],
+      lastUpdated: map['lastUpdated'] ?? Timestamp.now(), // fallback in case of missing field
     );
   }
 
-  // Convert the instance to a Map for Firestore
+  // ✅ To Firestore map
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -51,12 +57,14 @@ class CompanyInfo {
       'type': type,
       'address': address,
       'isExit': isExit,
-      'fcmTokens': fcmTokens, // Added fcmTokens
+      'fcmTokens': fcmTokens,
       'description': description,
+      'leaveAt': leaveAt,
+      'lastUpdated': lastUpdated,
     };
   }
 
-  // Create a copy of the instance with optional new values
+  // ✅ Copy with new values
   CompanyInfo copyWith({
     String? companyId,
     String? name,
@@ -65,9 +73,11 @@ class CompanyInfo {
     String? phone,
     String? type,
     String? address,
-    bool? isExit, // Corrected to use bool instead of Bool
-    List<String>? fcmTokens, // Added fcmTokens
+    bool? isExit,
+    List<String>? fcmTokens,
     String? description,
+    Timestamp? leaveAt,
+    Timestamp? lastUpdated,
   }) {
     return CompanyInfo(
       companyId: companyId ?? this.companyId,
@@ -77,13 +87,15 @@ class CompanyInfo {
       phone: phone ?? this.phone,
       type: type ?? this.type,
       address: address ?? this.address,
-      isExit: isExit ?? this.isExit, // Corrected to use the current value
+      isExit: isExit ?? this.isExit,
       fcmTokens: fcmTokens ?? this.fcmTokens,
       description: description ?? this.description,
+      leaveAt: leaveAt ?? this.leaveAt,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
 
-  // Create an instance from a Firestore DocumentSnapshot
+  // ✅ From Firestore DocumentSnapshot
   factory CompanyInfo.fromFirestore(DocumentSnapshot doc) {
     final json = doc.data() as Map<String, dynamic>;
 
@@ -95,9 +107,11 @@ class CompanyInfo {
       phone: json['phone'] ?? '',
       type: json['type'] ?? '',
       address: json['address'] ?? '',
-      isExit: json['isExit'] ?? false, // Correct to default to false
-      fcmTokens: List<String>.from(json['fcmTokens'] ?? []), // Correctly handles List<String>
+      isExit: json['isExit'] ?? false,
+      fcmTokens: List<String>.from(json['fcmTokens'] ?? []),
       description: json['description'] ?? '',
+      leaveAt: json['leaveAt'],
+      lastUpdated: json['lastUpdated'] ?? Timestamp.now(),
     );
   }
 }
