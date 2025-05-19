@@ -45,6 +45,9 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
   int totalPages = 0; // Tổng số trang
   List<int> pageNumbers = []; // Danh sách số trang cần hiển thị (1, 2, 3)
 
+  bool _isEditDialogShowing = false;
+  bool _isDeleteDialogShowing = false;
+
   void updatePaginatedApartments() {
     setState(() {
       int startIndex = (currentPage - 1) * itemsPerPage;
@@ -106,7 +109,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
     }
   }
 
-  void showDeleteApartmentDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) async {
+  Future<void> showDeleteApartmentDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) async {
     if (apartment.status== 'Đã được thuê') {
       // Hiển thị thông báo không thể xóa
       showDialog(
@@ -153,7 +156,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
     }
   }
 
-  void showEditApartmentDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) {
+  Future<void> showEditApartmentDialog(BuildContext context, Apartment apartment, VoidCallback onRefresh) async{
     final areaController = TextEditingController(text: apartment.area.toString());
     final descriptionController = TextEditingController(text: apartment.description);
 
@@ -304,7 +307,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
     );
   }
 
-  void showApartmentDialog(BuildContext context, Apartment apartment) {
+  Future<void> showApartmentDialog(BuildContext context, Apartment apartment) async {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -644,7 +647,6 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                   DataColumn(label: Text("Tầng", style: TextStyle(fontSize: 4.sp))),
                                   DataColumn(label: Text("Diện tích", style: TextStyle(fontSize: 4.sp))),
                                   DataColumn(label: Text("Mô tả", style: TextStyle(fontSize: 4.sp))),
-                                  DataColumn(label: Text("Trạng thái dịch vụ", style: TextStyle(fontSize: 4.sp))),
                                   DataColumn(label: Text("Hành động", style: TextStyle(fontSize: 4.sp))),
                                 ],
                                 rows: filteredApartments.map((apartment) {
@@ -654,28 +656,36 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                                     DataCell(Text("${apartment.floor}", style: TextStyle(fontSize: 4.sp))),
                                     DataCell(Text("${apartment.area} m²", style: TextStyle(fontSize: 4.sp))),
                                     DataCell(Text(apartment.description, style: TextStyle(fontSize: 4.sp))),
-                                    DataCell(Text(apartment.status, style: TextStyle(fontSize: 4.sp))),
                                     DataCell(
                                       Row(
                                         children: [
                                           IconButton(
                                             icon: Icon(Icons.edit, color: Colors.blue),
-                                            onPressed: () {
-                                              showEditApartmentDialog(context, apartment, loadApartmentsFromFirestore);
+                                            onPressed: () async {
+                                              if (_isEditDialogShowing) return;
+                                              _isEditDialogShowing = true;
+
+                                              try {
+                                                await showEditApartmentDialog(context, apartment, loadApartmentsFromFirestore);
+                                              } finally {
+                                                _isEditDialogShowing = false;
+                                              }
                                             },
                                           ),
                                           IconButton(
                                             icon: Icon(Icons.delete, color: Colors.red),
-                                            onPressed: () {
-                                              showDeleteApartmentDialog(context, apartment, loadApartmentsFromFirestore);
+                                            onPressed: () async {
+                                              if (_isDeleteDialogShowing) return;
+                                              _isDeleteDialogShowing = true;
+
+                                              try {
+                                                await showDeleteApartmentDialog(context, apartment, loadApartmentsFromFirestore);
+                                              } finally {
+                                                _isDeleteDialogShowing = false;
+                                              }
                                             },
                                           ),
-                                          IconButton(
-                                            icon: Icon(Icons.info_outline, color: Colors.grey),
-                                            onPressed: () {
-                                              showApartmentDialog(context, apartment);
-                                            },
-                                          ),
+
                                         ],
                                       ),
                                     ),
