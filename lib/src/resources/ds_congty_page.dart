@@ -10,6 +10,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'ds_congty_mobile_page.dart' if (dart.library.html) 'ds_congty_web_page.dart';
@@ -37,6 +38,10 @@ class _CompanyListPageState extends State<CompanyListPage> {
   int totalPages = 0;
   List<CompanyInfo> paginatedCompanies = [];
   List<int> pageNumbers = [];
+
+  bool _isEditCompanyDialogShowing = false;
+  bool _isDeleteCompanyDialogShowing = false;
+  bool _isViewCompanyDialogShowing = false;
 
   void updatePaginatedCompanies() {
     setState(() {
@@ -135,7 +140,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
     }
   }
 
-  void showCompanyDialog(BuildContext context, CompanyInfo company, VoidCallback onRefresh) {
+  Future<void> showCompanyDialog(BuildContext context, CompanyInfo company, VoidCallback onRefresh) async{
     final nameController = TextEditingController(text: company.name);
     final phoneController = TextEditingController(text: company.phone);
     final addressController = TextEditingController(text: company.address);
@@ -436,7 +441,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
     );
   }
 
-  void showEditCompanyDialog(BuildContext context, CompanyInfo company, VoidCallback onRefresh) {
+  Future<void> showEditCompanyDialog(BuildContext context, CompanyInfo company, VoidCallback onRefresh) async{
     final nameController = TextEditingController(text: company.name);
     final phoneController = TextEditingController(text: company.phone);
     final addressController = TextEditingController(text: company.address);
@@ -651,6 +656,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
                               }
 
                               if (updateData.isNotEmpty) {
+                                updateData['lastUpdate'] = Timestamp.now();
                                 await FirebaseFirestore.instance.collection('companies').doc(company.companyId!).update(updateData);
                               }
 
@@ -694,7 +700,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
     );
   }
 
-  void showDeleteCompanyDialog(BuildContext context, CompanyInfo company, VoidCallback onRefresh) async {
+  Future<void> showDeleteCompanyDialog(BuildContext context, CompanyInfo company, VoidCallback onRefresh) async {
     showDialog(
       context: context,
       builder: (context) {
@@ -710,16 +716,13 @@ class _CompanyListPageState extends State<CompanyListPage> {
               onPressed: () async {
                 LoadingDialog.showLoadingDialog(context, "Đang tải ...");
                 try {
-                  bool deleteSuccess = await deleteCompanyAccount(company.companyId!);
+                  await FirebaseFirestore.instance.collection('companies').doc(company.companyId).update({
+                    'isExit': true,
+                    'leaveAt': Timestamp.now(),
+                  });
 
-                  if (deleteSuccess) {
-                    // await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).delete();
-                    LoadingDialog.hideLoadingDialog(context);
-                    Navigator.pop(context);
-                    onRefresh();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lỗi khi xóa tài khoản.", style: TextStyle(fontSize: 4.sp))));
-                  }
+                  Navigator.pop(context);
+                  onRefresh();
                 } catch (e) {
                   print("Error during deletion: $e");
                   LoadingDialog.hideLoadingDialog(context); // Đóng loading dialog nếu xảy ra lỗi
@@ -733,7 +736,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
     );
   }
 
-  void showViewCompanyDialog(BuildContext context, CompanyInfo company) {
+  Future<void> showViewCompanyDialog(BuildContext context, CompanyInfo company, VoidCallback onRefresh) async{
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -805,10 +808,37 @@ class _CompanyListPageState extends State<CompanyListPage> {
                   "Mô tả: ${company.description}",
                   style: TextStyle(fontSize: 3.5.sp),
                 ),
+                SizedBox(height: 10.h),
+                Text(
+                  'Ngày nghỉ công việc: ${company.leaveAt != null ? DateFormat('dd/MM/yyyy – HH:mm').format(company.leaveAt!.toDate()) : "Chưa có"}',
+                ),
+
               ],
             ),
           ),
           actions: [
+            if (company.isExit)
+              TextButton(
+                onPressed: () async {
+                  LoadingDialog.showLoadingDialog(context, "Đang tải...");
+                  try {
+                    await FirebaseFirestore.instance.collection('companies').doc(company.companyId).update({
+                      'isExit': false,
+                      'leaveAt': null,
+                      'lastUpdated': Timestamp.now(),
+                    });
+                    LoadingDialog.hideLoadingDialog(context);
+                    Navigator.pop(context);
+                    onRefresh(); // Cập nhật lại UI
+                  } catch (e) {
+                    LoadingDialog.hideLoadingDialog(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Lỗi khi khôi phục tài khoản.", style: TextStyle(fontSize: 4.sp))),
+                    );
+                  }
+                },
+                child: Text("Khôi phục tài khoản", style: TextStyle(fontSize: 4.sp, color: Colors.green)),
+              ),
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
@@ -987,23 +1017,40 @@ class _CompanyListPageState extends State<CompanyListPage> {
                                                       if (!company.isExit) ...[
                                                         IconButton(
                                                           icon: Icon(Icons.edit, color: Colors.blue),
-                                                          onPressed: () {
-                                                            showEditCompanyDialog(context, company, _fetchCompany);
+                                                          onPressed: () async {
+                                                            if (_isEditCompanyDialogShowing) return;
+                                                            _isEditCompanyDialogShowing = true;
+                                                            try {
+                                                              await showEditCompanyDialog(context, company, _fetchCompany);
+                                                            } finally {
+                                                              _isEditCompanyDialogShowing = false;
+                                                            }
                                                           },
                                                         ),
                                                         IconButton(
                                                           icon: Icon(Icons.delete, color: Colors.red),
-                                                          onPressed: () {
-                                                            showDeleteCompanyDialog(context, company, _fetchCompany);
+                                                          onPressed: () async {
+                                                            if (_isDeleteCompanyDialogShowing) return;
+                                                            _isDeleteCompanyDialogShowing = true;
+                                                            try {
+                                                              await showDeleteCompanyDialog(context, company, _fetchCompany);
+                                                            } finally {
+                                                              _isDeleteCompanyDialogShowing = false;
+                                                            }
                                                           },
                                                         ),
                                                       ],
-                                                      // Hiển thị icon "info" nếu isExit = true (đã nghỉ việc)
                                                       if (company.isExit)
                                                         IconButton(
                                                           icon: Icon(Icons.info_outline, color: Colors.white),
-                                                          onPressed: () {
-                                                            showViewCompanyDialog(context, company);
+                                                          onPressed: () async {
+                                                            if (_isViewCompanyDialogShowing) return;
+                                                            _isViewCompanyDialogShowing = true;
+                                                            try {
+                                                              await showViewCompanyDialog(context, company, _fetchCompany);
+                                                            } finally {
+                                                              _isViewCompanyDialogShowing = false;
+                                                            }
                                                           },
                                                         ),
                                                     ],

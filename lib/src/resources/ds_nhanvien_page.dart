@@ -44,6 +44,10 @@ class _StaffListPageState extends State<StaffListPage> {
   List<Staff> paginatedStaffs = [];
   List<int> pageNumbers = [];
 
+  bool _isEditDialogShowing = false;
+  bool _isDeleteDialogShowing = false;
+  bool _isViewDialogShowing = false;
+
   final AuthBloc _authBloc = AuthBloc();
 
   void updatePaginatedStaffs() {
@@ -147,7 +151,7 @@ class _StaffListPageState extends State<StaffListPage> {
     }
   }
 
-  void showViewStaffDialog(BuildContext context, Staff staff, VoidCallback onRefresh) {
+  Future<void> showViewStaffDialog(BuildContext context, Staff staff, VoidCallback onRefresh) async{
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -256,7 +260,7 @@ class _StaffListPageState extends State<StaffListPage> {
     );
   }
 
-  void showEditDialog(BuildContext context, Staff staff, VoidCallback onRefresh) {
+  Future<void> showEditDialog(BuildContext context, Staff staff, VoidCallback onRefresh) async{
     final nameController = TextEditingController(text: staff.fullName);
     final phoneController = TextEditingController(text: staff.phone);
     final positionController = TextEditingController(text: staff.position);
@@ -548,7 +552,7 @@ class _StaffListPageState extends State<StaffListPage> {
                               }
 
                               if (updateData.isNotEmpty) {
-                                updateData['isUpdate'] = Timestamp.now();
+                                updateData['lastUpdate'] = Timestamp.now();
                                 await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).update(updateData);
                               }
 
@@ -597,7 +601,7 @@ class _StaffListPageState extends State<StaffListPage> {
   }
 
   /// Hàm hiển thị hộp thoại xác nhận xóa nhân viên
-  void showDeleteStaffDialog(BuildContext context, Staff staff, VoidCallback onRefresh) {
+  Future<void> showDeleteStaffDialog(BuildContext context, Staff staff, VoidCallback onRefresh) async{
     showDialog(
       context: context,
       builder: (context) {
@@ -611,6 +615,7 @@ class _StaffListPageState extends State<StaffListPage> {
             ),
             TextButton(
               onPressed: () async {
+                LoadingDialog.showLoadingDialog(context, "Đang tải ...");
                 try {
                   await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).update({
                     'isExit': true,
@@ -831,35 +836,57 @@ class _StaffListPageState extends State<StaffListPage> {
                                             DataCell(
                                               Row(
                                                 children: [
-                                                  // Hiển thị icon "edit" và "delete" nếu isExit = false (đang làm)
-            if (!staff.isExit) ...[
-              IconButton(
-                icon: Icon(Icons.edit, color: Colors.blue),
-                onPressed: () {
-                  showEditDialog(context, staff, _fetchStaff);
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.delete, color: Colors.red),
-                onPressed: () {
-                  showDeleteStaffDialog(context, staff, _fetchStaff);
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.info_outline, color: Colors.white),
-                onPressed: () {
-                  showViewStaffDialog(context, staff, _fetchStaff);
-                },
-              ),
-            ],
-            // Hiển thị icon "info" nếu isExit = true (đã nghỉ việc)
-            if (staff.isExit)
-              IconButton(
-                icon: Icon(Icons.info_outline, color: Colors.white),
-                onPressed: () {
-                  showViewStaffDialog(context, staff, _fetchStaff);
-                },
-              ),
+                                                  if (!staff.isExit) ...[
+                                                    IconButton(
+                                                      icon: Icon(Icons.edit, color: Colors.blue),
+                                                      onPressed: () async {
+                                                        if (_isEditDialogShowing) return;
+                                                        _isEditDialogShowing = true;
+                                                        try {
+                                                          await showEditDialog(context, staff, _fetchStaff);
+                                                        } finally {
+                                                          _isEditDialogShowing = false;
+                                                        }
+                                                      },
+                                                    ),
+                                                    IconButton(
+                                                      icon: Icon(Icons.delete, color: Colors.red),
+                                                      onPressed: () async {
+                                                        if (_isDeleteDialogShowing) return;
+                                                        _isDeleteDialogShowing = true;
+                                                        try {
+                                                          await showDeleteStaffDialog(context, staff, _fetchStaff);
+                                                        } finally {
+                                                          _isDeleteDialogShowing = false;
+                                                        }
+                                                      },
+                                                    ),
+                                                    IconButton(
+                                                      icon: Icon(Icons.info_outline, color: Colors.white),
+                                                      onPressed: () async {
+                                                        if (_isViewDialogShowing) return;
+                                                        _isViewDialogShowing = true;
+                                                        try {
+                                                          await showViewStaffDialog(context, staff, _fetchStaff);
+                                                        } finally {
+                                                          _isViewDialogShowing = false;
+                                                        }
+                                                      },
+                                                    ),
+                                                  ],
+                                                  if (staff.isExit)
+                                                    IconButton(
+                                                      icon: Icon(Icons.info_outline, color: Colors.white),
+                                                      onPressed: () async {
+                                                        if (_isViewDialogShowing) return;
+                                                        _isViewDialogShowing = true;
+                                                        try {
+                                                          await showViewStaffDialog(context, staff, _fetchStaff);
+                                                        } finally {
+                                                          _isViewDialogShowing = false;
+                                                        }
+                                                      },
+                                                    ),
                                                 ],
                                               ),
                                             ),

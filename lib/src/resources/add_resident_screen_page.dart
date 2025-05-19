@@ -8,6 +8,9 @@ import 'package:do_an/src/models/contract_data.dart';
 import 'package:do_an/src/models/resident_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pool/pool.dart';
+
+import '../../constants.dart';
 
 class AddResidentsScreen extends StatefulWidget {
   final int count;
@@ -59,9 +62,43 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
     super.dispose();
   }
 
+  Future<Map<String, dynamic>?> checkExistingResident(String cccd, String email) async {
+    // Query theo cccd + isExit = true
+    final query = await FirebaseFirestore.instance
+        .collection('residents')
+        .where('cccd', isEqualTo: cccd)
+        .where('isExit', isEqualTo: true)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      return {
+        'residentId': query.docs.first.id,
+        ...query.docs.first.data(),
+      };
+    }
+
+    // Query theo email + isExit = true
+    final emailQuery = await FirebaseFirestore.instance
+        .collection('residents')
+        .where('email', isEqualTo: email)
+        .where('isExit', isEqualTo: true)
+        .limit(1)
+        .get();
+
+    if (emailQuery.docs.isNotEmpty) {
+      return {
+        'residentId': emailQuery.docs.first.id,
+        ...emailQuery.docs.first.data(),
+      };
+    }
+
+    return null;
+  }
+
 // Hàm xử lý submit
   Future<void> _submit() async {
-    LoadingDialog.showLoadingDialog(context,"Đang tải ...");
+    LoadingDialog.showLoadingDialog(context, "Đang tải ...");
 
     bool isValid = true;
 
@@ -80,9 +117,12 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
     }
 
     if (!isValid) {
-      setState(() {
-        isLoading = false; // Tắt loading nếu không hợp lệ
-      });
+      if (mounted) {
+        LoadingDialog.hideLoadingDialog(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Vui lòng kiểm tra lại thông tin cư dân.")),
+        );
+      }
       return;
     }
 
@@ -95,81 +135,154 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
 
     try {
       final apartmentSnapshot = await apartmentRef.get();
+
       final existingResidents = List<Map<String, dynamic>>.from(apartmentSnapshot.data()?['residents'] ?? []);
 
+      final pool = Pool(3); // Giới hạn 3 request đồng thời
+
+      List<ResidentInfo> failedResidents = [];
+
       for (final resident in residents) {
-        final uid = await _createResidentAccount(
-          resident.email,
-          resident.fullName,
-          resident.cccd,
-          resident.address,
-          resident.gender,
-          resident.phone,
-          resident.birthDate,
-        );
+        await pool.withResource(() async {
+          int retryCount = 0;
+          const maxRetries = 3;
+          bool success = false;
 
-        if (uid == null) {
-          print("⚠️ Không thể lấy UID cho ${resident.fullName}, bỏ qua.");
-          continue;
-        }
+          while (retryCount < maxRetries && !success) {
+            try {
+              // === 1. Kiểm tra cư dân đã tồn tại ===
+              final existingData = await checkExistingResident(resident.cccd, resident.email);
 
-        final docRef = residentCollection.doc(uid);
-        batch.set(docRef, resident.copyWith(residentId: uid, apartmentId: widget.apartment.id).toMap());
+              if (existingData != null) {
+                final shouldProceed = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Center(child: Text("Cư dân đã tồn tại", style: TextStyle(fontSize: 5.sp))),
+                      content: Text(
+                        "${resident.fullName} đã tồn tại trong hệ thống.\nBạn có muốn khôi phục lại thông tin này không?",
+                        style: TextStyle(fontSize: 4.sp),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false), // Hủy
+                          child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true), // Khôi phục
+                          child: Text("Khôi phục", style: TextStyle(fontSize: 4.sp)),
+                        ),
+                      ],
+                    );
+                  },
+                );
 
-        final residentObj = {
-          'id': uid,
-          'fullName': resident.fullName,
-        };
-        newResidentObjects.add(residentObj);
-        newResidentNames.add(resident.fullName);
+                if (shouldProceed != true) {
+                  failedResidents.add(resident);
+                  print("⛔ Bỏ qua ${resident.fullName} vì người dùng chọn Hủy.");
+                  return;
+                }
+
+                print("🔁 Người dùng chọn khôi phục — vẫn tạo mới tài khoản cho ${resident.fullName}");
+              }
+
+              // === 2. Tạo tài khoản cư dân mới ===
+              final uid = await _createResidentAccount(
+                resident.email,
+                resident.fullName,
+                resident.cccd,
+                resident.address,
+                resident.gender,
+                resident.phone,
+                resident.birthDate,
+              );
+
+              if (uid == null) {
+                throw Exception("Không thể tạo tài khoản cho ${resident.fullName}");
+              }
+
+              final docRef = residentCollection.doc(uid);
+              batch.set(docRef, resident.copyWith(residentId: uid, apartmentId: widget.apartment.id).toMap());
+
+              newResidentObjects.add({'id': uid, 'fullName': resident.fullName});
+              newResidentNames.add(resident.fullName);
+              print("✅ Tạo mới thành công: ${resident.fullName}");
+              success = true; // kết thúc vòng while
+
+            } catch (e) {
+              retryCount++;
+              if (retryCount >= maxRetries) {
+                print("❌ Thất bại sau $maxRetries lần: ${resident.fullName} - Lỗi: $e");
+                failedResidents.add(resident);
+                break;
+              } else {
+                print("⚠️ Thử lại ${resident.fullName} lần $retryCount sau lỗi: $e");
+                await Future.delayed(Duration(seconds: 2));
+              }
+            }
+          }
+        });
       }
 
       if (newResidentObjects.isNotEmpty) {
-        final updatedResidents = List<Map<String, dynamic>>.from(existingResidents);
+        final updatedResidents = [...existingResidents];
+
         for (final newR in newResidentObjects) {
-          final alreadyExists = updatedResidents.any((r) => r['id'] == newR['id']);
-          if (!alreadyExists) updatedResidents.add(newR);
+          if (!updatedResidents.any((r) => r['id'] == newR['id'])) {
+            updatedResidents.add(newR);
+          }
         }
 
+        // Cập nhật cư dân cho căn hộ
         batch.update(apartmentRef, {
           'residents': updatedResidents,
         });
 
-        final logRef = apartmentRef.collection("updateHistory").doc();
-        batch.set(logRef, {
-          'action': 'Thêm cư dân',
-          'performedBy': 'Admin',
-          'residentNames': newResidentNames,
-          'timestamp': Timestamp.now(),
-        });
+        final apartmentDoc = await FirebaseFirestore.instance
+            .collection("apartments")
+            .doc(widget.apartment.id)
+            .get();
 
-        final contractRef = apartmentRef
-            .collection("contract")
-            .doc(widget.contract.contractId);
-        batch.update(contractRef, {
-          'numberOfResidents': widget.contract.numberOfResidents + newResidentObjects.length,
-        });
+        final currentContractId = apartmentDoc.data()?['currentContractId'];
+
+        if (currentContractId != null) {
+          final contractRef = FirebaseFirestore.instance
+              .collection("contracts")
+              .doc(currentContractId);
+
+          // Ghi lịch sử cập nhật
+          final logRef = contractRef.collection("contractHistory").doc();
+          batch.set(logRef, {
+            'action': 'Thêm cư dân',
+            'performedBy': 'Admin',
+            'residentNames': newResidentNames,
+            'timestamp': Timestamp.now(),
+          });
+
+          batch.update(contractRef, {
+            'numberOfResidents': widget.contract.numberOfResidents + newResidentObjects.length,
+          });
+        }
       }
 
       await batch.commit();
 
-      widget.onComplete();
-
-      LoadingDialog.hideLoadingDialog(context);
-
-      // Hiển thị dialog thành công
       if (mounted) {
+        LoadingDialog.hideLoadingDialog(context);
+        widget.onComplete();
+
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Center(child: Text("Thành công"),),
+              title: const Center(child: Text("Thành công")),
               content: const Text("Cư dân cập nhật thành công!"),
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Đóng dialog
-                    Navigator.pop(context); // Quay lại trang trước
+                    Navigator.pop(context); // Close dialog
+                    Navigator.pop(context); // Back to previous screen
+                    Navigator.pop(context);
                     Navigator.pop(context);
                   },
                   child: const Text("Đồng ý"),
@@ -181,22 +294,18 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
       }
     } catch (e) {
       print("❌ Lỗi khi commit batch: $e");
-      LoadingDialog.hideLoadingDialog(context);
-
-      // Hiển thị dialog thành công
       if (mounted) {
+        LoadingDialog.hideLoadingDialog(context);
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Center(child: Text("Thất bại"),),
+              title: const Center(child: Text("Thất bại")),
               content: const Text("Cư dân cập nhật thất bại!"),
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Đóng dialog
-                    Navigator.pop(context); // Quay lại trang trước
-                    Navigator.pop(context);
+                    Navigator.pop(context); // Close dialog
                   },
                   child: const Text("Đồng ý"),
                 ),
@@ -225,6 +334,7 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
       'phone': phone,
       'birthDate': birthDateString, // Gửi birthDate dưới dạng chuỗi
       'apartmentId': widget.apartment.id,
+      'contractId': widget.contract.contractId,
     });
 
     try {
@@ -244,8 +354,7 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text('      Nhập thông tin cư dân', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: Color(0xFFF7FEFF),),
-        backgroundColor: Color(0xFFF7FEFF),
+        appBar: AppBar(title: Text('      Nhập thông tin cư dân', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: bgColor,),
       body:SafeArea(child: Stack(
         children: [
           Padding(
@@ -269,7 +378,7 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
                     child: Card(
                       margin: EdgeInsets.only(bottom: 30.h),
                       elevation: 2,
-                      color: Colors.white,
+                      color: secondaryColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16.r),
                         side: BorderSide(

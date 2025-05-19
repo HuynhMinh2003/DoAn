@@ -844,7 +844,8 @@ class _ApartmentFilterPageState extends State<ApartmentFilterPage> {
       },
     );
 
-  }  Future<void> deleteResidentAccount1(String uid) async {
+  }
+  Future<void> deleteResidentAccount1(String uid) async {
     const functionUrl = 'https://deleteresidentaccount-ttrkrlo35a-uc.a.run.app';
 
     try {

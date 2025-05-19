@@ -23,41 +23,36 @@ const createResidentAccount = onRequest(
     corsHandler(req, res, async () => {
       const { email, fullName, cccd, address, gender, phone, birthDate, apartmentId, contractId } = req.body;
 
-      // Log dữ liệu nhận
       console.log("📦 Dữ liệu nhận được từ body:", req.body);
-
-      // Kiểm tra từng trường cụ thể
-      if (!email) console.log("❌ Thiếu trường: email");
-      if (!fullName) console.log("❌ Thiếu trường: fullName");
-      if (!cccd) console.log("❌ Thiếu trường: cccd");
-      if (!address) console.log("❌ Thiếu trường: address");
-      if (!gender) console.log("❌ Thiếu trường: gender");
-      if (!phone) console.log("❌ Thiếu trường: phone");
-      if (!birthDate) console.log("❌ Thiếu trường: birthDate");
-      if (!apartmentId) console.log("❌ Thiếu trường: apartmentId");
-      if (!contractId) console.log("❌ Thiếu trường: contractId");
 
       if (!email || !fullName || !cccd || !address || !gender || !phone || !birthDate || !apartmentId || !contractId) {
         return res.status(400).send("Thiếu thông tin.");
       }
 
       try {
-        // 1. Kiểm tra cư dân đã từng tồn tại chưa (isExit = true, tên và cccd trùng)
+        // ⚠️ Truy vấn nếu có resident nào trùng cccd HOẶC email (chỉ cần 1 trùng)
         const residentQuery = await admin
           .firestore()
           .collection("residents")
           .where("isExit", "==", true)
-          .where("cccd", "==", cccd)
-          .where("email", "==", email)
-          .limit(1)
+          .where("cccd", "in", [cccd])
           .get();
 
-        if (!residentQuery.empty) {
-          // Có cư dân từng thoát, khôi phục lại
-          const residentDoc = residentQuery.docs[0];
+        const emailQuery = await admin
+          .firestore()
+          .collection("residents")
+          .where("isExit", "==", true)
+          .where("email", "in", [email])
+          .get();
+
+        const combinedDocs = [...residentQuery.docs, ...emailQuery.docs];
+        const uniqueDocs = Array.from(new Map(combinedDocs.map(doc => [doc.id, doc])).values());
+
+        if (uniqueDocs.length > 0) {
+          const residentDoc = uniqueDocs[0];
           const residentId = residentDoc.id;
 
-          // Cập nhật lại trạng thái cư dân
+          // ✅ Cập nhật lại trạng thái
           await admin.firestore().collection("residents").doc(residentId).update({
             isExit: false,
             leaveAt: null,
@@ -65,7 +60,7 @@ const createResidentAccount = onRequest(
             apartmentId,
           });
 
-          // Thêm/cập nhật subcollection contractHistory
+          // ✅ Ghi nhận lại hợp đồng mới
           await admin
             .firestore()
             .collection("residents")
@@ -78,7 +73,7 @@ const createResidentAccount = onRequest(
               leftAt: null,
             });
 
-          // Gửi lại email thông báo
+          // ✅ Gửi email khôi phục
           const oAuth2Client = new google.auth.OAuth2(
             await CLIENT_ID.value(),
             await CLIENT_SECRET.value(),
@@ -111,12 +106,12 @@ const createResidentAccount = onRequest(
           });
 
           return res.status(200).json({
-            message: "Tài khoản đã được hoạt động lại.",
+            message: "Tài khoản đã được khôi phục.",
             residentId,
           });
         }
 
-        // 2. Nếu chưa từng tồn tại (hoặc chưa từng thoát), tiếp tục tạo mới
+        // 🔒 Nếu không trùng CCCD hoặc Email nào từng thoát → tạo mới
         const password = generateRandomPassword();
 
         const userRecord = await admin.auth().createUser({
@@ -143,7 +138,6 @@ const createResidentAccount = onRequest(
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        // Thêm contractHistory subcollection
         await admin
           .firestore()
           .collection("residents")
@@ -156,7 +150,6 @@ const createResidentAccount = onRequest(
             leftAt: null,
           });
 
-        // Gửi email thông tin đăng nhập
         const resetLink = await admin.auth().generatePasswordResetLink(email);
 
         const oAuth2Client = new google.auth.OAuth2(
@@ -192,13 +185,13 @@ const createResidentAccount = onRequest(
           `,
         });
 
-        res.status(200).json({
-          message: "Tạo tài khoản cư dân và gửi email thành công.",
+        return res.status(200).json({
+          message: "Tạo tài khoản cư dân mới thành công.",
           residentId: userRecord.uid,
         });
       } catch (error) {
-        console.error("❌ Lỗi tạo tài khoản cư dân:", error);
-        res.status(500).send("Lỗi: " + error.message);
+        console.error("❌ Lỗi xử lý cư dân:", error);
+        return res.status(500).send("Lỗi: " + error.message);
       }
     });
   }
