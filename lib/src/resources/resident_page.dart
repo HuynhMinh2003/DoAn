@@ -756,8 +756,8 @@ class _ResidentPageState extends State<ResidentPage> {
             hint: Text(
               label,
               style: TextStyle(
-                color: Colors.black,
                 fontSize: 4.sp,
+                color: Colors.white
               ),
             ),
             items: items.map((item) {
@@ -799,7 +799,6 @@ class _ResidentPageState extends State<ResidentPage> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30.r),
                 border: Border.all(color: const Color(0xe2707070)),
-                color: const Color(0xFFF7FEFF),
               ),
             ),
             dropdownStyleData: DropdownStyleData(
@@ -807,7 +806,6 @@ class _ResidentPageState extends State<ResidentPage> {
               width: 139.w ,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30.r),
-                color: const Color(0xFFF7FEFF),
               ),
               elevation: 4,
             ),
