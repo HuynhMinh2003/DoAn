@@ -7,6 +7,7 @@ import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/main_admin_page.dart';
 import 'package:do_an/src/resources/provider/company_image_provider.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
+import 'package:do_an/src/resources/provider/resident_image_provider.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/staff_image_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -128,6 +129,7 @@ void main() async {
             ChangeNotifierProvider(create: (_) => UserDataProvider()),
             ChangeNotifierProvider(create: (_) => StaffImageProvider()),
             ChangeNotifierProvider(create: (_) => CompanyImageProvider()),
+            ChangeNotifierProvider(create: (_) => ResidentImageProvider()),
             ChangeNotifierProvider(create: (_) => ContractNotifier()),
             ChangeNotifierProvider(create: (_) => MenuAppController()),
           ],

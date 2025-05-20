@@ -202,7 +202,11 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
               }
 
               final docRef = residentCollection.doc(uid);
-              batch.set(docRef, resident.copyWith(residentId: uid, apartmentId: widget.apartment.id).toMap());
+              batch.set(
+                docRef,
+                resident.copyWith(residentId: uid, apartmentId: widget.apartment.id).toMap(),
+                SetOptions(merge: true), // ✅ merge với dữ liệu cũ
+              );
 
               newResidentObjects.add({'id': uid, 'fullName': resident.fullName});
               newResidentNames.add(resident.fullName);
@@ -282,7 +286,6 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
                   onPressed: () {
                     Navigator.pop(context); // Close dialog
                     Navigator.pop(context); // Back to previous screen
-                    Navigator.pop(context);
                     Navigator.pop(context);
                   },
                   child: const Text("Đồng ý"),

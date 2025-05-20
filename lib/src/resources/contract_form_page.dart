@@ -710,10 +710,13 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           "createdAt": Timestamp.now(),
                         });
 
+                        final residentNames = residents.map((r) => r.fullName).toList();
+
                       final contractHistoryRef = contractRef.collection("contractHistory").doc();
                       await contractHistoryRef.set({
                         "action": "Kí hợp đồng mới ",
                         "performedBy": "Admin",
+                        "residents": residentNames,
                         "representativeName": representative.fullName,
                         "timestamp": FieldValue.serverTimestamp(),
                       });
