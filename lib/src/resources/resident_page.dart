@@ -11,6 +11,7 @@ import 'package:do_an/src/models/apartment.dart';
 import 'package:do_an/src/models/resident_info.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import '../../custom_paginated_table.dart';
 import 'resident_mobile_page.dart' if (dart.library.html) 'resident_web_page.dart';
 
 class ResidentPage extends StatefulWidget {
@@ -514,19 +515,12 @@ class _ResidentPageState extends State<ResidentPage> {
         ),
       );
 
-      if (selectedApartment != null) {
-        return r.apartmentId == selectedApartment!.id;
-      } else if (selectedBuilding != null && selectedFloor != null) {
-        return apt.building == selectedBuilding && apt.floor == selectedFloor;
-      } else if (selectedBuilding != null) {
-        return apt.building == selectedBuilding;
-      }
-      // Tìm kiếm theo tên cư dân
-      if (_searchQuery.isNotEmpty) {
-        return r.fullName.toLowerCase().contains(_searchQuery.toLowerCase());
-      }
+      bool matchesApartment = selectedApartment == null || r.apartmentId == selectedApartment!.id;
+      bool matchesBuilding = selectedBuilding == null || apt.building == selectedBuilding;
+      bool matchesFloor = selectedFloor == null || apt.floor == selectedFloor;
+      bool matchesSearch = _searchQuery.isEmpty || r.fullName.toLowerCase().contains(_searchQuery.toLowerCase());
 
-      return true; // chưa chọn gì thì hiển thị tất cả
+      return matchesApartment && matchesBuilding && matchesFloor && matchesSearch;
     }).toList();
 
     return Scaffold(
@@ -534,203 +528,137 @@ class _ResidentPageState extends State<ResidentPage> {
         child: Stack(
           children: [
             SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 40.h),
+              child: ConstrainedBox(constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),child:Padding(
+                padding: EdgeInsets.only(left: 10.w, right: 10.w, top: 40.h),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Danh sách cư dân",
-                      style: TextStyle(
-                        fontFamily: "Oswald",
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12.sp,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Flexible(flex:3,child: Text(
+                          "Danh sách cư dân",
+                          style: TextStyle(
+                            fontFamily: "Oswald",
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.sp,
+                          ),
+                        ),),
+                        Flexible(flex:2, child: TextField(
+                          decoration: InputDecoration(
+                            labelText: "Tìm kiếm cư dân",
+                            prefixIcon: Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30.r),
+                            ),
+                          ),
+                          onChanged: _onSearchChanged, // Gọi hàm debounce khi nhập
+                        )),
+                        Flexible(flex:2,child: ElevatedButton(
+                          onPressed: () => exportResidentsToExcel(residents, matchedResidents, apartments),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.upload),
+                              SizedBox(width: 5.w,),
+                              Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
+                            ],
+                          ),
+                        ),),
+                      ],
                     ),
-                    SizedBox(height: 30.h),
-                    ElevatedButton(
-                      onPressed: () => exportResidentsToExcel(residents, matchedResidents, apartments),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.upload),
-                          SizedBox(width: 5.w,),
-                          Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
-                        ],
-                      ),
+                    SizedBox(height: 10.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(child: buildFilterDropdown<String>(
+                          label: 'Chọn tòa nhà',
+                          items: getBuildings(),
+                          selectedValue: selectedBuilding,
+                          onChanged: (val) {
+                            setState(() {
+                              selectedBuilding = val;
+                              selectedFloor = null;
+                              selectedApartment = null;
+                            });
+                          },
+                        ),),
+                        SizedBox(width:20.w),
+                        Expanded(child: buildFilterDropdown<int>(
+                          label: 'Chọn tầng',
+                          items: floors.cast<int>(),
+                          selectedValue: selectedFloor,
+                          onChanged: (val) {
+                            setState(() {
+                              selectedFloor = val;
+                              selectedApartment = null;
+                            });
+                          },
+                        ),),
+                        SizedBox(width:20.w),
+                        Expanded(child: buildFilterDropdown<Apartment>(
+                          label: 'Chọn căn hộ',
+                          items: rooms.cast<Apartment>(),
+                          selectedValue: selectedApartment,
+                          onChanged: (val) {
+                            setState(() {
+                              selectedApartment = val;
+                            });
+                          },
+                          itemLabelBuilder: (apt) => apt.apartmentName,
+                        ),)
+                      ],
                     ),
-                    SizedBox(height: 40.h),
                     SizedBox(
                       height: MediaQuery.of(context).size.height - 360.h,
                       child: Row(
                         children: [
                           Expanded(
-                            child: Column(
-                              children: [
-                              SizedBox(
-                                width: double.infinity,
-                                child: TextField(
-                                  decoration: InputDecoration(
-                                    labelText: "Tìm kiếm cư dân",
-                                    prefixIcon: Icon(Icons.search),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(30.r),
-                                    ),
-                                  ),
-                                  onChanged: _onSearchChanged, // Gọi hàm debounce khi nhập
-                                ),
-                              ),
-                                SizedBox(height: 30.h,),
-                                // Tòa nhà
-                                buildFilterDropdown<String>(
-                                  label: 'Chọn tòa nhà',
-                                  items: getBuildings(),
-                                  selectedValue: selectedBuilding,
-                                  onChanged: (val) {
-                                    setState(() {
-                                      selectedBuilding = val;
-                                      selectedFloor = null;
-                                      selectedApartment = null;
-                                    });
-                                  },
-                                ),
-                                const SizedBox(height: 12),
-
-                                // Tầng
-                                buildFilterDropdown<int>(
-                                  label: 'Chọn tầng',
-                                  items: floors.cast<int>(),
-                                  selectedValue: selectedFloor,
-                                  onChanged: (val) {
-                                    setState(() {
-                                      selectedFloor = val;
-                                      selectedApartment = null;
-                                    });
-                                  },
-                                ),
-                                const SizedBox(height: 12),
-
-                                // Căn hộ
-                                buildFilterDropdown<Apartment>(
-                                  label: 'Chọn căn hộ',
-                                  items: rooms.cast<Apartment>(),
-                                  selectedValue: selectedApartment,
-                                  onChanged: (val) {
-                                    setState(() {
-                                      selectedApartment = val;
-                                    });
-                                  },
-                                  itemLabelBuilder: (apt) => apt.apartmentName,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 24),
-
-                          // Vertical Divider
-                          VerticalDivider(
-                            color: Colors.grey, // Màu của đường ngăn cách
-                            thickness: 0.2.w, // Độ dày của đường ngăn cách
-                            width: 40.w, // Chiều rộng tổng thể của vùng ngăn cách (bao gồm cả padding nếu có)
-                          ),
-
-                          Expanded(
                             child: matchedResidents.isEmpty
                                 ? const Center(child: Text("Không có cư dân."))
-                                : GridView.builder(
-                              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 10.h), // Thêm padding để tạo khoảng trống
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2, // Hiển thị 2 cột
-                                mainAxisSpacing: 30.h, // Khoảng cách giữa các hàng
-                                crossAxisSpacing: 5.w, // Khoảng cách giữa các cột
-                                childAspectRatio: 6 / 2.5, // Tỉ lệ chiều rộng / chiều cao của mỗi phần tử
-                              ),
-                              itemCount: matchedResidents.length,
-                              itemBuilder: (context, index) {
-                                final resident = matchedResidents[index];
-                                return GestureDetector(
-                                  onTap: () => _showResidentDetails(
-                                    context,
-                                    resident,
-                                    refresh, // Gọi lại hàm refresh để cập nhật danh sách cư dân sau khi chỉnh sửa
-                                  ),                                  child: Container(
-                                    padding: EdgeInsets.fromLTRB(1.w, 25.h, 1.w, 0.w),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12.r),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.3),
-                                          blurRadius: 6.r,
-                                          offset: Offset(0, 3),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          children: [
-                                            SizedBox(width: 5.w),
-                                            Stack(
-                                              children: [
-                                                // Ảnh cư dân
-                                                Container(
-                                                  width: 17.w,
-                                                  height: 80.h,
-                                                  child: CircleAvatar(
-                                                    radius: 8.r,
-                                                    backgroundImage: (resident.imageUrl != null && resident.imageUrl!.isNotEmpty)
-                                                        ? NetworkImage(resident.imageUrl!)
-                                                        : null, // Chỉ sử dụng NetworkImage nếu imageUrl hợp lệ
-                                                    child: (resident.imageUrl == null || resident.imageUrl!.isEmpty)
-                                                        ? Icon(
-                                                      Icons.person,
-                                                      size: 8.r * 4, // Kích thước icon phù hợp với radius
-                                                      color: Colors.grey, // Màu của biểu tượng
-                                                    ) // Hiển thị icon nếu imageUrl không hợp lệ
-                                                        : null,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(width: 5.w),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    resident.fullName,
-                                                    style: TextStyle(
-                                                      fontFamily: "Oswald",
-                                                      fontSize: 4.5.sp,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                  SizedBox(height: 10.h),
-                                                  Text(
-                                                    "CCCD: ${resident.cccd}",
-                                                    style: TextStyle(
-                                                      fontSize: 3.sp,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                                : CustomPaginatedTable(
+                              columns: const [
+                                DataColumn(label: Text('Họ tên')),
+                                DataColumn(label: Text('CCCD')),
+                                DataColumn(label: Text('Căn hộ')),
+                              ],
+                              rows: matchedResidents.map((resident) {
+                                final apartment = apartments.firstWhere(
+                                      (apt) => apt.id == resident.apartmentId,
+                                  orElse: () => Apartment(
+                                    id: '',
+                                    apartmentName: '',
+                                    building: '',
+                                    area: 0,
+                                    description: '',
+                                    status: '',
+                                    currentContractId: '',
+                                    residents: [],
                                   ),
                                 );
-                              },
+
+                                return DataRow(
+                                  cells: [
+                                    DataCell(Text(resident.fullName)),
+                                    DataCell(Text(resident.cccd)),
+                                    DataCell(Text(apartment.apartmentName)),
+                                  ],
+                                  onSelectChanged: (_) {
+                                    _showResidentDetails(context, resident, refresh);
+                                  },
+                                );
+                              }).toList(),
+                              rowsPerPage: 10,
                             ),
-                          ),                        ],
+                          ),
+                        ],
                       ),
                     )
                   ],
                 ),
-              ),
+              ),),
             ),
           ],
         ),
@@ -821,3 +749,4 @@ class _ResidentPageState extends State<ResidentPage> {
     );
   }
 }
+
