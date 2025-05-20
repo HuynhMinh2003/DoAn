@@ -375,7 +375,7 @@ class _ContractListPageState extends State<ContractListPage> {
           actions: [
             TextButton(
               onPressed: () async {
-                final confirm = await showDialog(
+                final confirm = await showDialog<bool>(
                   context: context,
                   builder: (_) => AlertDialog(
                     title: Center(
@@ -407,59 +407,75 @@ class _ContractListPageState extends State<ContractListPage> {
                   ),
                 );
 
-                if (confirm == true) {
-                  try {
-                    // 1. Cập nhật trạng thái hợp đồng thành không còn hiệu lực
-                    await contractDoc.reference.update({'isActive': false});
+                if (!context.mounted || confirm != true) return;
 
-                    // 2. Ghi bản ghi lịch sử kết thúc hợp đồng
-                    await updateHistoryCollectionRef.add({
-                      'action': 'Kết thúc hợp đồng',
-                      'performedBy': 'Admin',
-                      'representativeName':
-                          contract.representative?['fullName'],
-                      'timestamp': FieldValue.serverTimestamp(),
+                try {
+                  // 1. Cập nhật trạng thái hợp đồng thành không còn hiệu lực
+                  await contractDoc.reference.update({'isActive': false});
+
+                  // 2. Ghi bản ghi lịch sử kết thúc hợp đồng
+                  await updateHistoryCollectionRef.add({
+                    'action': 'Kết thúc hợp đồng',
+                    'performedBy': 'Admin',
+                    'representativeName': contract.representative?['fullName'],
+                    'timestamp': FieldValue.serverTimestamp(),
+                  });
+
+                  // 3. Cập nhật cư dân: isExit, lastUpdate và leftAt trong subcollection contractHistory
+                  final residentsSnapshot = await residentsRef
+                      .where('apartmentId', isEqualTo: apartment.id)
+                      .get();
+                  for (var residentDoc in residentsSnapshot.docs) {
+                    // 3.1 update isExit và lastUpdate
+                    await residentDoc.reference.update({
+                      'isExit': true,
+                      'lastUpdate': Timestamp.now(),
                     });
 
-                    // 3. Cập nhật trạng thái cư dân thành đã rời đi
-                    final residentsSnapshot = await residentsRef
-                        .where('apartmentId', isEqualTo: apartment.id)
+                    // 3.2 update leftAt trong contractHistory mới nhất
+                    final contractHistoryRef = residentDoc.reference
+                        .collection('contractHistory');
+                    final historySnap = await contractHistoryRef
+                        .where('contractId', isEqualTo: apartment.currentContractId)
+                        .orderBy('joinedAt', descending: true)
+                        .limit(1)
                         .get();
-                    for (var residentDoc in residentsSnapshot.docs) {
-                      await residentDoc.reference.update({
-                        'isExit': true,
-                        'lastUpdate': Timestamp.now(),
+                    if (historySnap.docs.isNotEmpty) {
+                      await historySnap.docs.first.reference.update({
+                        'leftAt': Timestamp.now(),
                       });
                     }
-
-                    // 4. Cập nhật lại trạng thái căn hộ
-                    await apartmentDocRef.update({
-                      'status': 'Trống',
-                      'currentContractId': null,
-                      'residents': [],
-                    });
-
-                    Navigator.pop(context); // Đóng dialog xác nhận
-                    onRefresh(); // Làm mới giao diện
-                  } catch (e) {
-                    showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: Text("Lỗi",
-                            style: TextStyle(
-                                fontSize: 5.sp, fontWeight: FontWeight.bold)),
-                        content: Text("Đã xảy ra lỗi: $e",
-                            style: TextStyle(fontSize: 4.sp)),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child:
-                                Text("Đóng", style: TextStyle(fontSize: 4.sp)),
-                          ),
-                        ],
-                      ),
-                    );
                   }
+
+                  // 4. Cập nhật lại trạng thái căn hộ
+                  await apartmentDocRef.update({
+                    'status': 'Trống',
+                    'currentContractId': null,
+                    'residents': [],
+                  });
+
+                  if (!context.mounted) return;
+                  Navigator.pop(context); // Đóng dialog xác nhận
+                  onRefresh();           // Làm mới giao diện
+
+                } catch (e) {
+                  if (!context.mounted) return;
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: Text("Lỗi",
+                          style:
+                          TextStyle(fontSize: 5.sp, fontWeight: FontWeight.bold)),
+                      content: Text("Đã xảy ra lỗi: $e",
+                          style: TextStyle(fontSize: 4.sp)),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                        ),
+                      ],
+                    ),
+                  );
                 }
               },
               child: Text(
@@ -477,6 +493,85 @@ class _ContractListPageState extends State<ContractListPage> {
                   _showUpdateHistoryDialog(context, updateHistoryCollectionRef),
               child: Text("Xem lịch sử thay đổi",
                   style: TextStyle(fontSize: 3.sp)),
+            ),
+            TextButton(
+              onPressed: () async {
+                // 1. Chọn ngày mới
+                final newEndDate = await showDatePicker(
+                  context: context,
+                  initialDate: contract.endDate ?? DateTime.now(),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                );
+                if (newEndDate == null) return;
+
+                // 2. Hiển thị loading
+                LoadingDialog.showLoadingDialog(context, "Đang gia hạn...");
+
+                try {
+                  // 3. Cập nhật endDate và lastUpdate
+                  await contractDoc.reference.update({
+                    'endDate': Timestamp.fromDate(newEndDate),
+                    'lastUpdate': FieldValue.serverTimestamp(),
+                  });
+
+                  // 4. Ghi vào lịch sử
+                  await updateHistoryCollectionRef.add({
+                    'action': 'Gia hạn hợp đồng',
+                    'performedBy': 'Admin',
+                    'details': 'Gia hạn đến ${DateFormat('dd/MM/yyyy').format(newEndDate)}',
+                    'timestamp': FieldValue.serverTimestamp(),
+                  });
+
+                  // 5. Ẩn loading
+                  LoadingDialog.hideLoadingDialog(context);
+
+                  // 6. Hiện dialog thành công
+                  await showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: Text("Thành công",
+                          style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold)),
+                      content: Text(
+                        "Hợp đồng đã được gia hạn đến ${DateFormat('dd/MM/yyyy').format(newEndDate)}.",
+                        style: TextStyle(fontSize: 4.sp),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  // 7. Đóng dialog gốc và làm mới UI
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    onRefresh();
+                  }
+                } catch (e) {
+                  // ẩn loading rồi show lỗi
+                  LoadingDialog.hideLoadingDialog(context);
+                  if (!context.mounted) return;
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: Text("Lỗi",
+                          style: TextStyle(fontSize: 5.sp, fontWeight: FontWeight.bold)),
+                      content: Text("Không thể gia hạn hợp đồng: $e",
+                          style: TextStyle(fontSize: 4.sp)),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
+              child: Text("Gia hạn hợp đồng", style: TextStyle(fontSize: 3.sp)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -842,29 +937,27 @@ class _ContractListPageState extends State<ContractListPage> {
                                           'leaveAt': Timestamp.now(),
                                         },
                                       );
-                                      // Cập nhật leftAt trong contractHistory của resident (nếu tồn tại entry có contractId khớp)
-                                      final residentHistoryRef =
-                                          FirebaseFirestore.instance
-                                              .collection("residents")
-                                              .doc(selectedIdToRemove)
-                                              .collection("contractHistory");
+                                      // 1. Tạo reference tới subcollection contractHistory của resident
+                                      final residentHistoryRef = FirebaseFirestore.instance
+                                          .collection("residents")
+                                          .doc(selectedIdToRemove)
+                                          .collection("contractHistory");
 
-                                      final residentHistorySnapshot =
-                                          await residentHistoryRef
-                                              .where("contractId",
-                                                  isEqualTo: currentContractId)
-                                              .limit(1)
-                                              .get();
+                                      // 2. Query: lọc theo contractId, sắp xếp joinedAt mới nhất trước, limit 1
+                                      final residentHistorySnapshot = await residentHistoryRef
+                                          .where("contractId", isEqualTo: currentContractId)
+                                          .orderBy("joinedAt", descending: true)  // mới nhất → cũ nhất
+                                          .limit(1)                                // chỉ 1 bản ghi
+                                          .get();
 
-                                      if (residentHistorySnapshot
-                                          .docs.isNotEmpty) {
-                                        final docId = residentHistorySnapshot
-                                            .docs.first.id;
-                                        batch.update(
-                                            residentHistoryRef.doc(docId), {
+                                      // 3. Nếu có, cập nhật leftAt cho bản mới nhất đó
+                                      if (residentHistorySnapshot.docs.isNotEmpty) {
+                                        final latestDocRef = residentHistorySnapshot.docs.first.reference;
+                                        await latestDocRef.update({
                                           "leftAt": Timestamp.now(),
                                         });
                                       }
+
 
                                       final removedResidentSummary = {
                                         'id': removedResident["id"],
@@ -903,6 +996,7 @@ class _ContractListPageState extends State<ContractListPage> {
                                       // await deleteResidentAccount1(selectedIdToRemove!);
                                       await batch.commit();
                                       onRefresh();
+                                      Navigator.pop(context);
                                     }
                                   });
                                 }
@@ -973,6 +1067,7 @@ class _ContractListPageState extends State<ContractListPage> {
 
                                 await batch.commit();
                                 onRefresh();
+                                Navigator.pop(context);
                               }
 
                               // Hiển thị thông báo thành công
@@ -1166,13 +1261,17 @@ class _ContractListPageState extends State<ContractListPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
     // Gán chỉ 1 lần
-    contractNotifier = Provider.of<ContractNotifier>(context, listen: false);
-    // Reload nếu có hợp đồng mới
-    if (contractNotifier.contractCreated) {
-      loadApartmentsFromFirestore();
-      contractNotifier.reset();
-    }
+    contractNotifier = Provider.of<ContractNotifier>(context, listen: true);
+
+    // Dùng post-frame callback để tránh lỗi gọi notifyListeners trong build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (contractNotifier.contractCreated) {
+        loadApartmentsFromFirestore();
+        contractNotifier.reset();
+      }
+    });
   }
 
   @override
