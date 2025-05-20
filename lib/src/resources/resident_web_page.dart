@@ -3,6 +3,8 @@ import 'package:do_an/src/models/resident_info.dart';
 import 'package:excel/excel.dart' as ex;
 import 'dart:html' as html;
 
+import 'package:intl/intl.dart';
+
 Future<void> exportResidentsToExcel(
     List<ResidentInfo> residents,
     List<ResidentInfo> matchedResidents,
@@ -51,8 +53,8 @@ Future<void> exportResidentsToExcel(
       ex.TextCellValue(resident.fullName),
       ex.TextCellValue(resident.cccd),
       ex.TextCellValue(resident.birthDate != null
-          ? resident.birthDate!.toString()
-          : "N/A"), // Handle null birth date
+          ? DateFormat('dd/MM/yyyy').format(resident.birthDate!)
+          : "N/A"),
       ex.TextCellValue(resident.gender),
       ex.TextCellValue(resident.email),
       ex.TextCellValue(resident.phone),
