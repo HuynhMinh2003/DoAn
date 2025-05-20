@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:do_an/src/resources/provider/resident_image_provider.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:email_validator/email_validator.dart';
@@ -9,10 +11,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:do_an/src/models/apartment.dart';
 import 'package:do_an/src/models/resident_info.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import '../../custom_paginated_table.dart';
-import 'resident_mobile_page.dart' if (dart.library.html) 'resident_web_page.dart';
+import 'resident_mobile_page.dart'
+    if (dart.library.html) 'resident_web_page.dart';
 
 class ResidentPage extends StatefulWidget {
   const ResidentPage({super.key});
@@ -84,8 +89,12 @@ class _ResidentPageState extends State<ResidentPage> {
     if (!mounted) return;
 
     setState(() {
-      apartments = results[0].docs.map((doc) => Apartment.fromFirestore(doc)).toList();
-      residents = results[1].docs.map((doc) => ResidentInfo.fromFirestore(doc)).toList();
+      apartments =
+          results[0].docs.map((doc) => Apartment.fromFirestore(doc)).toList();
+      residents = results[1]
+          .docs
+          .map((doc) => ResidentInfo.fromFirestore(doc))
+          .toList();
     });
   }
 
@@ -98,6 +107,7 @@ class _ResidentPageState extends State<ResidentPage> {
       });
     });
   }
+
 // Hàm refresh để tải lại dữ liệu
   Future<void> refresh() async {
     await loadData();
@@ -108,10 +118,103 @@ class _ResidentPageState extends State<ResidentPage> {
       selectedApartment = null;
     });
   }
+
   @override
   void dispose() {
     _debounce?.cancel(); // Hủy debounce khi widget bị dispose
     super.dispose();
+  }
+
+  Future<List<Map<String, dynamic>>> getContractHistoryWithApartmentNames(String residentId) async {
+    final historySnapshots = await FirebaseFirestore.instance
+        .collection('residents')
+        .doc(residentId)
+        .collection('contractHistory')
+        .get();
+
+    List<Map<String, dynamic>> historyList = [];
+
+    for (var doc in historySnapshots.docs) {
+      final data = doc.data();
+      final apartmentId = data['apartmentId'];
+      String apartmentName = 'Không rõ';
+
+      final aptSnapshot = await FirebaseFirestore.instance
+          .collection('apartments')
+          .doc(apartmentId)
+          .get();
+
+      if (aptSnapshot.exists) {
+        apartmentName = aptSnapshot.data()?['apartmentName'] ?? 'Không rõ';
+      }
+
+      historyList.add({
+        'apartmentId': apartmentId,
+        'apartmentName': apartmentName,
+        'contractId': data['contractId'] ?? '',
+        'joinedAt': (data['joinedAt'] as Timestamp?)?.toDate(),
+        'leftAt': (data['leftAt'] as Timestamp?)?.toDate(),
+      });
+    }
+
+    return historyList;
+  }
+
+  Future<void> showContractHistoryDialog(BuildContext context, String residentId) async {
+    final histories = await getContractHistoryWithApartmentNames(residentId);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          "Lịch sử hợp đồng",
+          style: TextStyle(
+            fontFamily: "Oswald",
+            fontWeight: FontWeight.bold,
+            fontSize: 7.sp,
+            color: Colors.blueAccent,
+          ),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: histories.isEmpty
+              ? Text("Không có dữ liệu lịch sử.")
+              : SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: histories.map((history) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Divider(),
+                    buildInfoRow("Tên căn hộ:", history['apartmentName']),
+                    buildInfoRow("Mã hợp đồng:", history['contractId']),
+                    buildInfoRow(
+                      "Ngày vào:",
+                      history['joinedAt'] != null
+                          ? DateFormat('dd/MM/yyyy').format(history['joinedAt'])
+                          : "Không rõ",
+                    ),
+                    buildInfoRow(
+                      "Ngày rời:",
+                      history['leftAt'] != null
+                          ? DateFormat('dd/MM/yyyy').format(history['leftAt'])
+                          : "Chưa có",
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<bool> sendUpdatedDetailEmailFromFlutter({
@@ -122,7 +225,7 @@ class _ResidentPageState extends State<ResidentPage> {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse("https://sendupdateddetailemail-ttrkrlo35a-uc.a.run.app"), // <-- thay URL đúng của bạn
+        Uri.parse("https://sendupdateddetailemail-ttrkrlo35a-uc.a.run.app"),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'uid': uid,
@@ -145,7 +248,94 @@ class _ResidentPageState extends State<ResidentPage> {
     }
   }
 
-  void _showResidentDetails(BuildContext context, ResidentInfo resident, VoidCallback refresh) async {
+  Future<void> showViewResidentDialog(BuildContext context,
+      ResidentInfo resident, VoidCallback onRefresh) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            "Thông tin cư dân",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: "Oswald",
+              fontWeight: FontWeight.bold,
+              fontSize: 7.sp,
+              color: Colors.blueAccent,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: CircleAvatar(
+                    radius: 70.r,
+                    backgroundColor: Colors.grey,
+                    child: ClipOval(
+                      child: resident.imageUrl?.isNotEmpty == true
+                          ? Image.network(
+                        resident.imageUrl!,
+                        width: 70.r,
+                        height: 70.r,
+                        fit: BoxFit.cover,
+                      )
+                          : SvgPicture.asset(
+                        'assets/images/default_avatar.svg',
+                        width: 70.r,
+                        height: 70.r,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+
+                ),
+                SizedBox(height: 20.h),
+                buildInfoRow("Họ và tên:", resident.fullName),
+                buildInfoRow("Email:", resident.email),
+                buildInfoRow("Giới tính:", resident.gender),
+                buildInfoRow(
+                  "Ngày sinh:",
+                  resident.birthDate != null
+                      ? DateFormat('dd/MM/yyyy').format(resident.birthDate!)
+                      : "Chưa cập nhật",
+                ),
+                buildInfoRow(
+                  "Lần sửa thông tin gần nhất: ",
+                  resident.lastUpdate != null
+                      ? DateFormat('dd/MM/yyyy – HH:mm')
+                      .format(resident.lastUpdate!)
+                      : "Chưa có",
+                ),
+                buildInfoRow("CCCD:", resident.cccd),
+                buildInfoRow("Địa chỉ:", resident.address),
+                buildInfoRow("Số điện thoại:", resident.phone),
+                if (resident.isExit)
+                  buildInfoRow(
+                    "Ngày rời căn hộ:",
+                    resident.leaveAt != null
+                        ? DateFormat('dd/MM/yyyy – HH:mm')
+                            .format(resident.leaveAt!)
+                        : "Chưa có",
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> showEditResident(
+      BuildContext context, ResidentInfo resident, VoidCallback refresh) async {
     final apartmentSnapshot = await FirebaseFirestore.instance
         .collection('apartments')
         .doc(resident.apartmentId)
@@ -172,12 +362,18 @@ class _ResidentPageState extends State<ResidentPage> {
     bool isEditing = false;
 
     // StreamControllers for error handling
-    final StreamController<String?> nameErrorController = StreamController<String?>();
-    final StreamController<String?> cccdErrorController = StreamController<String?>();
-    final StreamController<String?> emailErrorController = StreamController<String?>();
-    final StreamController<String?> birthDateErrorController = StreamController<String?>();
-    final StreamController<String?> phoneErrorController = StreamController<String?>();
-    final StreamController<String?> addressErrorController = StreamController<String?>();
+    final StreamController<String?> nameErrorController =
+        StreamController<String?>();
+    final StreamController<String?> cccdErrorController =
+        StreamController<String?>();
+    final StreamController<String?> emailErrorController =
+        StreamController<String?>();
+    final StreamController<String?> birthDateErrorController =
+        StreamController<String?>();
+    final StreamController<String?> phoneErrorController =
+        StreamController<String?>();
+    final StreamController<String?> addressErrorController =
+        StreamController<String?>();
 
     // Error state variables
     bool nameHasError = false;
@@ -221,7 +417,8 @@ class _ResidentPageState extends State<ResidentPage> {
         birthDateErrorController.add(null);
         birthDateHasError = false;
       } catch (e) {
-        birthDateErrorController.add('Ngày sinh phải đúng định dạng dd/MM/yyyy.');
+        birthDateErrorController
+            .add('Ngày sinh phải đúng định dạng dd/MM/yyyy.');
         birthDateHasError = true;
       }
 
@@ -248,242 +445,381 @@ class _ResidentPageState extends State<ResidentPage> {
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(
-                "Thông tin cư dân",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: "Oswald",
-                  fontWeight: FontWeight.bold,
-                  fontSize: 6.sp,
-                  color: Colors.blueAccent,
-                ),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Căn hộ: $apartmentName", style: TextStyle(fontSize: 4.sp)),
-                    SizedBox(height: 15.h),
-
-                    // Name field
-                    StreamBuilder<String?>(
-                      stream: nameErrorController.stream,
-                      builder: (context, snapshot) {
-                        return TextField(
-                          controller: nameController,
-                          enabled: isEditing,
-                          style: TextStyle(fontSize: 4.sp),
-                          decoration: InputDecoration(
-                            labelText: 'Họ và tên',
-                            labelStyle: TextStyle(fontSize: 4.sp),
-                            errorText: snapshot.data,
-                          ),
-                          onChanged: (_) {
-                            if (isEditing) validateFields();
-                          },
-                        );
-                      },
-                    ),
-                    SizedBox(height: 15.h),
-
-                    // CCCD field
-                    StreamBuilder<String?>(
-                      stream: cccdErrorController.stream,
-                      builder: (context, snapshot) {
-                        return TextField(
-                          controller: cccdController,
-                          enabled: isEditing,
-                          style: TextStyle(fontSize: 4.sp),
-                          decoration: InputDecoration(
-                            labelText: 'CCCD',
-                            labelStyle: TextStyle(fontSize: 4.sp),
-                            errorText: snapshot.data,
-                          ),
-                          keyboardType: TextInputType.number,
-                          onChanged: (_) {
-                            if (isEditing) validateFields();
-                          },
-                        );
-                      },
-                    ),
-                    SizedBox(height: 15.h),
-
-                    // Email field
-                    StreamBuilder<String?>(
-                      stream: emailErrorController.stream,
-                      builder: (context, snapshot) {
-                        return TextField(
-                          controller: emailController,
-                          enabled: isEditing,
-                          style: TextStyle(fontSize: 4.sp),
-                          decoration: InputDecoration(
-                            labelText: 'Email',
-                            labelStyle: TextStyle(fontSize: 4.sp),
-                            errorText: snapshot.data,
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                          onChanged: (_) {
-                            if (isEditing) validateFields();
-                          },
-                        );
-                      },
-                    ),
-                    SizedBox(height: 15.h),
-
-                    // Email field
-                    StreamBuilder<String?>(
-                      stream: phoneErrorController.stream,
-                      builder: (context, snapshot) {
-                        return TextField(
-                          controller: phoneController,
-                          enabled: isEditing,
-                          style: TextStyle(fontSize: 4.sp),
-                          decoration: InputDecoration(
-                            labelText: 'Số điện thoại',
-                            labelStyle: TextStyle(fontSize: 4.sp),
-                            errorText: snapshot.data,
-                          ),
-                          onChanged: (_) {
-                            if (isEditing) validateFields();
-                          },
-                        );
-                      },
-                    ),
-
-                    SizedBox(height: 15.h),
-
-                    // Email field
-                    StreamBuilder<String?>(
-                      stream: addressErrorController.stream,
-                      builder: (context, snapshot) {
-                        return TextField(
-                          controller: addressController,
-                          enabled: isEditing,
-                          style: TextStyle(fontSize: 4.sp),
-                          decoration: InputDecoration(
-                            labelText: 'Địa chỉ',
-                            labelStyle: TextStyle(fontSize: 4.sp),
-                            errorText: snapshot.data,
-                          ),
-                          onChanged: (_) {
-                            if (isEditing) validateFields();
-                          },
-                        );
-                      },
-                    ),
-                    SizedBox(height: 15.h,),
-                    // Gender dropdown
-                    DropdownButtonFormField<String>(
-                      value: selectedGender,
-                      decoration: InputDecoration(
-                        labelText: 'Giới tính',
-                        border: OutlineInputBorder(),
+        return ChangeNotifierProvider(
+          create: (_) => ResidentImageProvider(),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Consumer<ResidentImageProvider>(
+                builder: (context, imageProvider, _) {
+                  return AlertDialog(
+                    title: Text(
+                      "Thông tin cư dân",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: "Oswald",
+                        fontWeight: FontWeight.bold,
+                        fontSize: 6.sp,
+                        color: Colors.blueAccent,
                       ),
-                      items: ['Nam', 'Nữ', 'Khác']
-                          .map((gender) => DropdownMenuItem<String>(
-                        value: gender,
-                        child: Text(gender, style: TextStyle(fontSize: 4.sp)),
-                      ))
-                          .toList(),
-                      onChanged: isEditing
-                          ? (value) {
-                        setState(() {
-                          selectedGender = value ?? "Khác";
-                        });
-                      }
-                          : null,
                     ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () async {
-                    if (isEditing) {
-                      validateFields();
+                    content: SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 5.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                CircleAvatar(
+                                  radius: 80.r,
+                                  backgroundColor: Colors.grey,
+                                  child: ClipOval(
+                                    child: imageProvider.webImageBytes != null
+                                        ? Image.memory(imageProvider.webImageBytes!, fit: BoxFit.cover)
+                                        : imageProvider.selectedImageFile != null
+                                        ? Image.file(imageProvider.selectedImageFile!, fit: BoxFit.cover)
+                                        : (resident.imageUrl != null && resident.imageUrl!.isNotEmpty)
+                                        ? Image.network(resident.imageUrl!, fit: BoxFit.cover)
+                                        : SvgPicture.asset(
+                                      'assets/images/default_avatar.svg',
+                                      fit: BoxFit.cover,
+                                      width: 70.r,
+                                      height: 70.r,
+                                    ),
+                                  ),
+                                ),
+                                if (isEditing)
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: IconButton(
+                                      icon: Icon(Icons.camera_alt,
+                                          color: Colors.blueAccent),
+                                      onPressed: () async {
+                                        await imageProvider.pickImage();
+                                      },
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 30.h,
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Căn hộ: $apartmentName",
+                                    style: TextStyle(fontSize: 4.sp)),
+                                SizedBox(height: 15.h),
 
-                      if (nameHasError || cccdHasError || emailHasError || birthDateHasError || phoneHasError || addressHasError) return;
+                                // Name field
+                                StreamBuilder<String?>(
+                                  stream: nameErrorController.stream,
+                                  builder: (context, snapshot) {
+                                    return TextField(
+                                      controller: nameController,
+                                      enabled: isEditing,
+                                      style: TextStyle(fontSize: 4.sp),
+                                      decoration: InputDecoration(
+                                        labelText: 'Họ và tên',
+                                        labelStyle: TextStyle(fontSize: 4.sp),
+                                        errorText: snapshot.data,
+                                      ),
+                                      onChanged: (_) {
+                                        if (isEditing) validateFields();
+                                      },
+                                    );
+                                  },
+                                ),
+                                SizedBox(height: 15.h),
 
-                      LoadingDialog.showLoadingDialog(context, "Đang tải...");
-                      try {
-                        // Prepare updated fields
-                        final updatedFields = <String, String>{};
+                                // CCCD field
+                                StreamBuilder<String?>(
+                                  stream: cccdErrorController.stream,
+                                  builder: (context, snapshot) {
+                                    return TextField(
+                                      controller: cccdController,
+                                      enabled: isEditing,
+                                      style: TextStyle(fontSize: 4.sp),
+                                      decoration: InputDecoration(
+                                        labelText: 'CCCD',
+                                        labelStyle: TextStyle(fontSize: 4.sp),
+                                        errorText: snapshot.data,
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (_) {
+                                        if (isEditing) validateFields();
+                                      },
+                                    );
+                                  },
+                                ),
+                                SizedBox(height: 15.h),
 
-                        void compareAndAdd(String key, String newValue, String oldValue) {
-                          if (newValue != oldValue) {
-                            updatedFields[key] = newValue;
+                                // Email field
+                                StreamBuilder<String?>(
+                                  stream: emailErrorController.stream,
+                                  builder: (context, snapshot) {
+                                    return TextField(
+                                      controller: emailController,
+                                      enabled: isEditing,
+                                      style: TextStyle(fontSize: 4.sp),
+                                      decoration: InputDecoration(
+                                        labelText: 'Email',
+                                        labelStyle: TextStyle(fontSize: 4.sp),
+                                        errorText: snapshot.data,
+                                      ),
+                                      keyboardType: TextInputType.emailAddress,
+                                      onChanged: (_) {
+                                        if (isEditing) validateFields();
+                                      },
+                                    );
+                                  },
+                                ),
+                                SizedBox(height: 15.h),
+
+                                // Email field
+                                StreamBuilder<String?>(
+                                  stream: phoneErrorController.stream,
+                                  builder: (context, snapshot) {
+                                    return TextField(
+                                      controller: phoneController,
+                                      enabled: isEditing,
+                                      style: TextStyle(fontSize: 4.sp),
+                                      decoration: InputDecoration(
+                                        labelText: 'Số điện thoại',
+                                        labelStyle: TextStyle(fontSize: 4.sp),
+                                        errorText: snapshot.data,
+                                      ),
+                                      onChanged: (_) {
+                                        if (isEditing) validateFields();
+                                      },
+                                    );
+                                  },
+                                ),
+
+                                SizedBox(height: 15.h),
+
+                                // Email field
+                                StreamBuilder<String?>(
+                                  stream: addressErrorController.stream,
+                                  builder: (context, snapshot) {
+                                    return TextField(
+                                      controller: addressController,
+                                      enabled: isEditing,
+                                      style: TextStyle(fontSize: 4.sp),
+                                      decoration: InputDecoration(
+                                        labelText: 'Địa chỉ',
+                                        labelStyle: TextStyle(fontSize: 4.sp),
+                                        errorText: snapshot.data,
+                                      ),
+                                      onChanged: (_) {
+                                        if (isEditing) validateFields();
+                                      },
+                                    );
+                                  },
+                                ),
+                                SizedBox(
+                                  height: 15.h,
+                                ),
+                                // Gender dropdown
+                                DropdownButtonFormField<String>(
+                                  value: selectedGender,
+                                  decoration: InputDecoration(
+                                    labelText: 'Giới tính',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  items: ['Nam', 'Nữ', 'Khác']
+                                      .map((gender) => DropdownMenuItem<String>(
+                                            value: gender,
+                                            child: Text(gender,
+                                                style:
+                                                    TextStyle(fontSize: 4.sp)),
+                                          ))
+                                      .toList(),
+                                  onChanged: isEditing
+                                      ? (value) {
+                                          setState(() {
+                                            selectedGender = value ?? "Khác";
+                                          });
+                                        }
+                                      : null,
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () async {
+                          if (isEditing) {
+                            validateFields();
+
+                            if (nameHasError ||
+                                cccdHasError ||
+                                emailHasError ||
+                                birthDateHasError ||
+                                phoneHasError ||
+                                addressHasError) return;
+
+                            LoadingDialog.showLoadingDialog(
+                                context, "Đang tải...");
+                            try {
+                              String? newImageUrl;
+
+                              // Xử lý cập nhật ảnh đại diện
+                              if (imageProvider.webImageBytes != null) {
+                                if (resident.imageUrl != null &&
+                                    resident.imageUrl!.isNotEmpty) {
+                                  final storageRef = FirebaseStorage.instance
+                                      .refFromURL(resident.imageUrl!);
+                                  await storageRef.delete();
+                                }
+
+                                final uniqueFileName =
+                                    "${DateTime.now().millisecondsSinceEpoch}_avatar.jpg";
+                                newImageUrl = await imageProvider
+                                    .uploadSelectedImageAndGetUrl(
+                                        resident.residentId!, uniqueFileName);
+                              }
+
+                              final updatedFields = <String, String>{};
+                              final updatedFieldLabels = <String, String>{};
+
+                              void compareAndAdd(String key, String label,
+                                  String newValue, String oldValue) {
+                                if (newValue != oldValue) {
+                                  updatedFields[key] = newValue;
+                                  updatedFieldLabels[label] = newValue;
+                                }
+                              }
+
+                              compareAndAdd(
+                                  "fullName",
+                                  "Họ và tên",
+                                  nameController.text.trim(),
+                                  resident.fullName);
+                              compareAndAdd("email", "Email",
+                                  emailController.text.trim(), resident.email);
+                              compareAndAdd("cccd", "CCCD",
+                                  cccdController.text.trim(), resident.cccd);
+                              compareAndAdd(
+                                  "birthDate",
+                                  "Ngày sinh",
+                                  birthDateController.text.trim(),
+                                  resident.birthDate != null
+                                      ? DateFormat('dd/MM/yyyy')
+                                          .format(resident.birthDate!)
+                                      : "");
+                              compareAndAdd("phone", "Số điện thoại",
+                                  phoneController.text.trim(), resident.phone);
+                              compareAndAdd(
+                                  "address",
+                                  "Địa chỉ",
+                                  addressController.text.trim(),
+                                  resident.address);
+                              compareAndAdd("gender", "Giới tính",
+                                  selectedGender.trim(), resident.gender);
+
+                              // Nếu có ảnh mới → thêm vào cập nhật và gửi email
+                              if (newImageUrl != null &&
+                                  newImageUrl != resident.imageUrl) {
+                                updatedFields['imageUrl'] = newImageUrl;
+                                updatedFieldLabels['Ảnh đại diện'] =
+                                    '[Đã cập nhật ảnh mới]';
+                              }
+
+                              // Tạo dữ liệu cập nhật cho Firestore
+                              final updateData = {
+                                'fullName': nameController.text.trim(),
+                                'cccd': cccdController.text.trim(),
+                                'birthDate': DateFormat('dd/MM/yyyy')
+                                    .parseStrict(
+                                        birthDateController.text.trim()),
+                                'email': emailController.text.trim(),
+                                'phone': phoneController.text.trim(),
+                                'address': addressController.text.trim(),
+                                'gender': selectedGender.trim(),
+                                'lastUpdate': FieldValue.serverTimestamp(),
+                              };
+
+                              if (newImageUrl != null) {
+                                updateData['imageUrl'] = newImageUrl;
+                              }
+
+                              // Nếu có trường thay đổi thì mới cập nhật Firestore
+                              if (updatedFields.isNotEmpty) {
+                                await FirebaseFirestore.instance
+                                    .collection('residents')
+                                    .doc(resident.residentId)
+                                    .update(updateData);
+
+                                // Gửi email thông báo thay đổi
+                                await sendUpdatedDetailEmailFromFlutter(
+                                  uid: resident.residentId!,
+                                  oldEmail: resident.email,
+                                  newEmail: emailController.text.trim(),
+                                  updatedFields:
+                                      updatedFieldLabels, // gửi bản tiếng Việt
+                                );
+                              }
+
+                              Navigator.pop(context);
+                              refresh();
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text('Cập nhật thất bại: $e')),
+                              );
+                            } finally {
+                              LoadingDialog.hideLoadingDialog(context);
+                            }
+                          } else {
+                            setState(() {
+                              isEditing = true;
+                            });
                           }
-                        }
-
-                        compareAndAdd("fullName", nameController.text.trim(), resident.fullName);
-                        compareAndAdd("email", emailController.text.trim(), resident.email);
-                        compareAndAdd("cccd", cccdController.text.trim(), resident.cccd);
-                        compareAndAdd("birthDate", birthDateController.text.trim(), resident.birthDate != null
-                            ? DateFormat('dd/MM/yyyy').format(resident.birthDate!)
-                            : "");
-                        compareAndAdd("phone", phoneController.text.trim(), resident.phone);
-                        compareAndAdd("address", addressController.text.trim(), resident.address);
-                        compareAndAdd("gender", selectedGender.trim(), resident.gender);
-
-                        // Create updateData for Firestore
-                        final updateData = {
-                          'fullName': nameController.text.trim(),
-                          'cccd': cccdController.text.trim(),
-                          'birthDate': DateFormat('dd/MM/yyyy').parseStrict(birthDateController.text.trim()),
-                          'email': emailController.text.trim(),
-                          'phone': phoneController.text.trim(),
-                          'address': addressController.text.trim(),
-                          'gender': selectedGender.trim(),
-                        };
-
-                        // Update Firestore only if there are fields to update
-                        if (updatedFields.isNotEmpty) {
-                          await FirebaseFirestore.instance
-                              .collection('residents')
-                              .doc(resident.residentId)
-                              .update(updateData);
-
-                          // Send update email only if there are changes
-                          await sendUpdatedDetailEmailFromFlutter(
-                            uid: resident.residentId!,
-                            oldEmail: resident.email,
-                            newEmail: emailController.text.trim(),
-                            updatedFields: updatedFields,
-                          );
-                        }
-
-                        Navigator.pop(context);
-                        refresh();
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Cập nhật thất bại: $e')),
-                        );
-                      } finally {
-                        LoadingDialog.hideLoadingDialog(context);
-                      }
-                    } else {
-                      setState(() {
-                        isEditing = true;
-                      });
-                    }
-                  },
-                  child: Text(
-                    isEditing ? 'Lưu' : 'Sửa',
-                    style: TextStyle(fontSize: 4.sp),
-                  ),
-                ),                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Đóng', style: TextStyle(fontSize: 4.sp)),
-                ),
-              ],
-            );
-          },
+                        },
+                        child: Text(
+                          isEditing ? 'Lưu' : 'Sửa',
+                          style: TextStyle(fontSize: 4.sp),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop() ,
+                        child: Text('Đóng', style: TextStyle(fontSize: 4.sp)),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
         );
       },
+    );
+  }
+
+  Widget buildInfoRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 10.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "$label ",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 4.sp),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 4.sp),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -495,14 +831,15 @@ class _ResidentPageState extends State<ResidentPage> {
 
   @override
   Widget build(BuildContext context) {
-    final floors = selectedBuilding != null ? getFloorsByBuilding(selectedBuilding!) : [];
+    final floors =
+        selectedBuilding != null ? getFloorsByBuilding(selectedBuilding!) : [];
     final rooms = (selectedBuilding != null && selectedFloor != null)
         ? getApartmentsByFloor(selectedBuilding!, selectedFloor!)
         : [];
 
     final matchedResidents = residents.where((r) {
       final apt = apartments.firstWhere(
-            (a) => a.id == r.apartmentId,
+        (a) => a.id == r.apartmentId,
         orElse: () => Apartment(
           id: '',
           apartmentName: '',
@@ -515,12 +852,18 @@ class _ResidentPageState extends State<ResidentPage> {
         ),
       );
 
-      bool matchesApartment = selectedApartment == null || r.apartmentId == selectedApartment!.id;
-      bool matchesBuilding = selectedBuilding == null || apt.building == selectedBuilding;
+      bool matchesApartment =
+          selectedApartment == null || r.apartmentId == selectedApartment!.id;
+      bool matchesBuilding =
+          selectedBuilding == null || apt.building == selectedBuilding;
       bool matchesFloor = selectedFloor == null || apt.floor == selectedFloor;
-      bool matchesSearch = _searchQuery.isEmpty || r.fullName.toLowerCase().contains(_searchQuery.toLowerCase());
+      bool matchesSearch = _searchQuery.isEmpty ||
+          r.fullName.toLowerCase().contains(_searchQuery.toLowerCase());
 
-      return matchesApartment && matchesBuilding && matchesFloor && matchesSearch;
+      return matchesApartment &&
+          matchesBuilding &&
+          matchesFloor &&
+          matchesSearch;
     }).toList();
 
     return Scaffold(
@@ -528,137 +871,235 @@ class _ResidentPageState extends State<ResidentPage> {
         child: Stack(
           children: [
             SingleChildScrollView(
-              child: ConstrainedBox(constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),child:Padding(
-                padding: EdgeInsets.only(left: 10.w, right: 10.w, top: 40.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Flexible(flex:3,child: Text(
-                          "Danh sách cư dân",
-                          style: TextStyle(
-                            fontFamily: "Oswald",
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12.sp,
-                          ),
-                        ),),
-                        Flexible(flex:2, child: TextField(
-                          decoration: InputDecoration(
-                            labelText: "Tìm kiếm cư dân",
-                            prefixIcon: Icon(Icons.search),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30.r),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                    minHeight: MediaQuery.of(context).size.height),
+                child: Padding(
+                  padding: EdgeInsets.only(left: 10.w, right: 10.w, top: 40.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            flex: 3,
+                            child: Text(
+                              "Danh sách cư dân",
+                              style: TextStyle(
+                                fontFamily: "Oswald",
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12.sp,
+                              ),
                             ),
                           ),
-                          onChanged: _onSearchChanged, // Gọi hàm debounce khi nhập
-                        )),
-                        Flexible(flex:2,child: ElevatedButton(
-                          onPressed: () => exportResidentsToExcel(residents, matchedResidents, apartments),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.upload),
-                              SizedBox(width: 5.w,),
-                              Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.black),)
-                            ],
-                          ),
-                        ),),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(child: buildFilterDropdown<String>(
-                          label: 'Chọn tòa nhà',
-                          items: getBuildings(),
-                          selectedValue: selectedBuilding,
-                          onChanged: (val) {
-                            setState(() {
-                              selectedBuilding = val;
-                              selectedFloor = null;
-                              selectedApartment = null;
-                            });
-                          },
-                        ),),
-                        SizedBox(width:20.w),
-                        Expanded(child: buildFilterDropdown<int>(
-                          label: 'Chọn tầng',
-                          items: floors.cast<int>(),
-                          selectedValue: selectedFloor,
-                          onChanged: (val) {
-                            setState(() {
-                              selectedFloor = val;
-                              selectedApartment = null;
-                            });
-                          },
-                        ),),
-                        SizedBox(width:20.w),
-                        Expanded(child: buildFilterDropdown<Apartment>(
-                          label: 'Chọn căn hộ',
-                          items: rooms.cast<Apartment>(),
-                          selectedValue: selectedApartment,
-                          onChanged: (val) {
-                            setState(() {
-                              selectedApartment = val;
-                            });
-                          },
-                          itemLabelBuilder: (apt) => apt.apartmentName,
-                        ),)
-                      ],
-                    ),
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height - 360.h,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: matchedResidents.isEmpty
-                                ? const Center(child: Text("Không có cư dân."))
-                                : CustomPaginatedTable(
-                              columns: const [
-                                DataColumn(label: Text('Họ tên')),
-                                DataColumn(label: Text('CCCD')),
-                                DataColumn(label: Text('Căn hộ')),
-                              ],
-                              rows: matchedResidents.map((resident) {
-                                final apartment = apartments.firstWhere(
-                                      (apt) => apt.id == resident.apartmentId,
-                                  orElse: () => Apartment(
-                                    id: '',
-                                    apartmentName: '',
-                                    building: '',
-                                    area: 0,
-                                    description: '',
-                                    status: '',
-                                    currentContractId: '',
-                                    residents: [],
+                          Flexible(
+                              flex: 2,
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  labelText: "Tìm kiếm cư dân",
+                                  prefixIcon: Icon(Icons.search),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(30.r),
                                   ),
-                                );
-
-                                return DataRow(
-                                  cells: [
-                                    DataCell(Text(resident.fullName)),
-                                    DataCell(Text(resident.cccd)),
-                                    DataCell(Text(apartment.apartmentName)),
-                                  ],
-                                  onSelectChanged: (_) {
-                                    _showResidentDetails(context, resident, refresh);
-                                  },
-                                );
-                              }).toList(),
-                              rowsPerPage: 10,
+                                ),
+                                onChanged:
+                                    _onSearchChanged, // Gọi hàm debounce khi nhập
+                              )),
+                          Flexible(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: () => exportResidentsToExcel(
+                                  residents, matchedResidents, apartments),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.upload),
+                                  SizedBox(
+                                    width: 5.w,
+                                  ),
+                                  Text(
+                                    'Xuất file',
+                                    style: TextStyle(
+                                        fontSize: 4.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white),
+                                  )
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    )
-                  ],
+                      SizedBox(height: 10.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: buildFilterDropdown<String>(
+                              label: 'Chọn tòa nhà',
+                              items: getBuildings(),
+                              selectedValue: selectedBuilding,
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedBuilding = val;
+                                  selectedFloor = null;
+                                  selectedApartment = null;
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(width: 20.w),
+                          Expanded(
+                            child: buildFilterDropdown<int>(
+                              label: 'Chọn tầng',
+                              items: floors.cast<int>(),
+                              selectedValue: selectedFloor,
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedFloor = val;
+                                  selectedApartment = null;
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(width: 20.w),
+                          Expanded(
+                            child: buildFilterDropdown<Apartment>(
+                              label: 'Chọn căn hộ',
+                              items: rooms.cast<Apartment>(),
+                              selectedValue: selectedApartment,
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedApartment = val;
+                                });
+                              },
+                              itemLabelBuilder: (apt) => apt.apartmentName,
+                            ),
+                          )
+                        ],
+                      ),
+                      SizedBox(height: 10.h,),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height - 360.h,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: matchedResidents.isEmpty
+                                  ? const Center(
+                                      child: Text("Không có cư dân"))
+                                  : CustomPaginatedTable(
+                                      columns: [
+                                        DataColumn(
+                                            label: Text("Họ và tên",
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                        DataColumn(
+                                            label: Text("Email",
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                        DataColumn(
+                                            label: Text("Giới tính",
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                        DataColumn(
+                                            label: Text("Số điện thoại",
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                        DataColumn(
+                                            label: Text("Địa chỉ",
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                        DataColumn(
+                                            label: Text("Căn hộ",
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                        DataColumn(
+                                            label: Text("Thao tác",
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                      ],
+                                      rows: matchedResidents.map((resident) {
+                                        final apartment = apartments.firstWhere(
+                                          (apt) =>
+                                              apt.id == resident.apartmentId,
+                                          orElse: () => Apartment(
+                                            id: '',
+                                            apartmentName: '',
+                                            building: '',
+                                            area: 0,
+                                            description: '',
+                                            status: '',
+                                            currentContractId: '',
+                                            residents: [],
+                                          ),
+                                        );
+
+                                        return DataRow(
+                                          cells: [
+                                            DataCell(Text(resident.fullName,
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                            DataCell(Text(resident.email,
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                            DataCell(Text(resident.gender,
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                            DataCell(Text(resident.phone,
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                            DataCell(Text(resident.address,
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                            DataCell(Text(
+                                                apartment.apartmentName,
+                                                style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                            DataCell(
+                                              Row(children: [
+                                                IconButton(
+                                                icon: const Icon(
+                                                    Icons.edit, color: Colors.blueAccent,),
+                                                tooltip: 'Sửa thông tin',
+                                                onPressed: () =>
+                                                    showEditResident(context,
+                                                        resident, refresh),
+                                              ),
+                                                IconButton(
+                                                  icon: const Icon(
+                                                      Icons.info_outline, color: Colors.white,),
+                                                  tooltip: 'Xem chi tiết',
+                                                  onPressed: () =>
+                                                      showViewResidentDialog(context,
+                                                          resident, refresh),
+                                                ),
+                                                IconButton(
+                                                  icon: const Icon(
+                                                      Icons.insert_drive_file, color: Colors.green,),
+                                                  tooltip: 'Xem lịch sử hợp đồng',
+                                                  onPressed: () =>
+                                                      showContractHistoryDialog(context,
+                                                          resident.residentId!),
+                                                ),
+
+                                              ],)
+                                            ),
+                                          ],
+                                        );
+                                      }).toList(),
+                                      rowsPerPage: 10,
+                                    ),
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
                 ),
-              ),),
+              ),
             ),
           ],
         ),
@@ -673,7 +1114,6 @@ class _ResidentPageState extends State<ResidentPage> {
     required ValueChanged<T?> onChanged,
     String Function(T)? itemLabelBuilder,
   }) {
-
     return Padding(
       padding: EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 8.h),
       child: SizedBox(
@@ -683,10 +1123,7 @@ class _ResidentPageState extends State<ResidentPage> {
             isExpanded: true,
             hint: Text(
               label,
-              style: TextStyle(
-                fontSize: 4.sp,
-                color: Colors.white
-              ),
+              style: TextStyle(fontSize: 4.sp, color: Colors.white),
             ),
             items: items.map((item) {
               final displayText = itemLabelBuilder != null
@@ -731,7 +1168,7 @@ class _ResidentPageState extends State<ResidentPage> {
             ),
             dropdownStyleData: DropdownStyleData(
               maxHeight: 200.h,
-              width: 139.w ,
+              width: 139.w,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30.r),
               ),
@@ -740,7 +1177,7 @@ class _ResidentPageState extends State<ResidentPage> {
             menuItemStyleData: MenuItemStyleData(
               height: 40.h,
               padding: EdgeInsets.symmetric(
-                horizontal: 10.w ,
+                horizontal: 10.w,
               ),
             ),
           ),
@@ -749,4 +1186,3 @@ class _ResidentPageState extends State<ResidentPage> {
     );
   }
 }
-

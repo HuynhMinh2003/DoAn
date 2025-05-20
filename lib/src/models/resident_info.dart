@@ -12,7 +12,7 @@ class ResidentInfo {
   final String? apartmentId;
   final String? imageUrl;
   final bool isExit;
-  final bool? lastUpdate;
+  final DateTime? lastUpdate;
   final DateTime? leaveAt;
   final DateTime? createdAt;
   final List<String> fcmTokens;
@@ -48,7 +48,7 @@ class ResidentInfo {
       apartmentId: map['apartmentId'],
       imageUrl: map['imageUrl'],
       isExit: map['isExit'] ?? false,
-      lastUpdate: map['isUpdate'],
+      lastUpdate: _parseDate(map['lastUpdate']),
       leaveAt: _parseDate(map['leaveAt']),
       createdAt: _parseDate(map['createdAt']),
       fcmTokens: List<String>.from(map['fcmTokens'] ?? []),
@@ -61,11 +61,9 @@ class ResidentInfo {
   }
 
   Map<String, dynamic> toMap() {
-    return {
+    final data = <String, dynamic>{
       'apartmentId': apartmentId,
-      'birthDate': birthDate,
       'cccd': cccd,
-      'createdAt': createdAt ?? DateTime.now(),
       'email': email,
       'gender': gender,
       'address': address,
@@ -73,12 +71,32 @@ class ResidentInfo {
       'fullName': fullName,
       'phone': phone,
       'role': 3,
-      'imageUrl': imageUrl,
       'isExit': isExit,
-      'isUpdate': lastUpdate,
-      'leaveAt': leaveAt,
+      // dùng server time cho lần cập nhật cuối
+      'lastUpdate': FieldValue.serverTimestamp(),
     };
+
+    // ngày sinh
+    data['birthDate'] = Timestamp.fromDate(birthDate!);
+
+    // createdAt chỉ set lần đầu nếu chưa có
+    if (createdAt != null) {
+      data['createdAt'] = Timestamp.fromDate(createdAt!);
+    } else {
+      data['createdAt'] = FieldValue.serverTimestamp();
+    }
+
+    if (leaveAt != null) {
+      data['leaveAt'] = Timestamp.fromDate(leaveAt!);
+    }
+
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      data['imageUrl'] = imageUrl;
+    }
+
+    return data;
   }
+
 
   ResidentInfo copyWith({
     String? residentId,
@@ -92,7 +110,7 @@ class ResidentInfo {
     String? apartmentId,
     String? imageUrl,
     bool? isExit,
-    bool? isUpdate,
+    DateTime? lastUpdate,
     DateTime? leaveAt,
     DateTime? createdAt,
     List<String>? fcmTokens,
@@ -109,7 +127,7 @@ class ResidentInfo {
       apartmentId: apartmentId ?? this.apartmentId,
       imageUrl: imageUrl ?? this.imageUrl,
       isExit: isExit ?? this.isExit,
-      lastUpdate: isUpdate ?? this.lastUpdate,
+      lastUpdate: lastUpdate ?? this.lastUpdate,
       leaveAt: leaveAt ?? this.leaveAt,
       createdAt: createdAt ?? this.createdAt,
       fcmTokens: fcmTokens ?? this.fcmTokens,
