@@ -5,6 +5,7 @@ import 'package:do_an/src/resources/quan_li_web.dart';
 import 'package:do_an/src/resources/tao_tk_nv.dart';
 import 'package:do_an/src/resources/resident_page.dart';
 import 'package:do_an/src/resources/tao_tk_ctdv_ngoai.dart';
+import 'package:do_an/src/resources/update_fee_page.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter router = GoRouter(
@@ -17,5 +18,6 @@ final GoRouter router = GoRouter(
     GoRoute(path: '/ds-nhan-vien', builder: (_, __) => const StaffListPage()),
     GoRoute(path: '/cu-dan', builder: (_, __) => ResidentPage()),
     GoRoute(path: '/cty-dich-vu', builder: (_, __) => const AddAccountCompanyPage()),
+    GoRoute(path: '/gia-dich-vu', builder: (_, __) => UpdateFeeScreen()),
   ],
 );

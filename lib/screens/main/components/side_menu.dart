@@ -1,6 +1,5 @@
 import 'package:do_an/constants.dart';
 import 'package:do_an/screens/dashboard/dashboard_screen.dart';
-import 'package:do_an/src/resources/chon_can_ho_page.dart';
 import 'package:do_an/src/resources/ds_canho_page.dart';
 import 'package:do_an/src/resources/ds_congty_page.dart';
 import 'package:do_an/src/resources/ds_nhanvien_page.dart';
@@ -11,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../src/resources/ds_hopdong_canho_page.dart';
+import '../../../src/resources/update_fee_page.dart';
 
 class SideMenu extends StatelessWidget {
   final bool isMenuOpen; // Nhận trạng thái mở/đóng từ MainScreen
@@ -49,37 +49,51 @@ class SideMenu extends StatelessWidget {
                     },
                     isMenuOpen: isMenuOpen,
                   ),
-                  DrawerListTile(
-                    title: "Hợp đồng căn hộ",
-                    svgSrc: "assets/icons/menu_tran.svg",
-                    press: () {
-                      onMenuItemPressed(ContractListPage()); // Chuyển sang Dashboard
-                    },
+                  ExpandableDrawerListTile(
+                    title: "Quản lý căn hộ",
+                    svgSrc: "assets/icons/menu_notification.svg",
                     isMenuOpen: isMenuOpen,
+                    children: [
+                      DrawerListTile(
+                        title: "Hợp đồng căn hộ",
+                        svgSrc: "assets/icons/menu_tran.svg",
+                        press: () {
+                          onMenuItemPressed(ContractListPage()); // Chuyển sang Dashboard
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                      DrawerListTile(
+                        title: "Danh sách căn hộ",
+                        svgSrc: "assets/icons/menu_task.svg",
+                        press: () {
+                          onMenuItemPressed(ApartmentListPage()); // Chuyển sang Dashboard
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                    ],
                   ),
-                  DrawerListTile(
-                    title: "Danh sách căn hộ",
-                    svgSrc: "assets/icons/menu_task.svg",
-                    press: () {
-                      onMenuItemPressed(ApartmentListPage()); // Chuyển sang Dashboard
-                    },
+                  ExpandableDrawerListTile(
+                    title: "Nhân viên",
+                    svgSrc: "assets/icons/menu_notification.svg",
                     isMenuOpen: isMenuOpen,
-                  ),
-                  DrawerListTile(
-                    title: "Tạo tài khoản nhân viên",
-                    svgSrc: "assets/icons/menu_doc.svg",
-                    press: () {
-                      onMenuItemPressed(AddAccountStaffPage()); // Chuyển sang Dashboard
-                    },
-                    isMenuOpen: isMenuOpen,
-                  ),
-                  DrawerListTile(
-                    title: "Danh sách nhân viên",
-                    svgSrc: "assets/icons/menu_store.svg",
-                    press: () {
-                      onMenuItemPressed(StaffListPage()); // Chuyển sang Dashboard
-                    },
-                    isMenuOpen: isMenuOpen,
+                    children: [
+                      DrawerListTile(
+                        title: "Tạo tài khoản nhân viên",
+                        svgSrc: "assets/icons/menu_doc.svg",
+                        press: () {
+                          onMenuItemPressed(AddAccountStaffPage()); // Chuyển sang Dashboard
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                      DrawerListTile(
+                        title: "Danh sách nhân viên",
+                        svgSrc: "assets/icons/menu_store.svg",
+                        press: () {
+                          onMenuItemPressed(StaffListPage()); // Chuyển sang Dashboard
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                    ],
                   ),
                   DrawerListTile(
                     title: "Thông tin cư dân",
@@ -89,22 +103,53 @@ class SideMenu extends StatelessWidget {
                     },
                     isMenuOpen: isMenuOpen,
                   ),
-                  DrawerListTile(
-                    title: "Tạo tài khoản công ty",
+                  ExpandableDrawerListTile(
+                    title: "Quản lý công ty",
                     svgSrc: "assets/icons/menu_notification.svg",
-                    press: () {
-                      onMenuItemPressed(AddAccountCompanyPage()); // Chuyển sang Dashboard
-                    },
                     isMenuOpen: isMenuOpen,
+                    children: [
+                      DrawerListTile(
+                        title: "Tạo tài khoản công ty",
+                        svgSrc: "assets/icons/menu_doc.svg",
+                        press: () {
+                          onMenuItemPressed(AddAccountCompanyPage());
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                      DrawerListTile(
+                        title: "Danh sách công ty",
+                        svgSrc: "assets/icons/menu_profile.svg",
+                        press: () {
+                          onMenuItemPressed(CompanyListPage());
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                    ],
                   ),
-                  DrawerListTile(
-                    title: "Danh sách công ty",
-                    svgSrc: "assets/icons/menu_profile.svg",
-                    press: () {
-                      onMenuItemPressed(CompanyListPage()); // Chuyển sang Dashboard
-                    },
+                  ExpandableDrawerListTile(
+                    title: "Quản lý dịch vụ",
+                    svgSrc: "assets/icons/menu_notification.svg",
                     isMenuOpen: isMenuOpen,
+                    children: [
+                      DrawerListTile(
+                        title: "Cập nhật giá dịch vụ",
+                        svgSrc: "assets/icons/menu_doc.svg",
+                        press: () {
+                          onMenuItemPressed(UpdateFeeScreen());
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                      DrawerListTile(
+                        title: "Danh sách dịch vụ",
+                        svgSrc: "assets/icons/menu_profile.svg",
+                        press: () {
+                          onMenuItemPressed(CompanyListPage());
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                    ],
                   ),
+
                 ],
               ),
             ),
@@ -118,7 +163,8 @@ class SideMenu extends StatelessWidget {
 class DrawerListTile extends StatefulWidget {
   final String title, svgSrc;
   final VoidCallback press;
-  final bool isMenuOpen; // Nhận trạng thái mở/đóng từ SideMenu
+  final bool isMenuOpen;
+  final bool isChild; // để phân biệt item con
 
   const DrawerListTile({
     Key? key,
@@ -126,6 +172,7 @@ class DrawerListTile extends StatefulWidget {
     required this.svgSrc,
     required this.press,
     required this.isMenuOpen,
+    this.isChild = false,
   }) : super(key: key);
 
   @override
@@ -142,34 +189,104 @@ class _DrawerListTileState extends State<DrawerListTile> {
         setState(() {
           isPressed = true;
         });
-        Future.delayed(Duration(milliseconds: 200), () {
+        Future.delayed(const Duration(milliseconds: 200), () {
           setState(() {
             isPressed = false;
           });
-          widget.press(); // Gọi callback khi nhấn
+          widget.press();
         });
       },
-      splashColor: Colors.white24, // Hiệu ứng "splash" khi nhấn vào
-      highlightColor: Colors.transparent, // Không có màu nền sáng
-      child: Container(
-        child: ListTile(
-          horizontalTitleGap: widget.isMenuOpen ? 16.0 : 0.0, // Khoảng cách giữa icon và chữ khi mở menu
-          leading: SvgPicture.asset(
-            widget.svgSrc,
-            colorFilter: ColorFilter.mode(Colors.white54, BlendMode.srcIn),
-            height: 24,
-          ),
-          title: widget.isMenuOpen
-              ? Text(
-            widget.title,
-            style: TextStyle(
-              color: isPressed ? Colors.white : Colors.white54, // Đổi màu chữ khi nhấn
-              fontWeight: isPressed ? FontWeight.bold : FontWeight.normal, // Làm chữ in đậm khi nhấn
-            ),
-          )
-              : null, // Không hiển thị tiêu đề khi menu đóng
+      splashColor: Colors.white24,
+      highlightColor: Colors.transparent,
+      child: ListTile(
+        horizontalTitleGap: widget.isMenuOpen
+            ? (widget.isChild ? 8.0 : 16.0)
+            : 0.0, // giảm gap nếu là mục con
+        leading: SvgPicture.asset(
+          widget.svgSrc,
+          colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn),
+          height: 24,
         ),
+        title: widget.isMenuOpen
+            ? Text(
+          widget.title,
+          style: TextStyle(
+            color: isPressed ? Colors.white : Colors.white54,
+            fontWeight: isPressed ? FontWeight.bold : FontWeight.normal,
+          ),
+        )
+            : null,
       ),
+    );
+  }
+}
+
+class ExpandableDrawerListTile extends StatefulWidget {
+  final String title, svgSrc;
+  final bool isMenuOpen;
+  final List<DrawerListTile> children;
+
+  const ExpandableDrawerListTile({
+    super.key,
+    required this.title,
+    required this.svgSrc,
+    required this.isMenuOpen,
+    required this.children,
+  });
+
+  @override
+  State<ExpandableDrawerListTile> createState() => _ExpandableDrawerListTileState();
+}
+
+class _ExpandableDrawerListTileState extends State<ExpandableDrawerListTile> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: () {
+            setState(() {
+              _expanded = !_expanded;
+            });
+          },
+          child: ListTile(
+            horizontalTitleGap: widget.isMenuOpen ? 16.0 : 0.0,
+            leading: SvgPicture.asset(
+              widget.svgSrc,
+              colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn),
+              height: 24,
+            ),
+            title: widget.isMenuOpen
+                ? Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: const TextStyle(color: Colors.white54),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  color: Colors.white54,
+                  size: 20,
+                ),
+              ],
+            )
+                : null,
+          ),
+        ),
+        if (_expanded)
+          ...widget.children.map((child) {
+            return Padding(
+              padding: EdgeInsets.only(left: widget.isMenuOpen ? 6.0 : 0.0),
+              child: child,
+            );
+          }).toList(),
+      ],
     );
   }
 }
