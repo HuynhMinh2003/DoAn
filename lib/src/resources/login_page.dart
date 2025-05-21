@@ -675,7 +675,7 @@ class _LoginPageState extends State<LoginPage> {
               }
 
               else if (role != null) {
-                if (role == 2) {
+                if (role == 2||role == 3) {
                   if (isMobile) {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
@@ -692,8 +692,9 @@ class _LoginPageState extends State<LoginPage> {
                       "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
                     );
                   }
-                } else if (role == 3) {
+                } else if (role == 4) {
                   if(isMobile){
+                    print('Hello nha');
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (context) => HomeFirstResidentPage()),
                     );
@@ -708,7 +709,7 @@ class _LoginPageState extends State<LoginPage> {
                       "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
                     );
                   }
-                }else if (role == 4) {
+                }else if (role == 5) {
                   if(isMobile){
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (context) => TestPage1()),
@@ -758,15 +759,15 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context, snapshot) {
             return TextField(
               controller: controller,
-              style: const TextStyle(fontSize: 18, color: Colors.black),
+              style: const TextStyle(fontSize: 18, color: Colors.black87),
               decoration: InputDecoration(
                 labelText: label,
-                labelStyle: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp),
+                labelStyle: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp, color: Colors.black87),
                 errorText: snapshot.hasError ? snapshot.error as String : null,
                 contentPadding: EdgeInsets.symmetric(
                     vertical: 2.h, horizontal: isLandscape ? 8.w : 24.w),
                 border: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xffCED0D2), width: 1.w),
+                  borderSide: BorderSide(color: Colors.black, width: 1.w),
                   borderRadius: BorderRadius.all(Radius.circular(30.r)),
                 ),
               ),
@@ -801,15 +802,15 @@ class _LoginPageState extends State<LoginPage> {
                 return TextField(
                   controller: controller,
                   obscureText: isPassword ? obscureText : false, // Ẩn hoặc hiển thị mật khẩu
-                  style: const TextStyle(fontSize: 18, color: Colors.black),
+                  style: const TextStyle(fontSize: 18, color: Colors.black54),
                   decoration: InputDecoration(
                     labelText: label,
-                    labelStyle: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp),
+                    labelStyle: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp, color: Colors.black87),
                     errorText: snapshot.hasError ? snapshot.error as String : null,
                     contentPadding: EdgeInsets.symmetric(
                         vertical: 2.h, horizontal: isLandscape ? 8.w : 24.w),
                     border: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xffCED0D2), width: 1.w),
+                      borderSide: BorderSide(color: Colors.black, width: 1.w),
                       borderRadius: BorderRadius.all(Radius.circular(30.r)),
                     ),
                     suffixIcon: isPassword

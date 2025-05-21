@@ -176,7 +176,7 @@ class _ResidentPageState extends State<ResidentPage> {
           ),
         ),
         content: SizedBox(
-          width: double.maxFinite,
+          width: double.minPositive,
           child: histories.isEmpty
               ? Text("Không có dữ liệu lịch sử.")
               : SingleChildScrollView(
@@ -184,7 +184,8 @@ class _ResidentPageState extends State<ResidentPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: histories.map((history) {
                 return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Divider(),
                     buildInfoRow("Tên căn hộ:", history['apartmentName']),
@@ -278,8 +279,8 @@ class _ResidentPageState extends State<ResidentPage> {
                       child: resident.imageUrl?.isNotEmpty == true
                           ? Image.network(
                         resident.imageUrl!,
-                        width: 70.r,
-                        height: 70.r,
+                        width: 140.r,
+                        height: 140.r,
                         fit: BoxFit.cover,
                       )
                           : SvgPicture.asset(
@@ -804,18 +805,22 @@ class _ResidentPageState extends State<ResidentPage> {
 
   Widget buildInfoRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 10.h),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "$label ",
+            label,
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 4.sp),
           ),
+          const SizedBox(width: 5),
           Expanded(
             child: Text(
               value,
               style: TextStyle(fontSize: 4.sp),
+              softWrap: true,
+              overflow: TextOverflow.ellipsis, // Hoặc .fade hoặc .clip nếu thích
+              maxLines: 2, // Giới hạn số dòng nếu cần
             ),
           ),
         ],

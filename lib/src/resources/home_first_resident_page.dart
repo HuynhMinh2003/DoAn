@@ -1,6 +1,5 @@
 import 'package:do_an/src/resources/base_resident_info.dart';
 import 'package:do_an/src/resources/resident_page_1.dart';
-import 'package:do_an/src/resources/staff_page_1.dart';
 import 'package:do_an/src/resources/test.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
