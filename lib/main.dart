@@ -24,6 +24,8 @@ import 'package:flutter/foundation.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 import 'constants.dart';
 import 'controllers/menu_app_controller.dart';
@@ -75,7 +77,6 @@ void main() async {
   } else {
     await Firebase.initializeApp();
   }
-
   // Khởi tạo SQLite
   // initDatabase();
 
@@ -138,11 +139,13 @@ void main() async {
             MaterialApp(
               navigatorKey: navigatorKey,
               debugShowCheckedModeBanner: false,
-              theme: ThemeData.dark().copyWith(
+              theme: kIsWeb
+                  ? ThemeData.dark().copyWith(
                 scaffoldBackgroundColor: bgColor,
                 textTheme: Theme.of(context).textTheme.apply(bodyColor: Colors.white),
                 canvasColor: secondaryColor,
-              ),
+              )
+                  : ThemeData(), // Theme mặc định cho mobile
               builder: (context, child) => MediaQuery(
                 data: MediaQuery.of(context).copyWith(
                   textScaler: const TextScaler.linear(1.0),
@@ -150,15 +153,16 @@ void main() async {
                 child: ResponsiveBreakpoints.builder(
                   child: child!,
                   breakpoints: [
-                    const Breakpoint(start: 0, end: 899, name: MOBILE),             // Điện thoại nhỏ & vừa (iPhone, Android phổ biến)
-                    const Breakpoint(start: 900, end: 1279, name: TABLET),          // Tablet (iPad, Galaxy Tab, điện thoại gập ngang)
-                    const Breakpoint(start: 1280, end: 1919, name: DESKTOP),        // Laptop cơ bản (13"–14")
-                    const Breakpoint(start: 1920, end: double.infinity, name: '4K'), // Màn hình 2K, 4K, ultrawide
+                    const Breakpoint(start: 0, end: 899, name: MOBILE),
+                    const Breakpoint(start: 900, end: 1279, name: TABLET),
+                    const Breakpoint(start: 1280, end: 1919, name: DESKTOP),
+                    const Breakpoint(start: 1920, end: double.infinity, name: '4K'),
                   ],
                 ),
               ),
-              home: MainScreen(), // hoặc AuthWrapper()
+              home: LoginPage(),
             ),
+
           ),
         );
       },

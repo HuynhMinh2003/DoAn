@@ -6,7 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+
+import 'add_parking_page.dart';
 
 class ResidentPage extends StatefulWidget {
   const ResidentPage({super.key});
@@ -108,78 +111,217 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
 
   @override
   Widget build(BuildContext context) {
-    final avatarProvider = Provider.of<StaffImageProvider>(context);
-    String? avatarUrl = avatarProvider.avatarUrl;
-
     return Scaffold(
       backgroundColor: Colors.grey[200],
       body: Stack(
         children: [
-          Card(
-            margin: EdgeInsets.zero,
-            elevation: 9,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(30.r),
-                bottomRight: Radius.circular(30.r),
-              ),
-            ),
-            color: Colors.blueAccent,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  child: Image.asset(
-                    'assets/images/two_circle_green.png',
-                    width: 160,
+          Column(
+            children: [
+              Card(
+                margin: EdgeInsets.zero,
+                elevation: 9,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30.r),
+                    bottomRight: Radius.circular(30.r),
                   ),
                 ),
-                Positioned(
-                  top: 32,
-                  right: 16,
-                  child: IconButton(
-                    icon: Icon(Icons.logout),
-                    onPressed: _logout,
-                    tooltip: 'Đăng xuất',
-                  ),
-                ),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 20.h),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(height: 100.h),
-                      // CircleAvatar(
-                      //   radius: 50.r,
-                      //   backgroundImage: avatarUrl != null
-                      //       ? NetworkImage(avatarUrl)
-                      //       : null,
-                      //   child: avatarUrl == null
-                      //       ? const Icon(Icons.person, size: 50)
-                      //       : null,
-                      // ),
-                      SizedBox(height: 60.h),
-                      Text(
-                        "Xin chào, ${residentInfo?.fullName ?? "người dùng"}",
-                        style: TextStyle(
-                            fontFamily: "Oswald",
-                            fontSize: 25.sp,
-                            color: Colors.white),
+                color: Theme.of(context).colorScheme.primary,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: Image.asset(
+                        'assets/images/two_circle_green.png',
+                        width: 160,
                       ),
-                      SizedBox(height: 10.h),
-                    ],
-                  ),
+                    ),
+                    Positioned(
+                      top: 32,
+                      right: 16,
+                      child: IconButton(
+                        icon: Icon(Icons.logout),
+                        onPressed: _logout,
+                        tooltip: 'Đăng xuất',
+                      ),
+                    ),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(vertical: 20.h),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(height: 80.h),
+                          Center(
+                            child: CircleAvatar(
+                              radius: 70.r,
+                              backgroundColor: Colors.white,
+                              child: ClipOval(
+                                child: residentInfo?.imageUrl?.isNotEmpty == true
+                                    ? Image.network(
+                                  residentInfo!.imageUrl!, // <- fix here
+                                  width: 140.r,
+                                  height: 140.r,
+                                  fit: BoxFit.cover,
+                                )
+                                    : SvgPicture.asset(
+                                  'assets/images/default_avatar.svg',
+                                  width: 70.r,
+                                  height: 70.r,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20.h),
+                          Text(
+                            "Xin chào, ${residentInfo?.fullName ?? "người dùng"} 👋",
+                            style: TextStyle(
+                                fontFamily: "Oswald",
+                                fontSize: 25.sp,
+                                color: Colors.white),
+                          ),
+                          SizedBox(height: 10.h),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          // Chỗ trống để thêm các widget nội dung phía dưới nếu cần
-          Container(),
+              ),
+              SizedBox(height: 10.h,),
+              Container(
+                child: Padding(padding: EdgeInsets.all(10),
+                  child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('     Tiện ích cơ bản', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
+                    GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(8),
+                      mainAxisSpacing: 12, // Khoảng cách dọc giữa các hàng
+                      crossAxisSpacing: 12, // Khoảng cách ngang giữa các cột
+                      children: [
+                        buildServiceCard(
+                          context,
+                          svgPath: 'assets/images/parking.svg',
+                          label: 'Gửi xe',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => GuiXeScreen()),
+                            );
+                          },
+                        ),
+                        buildServiceCard(
+                          context,
+                          svgPath: 'assets/images/water.svg',
+                          label: 'Chỉ số nước',
+                          onTap: () {},
+                        ),
+                        buildServiceCard(
+                          context,
+                          svgPath: 'assets/images/water.svg',
+                          label: 'Dịch vụ điện',
+                          onTap: () {},
+                        ),
+                        // Thêm các ô khác tại đây
+                      ],
+                    ),
+                    Text('     Chức năng', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
+                    GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(8),
+                      mainAxisSpacing: 12, // Khoảng cách dọc giữa các hàng
+                      crossAxisSpacing: 12, // Khoảng cách ngang giữa các cột
+                      children: [
+                        buildServiceCard(
+                          context,
+                          svgPath: 'assets/images/contract.svg',
+                          label: 'Xem hợp đồng',
+                          onTap: () {
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(builder: (context) => GuiXeScreen()),
+                            // );
+                          },
+                        ),
+                        buildServiceCard(
+                          context,
+                          svgPath: 'assets/images/rate.svg',
+                          label: 'Đánh giá',
+                          onTap: () {},
+                        ),
+                        buildServiceCard(
+                          context,
+                          svgPath: 'assets/images/paycard.svg',
+                          label: 'Thanh toán',
+                          onTap: () {},
+                        ),
+                        // Thêm các ô khác tại đây
+                      ],
+                    )
+                  ],
+                ),)
+              ),
+            ],
+          )
         ],
       ),
     );
   }
+  Widget buildServiceCard(
+      BuildContext context, {
+        required String svgPath, // Đường dẫn ảnh SVG
+        required String label,
+        required VoidCallback onTap,
+      }) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 100),
+      tween: Tween(begin: 1.0, end: 1.0),
+      builder: (context, scale, child) {
+        return GestureDetector(
+          onTapDown: (_) {
+            (context as Element).markNeedsBuild();
+          },
+          onTapUp: (_) {
+            onTap();
+          },
+          child: Material(
+            color: Colors.white,
+            elevation: 3,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(12),
+              splashColor: Colors.blue.withOpacity(0.2),
+              highlightColor: Colors.blue.withOpacity(0.1),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      svgPath,
+                      width: 50,
+                      height: 50,
+
+                    ),
+                    const SizedBox(height: 8),
+                    Text(label, style:TextStyle(fontWeight: FontWeight.bold,fontSize: 12.sp),textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 }
