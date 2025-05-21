@@ -1140,7 +1140,7 @@ class _ContractListPageState extends State<ContractListPage> {
                   final action = history['action'];
                   final performedBy = history['performedBy'];
                   final representativeName = history['representativeName'];
-                  final residentNamesList = history['residentNames'] as List?;
+                  final residentNamesList = history['residents'] as List?;
                   final newRepresentative =
                       history['newRepresentative']?['fullName'];
                   final timestamp =

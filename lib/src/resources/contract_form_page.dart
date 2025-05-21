@@ -746,7 +746,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           ..add(TextContent("bike_unroofed_fee", currencyFormat.format(latestFeesParking["bike_unroofed"] ?? 0)))
                           ..add(TextContent("car_unroofed_fee", currencyFormat.format(latestFeesParking["car_unroofed"] ?? 0)))
                           ..add(TextContent("car_roofed_fee", currencyFormat.format(latestFeesParking["car_roofed"] ?? 0)))
-                          ..add(TextContent("motobike_roofed_fee", currencyFormat.format(latestFeesParking["motobike_roofed"] ?? 0)))
+                          ..add(TextContent("motorbike_roofed_fee", currencyFormat.format(latestFeesParking["motorbike_roofed"] ?? 0)))
                           ..add(TextContent("motorbike_unroofed_fee", currencyFormat.format(latestFeesParking["motorbike_unroofed"] ?? 0)))
                           ..add(TextContent("management_fee", currencyFormat.format(latestFeesManagement ?? 0)));
 
