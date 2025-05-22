@@ -39,7 +39,7 @@ class StaffImageProvider extends ChangeNotifier {
     _avatarListener?.cancel();
     _avatarListener = docRef.snapshots().listen((event) {
       if (event.exists) {
-        _avatarUrl = (event.data() as Map<String, dynamic>)['avatarUrl'] as String?;
+        _avatarUrl = (event.data() as Map<String, dynamic>)['imageUrl'] as String?;
       }
       else {
         _avatarUrl = null;
