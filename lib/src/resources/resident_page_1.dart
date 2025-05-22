@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/resources/base_resident_info.dart';
 import 'package:do_an/src/resources/login_page.dart';
-import 'package:do_an/src/resources/provider/staff_image_provider.dart';
+import 'package:do_an/src/resources/provider/resident_image_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -23,13 +23,14 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
   void initState() {
     super.initState();
     final residentId = FirebaseAuth.instance.currentUser?.uid;
-    // if (residentId != null) {
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     Provider.of<UserImageProvider>(context, listen: false)
-    //         .loadImageByStaffId(staffId);
-    //   });
-    // }
+    if (residentId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Provider.of<ResidentImageProvider>(context, listen: false)
+            .loadImageByResidentId(residentId); // đúng hàm và id
+      });
+    }
   }
+
 
   Future<void> _removeFcmToken() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -144,6 +145,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                         icon: Icon(Icons.logout),
                         onPressed: _logout,
                         tooltip: 'Đăng xuất',
+                        color: Colors.black,
                       ),
                     ),
                     Container(
@@ -155,38 +157,57 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                         children: [
                           SizedBox(height: 80.h),
                           Center(
-                            child: CircleAvatar(
-                              radius: 70.r,
-                              backgroundColor: Colors.white,
-                              child: ClipOval(
-                                child: residentInfo?.imageUrl?.isNotEmpty == true
-                                    ? Image.network(
-                                  residentInfo!.imageUrl!, // <- fix here
-                                  width: 140.r,
-                                  height: 140.r,
-                                  fit: BoxFit.cover,
-                                )
-                                    : SvgPicture.asset(
-                                  'assets/images/default_avatar.svg',
-                                  width: 70.r,
-                                  height: 70.r,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
+                            child: Consumer<ResidentImageProvider>(
+                              builder: (context, imageProvider, _) {
+                                Widget avatarChild;
+
+                                if (imageProvider.avatarUrl != null && imageProvider.avatarUrl!.isNotEmpty) {
+                                  // Chỉ hiển thị ảnh từ URL (Firebase Storage)
+                                  avatarChild = Image.network(
+                                    imageProvider.avatarUrl!,
+                                    width: 140.r,
+                                    height: 140.r,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return SvgPicture.asset(
+                                        'assets/images/default_avatar.svg',
+                                        width: 70.r,
+                                        height: 70.r,
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
+                                  );
+                                } else {
+                                  // Nếu không có ảnh nào → SVG mặc định
+                                  avatarChild = SvgPicture.asset(
+                                    'assets/images/default_avatar.svg',
+                                    width: 70.r,
+                                    height: 70.r,
+                                    fit: BoxFit.cover,
+                                  );
+                                }
+
+                                return CircleAvatar(
+                                  radius: 70.r,
+                                  backgroundColor: Colors.grey[200],
+                                  child: ClipOval(child: avatarChild),
+                                );
+                              },
                             ),
                           ),
                           SizedBox(height: 20.h),
                           Text(
                             "Xin chào, ${residentInfo?.fullName ?? "người dùng"} 👋",
                             style: TextStyle(
-                                fontFamily: "Oswald",
-                                fontSize: 25.sp,
-                                color: Colors.white),
+                              fontFamily: "Oswald",
+                              fontSize: 25.sp,
+                              color: Colors.white,
+                            ),
                           ),
                           SizedBox(height: 10.h),
                         ],
                       ),
-                    ),
+                    )
                   ],
                 ),
               ),
