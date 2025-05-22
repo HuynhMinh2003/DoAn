@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../src/resources/ds_hopdong_canho_page.dart';
+import '../../../src/resources/send_notification_page.dart';
 import '../../../src/resources/update_fee_page.dart';
 
 class SideMenu extends StatelessWidget {
@@ -141,6 +142,29 @@ class SideMenu extends StatelessWidget {
                       ),
                       DrawerListTile(
                         title: "Danh sách dịch vụ",
+                        svgSrc: "assets/icons/menu_profile.svg",
+                        press: () {
+                          onMenuItemPressed(CompanyListPage());
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                    ],
+                  ),
+                  ExpandableDrawerListTile(
+                    title: "Quản lý thông báo",
+                    svgSrc: "assets/icons/menu_notification.svg",
+                    isMenuOpen: isMenuOpen,
+                    children: [
+                      DrawerListTile(
+                        title: "Đăng thông báo chung",
+                        svgSrc: "assets/icons/menu_doc.svg",
+                        press: () {
+                          onMenuItemPressed(InfoPage());
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                      DrawerListTile(
+                        title: "Danh sách thông báo",
                         svgSrc: "assets/icons/menu_profile.svg",
                         press: () {
                           onMenuItemPressed(CompanyListPage());
