@@ -39,7 +39,7 @@ class ResidentImageProvider extends ChangeNotifier {
     _avatarListener?.cancel();
     _avatarListener = docRef.snapshots().listen((event) {
       if (event.exists) {
-        _avatarUrl = (event.data() as Map<String, dynamic>)['avatarUrl'] as String?;
+        _avatarUrl = (event.data() as Map<String, dynamic>)['imageUrl'] as String?;
       }
       else {
         _avatarUrl = null;
@@ -158,7 +158,6 @@ class ResidentImageProvider extends ChangeNotifier {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
-
       // 🔹 Lấy thông tin người dùng từ Firestore để biết tên file ảnh
       final snapshot = await FirebaseFirestore.instance.collection('residents').doc(user.uid).get();
       final data = snapshot.data();

@@ -58,9 +58,11 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
 
-      setState(() {
-        _roleItems = data.values.map((e) => e.toString()).toList(); // lấy danh sách các "positions"
-      });
+      if (mounted) {
+        setState(() {
+          _roleItems = data.values.map((e) => e.toString()).toList();
+        });
+      }
     }
   }
 

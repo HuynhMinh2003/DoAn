@@ -1,4 +1,5 @@
 import 'package:do_an/src/resources/base_resident_info.dart';
+import 'package:do_an/src/resources/resident_info_page.dart';
 import 'package:do_an/src/resources/resident_page_1.dart';
 import 'package:do_an/src/resources/test.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -44,6 +45,7 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
       // const HomePage(),
       ResidentPage(),
       TestPage(),
+      ResidentInfoPage(),
     ];
 
     return Scaffold(
@@ -52,8 +54,9 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
           backgroundColor: Theme.of(context).colorScheme.primary,
           activeColor: Colors.white,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Trang chủ'),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
             BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Thông báo'),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Hồ sơ'),
           ],
         ),
         tabBuilder: (BuildContext context, int index) {

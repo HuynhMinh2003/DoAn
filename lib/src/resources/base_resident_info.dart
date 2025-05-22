@@ -10,6 +10,9 @@ abstract class BaseResidentInfoScreen<T extends StatefulWidget> extends State<T>
   late User _resident;
   ResidentInfo? residentInfo;
   bool isLoading = false;
+  String? apartmentName;
+  String? building;
+  var area;
 
   @override
   void initState() {
@@ -34,6 +37,10 @@ abstract class BaseResidentInfoScreen<T extends StatefulWidget> extends State<T>
         setState(() {
           residentInfo = ResidentInfo.fromFirestore(doc);
         });
+
+        // Sau khi residentInfo đã được set, gọi lấy apartmentName
+        await fetchApartmentName();
+
       } else {
         print('❌ Không tìm thấy thông tin cư dân.');
         showSnackBar('Không tìm thấy thông tin cư dân.');
@@ -45,6 +52,23 @@ abstract class BaseResidentInfoScreen<T extends StatefulWidget> extends State<T>
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> fetchApartmentName() async {
+    if (residentInfo?.apartmentId != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('apartments')
+          .doc(residentInfo!.apartmentId)
+          .get();
+
+      if (doc.exists) {
+        setState(() {
+          apartmentName = doc.data()?['apartmentName'] ?? 'Không rõ';
+          building = doc.data()?['building'] ?? 'Không rõ';
+          area = doc.data()?['area'] as int? ?? 0;
+        });
+      }
     }
   }
 
