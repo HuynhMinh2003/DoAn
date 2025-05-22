@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:shimmer/shimmer.dart';
 
 class GuiXeScreen extends StatefulWidget {
   const GuiXeScreen({super.key});
@@ -18,7 +19,6 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
   final _formKey = GlobalKey<FormState>();
   String? _vehicleType;
   String _licensePlate = '';
-  bool _showRegistrationForm = false; // Thêm state này để điều khiển việc hiển thị form
 
   Future<void> _registerVehicle() async {
     if (!_formKey.currentState!.validate()) return;
@@ -142,7 +142,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
             ),
             SingleChildScrollView(
                 padding: EdgeInsets.only(
-                    left: 15.w,
+                    left: 20.w,
                     right: 15.w,
                     top: 140.h
                 ),
@@ -178,7 +178,17 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                       FutureBuilder<String?>(
                         future: _getContractId(),
                         builder: (context, snapshot) {
-                          if (!snapshot.hasData) return Text("Không có hợp đồng hiện tại.");
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            // Khi đang load Future, hiện shimmer
+                            return SizedBox(
+                              height: 200.h,
+                              child: ListView.builder(
+                                itemCount: 3,
+                                itemBuilder: (_, __) => _buildShimmerListItem(),
+                              ),
+                            );
+                          }
+                          if (!snapshot.hasData) return Text("Chưa có danh sách xe",style: TextStyle(fontSize: 25.sp),);
                           final contractId = snapshot.data!;
                           return StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
@@ -190,19 +200,23 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                               if (!snapshot.hasData) return CircularProgressIndicator();
                               final docs = snapshot.data!.docs;
                               return SizedBox(
-                                height: 300.h,
+                                height: 450.h,
                                 child: ListView.builder(
                                   shrinkWrap: true,
                                   itemCount: docs.length,
                                   itemBuilder: (_, index) {
                                     final doc = docs[index];
                                     final canceled = doc['canceledAt'] != null;
+                                    final canceledAt = doc['canceledAt'] as Timestamp?;
                                     final vehicleType = doc['vehicleType'];
                                     final licensePlate = doc['licensePlate'];
                                     final registeredAt = doc['registeredAt'] as Timestamp?;
                                     final formattedDate = registeredAt != null
                                         ? DateFormat('dd/MM/yyyy – HH:mm').format(registeredAt.toDate())
                                         : 'Không rõ ngày';
+                                    final formattedCanceledDate = canceledAt != null
+                                        ? DateFormat('dd/MM/yyyy – HH:mm').format(canceledAt.toDate())
+                                        : '';
 
                                     // Gán biểu tượng và tên tiếng Việt
                                     String emoji;
@@ -239,13 +253,51 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
 
                                     return ListTile(
                                       title: Text("$emoji $licensePlate"),
-                                      subtitle: Text("Loại: $readableType\nNgày đăng ký: $formattedDate"),
+                                      subtitle: Text(
+                                        "Loại: $readableType\n"
+                                            "Ngày đăng ký: $formattedDate"
+                                            "${canceledAt != null ? '\nNgày hủy: $formattedCanceledDate' : ''}",
+                                      ),
                                       isThreeLine: true,
                                       trailing: canceled
-                                          ? Text("⛔ Đã hủy", style: TextStyle(color: Colors.red))
+                                          ? Text(
+                                        "     ⛔\nĐã hủy",
+                                        style: TextStyle(color: Colors.red, fontSize: 15.sp),
+                                      )
                                           : TextButton(
-                                        onPressed: () => _cancelRegistration(contractId, doc.id),
-                                        child: Text("Hủy"),
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                              title: Center(
+                                                child: Text(
+                                                  "Xác nhận hủy",
+                                                  style: TextStyle(fontSize: 30.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
+                                                ),
+                                              ),
+                                              content: Text(
+                                                "Bạn có chắc chắn muốn hủy đăng ký xe này không?",
+                                                style: TextStyle(fontSize: 15.sp),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(context),
+                                                  child: Text("Không", style: TextStyle(fontSize: 15.sp)),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                    _cancelRegistration(contractId, doc.id);
+                                                  },
+                                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                                  child: Text("Hủy đăng ký", style: TextStyle(fontSize: 15.sp, color: Colors.white)),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                        child: Text("Hủy", style: TextStyle(fontSize: 15.sp)),
                                       ),
                                     );
                                   },
@@ -256,89 +308,31 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                         },
                       ),
 
-                      // Nút Đăng ký thêm xe
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _showRegistrationForm = !_showRegistrationForm;
-                          });
-                        },
-                        icon: Icon(_showRegistrationForm ? Icons.close : Icons.add),
-                        label: Text(_showRegistrationForm ? "Hủy" : "Đăng ký thêm xe"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                      SizedBox(height: 20.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          SizedBox(width: 1.w,),
+                          ElevatedButton(onPressed: () => Navigator.pop(context), child: Text("Quay lại", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),),),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (dialogContext) => _buildVehicleRegistrationDialog(dialogContext),
+                              );
+                            },
+                            icon: Icon(Icons.add),
+                            label: Text("Đăng ký xe", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                          SizedBox(width: 1.w,),
+                        ],
+                      )
 
-                      // Form đăng ký xe
-                      if (_showRegistrationForm)
-                        Padding(padding: EdgeInsets.only(
-                          left: 15.w,
-                          right: 15.w,
-                        ),
-                            child: Form(
-                              key: _formKey,
-                              child: Column(children: [
-                                DropdownButtonFormField2<String>(
-                                  value: _vehicleType,
-                                  isExpanded: true,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
-                                  ),
-                                  hint: const Text('Chọn loại phương tiện'),
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 'motorbike_roofed',
-                                      child: Text('Xe máy (có mái)'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'motorbike_unroofed',
-                                      child: Text('Xe máy (không mái)'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'car_roofed',
-                                      child: Text('Ô tô (có mái)'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'car_unroofed',
-                                      child: Text('Ô tô (không mái)'),
-                                    ),
-                                  ],
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _vehicleType = value;
-                                    });
-                                  },
-                                  validator: (value) => value == null ? 'Vui lòng chọn loại phương tiện' : null,
-                                ),
-                                SizedBox(height: 12.h),
-                                TextFormField(
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                    labelText: "Điền biển số xe",
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
-                                  ),
-                                  validator: (value) => value == null || value.isEmpty ? 'Nhập biển số xe' : null,
-                                  onSaved: (value) => _licensePlate = value!,
-                                ),
-                                SizedBox(height: 20.h),
-                                ElevatedButton(
-                                  onPressed: _registerVehicle,
-                                  child: Text("Xác nhận đăng ký"),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    foregroundColor: Colors.white,
-                                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  ),
-                                )
-                              ]),
-                            )),
                     ],
                   ),
                 )
@@ -348,4 +342,89 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
       )
     );
   }
+
+  Widget _buildVehicleRegistrationDialog(BuildContext dialogContext) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Center(child: Text("Đăng ký thêm xe", style:TextStyle(fontFamily:"Oswald", fontSize: 30.sp, fontWeight: FontWeight.bold)),),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField2<String>(
+                value: _vehicleType,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
+                ),
+                hint: Text('Chọn loại phương tiện',style: TextStyle(fontSize: 15.sp)),
+                items: const [
+                  DropdownMenuItem(value: 'motorbike_roofed', child: Text('Xe máy (có mái)')),
+                  DropdownMenuItem(value: 'motorbike_unroofed', child: Text('Xe máy (không mái)')),
+                  DropdownMenuItem(value: 'car_roofed', child: Text('Ô tô (có mái)')),
+                  DropdownMenuItem(value: 'car_unroofed', child: Text('Ô tô (không mái)')),
+                  DropdownMenuItem(value: 'bike_roofed', child: Text('Xe đạp (có mái)')),
+                  DropdownMenuItem(value: 'bike_unroofed', child: Text('Xe đạp (không mái)')),
+                ],
+                onChanged: (value) => setState(() => _vehicleType = value),
+                validator: (value) => value == null ? 'Vui lòng chọn loại phương tiện' : null,
+              ),
+              SizedBox(height: 12.h),
+              TextFormField(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  labelText: "Điền biển số xe",
+                  labelStyle: TextStyle(fontSize: 15.sp),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
+                ),
+                validator: (value) => value == null || value.isEmpty ? 'Nhập biển số xe' : null,
+                onSaved: (value) => _licensePlate = value!,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: Text("Hủy",style: TextStyle(fontSize: 15.sp),),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              _formKey.currentState!.save();
+              Navigator.pop(dialogContext); // đóng dialog
+              _registerVehicle();     // xử lý đăng ký
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          child: Text("Xác nhận",style: TextStyle(fontSize: 15.sp,color: Colors.white),),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShimmerListItem() {
+    return ListTile(
+      title: Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Container(height: 20.h, width: 150.w, color: Colors.white),
+      ),
+      subtitle: Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Container(height: 14.h, width: 200.w, color: Colors.white),
+      ),
+      trailing: Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Container(height: 30.h, width: 50.w, color: Colors.white),
+      ),
+    );
+  }
+
 }

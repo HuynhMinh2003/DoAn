@@ -1,367 +1,468 @@
-// import 'package:do_an/src/models/contract_data.dart';
-// import 'package:do_an/src/models/resident_info.dart';
-// import 'package:do_an/src/resources/contract_review_page.dart';
-// import 'package:do_an/src/blocs/auth_bloc.dart'; // Nhớ import bloc
-// import 'package:flutter/material.dart';
-// import 'package:flutter_screenutil/flutter_screenutil.dart';
-// import 'package:flutter_svg/flutter_svg.dart';
-//
-// class ResidentInfoPage extends StatefulWidget {
-//   final ContractData contractData;
-//
-//   ResidentInfoPage({required this.contractData});
-//
-//   @override
-//   _ResidentInfoPageState createState() => _ResidentInfoPageState();
-// }
-//
-// class _ResidentInfoPageState extends State<ResidentInfoPage> {
-//   final authBloc = AuthBloc(); // Tạo hoặc lấy từ Provider nếu dùng DI
-//
-//   final _nameResidentController = TextEditingController();
-//   final _cccdResidentController = TextEditingController();
-//   final _phoneResidentController = TextEditingController();
-//   final _emailResidentController = TextEditingController();
-//   final _genderResidentController = TextEditingController();
-//   DateTime? birthDate;
-//
-//   List<ResidentInfo> residents = [];
-//   int currentIndex = 0;
-//
-//   @override
-//   void dispose() {
-//     _nameResidentController.dispose();
-//     _cccdResidentController.dispose();
-//     _phoneResidentController.dispose();
-//     _emailResidentController.dispose();
-//     authBloc.dispose(); // Quan trọng: tránh rò rỉ stream
-//     super.dispose();
-//   }
-//
-//   void nextResident() {
-//     final isValid = authBloc.isValidResidentSignUp(
-//       _nameResidentController.text,
-//       _emailResidentController.text,
-//       _phoneResidentController.text,
-//       _genderResidentController.text,
-//       _cccdResidentController.text,
-//       birthDate,
-//     );
-//
-//     if (!isValid) return;
-//
-//     final newResident = ResidentInfo(
-//       fullName: _nameResidentController.text,
-//       cccd: _cccdResidentController.text,
-//       address: _addressResidentController.text,
-//       phone: _phoneResidentController.text,
-//       gender: _genderResidentController.text,
-//       email: _emailResidentController.text,
-//       birthDate: birthDate!,
-//     );
-//
-//     // Ghi đè nếu đã có dữ liệu ở vị trí này
-//     if (residents.length > currentIndex) {
-//       residents[currentIndex] = newResident;
-//     } else {
-//       residents.add(newResident);
-//     }
-//
-//     if (currentIndex < widget.contractData.numberOfResidents - 1) {
-//       setState(() {
-//         currentIndex++;
-//         if (residents.length > currentIndex) {
-//           final r = residents[currentIndex];
-//           _nameResidentController.text = r.fullName;
-//           _cccdResidentController.text = r.cccd;
-//           _phoneResidentController.text = r.phone;
-//           _emailResidentController.text = r.email;
-//           birthDate = r.birthDate;
-//         } else {
-//           _nameResidentController.clear();
-//           _cccdResidentController.clear();
-//           _phoneResidentController.clear();
-//           _emailResidentController.clear();
-//           birthDate = null;
-//         }
-//       });
-//     } else {
-//       final updatedContract = widget.contractData.copyWith(residents: residents);
-//       Navigator.push(
-//         context,
-//         MaterialPageRoute(
-//           builder: (_) => ContractReviewPage(contractData: updatedContract),
-//         ),
-//       );
-//     }
-//
-//   }
-//
-//   Widget _buildTextField({
-//     required TextEditingController controller,
-//     required String label,
-//     required Stream<String> stream,
-//     required VoidCallback clearError, // 👉 Thêm hàm để clear lỗi
-//   }) {
-//     return Padding(
-//       padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 15.h),
-//       child: StreamBuilder<String>(
-//         stream: stream,
-//         builder: (context, snapshot) {
-//           return TextField(
-//             controller: controller,
-//             style: TextStyle(fontSize: 4.sp, color: Colors.black),
-//             onChanged: (value) {
-//               clearError(); // 👉 Clear lỗi khi người dùng sửa
-//             },
-//             decoration: InputDecoration(
-//               labelText: label,
-//               labelStyle: TextStyle(fontSize: 4.sp),
-//               errorText: snapshot.hasError ? snapshot.error as String : null,
-//               errorStyle: TextStyle(fontSize: 3.sp, color: Colors.red),
-//               helperText: snapshot.hasError ? null : ' ',
-//               // giữ chỗ dòng lỗi
-//               contentPadding: EdgeInsets.symmetric(horizontal: 10.w),
-//               border: OutlineInputBorder(
-//                 borderSide: BorderSide(color: Color(0xffCED0D2), width: 1.w),
-//                 borderRadius: BorderRadius.all(Radius.circular(30.r)),
-//               ),
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-//
-//   Widget _buildDatePickerButton() {
-//     return Padding(
-//       padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 15.h),
-//       child: StreamBuilder<DateTime?>(
-//         stream: authBloc.birthDateStream,
-//         builder: (context, snapshot) {
-//           final hasError = snapshot.hasError;
-//
-//           return SizedBox(
-//             height: 60.h, // đủ chỗ cho cả button + lỗi
-//             child: Stack(
-//               clipBehavior: Clip.none, // cho lỗi có thể "tràn" ra ngoài
-//               children: [
-//                 SizedBox(
-//                   height: 50.h,
-//                   width: double.infinity,
-//                   child: ElevatedButton(
-//                     onPressed: () async {
-//                       final picked = await showDatePicker(
-//                         context: context,
-//                         initialDate: DateTime(2000),
-//                         firstDate: DateTime(1950),
-//                         lastDate: DateTime.now(),
-//                       );
-//                       if (picked != null) {
-//                         setState(() {
-//                           birthDate = picked;
-//                           authBloc.updateBirthDate(picked);
-//                         });
-//                       }
-//                     },
-//                     style: ElevatedButton.styleFrom(
-//                       backgroundColor: const Color(0xFFF7FEFF),
-//                       elevation: 0,
-//                       alignment: Alignment.centerLeft,
-//                       shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(30.r),
-//                         side: BorderSide(
-//                           color: hasError ? Color(0xFFD32F2F) : Colors.black,
-//                           width: 0.17.w,
-//                         ),
-//                       ),
-//                       padding: EdgeInsets.symmetric(horizontal: 10.w),
-//                     ),
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       mainAxisAlignment: MainAxisAlignment.center,
-//                       children: [
-//                         if (birthDate != null)
-//                           Text(
-//                             'Ngày sinh',
-//                             style: TextStyle(
-//                               fontSize: 3.sp,
-//                               color: Colors.black,
-//                             ),
-//                           ),
-//                         Text(
-//                           birthDate == null
-//                               ? "Ngày sinh"
-//                               : "${birthDate!.toLocal()}".split(' ')[0],
-//                           style: TextStyle(
-//                             fontSize: 4.sp,
-//                             color: Colors.black87,
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//
-//                 if (hasError)
-//                   Positioned(
-//                     left: 10.w,
-//                     bottom: -18.h, // tràn ra ngoài một chút
-//                     child: Text(
-//                       snapshot.error as String,
-//                       style: TextStyle(color: Colors.red, fontSize: 3.sp),
-//                     ),
-//                   ),
-//               ],
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Color(0xFFF7FEFF),
-//       body: SafeArea(
-//           child: Stack(
-//         children: [
-//           SingleChildScrollView(
-//               child: Padding(
-//             padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 150.h),
-//             child: Row(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Expanded(
-//                   child: Padding(
-//                     padding: EdgeInsets.only(right: 30.w, top: 30.h),
-//                     child: SvgPicture.asset(
-//                       'assets/images/info_resident.svg',
-//                       width: 200.w,
-//                     ),
-//                   ),
-//                 ),
-//                 Expanded(
-//                   child: Column(
-//                     children: [
-//                       Text(
-//                         "Cư dân ${currentIndex + 1}",
-//                         style: TextStyle(
-//                             fontFamily: "Oswald",
-//                             fontWeight: FontWeight.w700,
-//                             fontSize: 12.sp),
-//                       ),
-//                       SizedBox(height: 40.h,),
-//                       _buildTextField(
-//                         controller: _nameResidentController,
-//                         label: "Họ tên",
-//                         stream: authBloc.nameResidentStream,
-//                         clearError: authBloc.clearNameResidentError,
-//                       ),
-//                       _buildTextField(
-//                         controller: _cccdResidentController,
-//                         label: "CCCD",
-//                         stream: authBloc.cccdResidentStream,
-//                         clearError: authBloc.clearCccdResidentError,
-//                       ),
-//                       _buildTextField(
-//                         controller: _phoneResidentController,
-//                         label: "SĐT",
-//                         stream: authBloc.phoneResidentStream,
-//                         clearError: authBloc.clearPhoneResidentError,
-//                       ),
-//                       _buildTextField(
-//                         controller: _emailResidentController,
-//                         label: "Email",
-//                         stream: authBloc.emailResidentStream,
-//                         clearError: authBloc.clearEmailResidentError,
-//                       ),
-//                       _buildDatePickerButton(),
-//                       SizedBox(height: 25.h),
-//                       Row(
-//                         children: [
-//                           SizedBox(width: 20.w),
-//                           if (currentIndex > 0) // Nếu có nút "Quay lại"
-//                             Expanded(
-//                               child: SizedBox(
-//                                 height: 60.h,
-//                                 child: OutlinedButton(
-//                                     onPressed: () {
-//                                       if (currentIndex > 0) {
-//                                         setState(() {
-//                                           currentIndex--;
-//
-//                                           // Nạp lại dữ liệu từ cư dân cũ
-//                                           final r = residents[currentIndex];
-//                                           _nameResidentController.text = r.fullName;
-//                                           _cccdResidentController.text = r.cccd;
-//                                           _phoneResidentController.text = r.phone;
-//                                           _emailResidentController.text = r.email;
-//                                           birthDate = r.birthDate;
-//                                         });
-//                                       }
-//                                     },
-//                                   style: OutlinedButton.styleFrom(
-//                                     side: BorderSide(color: Colors.grey),
-//                                     shape: RoundedRectangleBorder(
-//                                       borderRadius: BorderRadius.circular(30.r),
-//                                     ),
-//                                   ),
-//                                   child: Text(
-//                                     "Quay lại",
-//                                     style: TextStyle(
-//                                       fontFamily: "Oswald",
-//                                       fontWeight: FontWeight.w700,
-//                                       fontSize: 7.sp,
-//                                       color: Colors.black,
-//                                     ),
-//                                   ),
-//                                 ),
-//                               ),
-//                             )
-//                           else
-//                             const Expanded(child: SizedBox()),
-//                           // Khi không có nút "Quay lại", chiếm không gian
-//
-//                           SizedBox(width: 20.w),
-//
-//                           Expanded(
-//                             child: SizedBox(
-//                               height: 60.h,
-//                               child: ElevatedButton(
-//                                 onPressed: () => nextResident(),
-//                                 style: ElevatedButton.styleFrom(
-//                                   backgroundColor: const Color(0xFF2D80F8),
-//                                   shape: RoundedRectangleBorder(
-//                                     borderRadius: BorderRadius.circular(30.r),
-//                                   ),
-//                                   elevation: 4,
-//                                   shadowColor: Colors.black45,
-//                                 ),
-//                                 child: Text(
-//                                   "Tiếp tục",
-//                                   style: TextStyle(
-//                                     fontFamily: "Oswald",
-//                                     fontWeight: FontWeight.w700,
-//                                     fontSize: 7.sp,
-//                                     color: Colors.white,
-//                                   ),
-//                                 ),
-//                               ),
-//                             ),
-//                           ),
-//                           SizedBox(width: 20.w),
-//                         ],
-//                       )
-//
-//                     ],
-//                   ),)
-//               ],
-//             )
-//           )),
-//         ],
-//       )),
-//     );
-//   }
-// }
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/src/resources/base_resident_info.dart';
+import 'package:do_an/src/resources/provider/resident_image_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+class ResidentInfoPage extends StatefulWidget {
+  const ResidentInfoPage({Key? key}) : super(key: key);
+
+  @override
+  _ResidentInfoPageState createState() => _ResidentInfoPageState();
+}
+
+class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
+  double xPosition = 20;
+  double yPosition = 600;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final residentId =
+        FirebaseAuth.instance.currentUser?.uid; // UID người dùng đăng nhập
+    if (residentId != null) {
+      Future.microtask(() {
+        // Tải ảnh người dùng (nếu có)
+        Provider.of<ResidentImageProvider>(context, listen: false)
+            .loadImageByResidentId(residentId);
+
+        // Lấy thông tin cư dân + apartmentName luôn
+        getResidentInfo(residentId);
+      });
+    }
+  }
+
+  Future<void> updateResidentInfo(String phone, String email) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final uid = user?.uid;
+
+      if (uid != null) {
+        if (email != user!.email) {
+          try {
+            await user.verifyBeforeUpdateEmail(email);
+            showSnackBar('Một email xác nhận đã được gửi đến $email. Vui lòng xác nhận để hoàn tất cập nhật.');
+            // Tạm dừng update Firestore email cho đến khi user xác nhận email mới
+            // Bạn có thể cập nhật phone trước hoặc đợi user xác nhận email rồi mới update Firestore
+            await FirebaseFirestore.instance
+                .collection('residents')
+                .doc(uid)
+                .update({
+              'phone': phone,
+              // Bạn có thể không cập nhật email ở Firestore ngay lúc này, hoặc đánh dấu trạng thái
+            });
+            return; // Kết thúc sau khi gửi email xác nhận
+          } on FirebaseAuthException catch (e) {
+            if (e.code == 'requires-recent-login') {
+              showSnackBar('Bạn cần đăng nhập lại để thay đổi email.');
+              return;
+            } else {
+              showSnackBar('Không thể cập nhật email: ${e.message}');
+              return;
+            }
+          }
+        } else {
+          // Nếu email không đổi thì cập nhật phone luôn
+          await FirebaseFirestore.instance
+              .collection('residents')
+              .doc(uid)
+              .update({
+            'phone': phone,
+          });
+        }
+
+        // Tải lại thông tin để cập nhật UI
+        await getResidentInfo(uid);
+
+        showSnackBar('Cập nhật thông tin thành công');
+      }
+    } catch (e) {
+      print('❌ Lỗi khi cập nhật thông tin: $e');
+      showSnackBar('Không thể cập nhật thông tin.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final avatarProvider = Provider.of<ResidentImageProvider>(context);
+    String? avatarUrl = avatarProvider.avatarUrl;
+
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: const Center(
+              child: Text(
+                'Thông tin cá nhân',
+                style: TextStyle(
+                    fontFamily: "Oswald",
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+            backgroundColor: Color(0xFF088FC2),
+          ),
+          body: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : residentInfo == null
+              ? const Center(child: Text("Không có thông tin cư dân."))
+              : Align(
+            alignment: Alignment.topCenter,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(top: 20.h),
+                child: Padding(
+                  padding: EdgeInsets.only(left: 20.w, right: 10.w, top: 10.h),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Consumer<ResidentImageProvider>(
+                        builder: (context, imageProvider, _) {
+                          Widget avatarChild;
+
+                          if (imageProvider.avatarUrl != null &&
+                              imageProvider.avatarUrl!.isNotEmpty) {
+                            avatarChild = Image.network(
+                              imageProvider.avatarUrl!,
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return SvgPicture.asset(
+                                  'assets/images/default_avatar.svg',
+                                  width: 50.r,
+                                  height: 50.r,
+                                  fit: BoxFit.cover,
+                                );
+                              },
+                            );
+                          } else {
+                            avatarChild = SvgPicture.asset(
+                              'assets/images/default_avatar.svg',
+                              width: 50.r,
+                              height: 50.r,
+                              fit: BoxFit.cover,
+                            );
+                          }
+
+                          return CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.grey[200],
+                            child: ClipOval(child: avatarChild),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 10.h),
+                      Padding(
+                        padding: EdgeInsets.only(left: 20.w, right: 10.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Divider(
+                              color: Colors.grey,
+                              thickness: 1,
+                              height: 10.h,
+                              indent: 0.w,
+                              endIndent: 20.w,
+                            ),
+                            Text(
+                              'Thông tin căn hộ',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
+                            ),
+                            InfoRow(title: "Căn hộ", value: apartmentName ?? "Đang tải..."),
+                            InfoRow(title: "Diện tích", value: area != null ? "$area m²" : "Đang tải..."),
+                            InfoRow(title: "Tòa", value: building ?? "Đang tải..."),
+                            Divider(
+                              color: Colors.grey,
+                              thickness: 1,
+                              height: 10.h,
+                              indent: 0.w,
+                              endIndent: 20.w,
+                            ),
+                            Text(
+                              'Thông tin cá nhân',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
+                            ),
+                            InfoRow(title: "Họ và tên", value: residentInfo?.fullName ?? ""),
+                            InfoRow(title: "Giới tính", value: residentInfo?.gender ?? ""),
+                            InfoRow(title: "Địa chỉ", value: residentInfo?.address ?? ""),
+                            InfoRow(title: "Số CCCD", value: residentInfo?.cccd ?? ""),
+                            InfoRow(
+                              title: "Ngày sinh",
+                              value: residentInfo?.birthDate != null
+                                  ? DateFormat('dd/MM/yyyy').format(residentInfo!.birthDate!)
+                                  : "Chưa có",
+                            ),
+                            InfoRow(title: "Số điện thoại", value: residentInfo?.phone ?? ""),
+                            InfoRow(title: "Email", value: residentInfo?.email ?? ""),
+                            InfoRow(
+                              title: "Ngày tạo hồ sơ",
+                              value: residentInfo?.createdAt != null
+                                  ? DateFormat('dd/MM/yyyy – HH:mm').format(residentInfo!.createdAt!)
+                                  : "Không rõ",
+                            ),
+                            Divider(
+                              color: Colors.grey,
+                              thickness: 1,
+                              height: 10.h,
+                              indent: 0.w,
+                              endIndent: 20.w,
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Đặt FloatingActionButton ở đây — bên ngoài Scaffold nhưng trong Stack
+        Positioned(
+          left: xPosition,
+          top: yPosition,
+          child: Draggable(
+            feedback: FloatingActionButton(
+              onPressed: () {},
+              backgroundColor: Color(0xFF088FC2),
+              child: const Icon(Icons.edit),
+            ),
+            childWhenDragging: Container(),
+            onDragEnd: (details) {
+              setState(() {
+                xPosition = details.offset.dx;
+                yPosition = details.offset.dy - kToolbarHeight;
+              });
+            },
+            child: FloatingActionButton(
+              onPressed: () {
+                showEditDialog(context);
+              },
+              backgroundColor: Color(0xFF088FC2),
+              child: const Icon(Icons.edit),
+            ),
+          ),
+        ),
+      ],
+    );
+
+  }
+
+  void showEditDialog(BuildContext context) {
+    final phoneController = TextEditingController(text: residentInfo?.phone ?? '');
+    final emailController = TextEditingController(text: residentInfo?.email ?? '');
+    final bloc = EditResidentBloc();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Consumer<ResidentImageProvider>(
+          builder: (context, imageProvider, _) {
+            return AlertDialog(
+              title: Center(child: Text('Chỉnh sửa thông tin', style: TextStyle(fontFamily: "Osward", fontSize: 20.sp, fontWeight: FontWeight.bold))),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Ảnh đại diện
+                    ClipOval(
+                      child: SizedBox(
+                        width: 100,
+                        height: 100,
+                        child: imageProvider.webImageBytes != null
+                            ? Image.memory(imageProvider.webImageBytes!, fit: BoxFit.cover)
+                            : imageProvider.selectedImageFile != null
+                            ? Image.file(imageProvider.selectedImageFile!, fit: BoxFit.cover)
+                            : (residentInfo?.imageUrl?.isNotEmpty ?? false)
+                            ? Image.network(residentInfo!.imageUrl!, fit: BoxFit.cover, errorBuilder: (context, _, __) => SvgPicture.asset('assets/images/default_avatar.svg'))
+                            : SvgPicture.asset('assets/images/default_avatar.svg'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.image),
+                      label: Text('Đổi ảnh đại diện', style: TextStyle(fontSize: 15.sp)),
+                      onPressed: () async => await imageProvider.pickImage(),
+                    ),
+                    const SizedBox(height: 15),
+
+                    /// ✅ TextField with StreamBuilder (Email)
+                    StreamBuilder<String?>(
+                      stream: bloc.emailStream,
+                      builder: (context, snapshot) {
+                        return TextField(
+                          controller: emailController,
+                          decoration: InputDecoration(
+                            labelText: 'Email',
+                            errorText: snapshot.data,
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          onChanged: bloc.changeEmail,
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    /// ✅ TextField with StreamBuilder (Phone)
+                    StreamBuilder<String?>(
+                      stream: bloc.phoneStream,
+                      builder: (context, snapshot) {
+                        return TextField(
+                          controller: phoneController,
+                          decoration: InputDecoration(
+                            labelText: 'Số điện thoại',
+                            errorText: snapshot.data,
+                          ),
+                          keyboardType: TextInputType.phone,
+                          onChanged: bloc.changePhone,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    bloc.dispose();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Hủy'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final phoneError = bloc.validatePhone(phoneController.text);
+                    final emailError = bloc.validateEmail(emailController.text);
+
+                    if (phoneError != null || emailError != null) {
+                      bloc.changePhone(phoneController.text);
+                      bloc.changeEmail(emailController.text);
+                      return;
+                    }
+
+                    // Xử lý ảnh đại diện (nếu có)
+                    if (imageProvider.webImageBytes != null || imageProvider.selectedImageFile != null) {
+                      final uniqueFileName = '${DateTime.now().millisecondsSinceEpoch}_avatar.jpg';
+                      final newUrl = await imageProvider.uploadSelectedImageAndGetUrl(residentInfo!.residentId!, uniqueFileName);
+
+                      if (newUrl != null) {
+                        await FirebaseFirestore.instance.collection('residents').doc(residentInfo!.residentId!).update({'imageUrl': newUrl});
+                        final oldImageUrl = residentInfo!.imageUrl;
+
+                        if (oldImageUrl != null && oldImageUrl.isNotEmpty) {
+                          final path = Uri.tryParse(oldImageUrl)?.pathSegments;
+                          if (path != null && path.length > 1) {
+                            final decodedPath = Uri.decodeFull(path[1]);
+                            await FirebaseStorage.instance.ref(decodedPath).delete().catchError((e) {
+                              print('Không thể xóa ảnh cũ: $e');
+                            });
+                          }
+                        }
+                      }
+                    }
+
+                    // Cập nhật thông tin
+                    await updateResidentInfo(phoneController.text, emailController.text);
+                    bloc.dispose();
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Lưu', style: TextStyle(fontSize: 15.sp)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class EditResidentBloc {
+  final _phoneController = StreamController<String>.broadcast();
+  final _emailController = StreamController<String>.broadcast();
+
+  Stream<String?> get phoneStream =>
+      _phoneController.stream.map(validatePhone);
+  Stream<String?> get emailStream =>
+      _emailController.stream.map(validateEmail);
+
+  Function(String) get changePhone => _phoneController.sink.add;
+  Function(String) get changeEmail => _emailController.sink.add;
+
+  String? validatePhone(String value) {
+    if (value.isEmpty) return 'Không được để trống';
+    if (!RegExp(r'^(0|\+84)[0-9]{9,10}$').hasMatch(value)) {
+      return 'Số điện thoại không hợp lệ';
+    }
+    return null;
+  }
+
+  String? validateEmail(String value) {
+    if (value.isEmpty) return 'Không được để trống';
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+      return 'Email không hợp lệ';
+    }
+    return null;
+  }
+
+  void dispose() {
+    _phoneController.close();
+    _emailController.close();
+  }
+}
+
+class InfoRow extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const InfoRow({
+    Key? key,
+    required this.title,
+    required this.value,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 10.h), // Khoảng cách giữa các dòng
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 15.sp,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 5,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+

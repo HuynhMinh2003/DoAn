@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/firebase_options.dart';
 import 'package:do_an/screens/main/main_screen.dart';
 import 'package:do_an/src/resources/add_service_form_page.dart';
+import 'package:do_an/src/resources/auth_wrapper_page.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/main_admin_page.dart';
 import 'package:do_an/src/resources/provider/company_image_provider.dart';
@@ -10,6 +11,7 @@ import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:do_an/src/resources/provider/resident_image_provider.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/staff_image_provider.dart';
+import 'package:do_an/src/resources/splash_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -160,7 +162,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: LoginPage(),
+              home: SplashScreen(),
             ),
 
           ),
