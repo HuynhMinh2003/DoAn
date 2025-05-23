@@ -1,5 +1,6 @@
 import 'package:do_an/constants.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:pool/pool.dart';
 import 'contract_form_mobile_page.dart' if (dart.library.html) 'contract_form_web_page.dart';
@@ -258,6 +259,37 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
     }
 
     return null;
+  }
+
+  Future<void> uploadContractDocx(String contractId, String apartmentName, Uint8List fileBytes) async {
+    try {
+      final storageRef = FirebaseStorage.instance.ref();
+      final filePath = 'contracts/${contractId}_${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx';
+
+      final uploadTask = storageRef
+          .child(filePath)
+          .putData(
+        fileBytes,
+        SettableMetadata(
+          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ),
+      );
+
+      final snapshot = await uploadTask.whenComplete(() => null);
+
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+
+      print('File Word đã được upload thành công: $downloadUrl');
+
+      // Cập nhật Firestore document contracts/{contractId} với đường dẫn và URL file Word
+      await FirebaseFirestore.instance.collection('contracts').doc(contractId).update({
+        'docxStoragePath': filePath,
+        'docxUrl': downloadUrl,
+      });
+    } catch (e) {
+      print('Lỗi upload file Word: $e');
+      rethrow; // hoặc xử lý lỗi tùy ý
+    }
   }
 
   @override
@@ -750,10 +782,37 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           ..add(TextContent("motorbike_unroofed_fee", currencyFormat.format(latestFeesParking["motorbike_unroofed"] ?? 0)))
                           ..add(TextContent("management_fee", currencyFormat.format(latestFeesManagement ?? 0)));
 
+                        // === Danh sách cư dân ===
+                        final residentsList = <PlainContent>[];
+
+                        for (final r in List<ResidentInfo>.from(residents)) {
+                          final residentContent = PlainContent("residents")
+                            ..add(TextContent("resident_name", "Họ và tên: " + r.fullName))
+                            ..add(TextContent("resident_cccd", "Số CCCD: " + r.cccd))
+                            ..add(TextContent("resident_gender", "Giới tính: " + r.cccd))
+                            ..add(TextContent("resident_birthdate", "Ngày sinh: " + r.cccd))
+                            ..add(TextContent("resident_address", "Địa chỉ: " + r.cccd))
+                            ..add(TextContent("resident_phone", "Số điện thoại: " + r.phone))
+                            ..add(TextContent("resident_email", "Email: " + r.email));
+
+                          residentsList.add(residentContent);
+                        }
+
+                        // residents là tag list, resident là mỗi item trong list
+                        content.add(ListContent("residents", residentsList));
+
                         final fileBytes = await docx.generate(content);
+
                         if (fileBytes != null) {
+                          final uint8ListFileBytes = Uint8List.fromList(fileBytes);
+
                           final fileName = "Hợp đồng dịch vụ căn hộ ${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
-                          await downloadWordFile(fileName, fileBytes);
+
+                          // 1. Upload file Word lên Firebase Storage (đã convert đúng kiểu)
+                          await uploadContractDocx(contractId, apartmentName, uint8ListFileBytes);
+
+                          // 2. Tải file về máy (nếu cần)
+                          await downloadWordFile(fileName, uint8ListFileBytes);
                         }
 
                         LoadingDialog.hideLoadingDialog(context);

@@ -37,6 +37,8 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
   String? userId = FirebaseAuth.instance.currentUser?.uid;
   int _selectedIndex = 0;
   int _notificationCount = 0;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   void _getNotificationCount() {
     if (userId == null) return;
@@ -52,11 +54,46 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
       });
     });
   }
+  /// Hàm gọi khi user đăng nhập lại hoặc refresh màn hình, để đồng bộ email Firebase Auth với Firestore
+  Future<void> syncEmailWithFirestore() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+      final uid = user.uid;
 
+      // Reload user để lấy email mới (sau khi user xác nhận qua email)
+      await user.reload();
+
+      final refreshedUser = _auth.currentUser;
+      if (refreshedUser == null) return;
+
+      // Lấy email hiện tại từ Firebase Auth
+      final currentEmail = refreshedUser.email;
+
+      if (currentEmail == null) return;
+
+      // Lấy email trong Firestore
+      final docSnapshot = await _firestore.collection('residents').doc(uid).get();
+      if (!docSnapshot.exists) return;
+
+      final firestoreEmail = docSnapshot.get('email');
+
+      if (firestoreEmail != currentEmail) {
+        // Email khác nhau, cập nhật Firestore
+        await _firestore.collection('residents').doc(uid).update({'email': currentEmail});
+        print('Đã đồng bộ email mới từ Firebase Auth lên Firestore');
+        showSnackBar('Email đã được cập nhật thành công.');
+      }
+    } catch (e) {
+      print('❌ Lỗi khi đồng bộ email: $e');
+    }
+  }
   @override
   void initState(){
     super.initState();
     _getNotificationCount();
+    syncEmailWithFirestore();
+
   }
 
   /// Đánh dấu tất cả thông báo là đã đọc khi bấm vào tab Thông báo
@@ -107,7 +144,6 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
       // const HomePage(),
       ResidentPage(),
       NotificationListPage(),
-      TestPage(),
       ResidentInfoPage(),
     ];
 
