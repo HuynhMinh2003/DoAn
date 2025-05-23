@@ -10,7 +10,7 @@ const { deleteCompanyAccount } = require("./deleteCompany");
 const { sendUpdatedDetailEmail } = require("./sendUpdatedDetailEmail");
 const { sendUpdatedDetailEmail1 } = require("./sendUpdatedDetailEmail1");
 const { sendUpdatedDetailEmail2 } = require("./sendUpdatedDetailEmail2");
-
+const { convertDocxToPdf } = require("./convertDocxToPdf");
 
 // Export tất cả các function Cloud Functions
 exports.createStaffAccount = createStaffAccount;
@@ -22,3 +22,4 @@ exports.deleteCompanyAccount = deleteCompanyAccount;
 exports.sendUpdatedDetailEmail = sendUpdatedDetailEmail;
 exports.sendUpdatedDetailEmail1 = sendUpdatedDetailEmail1;
 exports.sendUpdatedDetailEmail2 = sendUpdatedDetailEmail2;
+exports.convertDocxToPdf = convertDocxToPdf;

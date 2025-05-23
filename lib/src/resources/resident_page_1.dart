@@ -1,13 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/resources/base_resident_info.dart';
 import 'package:do_an/src/resources/login_page.dart';
+import 'package:do_an/src/resources/pdf_Viewer_Screen_page.dart';
 import 'package:do_an/src/resources/provider/resident_image_provider.dart';
+import 'package:do_an/src/resources/rate_staff_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'add_parking_page.dart';
 
@@ -219,12 +222,12 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                   children: [
                     Text('     Tiện ích cơ bản', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
                     GridView.count(
-                      crossAxisCount: 3,
+                      crossAxisCount: 2,
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(8),
-                      mainAxisSpacing: 12, // Khoảng cách dọc giữa các hàng
-                      crossAxisSpacing: 12, // Khoảng cách ngang giữa các cột
+                      padding: const EdgeInsets.all(36),
+                      mainAxisSpacing: 36, // Khoảng cách dọc giữa các hàng
+                      crossAxisSpacing: 36, // Khoảng cách ngang giữa các cột
                       children: [
                         buildServiceCard(
                           context,
@@ -243,13 +246,6 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                           label: 'Chỉ số nước',
                           onTap: () {},
                         ),
-                        buildServiceCard(
-                          context,
-                          svgPath: 'assets/images/water.svg',
-                          label: 'Dịch vụ điện',
-                          onTap: () {},
-                        ),
-                        // Thêm các ô khác tại đây
                       ],
                     ),
                     Text('     Chức năng', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
@@ -265,24 +261,65 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                           context,
                           svgPath: 'assets/images/contract.svg',
                           label: 'Xem hợp đồng',
-                          onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(builder: (context) => GuiXeScreen()),
-                            // );
+                          onTap: () async {
+                            // Lấy user hiện tại
+                            final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                            if (currentUserId == null) return;
+
+                            // Lấy apartmentId từ resident
+                            final residentSnapshot = await FirebaseFirestore.instance
+                                .collection('residents')
+                                .doc(currentUserId)
+                                .get();
+
+                            final apartmentId = residentSnapshot.data()?['apartmentId'];
+                            if (apartmentId == null) return;
+
+                            // Tìm hợp đồng với apartmentDocId = apartmentId và isActive = true
+                            final contractsSnapshot = await FirebaseFirestore.instance
+                                .collection('contracts')
+                                .where('apartmentDocId', isEqualTo: apartmentId)
+                                .where('isActive', isEqualTo: true)
+                                .limit(1)
+                                .get();
+
+                            if (contractsSnapshot.docs.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Không tìm thấy hợp đồng đang hoạt động')),
+                              );
+                              return;
+                            }
+
+                            final contractData = contractsSnapshot.docs.first.data();
+                            final contractUrl = contractData['pdfUrl'];
+
+                            // Mở trang xem PDF
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PdfViewerScreen(pdfUrl: contractUrl),
+                              ),
+                            );
                           },
                         ),
+
                         buildServiceCard(
                           context,
                           svgPath: 'assets/images/rate.svg',
                           label: 'Đánh giá',
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => RateStaffPage()),
+                            );
+                          },
                         ),
                         buildServiceCard(
                           context,
                           svgPath: 'assets/images/paycard.svg',
                           label: 'Thanh toán',
-                          onTap: () {},
+                          onTap: () {
+                          },
                         ),
                         // Thêm các ô khác tại đây
                       ],
