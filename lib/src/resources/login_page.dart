@@ -450,124 +450,126 @@ class _LoginPageState extends State<LoginPage> {
         final isLandscape = size.height < size.width;
 
         return Padding(
-            padding: EdgeInsets.only(
-              left: 20.w,
-              right: 20.w,
-              bottom: MediaQuery.of(context).viewInsets.bottom +
-                  20.h, // Đẩy nội dung lên khi bàn phím mở
-              top: 20.h,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Quên mật khẩu",
-                    style: TextStyle(
-                      fontFamily: "Oswald",
-                      fontWeight: FontWeight.w700,
-                      fontSize: isLandscape ? 6.sp : 20.sp,
-                    ),
+          padding: EdgeInsets.only(
+            left: 20.w,
+            right: 20.w,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+            top: 20.h,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Quên mật khẩu",
+                  style: TextStyle(
+                    fontFamily: "Oswald",
+                    fontWeight: FontWeight.w700,
+                    fontSize: isLandscape ? 6.sp : 20.sp,
                   ),
-                  SizedBox(height: 5.h),
-                  Text(
-                    "Vui lòng nhập email của bạn để tiếp tục",
-                    style: TextStyle(
-                      fontSize: isLandscape ? 5.sp : 16.sp,
-                    ),
+                ),
+                SizedBox(height: 5.h),
+                Text(
+                  "Vui lòng nhập email của bạn để tiếp tục",
+                  style: TextStyle(
+                    fontSize: isLandscape ? 5.sp : 16.sp,
                   ),
-                  SizedBox(height: 15.h),
-                  TextField(
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      hintText: "Nhập địa chỉ email",
-                      hintStyle:
-                          TextStyle(fontSize: isLandscape ? 6.sp : 14.sp),
-                      border: OutlineInputBorder(),
-                    ),
+                ),
+                SizedBox(height: 15.h),
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    hintText: "Nhập địa chỉ email",
+                    hintStyle: TextStyle(fontSize: isLandscape ? 6.sp : 14.sp),
+                    border: OutlineInputBorder(),
                   ),
-                  SizedBox(height: 20.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        // Đóng bottom sheet
-                        child: Text(
-                          "Hủy",
-                          style:
-                              TextStyle(fontSize: isLandscape ? 5.sp : 14.sp),
-                        ),
+                ),
+                SizedBox(height: 20.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        "Hủy",
+                        style: TextStyle(fontSize: isLandscape ? 5.sp : 14.sp),
                       ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        String email = emailController.text.trim();
+                        print("Email nhập vào: $email");
 
-                      ElevatedButton(
-                        onPressed: () async {
-                          String email = emailController.text.trim();
-                          if (email.isEmpty) {
-                            _showCustomSnackBar(context, "Vui lòng nhập địa chỉ email !",
-                                Colors.red, Icons.error);
+                        if (email.isEmpty) {
+                          _showCustomSnackBar(
+                            context,
+                            "Vui lòng nhập địa chỉ email!",
+                            Colors.red,
+                            Icons.error,
+                          );
+                          return;
+                        }
+
+                        LoadingDialog.showLoadingDialog(context, "Đang kiểm tra...");
+
+                        try {
+                          final firestore = FirebaseFirestore.instance;
+
+                          // Tìm trong 3 collection
+                          final queries = await Future.wait([
+                            firestore.collection('staffs').where('email', isEqualTo: email).get(),
+                            firestore.collection('residents').where('email', isEqualTo: email).get(),
+                            firestore.collection('companies').where('email', isEqualTo: email).get(),
+                          ]);
+
+                          if (!mounted) return;
+
+                          Navigator.pop(context); // Đóng loading dialog
+
+                          final found = queries.any((q) => q.docs.isNotEmpty);
+                          if (!found) {
+                            _showCustomSnackBar(
+                              context,
+                              "Email này không tồn tại trong hệ thống!",
+                              Colors.red,
+                              Icons.error,
+                            );
                             return;
                           }
 
-                          // Hiển thị dialog loading
-                          LoadingDialog.showLoadingDialog(
-                              context, "Kiểm tra tài khoản...");
-
-                          try {
-                            // Lấy email từ Firestore
-                            var userRef = FirebaseFirestore.instance
-                                .collection('staffs')
-                                .where('email', isEqualTo: email);
-                            var querySnapshot = await userRef.get();
-
-                            if (!mounted) return; // đảm bảo context còn sống
-
-                            Navigator.pop(context);
-
-                            // Kiểm tra nếu email tồn tại trong Firestore
-                            if (querySnapshot.docs.isEmpty) {
-                              Future.delayed(Duration(milliseconds: 200), () {
-                                _showCustomSnackBar(
-                                    context,
-                                    "Email này không tồn tại trong hệ thống",
-                                    Colors.red,
-                                    Icons.error);
-                              });
-                              return;
-                            } else {
-                              // Gửi email reset mật khẩu nếu tất cả điều kiện đã thông qua
-                              await FirebaseAuth.instance
-                                  .sendPasswordResetEmail(email: email);
-                              Future.delayed(Duration(milliseconds: 200), () {
-                                _showCustomSnackBar(
-                                    context,
-                                    "Link đặt lại mật khẩu đã được gửi!",
-                                    Colors.green,
-                                    Icons.check_circle);
-                              });
-                              Navigator.pop(context);
-
-                            }
-                          } catch (error) {
-                            if(mounted){
-                              Navigator.pop(context);
-                              Future.delayed(Duration(milliseconds: 200), () {
-                                _showCustomSnackBar(context, error.toString(),
-                                    Colors.red, Icons.error);
-                              });
-                            }
+                          await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                          _showCustomSnackBar(
+                            context,
+                            "Link đặt lại mật khẩu đã được gửi!",
+                            Colors.green,
+                            Icons.check_circle,
+                          );
+                          Navigator.pop(context); // Đóng bottom sheet sau khi gửi thành công
+                        } catch (error) {
+                          print("Lỗi khi gửi link reset: $error");
+                          if (mounted) {
+                            Navigator.pop(context); // Đóng loading
+                            _showCustomSnackBar(
+                              context,
+                              "Có lỗi xảy ra: $error",
+                              Colors.red,
+                              Icons.error,
+                            );
                           }
-                        },
-                        child: Text("Gửi",
-                            style: TextStyle(
-                                fontSize: isLandscape ? 5.sp : 14.sp)),
+                        }
+                      },
+                      child: Text(
+                        "Gửi",
+                        style: TextStyle(fontSize: isLandscape ? 5.sp : 14.sp),
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ));
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }

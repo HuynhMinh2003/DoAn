@@ -476,20 +476,34 @@ class _ResidentPageState extends State<ResidentPage> {
                                   radius: 80.r,
                                   backgroundColor: Colors.grey,
                                   child: ClipOval(
-                                    child: imageProvider.webImageBytes != null
-                                        ? Image.memory(imageProvider.webImageBytes!, fit: BoxFit.cover)
-                                        : imageProvider.selectedImageFile != null
-                                        ? Image.file(imageProvider.selectedImageFile!, fit: BoxFit.cover)
-                                        : (resident.imageUrl != null && resident.imageUrl!.isNotEmpty)
-                                        ? Image.network(resident.imageUrl!, fit: BoxFit.cover)
-                                        : SvgPicture.asset(
-                                      'assets/images/default_avatar.svg',
-                                      fit: BoxFit.cover,
-                                      width: 70.r,
-                                      height: 70.r,
+                                    child: SizedBox(
+                                      width: 160.r, // 2 * radius
+                                      height: 160.r,
+                                      child: imageProvider.webImageBytes != null
+                                          ? Image.memory(
+                                        imageProvider.webImageBytes!,
+                                        fit: BoxFit.cover,
+                                      )
+                                          : imageProvider.selectedImageFile != null
+                                          ? Image.file(
+                                        imageProvider.selectedImageFile!,
+                                        fit: BoxFit.cover,
+                                      )
+                                          : (resident.imageUrl != null && resident.imageUrl!.isNotEmpty)
+                                          ? Image.network(
+                                        resident.imageUrl!,
+                                        fit: BoxFit.cover,
+                                      )
+                                          : SvgPicture.asset(
+                                        'assets/images/default_avatar.svg',
+                                        fit: BoxFit.cover,
+                                        width: 160.r,
+                                        height: 160.r,
+                                      ),
                                     ),
                                   ),
                                 ),
+
                                 if (isEditing)
                                   Positioned(
                                     bottom: 0,

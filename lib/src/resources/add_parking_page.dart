@@ -20,6 +20,15 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
   String? _vehicleType;
   String _licensePlate = '';
 
+  void showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message,style: TextStyle(fontSize: 15.sp),),
+        backgroundColor: Colors.green,  // Màu nền xanh
+      ),
+    );
+  }
+
   Future<void> _registerVehicle() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -73,12 +82,12 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
         'canceledAt': null,
       });
 
-      LoadingDialog.hideLoadingDialog(context);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("✅ Đăng ký xe thành công")));
-      Navigator.pop(context);
+      Navigator.of(context, rootNavigator: true).pop(); // Đóng loading dialog
+      Navigator.of(context, rootNavigator: true).pop(); // Đóng loading dialog
+
+      showSnackBar("✅ Đăng ký xe thành công");
     } catch (e) {
-      Navigator.of(context).pop(); // Đóng loading dialog
+      Navigator.of(context, rootNavigator: true).pop(); // Đóng loading dialog nếu có lỗi
       print('❌ Lỗi: $e');
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("❌ Đăng ký thất bại")));
@@ -93,8 +102,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
           .collection('parkingRegistrations')
           .doc(docId)
           .update({'canceledAt': Timestamp.now()});
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("✅ Hủy đăng ký thành công")));
+      showSnackBar("✅ Hủy đăng ký thành công");
       setState(() {}); // Refresh
     } catch (e) {
       print('❌ Lỗi khi hủy đăng ký: $e');
@@ -312,7 +320,8 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           SizedBox(width: 1.w,),
-                          ElevatedButton(onPressed: () => Navigator.pop(context), child: Text("Quay lại", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),),),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context), child: Text("Quay lại", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),),),
                           ElevatedButton.icon(
                             onPressed: () {
                               showDialog(
@@ -396,7 +405,6 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
           onPressed: () {
             if (_formKey.currentState!.validate()) {
               _formKey.currentState!.save();
-              Navigator.pop(dialogContext); // đóng dialog
               _registerVehicle();     // xử lý đăng ký
             }
           },
