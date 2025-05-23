@@ -61,7 +61,7 @@ class AuthWrapper extends StatelessWidget {
 
         if (snapshot.hasError) {
           return Scaffold(
-            body: Center(child: Text('Đã có lỗi xảy ra')),
+            body: Center(child: Text('Đã có lỗi xảy ra', style: TextStyle(fontSize:15))),
           );
         }
 
