@@ -93,7 +93,11 @@ class Contract {
       numberOfResidents: map['numberOfResidents'] ?? 0,
       residents: residents,
       representative: map['representative'] != null
-          ? Map<String, String>.from(map['representative'])
+          ? Map<String, String>.from(
+        (map['representative'] as Map).map(
+              (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
+        ),
+      )
           : null,
       purpose: map['purpose'],
       createdAt: (map['createdAt'] as Timestamp).toDate(),

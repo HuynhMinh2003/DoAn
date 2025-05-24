@@ -577,7 +577,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                 resident.birthDate != null
                                     ? '${resident.birthDate!.day}/${resident.birthDate!.month}/${resident.birthDate!.year}'
                                     : 'Chọn ngày',
-                                style: TextStyle(fontSize: 4.sp, color: Colors.black),
+                                style: TextStyle(fontSize: 4.sp,color: Colors.white),
                               )
 
                             ),

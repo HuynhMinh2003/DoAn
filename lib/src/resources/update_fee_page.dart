@@ -156,6 +156,7 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                       ),
                       SizedBox(height: 16.h),
                     ],
+
                     TextFormField(
                       controller: _feeController,
                       decoration: _inputDecoration(hint: 'Nhập giá phí (VNĐ)'),
@@ -193,16 +194,31 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                     SizedBox(height: 24.h),
                     Center(
                       child: SizedBox(
-                        width: 40.w,
-                        child: ElevatedButton.icon(
-                          icon: Icon(Icons.save),
-                          label: Text('Lưu giá dịch vụ'),
-                          onPressed: _saveFee,
+                        height: 60.h,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _saveFee();
+                          },
                           style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            backgroundColor: secondaryColor, // Màu xanh dương sáng
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(30.r),
                             ),
+                            elevation: 4,
+                            shadowColor: Colors.black45,
+                            alignment: Alignment.center,
+                            padding: EdgeInsets.zero,
+                          ),
+                          child: Text(
+                            "Lưu giá dịch vụ",
+                            style: TextStyle(
+                              fontFamily: "Oswald",
+                              fontWeight: FontWeight.w700,
+                              fontSize: 7.sp,
+                              color: Colors.white, // Màu chữ trắng
+                              height: 1.h,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
@@ -224,13 +240,13 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
         color: Colors.grey,
         fontSize: 4.sp,
       ),
-      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 20.h),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.blue),
+        borderSide: BorderSide(color: Colors.grey),
       ),
     );
   }
