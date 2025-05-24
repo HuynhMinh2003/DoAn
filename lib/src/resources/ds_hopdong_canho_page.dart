@@ -14,8 +14,8 @@ import 'package:provider/provider.dart';
 import 'add_resident_screen_page.dart';
 import 'contract_form_page.dart';
 import 'dialog/msg_dialog.dart';
-import 'ds_canho_mobile_page.dart'
-    if (dart.library.html) 'ds_canho_web_page.dart';
+import 'ds_hopdong_canho_mobile_page.dart'
+    if (dart.library.html) 'ds_hopdong_canho_web_page.dart';
 
 class ContractListPage extends StatefulWidget {
   const ContractListPage({super.key});
@@ -353,7 +353,7 @@ class _ContractListPageState extends State<ContractListPage> {
                   style: TextStyle(fontSize: 3.5.sp)),
               SizedBox(height: 10.h),
               Text(
-                "Người đại diện: ${contract.representative?['fullName']?.trim().isNotEmpty == true ? contract.representative!['fullName'] : 'Không có'}",
+                  "Người đại diện: ${contract.representative?['fullName'] ?? 'Không có'}",
                 style: TextStyle(fontSize: 3.5.sp),
               ),
               SizedBox(height: 10.h),
@@ -363,11 +363,11 @@ class _ContractListPageState extends State<ContractListPage> {
               Text('Mục đích ở: ${contract.purpose}',
                   style: TextStyle(fontSize: 3.5.sp)),
               SizedBox(height: 10.h),
-              Text('Thời gian kí: ${contract.createdAt}',
+              Text('Thời gian kí: ${DateFormat('dd/MM/yyyy - HH:mm').format(contract.createdAt)}',
                   style: TextStyle(fontSize: 3.5.sp)),
               SizedBox(height: 10.h),
               Text(
-                "Có hiệu lực từ: ${DateFormat('dd/MM/yyyy – HH:mm').format(contract.startDate)} đến ${contract.endDate != null ? DateFormat('dd/MM/yyyy – HH:mm').format(contract.endDate!) : '∞'}",
+                "Có hiệu lực từ: ${DateFormat('dd/MM/yyyy').format(contract.startDate)} đến ${contract.endDate != null ? DateFormat('dd/MM/yyyy').format(contract.endDate!) : '∞'}",
                 style: TextStyle(fontSize: 3.5.sp),
               ),
             ],
@@ -400,7 +400,7 @@ class _ContractListPageState extends State<ContractListPage> {
                         onPressed: () => Navigator.pop(context, true),
                         child: Text(
                           "Xóa",
-                          style: TextStyle(color: Colors.red, fontSize: 3.sp),
+                          style: TextStyle(color: Colors.red, fontSize: 4.sp),
                         ),
                       ),
                     ],
@@ -429,22 +429,35 @@ class _ContractListPageState extends State<ContractListPage> {
                     // 3.1 update isExit và lastUpdate
                     await residentDoc.reference.update({
                       'isExit': true,
-                      'lastUpdate': Timestamp.now(),
+                      'leaveAt': Timestamp.now(),
                     });
 
                     // 3.2 update leftAt trong contractHistory mới nhất
-                    final contractHistoryRef = residentDoc.reference
-                        .collection('contractHistory');
+                    final contractHistoryRef = residentDoc.reference.collection('contractHistory');
+
+                    print('👉 Đang truy vấn contractHistory với contractId: ${apartment.currentContractId}');
+
                     final historySnap = await contractHistoryRef
                         .where('contractId', isEqualTo: apartment.currentContractId)
                         .orderBy('joinedAt', descending: true)
                         .limit(1)
                         .get();
+
+                    print('🔍 Số lượng bản ghi tìm thấy: ${historySnap.docs.length}');
+
                     if (historySnap.docs.isNotEmpty) {
+                      final historyDocId = historySnap.docs.first.id;
+                      print('✅ Đã tìm thấy contractHistory docId: $historyDocId — sẽ cập nhật leftAt');
+
                       await historySnap.docs.first.reference.update({
                         'leftAt': Timestamp.now(),
                       });
+
+                      print('✅ Đã cập nhật thành công leftAt tại docId: $historyDocId');
+                    } else {
+                      print('⚠️ Không tìm thấy contractHistory tương ứng để cập nhật leftAt');
                     }
+
                   }
 
                   // 4. Cập nhật lại trạng thái căn hộ
@@ -479,7 +492,7 @@ class _ContractListPageState extends State<ContractListPage> {
                 }
               },
               child: Text(
-                "Xóa hợp đồng",
+                "Kết thúc hợp đồng",
                 style: TextStyle(color: Colors.red, fontSize: 3.sp),
               ),
             ),
@@ -1332,33 +1345,11 @@ class _ContractListPageState extends State<ContractListPage> {
                             onChanged: _onSearchChanged,
                           ),
                         ),
-                        // Nút Thêm file
-                        Flexible(
-                          flex: 1,
-                          child: ElevatedButton(
-                            onPressed: () => importApartmentsFromExcel,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.add),
-                                SizedBox(width: 5.w),
-                                Text(
-                                  'Thêm file',
-                                  style: TextStyle(
-                                    fontSize: 4.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        // Nút Xuất file
                         Flexible(
                           flex: 1,
                           child: ElevatedButton(
                             onPressed: () =>
-                                exportApartmentsToExcel(filteredApartments),
+                                exportContractApartmentsToExcel(filteredApartments),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -1369,6 +1360,7 @@ class _ContractListPageState extends State<ContractListPage> {
                                   style: TextStyle(
                                     fontSize: 4.sp,
                                     fontWeight: FontWeight.bold,
+                                    color: Colors.white
                                   ),
                                 ),
                               ],

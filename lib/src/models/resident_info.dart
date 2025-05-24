@@ -70,7 +70,7 @@ class ResidentInfo {
       'fcmTokens': fcmTokens,
       'fullName': fullName,
       'phone': phone,
-      'role': 3,
+      'role': 4,
       'isExit': isExit,
       // dùng server time cho lần cập nhật cuối
       'lastUpdate': FieldValue.serverTimestamp(),
