@@ -909,7 +909,7 @@ class _ResidentPageState extends State<ResidentPage> {
                               style: TextStyle(
                                 fontFamily: "Oswald",
                                 fontWeight: FontWeight.w700,
-                                fontSize: 12.sp,
+                                fontSize: 7.sp,
                               ),
                             ),
                           ),
