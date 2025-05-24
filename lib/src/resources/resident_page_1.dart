@@ -94,7 +94,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
               onPressed: () => Navigator.of(context).pop(),
               child: Text('Hủy', style: TextStyle(fontSize: 14.sp)),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () async {
                 await _removeFcmToken();
                 await FirebaseAuth.instance.signOut();
@@ -105,7 +105,8 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                       (route) => false,
                 );
               },
-              child: Text('Đồng ý', style: TextStyle(fontSize: 14.sp)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: Text('Đồng ý', style: TextStyle(fontSize: 14.sp,color: Colors.white)),
             ),
           ],
         );
@@ -165,7 +166,6 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                                 Widget avatarChild;
 
                                 if (imageProvider.avatarUrl != null && imageProvider.avatarUrl!.isNotEmpty) {
-                                  // Chỉ hiển thị ảnh từ URL (Firebase Storage)
                                   avatarChild = Image.network(
                                     imageProvider.avatarUrl!,
                                     width: 140.r,
@@ -181,7 +181,6 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                                     },
                                   );
                                 } else {
-                                  // Nếu không có ảnh nào → SVG mặc định
                                   avatarChild = SvgPicture.asset(
                                     'assets/images/default_avatar.svg',
                                     width: 70.r,
@@ -190,14 +189,21 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                                   );
                                 }
 
-                                return CircleAvatar(
-                                  radius: 70.r,
-                                  backgroundColor: Colors.grey[200],
-                                  child: ClipOval(child: avatarChild),
+                                return Container(
+                                  width: 140.r,
+                                  height: 140.r,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 2), // Viền trắng dày 4
+                                  ),
+                                  child: ClipOval(
+                                    child: avatarChild,
+                                  ),
                                 );
                               },
                             ),
                           ),
+
                           SizedBox(height: 20.h),
                           Text(
                             "Xin chào, ${residentInfo?.fullName ?? "người dùng"} 👋",
@@ -225,9 +231,9 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                       crossAxisCount: 2,
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(36),
-                      mainAxisSpacing: 36, // Khoảng cách dọc giữa các hàng
-                      crossAxisSpacing: 36, // Khoảng cách ngang giữa các cột
+                      padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
+                      mainAxisSpacing: 45, // Khoảng cách dọc giữa các hàng
+                      crossAxisSpacing: 45, // Khoảng cách ngang giữa các cột
                       children: [
                         buildServiceCard(
                           context,
@@ -305,8 +311,8 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
 
                         buildServiceCard(
                           context,
-                          svgPath: 'assets/images/rate.svg',
-                          label: 'Đánh giá',
+                          svgPath: 'assets/images/problem.svg',
+                          label: 'Phản hồi sự cố',
                           onTap: () {
                             Navigator.push(
                               context,

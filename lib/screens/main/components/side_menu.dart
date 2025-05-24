@@ -52,12 +52,12 @@ class SideMenu extends StatelessWidget {
                   ),
                   ExpandableDrawerListTile(
                     title: "Quản lý căn hộ",
-                    svgSrc: "assets/icons/menu_notification.svg",
+                    svgSrc: "assets/icons/menu_apartment.svg",
                     isMenuOpen: isMenuOpen,
                     children: [
                       DrawerListTile(
-                        title: "Hợp đồng căn hộ",
-                        svgSrc: "assets/icons/menu_tran.svg",
+                        title: "Hợp đồng dịch vụ",
+                        svgSrc: "assets/icons/menu_hd_apartment.svg",
                         press: () {
                           onMenuItemPressed(ContractListPage()); // Chuyển sang Dashboard
                         },
@@ -65,7 +65,7 @@ class SideMenu extends StatelessWidget {
                       ),
                       DrawerListTile(
                         title: "Danh sách căn hộ",
-                        svgSrc: "assets/icons/menu_task.svg",
+                        svgSrc: "assets/icons/menu_list_apartment.svg",
                         press: () {
                           onMenuItemPressed(ApartmentListPage()); // Chuyển sang Dashboard
                         },
@@ -74,13 +74,13 @@ class SideMenu extends StatelessWidget {
                     ],
                   ),
                   ExpandableDrawerListTile(
-                    title: "Nhân viên",
-                    svgSrc: "assets/icons/menu_notification.svg",
+                    title: "Quản lý nhân viên",
+                    svgSrc: "assets/icons/menu_staff.svg",
                     isMenuOpen: isMenuOpen,
                     children: [
                       DrawerListTile(
                         title: "Tạo tài khoản nhân viên",
-                        svgSrc: "assets/icons/menu_doc.svg",
+                        svgSrc: "assets/icons/menu_add_staff.svg",
                         press: () {
                           onMenuItemPressed(AddAccountStaffPage()); // Chuyển sang Dashboard
                         },
@@ -88,7 +88,7 @@ class SideMenu extends StatelessWidget {
                       ),
                       DrawerListTile(
                         title: "Danh sách nhân viên",
-                        svgSrc: "assets/icons/menu_store.svg",
+                        svgSrc: "assets/icons/menu_list_staff.svg",
                         press: () {
                           onMenuItemPressed(StaffListPage()); // Chuyển sang Dashboard
                         },
@@ -106,12 +106,12 @@ class SideMenu extends StatelessWidget {
                   ),
                   ExpandableDrawerListTile(
                     title: "Quản lý công ty",
-                    svgSrc: "assets/icons/menu_notification.svg",
+                    svgSrc: "assets/icons/menu_company.svg",
                     isMenuOpen: isMenuOpen,
                     children: [
                       DrawerListTile(
                         title: "Tạo tài khoản công ty",
-                        svgSrc: "assets/icons/menu_doc.svg",
+                        svgSrc: "assets/icons/menu_add_company.svg",
                         press: () {
                           onMenuItemPressed(AddAccountCompanyPage());
                         },
@@ -119,7 +119,7 @@ class SideMenu extends StatelessWidget {
                       ),
                       DrawerListTile(
                         title: "Danh sách công ty",
-                        svgSrc: "assets/icons/menu_profile.svg",
+                        svgSrc: "assets/icons/menu_list_company.svg",
                         press: () {
                           onMenuItemPressed(CompanyListPage());
                         },
@@ -129,12 +129,12 @@ class SideMenu extends StatelessWidget {
                   ),
                   ExpandableDrawerListTile(
                     title: "Quản lý dịch vụ",
-                    svgSrc: "assets/icons/menu_notification.svg",
+                    svgSrc: "assets/icons/service.svg",
                     isMenuOpen: isMenuOpen,
                     children: [
                       DrawerListTile(
                         title: "Cập nhật giá dịch vụ",
-                        svgSrc: "assets/icons/menu_doc.svg",
+                        svgSrc: "assets/icons/edit_fee_service.svg",
                         press: () {
                           onMenuItemPressed(UpdateFeeScreen());
                         },
@@ -152,12 +152,12 @@ class SideMenu extends StatelessWidget {
                   ),
                   ExpandableDrawerListTile(
                     title: "Quản lý thông báo",
-                    svgSrc: "assets/icons/menu_notification.svg",
+                    svgSrc: "assets/icons/notification.svg",
                     isMenuOpen: isMenuOpen,
                     children: [
                       DrawerListTile(
                         title: "Đăng thông báo chung",
-                        svgSrc: "assets/icons/menu_doc.svg",
+                        svgSrc: "assets/icons/post_notification.svg",
                         press: () {
                           onMenuItemPressed(InfoPage());
                         },
@@ -226,11 +226,15 @@ class _DrawerListTileState extends State<DrawerListTile> {
         horizontalTitleGap: widget.isMenuOpen
             ? (widget.isChild ? 8.0 : 16.0)
             : 0.0, // giảm gap nếu là mục con
-        leading: SvgPicture.asset(
-          widget.svgSrc,
-          colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn),
+        leading: SizedBox(
+          width: 24,
           height: 24,
+          child: SvgPicture.asset(
+            widget.svgSrc,
+            colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn),
+          ),
         ),
+
         title: widget.isMenuOpen
             ? Text(
           widget.title,
