@@ -14,6 +14,8 @@ import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import 'dialog/loading_dialog.dart';
+
 class ResidentInfoPage extends StatefulWidget {
   const ResidentInfoPage({Key? key}) : super(key: key);
 
@@ -198,15 +200,15 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
                                         imageProvider.avatarUrl!.isNotEmpty) {
                                       avatarChild = Image.network(
                                         imageProvider.avatarUrl!,
-                                        width: 100,
-                                        height: 100,
+                                        width: 120,
+                                        height: 120,
                                         fit: BoxFit.cover,
                                         errorBuilder:
                                             (context, error, stackTrace) {
                                           return SvgPicture.asset(
                                             'assets/images/default_avatar.svg',
-                                            width: 50.r,
-                                            height: 50.r,
+                                            width: 60.r,
+                                            height: 60.r,
                                             fit: BoxFit.cover,
                                           );
                                         },
@@ -214,14 +216,14 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
                                     } else {
                                       avatarChild = SvgPicture.asset(
                                         'assets/images/default_avatar.svg',
-                                        width: 50.r,
-                                        height: 50.r,
+                                        width: 60.r,
+                                        height: 60.r,
                                         fit: BoxFit.cover,
                                       );
                                     }
 
                                     return CircleAvatar(
-                                      radius: 50,
+                                      radius: 60,
                                       backgroundColor: Colors.grey[200],
                                       child: ClipOval(child: avatarChild),
                                     );
@@ -477,35 +479,46 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
                       return;
                     }
 
-                    String? newUrl;
+                    try {
+                      // Hiện loading dialog
+                      LoadingDialog.showLoadingDialog(context, "Đang lưu...");
 
-                    // Xử lý ảnh đại diện (nếu có)
-                    if (imageProvider.webImageBytes != null || imageProvider.selectedImageFile != null) {
-                      final uniqueFileName = '${DateTime.now().millisecondsSinceEpoch}_avatar.jpg';
+                      String? newUrl;
 
-                      // Gọi upload với xoá ảnh cũ bên trong
-                      newUrl = await imageProvider.uploadSelectedImageAndGetUrl1(
-                        residentInfo!.residentId!,
-                        uniqueFileName,
-                        oldImageUrl: residentInfo!.imageUrl,
-                      );
+                      if (imageProvider.webImageBytes != null || imageProvider.selectedImageFile != null) {
+                        final uniqueFileName = '${DateTime.now().millisecondsSinceEpoch}_avatar.jpg';
 
-                      if (newUrl != null) {
-                        await FirebaseFirestore.instance
-                            .collection('residents')
-                            .doc(residentInfo!.residentId!)
-                            .update({'imageUrl': newUrl});
+                        newUrl = await imageProvider.uploadSelectedImageAndGetUrl1(
+                          residentInfo!.residentId!,
+                          uniqueFileName,
+                          oldImageUrl: residentInfo!.imageUrl,
+                        );
+
+                        if (newUrl != null) {
+                          await FirebaseFirestore.instance
+                              .collection('residents')
+                              .doc(residentInfo!.residentId!)
+                              .update({'imageUrl': newUrl});
+                        }
                       }
+
+                      await updateResidentInfo(phoneController.text, emailController.text);
+
+                      bloc.dispose();
+                      Navigator.of(context, rootNavigator: true).pop(); // Đóng dialog loading
+                      Navigator.of(context).pop(); // Đóng màn hình hiện tại
+                    } catch (e) {
+                      Navigator.of(context, rootNavigator: true).pop(); // Đóng dialog loading nếu có lỗi
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Lỗi khi lưu thông tin: $e")),
+                      );
                     }
-
-                    // Cập nhật thông tin điện thoại và email
-                    await updateResidentInfo(phoneController.text, emailController.text);
-
-                    bloc.dispose();
-                    Navigator.of(context).pop();
                   },
-                  child: Text('Lưu', style: TextStyle(fontSize: 15.sp)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  child: Text('Lưu', style: TextStyle(fontSize: 15.sp,color: Colors.white)),
                 ),
+
               ],
             );
           },

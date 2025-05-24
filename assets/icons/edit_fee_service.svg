@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" id="Checklist">
+  <path fill="#ffffff" d="M62,39a1,1,0,0,0-1-1H53a1,1,0,0,0-1,1v9H44V39a1,1,0,0,0-1-1,1,1,0,0,0,1-1V6a2,2,0,0,0-2-2H41a1,1,0,0,0-1,1V37a1,1,0,0,0,1,1H35a1,1,0,0,0-1,1V57a1,1,0,0,0-1-1H14L6,48V5A1,1,0,0,0,5,4H4A2,2,0,0,0,2,6V60a2,2,0,0,0,2,2H33a1,1,0,0,0,1-1,1,1,0,0,0,1,1H61a1,1,0,0,0,1-1Z" class="colorf4b2b0 svgShape"></path>
+  <path fill="#797979" d="M16 25H30a1 1 0 001-1V12a1 1 0 00-1-1H16a1 1 0 00-1 1V24A1 1 0 0016 25zm6-12h2v3H22zm-5 0h3v4a1 1 0 001 1h4a1 1 0 001-1V13h3V23H17zM10 27a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V28a1 1 0 00-1-1zm3 4H11V29h2zM14 37H10a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V38A1 1 0 0014 37zm-1 4H11V39h2z" class="colorb3404a svgShape"></path>
+  <rect width="18" height="2" x="17" y="27" fill="#797979" class="colorb3404a svgShape"></rect>
+  <rect width="13" height="2" x="17" y="31" fill="#797979" class="colorb3404a svgShape"></rect>
+  <rect width="13" height="2" x="17" y="37" fill="#797979" class="colorb3404a svgShape"></rect>
+  <rect width="13" height="2" x="17" y="41" fill="#797979" class="colorb3404a svgShape"></rect>
+  <path fill="#797979" d="M61,37H45V6a3,3,0,0,0-3-3H32V2a1,1,0,0,0-1-1H15a1,1,0,0,0-1,1V3H4A3,3,0,0,0,1,6V60a3,3,0,0,0,3,3H61a2,2,0,0,0,2-2V39A2,2,0,0,0,61,37ZM45,39h6v8H45ZM43,6V37H41V5h1A1,1,0,0,1,43,6ZM16,3H30V7H16ZM15,9H31a1,1,0,0,0,1-1V5h7V37H35a2,2,0,0,0-2,2V55H15V48a1,1,0,0,0-1-1H7V5h7V8A1,1,0,0,0,15,9ZM13,53.586,8.414,49H13ZM4,61a1,1,0,0,1-1-1V6A1,1,0,0,1,4,5H5V48a1,1,0,0,0,.293.707l8,8A1,1,0,0,0,14,57H33v4Zm31,0V39h8v9a1,1,0,0,0,1,1h8a1,1,0,0,0,1-1V39h8V61Z" class="colorb3404a svgShape"></path>
+  <rect width="6" height="2" x="53" y="53" fill="#797979" class="colorb3404a svgShape"></rect>
+  <rect width="10" height="2" x="49" y="57" fill="#797979" class="colorb3404a svgShape"></rect>
+</svg>
