@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'home_first_resident_page.dart';
-import 'home_first_staff_page.dart';
+import 'home_first_ktv_page.dart';
 import 'login_page.dart';
 
 class AuthWrapper extends StatelessWidget {
@@ -68,7 +68,7 @@ class AuthWrapper extends StatelessWidget {
         final role = snapshot.data;
 
         if (role == 2 || role == 3) {
-          return HomeFirstStaffPage();
+          return HomeFirstKTVPage();
         } else if (role == 4) {
           return HomeFirstResidentPage();
         } else if (role == 5) {

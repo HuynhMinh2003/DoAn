@@ -116,6 +116,57 @@ class StaffImageProvider extends ChangeNotifier {
     }
   }
 
+  Future<String?> uploadSelectedImageAndGetUrl1(
+      String userId, String uniqueFileName, {String? oldImageUrl}) async {
+    try {
+      // 🧹 Xoá ảnh cũ trước (nếu có)
+      if (oldImageUrl != null && oldImageUrl.isNotEmpty) {
+        final uri = Uri.tryParse(oldImageUrl);
+        final segments = uri?.pathSegments;
+
+        if (segments != null && segments.length >= 2) {
+          // Với đường dẫn dạng: /v0/b/your-project.appspot.com/o/residents%2Fuid%2Ffilename.jpg?alt=media...
+          final index = segments.indexWhere((e) => e.contains('%2F') || e.endsWith('.jpg'));
+          final encodedPath = segments.sublist(index).join('/');
+          final decodedPath = Uri.decodeFull(encodedPath);
+
+          try {
+            await FirebaseStorage.instance.ref(decodedPath).delete();
+            print('🗑️ Đã xoá ảnh cũ: $decodedPath');
+          } catch (e) {
+            print('⚠️ Không thể xóa ảnh cũ: $e');
+          }
+        }
+      }
+
+      // 📤 Upload ảnh mới
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('staffs/$userId/$uniqueFileName');
+
+      UploadTask uploadTask;
+
+      if (kIsWeb && _webImageBytes != null) {
+        uploadTask = storageRef.putData(
+            _webImageBytes!, SettableMetadata(contentType: 'image/jpeg'));
+      } else if (_selectedImageFile != null) {
+        uploadTask = storageRef.putFile(_selectedImageFile!);
+      } else {
+        print('❌ Không có ảnh để upload');
+        return null;
+      }
+
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+
+      print('✅ Upload thành công. URL = $downloadUrl');
+      return downloadUrl;
+    } catch (e) {
+      print('❌ Lỗi khi upload ảnh: $e');
+      return null;
+    }
+  }
+
   Future<File> _convertToJpegIfNeeded(File file) async {
     if (kIsWeb) return file;
 
