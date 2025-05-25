@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloud_functions/cloud_functions.dart'; // THÊM DÒNG NÀY
 
 import '../../constants.dart';
+import 'dialog/msg_dialog.dart';
 
 class InfoPage extends StatefulWidget {
   const InfoPage({super.key});
@@ -163,120 +165,144 @@ class _InfoPageState extends State<InfoPage> {
           children: [
             SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.only(left: 50.w, right: 40.w, top: 40.h),
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 40.h),
                 child: Center(
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    child: Column(
-                      children: [
-                        SizedBox(height: 20.h),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      bool isMobile = constraints.maxWidth < 600;
 
-                        Text(
-                          'Đăng thông báo chung',
-                          style: TextStyle(
-                            fontFamily: "Oswald",
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12.sp,
+                      return Column(
+                        children: [
+                          SizedBox(height: 20.h),
+                          Text(
+                            'Đăng thông báo chung',
+                            style: TextStyle(
+                              fontFamily: "Oswald",
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.sp,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 50.h),
+                          SizedBox(height: 50.h),
 
-                        // Vùng ảnh có thể bấm vào để chọn ảnh
-                        GestureDetector(
-                          onTap: _pickImage,
-                          child: Container(
-                            height: 180,
-                            width: double.infinity,
-                            margin: EdgeInsets.only(bottom: 30.h),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: bgColor),
-                              borderRadius: BorderRadius.circular(12),
-                              color: (_image != null || _webImage != null) ? null : Colors.white,
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: (_image != null && !kIsWeb)
-                                  ? Image.file(
-                                _image!,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                              )
-                                  : (_webImage != null && kIsWeb)
-                                  ? Image.memory(
-                                _webImage!,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                              )
-                                  : Center(
-                                child: Icon(
-                                  Icons.camera_alt,
-                                  size: 20.sp,
-                                  color: Colors.grey,
-                                ),
+                          isMobile
+                              ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildImagePicker(),
+                              SizedBox(height: 30.h),
+                              _buildTextFields(),
+                            ],
+                          )
+                              : Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Flexible(
+                                flex: 4,
+                                child: _buildImagePicker(),
                               ),
-                            ),
+                              SizedBox(width: 10.w),
+                              Expanded(
+                                flex: 6,
+                                child: _buildTextFields(),
+                              ),
+                            ],
                           ),
-                        ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _buildImagePicker() {
+    final bool hasImage = _image != null || _webImage != null;
 
-                        StreamBuilder<String>(
-                          stream: _titleStream.stream,
-                          builder: (context, snapshot) {
-                            return TextField(
-                              controller: _titleController,
-                              onChanged: (value) => _titleStream.sink.add(value),
-                              decoration: InputDecoration(
-                                labelText: "Thông báo",
-                                labelStyle: TextStyle(fontSize: 4.sp),
-                                hintText: "Nhập tiêu đề thông báo...",
-                                hintStyle: TextStyle(fontSize: 4.sp),
-                                border: OutlineInputBorder(),
-                                errorText: (snapshot.hasData && snapshot.data!.isEmpty)
-                                    ? 'Không được để trống'
-                                    : null,
-                              ),
-                            );
-                          },
-                        ),
-                        SizedBox(height: 50.h),
+    Widget _buildImage() {
+      if (_webImage != null && kIsWeb) {
+        return Image.memory(
+          _webImage!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        );
+      } else if (_image != null && !kIsWeb) {
+        return Image.file(
+          _image!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        );
+      } else {
+        return Icon(
+          Icons.add_a_photo,
+          size: 24.sp,
+          color: Colors.grey,
+        );
+      }
+    }
 
-                        StreamBuilder<String>(
-                          stream: _messageStream.stream,
-                          builder: (context, snapshot) {
-                            return TextField(
-                              controller: _infoController,
-                              maxLines: 5,
-                              onChanged: (value) => _messageStream.sink.add(value),
-                              decoration: InputDecoration(
-                                labelText: "Nội dung thông báo",
-                                labelStyle: TextStyle(fontSize: 4.sp),
-                                hintText: "Nhập chi tiết thông báo...",
-                                hintStyle: TextStyle(fontSize: 4.sp),
-                                border: OutlineInputBorder(),
-                                errorText: (snapshot.hasData && snapshot.data!.isEmpty)
-                                    ? 'Không được để trống'
-                                    : null,
-                              ),
-                            );
-                          },
-                        ),
-                        SizedBox(height: 50.h),
+    double imageBoxSize = min(300.w, 300.h); // Đảm bảo ảnh không bị quá to
 
-                        // Chỉ còn nút gửi thông báo
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            ElevatedButton(
-                              onPressed: _sendInfo,
-                              child: Text("Gửi thông báo",
-                                  style: TextStyle(fontSize: 4.sp)),
-                            ),
-                          ],
-                        ),
-                      ],
+    return Center(
+      child: SizedBox(
+        width: imageBoxSize,
+        height: imageBoxSize + 40.h,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: imageBoxSize,
+              height: imageBoxSize,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.grey.shade300, width: 0.5.w),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    await _pickImage();
+                    await Future.delayed(const Duration(milliseconds: 300));
+                    if (_image == null && _webImage == null) {
+                      MsgDialog.showMsgDialog(
+                          context, "Lỗi", "Chưa chọn ảnh hoặc không tải được ảnh");
+                    }
+                  },
+                  splashColor: Colors.grey.withOpacity(0.1),
+                  highlightColor: Colors.transparent,
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12.r),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _buildImage(),
                     ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              child: Container(
+                margin: EdgeInsets.only(top: 8.h),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Text(
+                  hasImage ? 'Thay đổi' : 'Thêm ảnh',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 4.sp,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -284,6 +310,65 @@ class _InfoPageState extends State<InfoPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTextFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        StreamBuilder<String>(
+          stream: _titleStream.stream,
+          builder: (context, snapshot) {
+            return TextField(
+              controller: _titleController,
+              onChanged: (value) => _titleStream.sink.add(value),
+              decoration: InputDecoration(
+                labelText: "Thông báo",
+                hintText: "Nhập tiêu đề thông báo...",
+                labelStyle: TextStyle(fontSize: 4.sp),
+                hintStyle: TextStyle(fontSize: 4.sp),
+                border: OutlineInputBorder(),
+                errorText: (snapshot.hasData && snapshot.data!.isEmpty)
+                    ? 'Không được để trống'
+                    : null,
+              ),
+            );
+          },
+        ),
+        SizedBox(height: 50.h),
+        StreamBuilder<String>(
+          stream: _messageStream.stream,
+          builder: (context, snapshot) {
+            return TextField(
+              controller: _infoController,
+              maxLines: 5,
+              onChanged: (value) => _messageStream.sink.add(value),
+              decoration: InputDecoration(
+                labelText: "Nội dung thông báo",
+                hintText: "Nhập chi tiết thông báo...",
+                labelStyle: TextStyle(fontSize: 4.sp),
+                hintStyle: TextStyle(fontSize: 4.sp),
+                border: OutlineInputBorder(),
+                errorText: (snapshot.hasData && snapshot.data!.isEmpty)
+                    ? 'Không được để trống'
+                    : null,
+              ),
+            );
+          },
+        ),
+        SizedBox(height: 30.h),
+        Align(
+          alignment: Alignment.centerRight,
+          child: ElevatedButton(
+            onPressed: _sendInfo,
+            child: Text(
+              "Gửi thông báo",
+              style: TextStyle(fontSize: 4.sp),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

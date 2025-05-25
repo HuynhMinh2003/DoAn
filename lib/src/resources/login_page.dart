@@ -6,7 +6,7 @@ import 'package:do_an/src/resources/home_first_resident_page.dart';
 import 'package:do_an/src/resources/main_admin_page.dart';
 import 'package:do_an/src/resources/staff_page_1.dart';
 import 'package:do_an/src/resources/quan_li_web.dart';
-import 'package:do_an/src/resources/home_first_staff_page.dart';
+import 'package:do_an/src/resources/home_first_ktv_page.dart';
 import 'package:do_an/src/resources/test.dart';
 import 'package:do_an/src/resources/test_1.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -677,13 +677,11 @@ class _LoginPageState extends State<LoginPage> {
               }
 
               else if (role != null) {
-                if (role == 2||role == 3) {
+                if (role == 2) {
                   if (isMobile) {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                          builder: (context) => HomeFirstStaffPage()),
+                      MaterialPageRoute(builder: (context) => HomeFirstKTVPage()),
                     );
-                    // Lưu FCM token nếu có
                     if (newToken != null) {
                       await _saveTokenToFirestore(newToken);
                     }
@@ -694,7 +692,23 @@ class _LoginPageState extends State<LoginPage> {
                       "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
                     );
                   }
-                } else if (role == 4) {
+                } else if (role == 3) {
+                  if (isMobile) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => HomeFirstKTVPage()), // <-- Đổi trang cho role 3
+                    );
+                    if (newToken != null) {
+                      await _saveTokenToFirestore(newToken);
+                    }
+                  } else {
+                    MsgDialog.showMsgDialog(
+                      context,
+                      "Thông báo",
+                      "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
+                    );
+                  }
+                }
+                else if (role == 4) {
                   if(isMobile){
                     print('Hello nha');
                     Navigator.of(context).pushReplacement(
