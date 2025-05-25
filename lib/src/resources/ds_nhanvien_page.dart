@@ -214,7 +214,7 @@ class _StaffListPageState extends State<StaffListPage> {
                     await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).update({
                       'isExit': false,
                       'leaveAt': null,
-                      'lastUpdated': Timestamp.now(),
+                      'lastUpdate': Timestamp.now(),
                     });
                     LoadingDialog.hideLoadingDialog(context);
                     Navigator.pop(context);

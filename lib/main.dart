@@ -10,8 +10,8 @@ import 'package:do_an/src/resources/main_admin_page.dart';
 import 'package:do_an/src/resources/provider/company_image_provider.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:do_an/src/resources/provider/resident_image_provider.dart';
-import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/provider/staff_image_provider.dart';
+import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/splash_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -104,11 +104,11 @@ void main() async {
   //     "Hóa đơn tháng này là 500,000 VND."
   // );
 
-  //Thêm lắng nghe sự kiện khi token thay đổi
-  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async{
-    print("FCM Token refreshed: $newToken");
-    await _saveTokenToFirestore(newToken);
-  });
+  // //Thêm lắng nghe sự kiện khi token thay đổi
+  // FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async{
+  //   print("FCM Token refreshed: $newToken");
+  //   await _saveTokenToFirestore(newToken);
+  // });
 
   // Khởi chạy ứng dụng
   runApp(
@@ -127,8 +127,8 @@ void main() async {
           providers: [
             ChangeNotifierProvider(create: (_) => ResidentProvider()),
             ChangeNotifierProvider(create: (_) => UserDataProvider()),
-            ChangeNotifierProvider(create: (_) => StaffImageProvider()),
             ChangeNotifierProvider(create: (_) => CompanyImageProvider()),
+            ChangeNotifierProvider(create: (_) => StaffImageProvider()),
             ChangeNotifierProvider(create: (_) => ResidentImageProvider()),
             ChangeNotifierProvider(create: (_) => ContractNotifier()),
             ChangeNotifierProvider(create: (_) => MenuAppController()),
@@ -159,7 +159,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: SplashScreen(),
+              home: MainScreen(),
             ),
 
           ),
@@ -188,38 +188,6 @@ Future<void> _requestNotificationPermissions() async {
   }
 }
 
-// Hàm lưu token FCM vào Firestore
-Future<void> _saveTokenToFirestore(String newToken) async {
-  final userId = FirebaseAuth.instance.currentUser?.uid;
-  if (userId == null) return; // Không có userId thì thoát luôn
-
-  try {
-    DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userId);
-    DocumentSnapshot userDoc = await userRef.get();
-
-    if (userDoc.exists) {
-      List<String> tokens = List<String>.from(userDoc['fcmTokens'] ?? []);
-
-      if (!tokens.contains(newToken)) {
-        // Nếu token chưa tồn tại thì thêm vào danh sách
-        await userRef.update({
-          'fcmTokens': FieldValue.arrayUnion([newToken]),
-          'lastUpdated': FieldValue.serverTimestamp(),
-        });
-      }
-    } else {
-      // Nếu user chưa có tài liệu, tạo mới với danh sách token
-      await userRef.set({
-        'fcmTokens': [newToken],
-        'lastUpdated': FieldValue.serverTimestamp(),
-      });
-    }
-    print("FCM Token saved successfully!");
-  } catch (e) {
-    print("Error saving FCM Token: $e");
-  }
-}
-
 // Hàm đăng ký FCM và lấy mã thông báo
 Future<void> _registerWithFCM() async {
   const vapidKey = "REDACTED_VAPID_KEY";
@@ -238,10 +206,10 @@ Future<void> _registerWithFCM() async {
     print('Registration Token=$token');
   }
 
-  // Lưu token vào Firestore
-  if (token != null) {
-    await _saveTokenToFirestore(token);
-  }
+  // // Lưu token vào Firestore
+  // if (token != null) {
+  //   await _saveTokenToFirestore(token);
+  // }
 
   // Gửi mã thông báo lên server (ví dụ minh họa)
   if (token != null) {

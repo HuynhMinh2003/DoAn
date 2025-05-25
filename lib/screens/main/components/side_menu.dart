@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../src/resources/ds_hopdong_canho_page.dart';
+import '../../../src/resources/manage_incident_page.dart';
 import '../../../src/resources/send_notification_page.dart';
 import '../../../src/resources/update_fee_page.dart';
 
@@ -172,6 +173,14 @@ class SideMenu extends StatelessWidget {
                         isMenuOpen: isMenuOpen,
                       ),
                     ],
+                  ),
+                  DrawerListTile(
+                    title: "Quản lí sự cố",
+                    svgSrc: "assets/icons/menu_profile.svg",
+                    press: () {
+                      onMenuItemPressed(ManagerIncidentPage()); // Chuyển sang Dashboard
+                    },
+                    isMenuOpen: isMenuOpen,
                   ),
 
                 ],
