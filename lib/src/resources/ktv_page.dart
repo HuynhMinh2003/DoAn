@@ -1,35 +1,31 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:do_an/src/resources/base_resident_info.dart';
-import 'package:do_an/src/resources/login_page.dart';
-import 'package:do_an/src/resources/pdf_Viewer_Screen_page.dart';
-import 'package:do_an/src/resources/provider/resident_image_provider.dart';
-import 'package:do_an/src/resources/rate_staff_page.dart';
+import 'package:do_an/src/resources/provider/staff_image_provider.dart';
+import 'package:do_an/src/resources/staff_incident_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../base_staff_info.dart';
+import 'login_page.dart';
 
-import 'add_parking_page.dart';
-
-class ResidentPage extends StatefulWidget {
-  const ResidentPage({super.key});
+class KTVPage extends StatefulWidget {
+  const KTVPage({super.key});
 
   @override
-  State<ResidentPage> createState() => _ResidentPageState();
+  State<KTVPage> createState() => _KTVPageState();
 }
 
-class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
+class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
   @override
   void initState() {
     super.initState();
-    final residentId = FirebaseAuth.instance.currentUser?.uid;
-    if (residentId != null) {
+    final staffId = FirebaseAuth.instance.currentUser?.uid;
+    if (staffId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Provider.of<ResidentImageProvider>(context, listen: false)
-            .loadImageByResidentId(residentId); // đúng hàm và id
+        Provider.of<StaffImageProvider>(context, listen: false)
+            .loadImageByStaffId(staffId); // đúng hàm và id
       });
     }
   }
@@ -47,7 +43,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
       }
 
       DocumentReference userRef =
-      FirebaseFirestore.instance.collection('residents').doc(userId);
+      FirebaseFirestore.instance.collection('staffs').doc(userId);
       DocumentSnapshot userDoc = await userRef.get();
 
       if (!userDoc.exists) {
@@ -106,7 +102,8 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                 );
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: Text('Đồng ý', style: TextStyle(fontSize: 14.sp,color: Colors.white)),
+              child: Text('Đồng ý',
+                  style: TextStyle(fontSize: 14.sp, color: Colors.white)),
             ),
           ],
         );
@@ -131,14 +128,14 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                     bottomRight: Radius.circular(30.r),
                   ),
                 ),
-                color: Theme.of(context).colorScheme.primary,
+                color: Color(0xFF3C4DFF),
                 child: Stack(
                   children: [
                     Positioned(
                       top: 0,
                       left: 0,
                       child: Image.asset(
-                        'assets/images/two_circle_green.png',
+                        'assets/images/two_circle.png',
                         width: 160,
                       ),
                     ),
@@ -161,11 +158,12 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                         children: [
                           SizedBox(height: 80.h),
                           Center(
-                            child: Consumer<ResidentImageProvider>(
+                            child: Consumer<StaffImageProvider>(
                               builder: (context, imageProvider, _) {
                                 Widget avatarChild;
 
-                                if (imageProvider.avatarUrl != null && imageProvider.avatarUrl!.isNotEmpty) {
+                                if (imageProvider.avatarUrl != null &&
+                                    imageProvider.avatarUrl!.isNotEmpty) {
                                   avatarChild = Image.network(
                                     imageProvider.avatarUrl!,
                                     width: 140.r,
@@ -194,7 +192,8 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                                   height: 140.r,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2), // Viền trắng dày 4
+                                    border: Border.all(color: Colors.white,
+                                        width: 2), // Viền trắng dày 4
                                   ),
                                   child: ClipOval(
                                     child: avatarChild,
@@ -206,7 +205,8 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
 
                           SizedBox(height: 20.h),
                           Text(
-                            "Xin chào, ${residentInfo?.fullName ?? "người dùng"} 👋",
+                            "Xin chào, ${staffInfo?.fullName ??
+                                "người dùng"} 👋",
                             style: TextStyle(
                               fontFamily: "Oswald",
                               fontSize: 25.sp,
@@ -222,117 +222,36 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
               ),
               SizedBox(height: 10.h,),
               Container(
-                child: Padding(padding: EdgeInsets.all(10),
-                  child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('     Tiện ích cơ bản', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
-                      mainAxisSpacing: 45, // Khoảng cách dọc giữa các hàng
-                      crossAxisSpacing: 45, // Khoảng cách ngang giữa các cột
+                  child: Padding(padding: EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        buildServiceCard(
-                          context,
-                          svgPath: 'assets/images/parking.svg',
-                          label: 'Gửi xe',
-                          onTap: () {
-                            Navigator.push(
+                        Text('     Tiện ích cơ bản', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
+                          mainAxisSpacing: 45, // Khoảng cách dọc giữa các hàng
+                          crossAxisSpacing: 45, // Khoảng cách ngang giữa các cột
+                          children: [
+                            buildServiceCard(
                               context,
-                              MaterialPageRoute(builder: (context) => GuiXeScreen()),
-                            );
-                          },
+                              svgPath: 'assets/images/parking.svg',
+                              label: 'Danh sách sự cố',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => StaffIncidentPage(staffId: staffInfo!.uid,)),
+                                );
+                              },
+                            ),
+                          ],
                         ),
-                        buildServiceCard(
-                          context,
-                          svgPath: 'assets/images/water.svg',
-                          label: 'Chỉ số nước',
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-                    Text('     Chức năng', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
-                    GridView.count(
-                      crossAxisCount: 3,
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(8),
-                      mainAxisSpacing: 12, // Khoảng cách dọc giữa các hàng
-                      crossAxisSpacing: 12, // Khoảng cách ngang giữa các cột
-                      children: [
-                        buildServiceCard(
-                          context,
-                          svgPath: 'assets/images/contract.svg',
-                          label: 'Xem hợp đồng',
-                          onTap: () async {
-                            // Lấy user hiện tại
-                            final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-                            if (currentUserId == null) return;
+                          ],
+                        )
+                    ),)
 
-                            // Lấy apartmentId từ resident
-                            final residentSnapshot = await FirebaseFirestore.instance
-                                .collection('residents')
-                                .doc(currentUserId)
-                                .get();
-
-                            final apartmentId = residentSnapshot.data()?['apartmentId'];
-                            if (apartmentId == null) return;
-
-                            // Tìm hợp đồng với apartmentDocId = apartmentId và isActive = true
-                            final contractsSnapshot = await FirebaseFirestore.instance
-                                .collection('contracts')
-                                .where('apartmentDocId', isEqualTo: apartmentId)
-                                .where('isActive', isEqualTo: true)
-                                .limit(1)
-                                .get();
-
-                            if (contractsSnapshot.docs.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Không tìm thấy hợp đồng đang hoạt động')),
-                              );
-                              return;
-                            }
-
-                            final contractData = contractsSnapshot.docs.first.data();
-                            final contractUrl = contractData['pdfUrl'];
-
-                            // Mở trang xem PDF
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PdfViewerScreen(pdfUrl: contractUrl),
-                              ),
-                            );
-                          },
-                        ),
-
-                        buildServiceCard(
-                          context,
-                          svgPath: 'assets/images/problem.svg',
-                          label: 'Phản hồi sự cố',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => RateStaffPage()),
-                            );
-                          },
-                        ),
-                        buildServiceCard(
-                          context,
-                          svgPath: 'assets/images/paycard.svg',
-                          label: 'Thanh toán',
-                          onTap: () {
-                          },
-                        ),
-                        // Thêm các ô khác tại đây
-                      ],
-                    )
-                  ],
-                ),)
-              ),
             ],
           )
         ],
@@ -387,5 +306,4 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
       },
     );
   }
-
 }
