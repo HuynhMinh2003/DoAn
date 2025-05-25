@@ -1,22 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:do_an/src/resources/base_resident_info.dart';
-import 'package:do_an/src/resources/resident_info_page.dart';
-import 'package:do_an/src/resources/home_resident_page.dart';
-import 'package:do_an/src/resources/test.dart';
+import 'package:do_an/base_staff_info.dart';
+import 'package:do_an/src/resources/ktv_page.dart';
+import 'package:do_an/src/resources/staff_page_1.dart';
+import 'package:do_an/src/resources/test_1.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'ktv_info_page.dart';
 import 'notification_list_page.dart';
 
-class HomeFirstResidentPage extends StatelessWidget {
-  const HomeFirstResidentPage({super.key});
+class HomeFirstKTVPage extends StatelessWidget {
+  const HomeFirstKTVPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF088FC2),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple
         ),
         useMaterial3: true,
       ),
@@ -33,7 +34,7 @@ class HomeFirstPage extends StatefulWidget {
   State<HomeFirstPage> createState() => _HomeFirstPageState();
 }
 
-class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
+class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
   String? userId = FirebaseAuth.instance.currentUser?.uid;
   int _selectedIndex = 0;
   int _notificationCount = 0;
@@ -73,14 +74,14 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
       if (currentEmail == null) return;
 
       // Lấy email trong Firestore
-      final docSnapshot = await _firestore.collection('residents').doc(uid).get();
+      final docSnapshot = await _firestore.collection('staffs').doc(uid).get();
       if (!docSnapshot.exists) return;
 
       final firestoreEmail = docSnapshot.get('email');
 
       if (firestoreEmail != currentEmail) {
         // Email khác nhau, cập nhật Firestore
-        await _firestore.collection('residents').doc(uid).update({'email': currentEmail});
+        await _firestore.collection('staffs').doc(uid).update({'email': currentEmail});
         print('Đã đồng bộ email mới từ Firebase Auth lên Firestore');
         showSnackBar('Email đã được cập nhật thành công.');
       }
@@ -88,7 +89,7 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
       print('❌ Lỗi khi đồng bộ email: $e');
     }
   }
-  
+
   @override
   void initState(){
     super.initState();
@@ -135,7 +136,7 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
   }
   @override
   Widget build(BuildContext context) {
-    if (residentInfo == null) {
+    if (staffInfo == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -143,15 +144,15 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
 
     final List<Widget> tabs = [
       // const HomePage(),
-      ResidentPage(),
+      KTVPage(),
       NotificationListPage(),
-      ResidentInfoPage(),
+      KTVInfoPage(),
     ];
 
     return Scaffold(
       body: CupertinoTabScaffold(
         tabBar: CupertinoTabBar(
-          backgroundColor: Theme.of(context).colorScheme.primary,
+          backgroundColor: Color(0xFF3C4DFF),
           activeColor: Colors.white,
           items: [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
