@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/src/resources/problem_history_page.dart';
 import 'package:do_an/src/resources/provider/staff_image_provider.dart';
 import 'package:do_an/src/resources/staff_incident_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -232,13 +233,13 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
                           padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
-                          mainAxisSpacing: 45, // Khoảng cách dọc giữa các hàng
-                          crossAxisSpacing: 45, // Khoảng cách ngang giữa các cột
+                          mainAxisSpacing: 30, // Khoảng cách dọc giữa các hàng
+                          crossAxisSpacing: 30, // Khoảng cách ngang giữa các cột
                           children: [
                             buildServiceCard(
                               context,
-                              svgPath: 'assets/images/parking.svg',
-                              label: 'Danh sách sự cố',
+                              svgPath: 'assets/images/warning.svg',
+                              label: 'Sự cố mới',
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -246,6 +247,22 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
                                 );
                               },
                             ),
+                            buildServiceCard(
+                              context,
+                              svgPath: 'assets/images/clipboard.svg',
+                              label: 'Lịch sử sự cố',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProblemHistoryScreen(
+                                      staffId: staffInfo!.uid, // Truyền đúng staffId
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+
                           ],
                         ),
                           ],

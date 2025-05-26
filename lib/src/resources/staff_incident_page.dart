@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -28,7 +27,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
   Future<void> _loadAssignedIncidents() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('incidents')
-        .where('status', isEqualTo: 'Đã giao')
+        .where('status', isEqualTo: 'Đang xử lí')
         .where('assignedStaffId', isEqualTo: widget.staffId)
         .get();
 
@@ -37,49 +36,14 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
     });
   }
 
-  Future<void> _handleIncident(DocumentSnapshot incident) async {
-    if (_proofImageFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Vui lòng chọn ảnh xử lý")),
-      );
-      return;
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _proofImageFile = File(image.path);
+      });
     }
-
-    final imageUrl = await uploadProofImage(incident.id, _proofImageFile!);
-
-    await FirebaseFirestore.instance.collection('incidents').doc(incident.id).update({
-      'status': 'Đã xử lý',
-      'handledAt': FieldValue.serverTimestamp(),
-      'proofImageUrl': imageUrl,
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Đã xác nhận xử lý")),
-    );
-
-    _loadAssignedIncidents();
-  }
-
-  Future<void> _rejectIncident(DocumentSnapshot incident) async {
-    final reason = _rejectReasonController.text.trim();
-    if (reason.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Vui lòng nhập lý do từ chối")),
-      );
-      return;
-    }
-
-    await FirebaseFirestore.instance.collection('incidents').doc(incident.id).update({
-      'status': 'Từ chối xử lý',
-      'rejectedReason': reason,
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Đã từ chối xử lý")),
-    );
-
-    _rejectReasonController.clear();
-    _loadAssignedIncidents();
   }
 
   Future<String> uploadProofImage(String incidentId, File imageFile) async {
@@ -92,13 +56,111 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
     return await ref.getDownloadURL();
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _proofImageFile = File(image.path);
+  Future<void> _handleIncident(DocumentSnapshot incident) async {
+    if (_proofImageFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vui lòng chọn ảnh xử lý")),
+      );
+      return;
+    }
+
+    try {
+      final imageUrl = await uploadProofImage(incident.id, _proofImageFile!);
+      final incidentRef = FirebaseFirestore.instance.collection('incidents').doc(incident.id);
+      final staffRef = FirebaseFirestore.instance.collection('staffs').doc(widget.staffId);
+
+      // Dữ liệu đầy đủ cho handledHistory
+      final fullData = {
+        'staffId': widget.staffId,
+        'staffName': incident['assignedStaffName'],
+        'accepted': true,
+        'responseTime': FieldValue.serverTimestamp(),
+        'note': 'Đã xử lý và đính kèm ảnh minh chứng.',
+        'proofImageUrl': imageUrl,
+        'rejectionReason': null,
+        'incidentId': incident.id,
+        'title': incident['title'],
+      };
+
+      // Dữ liệu rút gọn cho problemHistory
+      final problemData = Map<String, dynamic>.from(fullData)
+        ..remove('staffId')
+        ..remove('staffName');
+
+      await incidentRef.update({
+        'status': 'Đã xử lý',
+        'handledAt': FieldValue.serverTimestamp(),
       });
+
+      await incidentRef.collection('handledHistory').add(fullData);
+      await staffRef.collection('problemHistory').add(problemData);
+      await staffRef.update({'isFree': true});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Đã xác nhận xử lý")),
+      );
+
+      setState(() {
+        _proofImageFile = null;
+      });
+
+      _loadAssignedIncidents();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Lỗi xử lý: $e")),
+      );
+    }
+  }
+
+  Future<void> _rejectIncident(DocumentSnapshot incident) async {
+    final reason = _rejectReasonController.text.trim();
+    if (reason.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vui lòng nhập lý do từ chối")),
+      );
+      return;
+    }
+
+    try {
+      final incidentRef = FirebaseFirestore.instance.collection('incidents').doc(incident.id);
+      final staffRef = FirebaseFirestore.instance.collection('staffs').doc(widget.staffId);
+
+      final fullData = {
+        'staffId': widget.staffId,
+        'staffName': incident['assignedStaffName'],
+        'accepted': false,
+        'responseTime': FieldValue.serverTimestamp(),
+        'note': 'Chưa xử lí được sự cố',
+        'proofImageUrl': null,
+        'rejectionReason': reason,
+        'incidentId': incident.id,
+        'title': incident['title'],
+      };
+
+      final problemData = Map<String, dynamic>.from(fullData)
+        ..remove('staffId')
+        ..remove('staffName');
+
+      await incidentRef.update({
+        'status': 'Đang chờ xử lý',
+        'assignedStaffId': null,
+        'assignedStaffName': null,
+      });
+
+      await incidentRef.collection('handledHistory').add(fullData);
+      await staffRef.collection('problemHistory').add(problemData);
+      await staffRef.update({'isFree': true});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Đã từ chối xử lý")),
+      );
+
+      _rejectReasonController.clear();
+      _loadAssignedIncidents();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Lỗi từ chối xử lý: $e")),
+      );
     }
   }
 
@@ -132,31 +194,19 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      ElevatedButton.icon(
-                        onPressed: _pickImage,
-                        icon: const Icon(Icons.upload),
-                        label: const Text("Chọn ảnh đã xử lý"),
+                      ElevatedButton(
+                        onPressed: () => _showHandleDialog(incident),
+                        child: const Text("Xác nhận xử lý"),
                       ),
                       const SizedBox(width: 10),
                       ElevatedButton(
-                        onPressed: () => _handleIncident(incident),
-                        child: const Text("Xác nhận xử lý"),
+                        onPressed: () => _showRejectDialog(incident),
+                        child: const Text("Từ chối xử lý"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                        ),
                       ),
                     ],
-                  ),
-                  const Divider(),
-                  TextField(
-                    controller: _rejectReasonController,
-                    decoration: const InputDecoration(
-                      hintText: "Lý do từ chối xử lý...",
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => _rejectIncident(incident),
-                    child: const Text("Từ chối xử lý"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                    ),
                   ),
                 ],
               ),
@@ -166,4 +216,106 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       ),
     );
   }
+  Future<void> _showHandleDialog(DocumentSnapshot incident) async {
+    File? selectedImage;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: const Text("Xác nhận đã xử lý"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final picker = ImagePicker();
+                    final image = await picker.pickImage(source: ImageSource.gallery);
+                    if (image != null) {
+                      setState(() {
+                        selectedImage = File(image.path);
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.upload),
+                  label: const Text("Chọn ảnh minh chứng"),
+                ),
+                if (selectedImage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Image.file(selectedImage!, height: 120),
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Hủy"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (selectedImage == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Vui lòng chọn ảnh xử lý")),
+                    );
+                    return;
+                  }
+
+                  setState(() {
+                    _proofImageFile = selectedImage;
+                  });
+
+                  Navigator.pop(context);
+                  await _handleIncident(incident);
+                },
+                child: const Text("Xác nhận"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showRejectDialog(DocumentSnapshot incident) async {
+    final TextEditingController reasonController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Từ chối xử lý"),
+        content: TextField(
+          controller: reasonController,
+          decoration: const InputDecoration(
+            hintText: "Nhập lý do từ chối...",
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Hủy"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final reason = reasonController.text.trim();
+              if (reason.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Vui lòng nhập lý do từ chối")),
+                );
+                return;
+              }
+
+              _rejectReasonController.text = reason;
+              Navigator.pop(context);
+              await _rejectIncident(incident);
+            },
+            child: const Text("Từ chối"),
+          ),
+        ],
+      ),
+    );
+  }
+
 }
