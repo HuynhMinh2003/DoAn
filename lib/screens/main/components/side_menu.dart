@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../src/resources/ds_hopdong_canho_page.dart';
+import '../../../src/resources/list_incident_page.dart';
 import '../../../src/resources/manage_incident_page.dart';
 import '../../../src/resources/send_notification_page.dart';
 import '../../../src/resources/update_fee_page.dart';
@@ -174,14 +175,24 @@ class SideMenu extends StatelessWidget {
                       ),
                     ],
                   ),
-                  DrawerListTile(
-                    title: "Quản lí sự cố",
-                    svgSrc: "assets/icons/menu_profile.svg",
-                    press: () {
-                      onMenuItemPressed(ManagerIncidentPage()); // Chuyển sang Dashboard
-                    },
-                    isMenuOpen: isMenuOpen,
-                  ),
+                  ExpandableDrawerListTile(title: 'Quản lý sự cố', svgSrc: "assets/icons/attention.svg", isMenuOpen: isMenuOpen, children: [
+                    DrawerListTile(
+                      title: "Sự cố mới",
+                      svgSrc: "assets/icons/new_error.svg",
+                      press: () {
+                        onMenuItemPressed(ManagerIncidentPage()); // Chuyển sang Dashboard
+                      },
+                      isMenuOpen: isMenuOpen,
+                    ),
+                    DrawerListTile(
+                      title: "Danh sách sự cố",
+                      svgSrc: "assets/icons/list_error.svg",
+                      press: () {
+                        onMenuItemPressed(ListIncidentPage()); // Chuyển sang Dashboard
+                      },
+                      isMenuOpen: isMenuOpen,
+                    ),
+                  ])
 
                 ],
               ),

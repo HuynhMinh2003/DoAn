@@ -48,104 +48,103 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
     });
   }
 
-  void _openAssignDialog(Incident incident) {
-    final _noteController = TextEditingController();
-    _selectedPriority = incident.priority ?? 'Trung bình';
-    _selectedStaff = null;
-
+  Future<void> _openAssignDialog(Incident incident) async{
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Giao sự cố cho nhân viên'),
-        content: StatefulBuilder(
+      builder: (_) {
+        final _noteController = TextEditingController();
+        Staff? selectedStaff = null;
+        String? selectedPriority = incident.priority ?? 'Trung bình';
+
+        return StatefulBuilder(
           builder: (context, setState) {
-            return SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Priority
-                  DropdownButtonFormField<String>(
-                    value: _selectedPriority,
-                    decoration:
-                    const InputDecoration(labelText: 'Mức độ ưu tiên'),
-                    items: ['Cao', 'Trung bình', 'Thấp']
-                        .map((level) => DropdownMenuItem<String>(
-                      value: level,
-                      child: Text(level),
-                    ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedPriority = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Staff dropdown (hiển thị toàn bộ role = 2, nhưng chỉ cho chọn isFree == true)
-                  DropdownButtonFormField<Staff>(
-                    value: _selectedStaff,
-                    decoration:
-                    const InputDecoration(labelText: 'Chọn nhân viên'),
-                    items: _allStaffs.map((staff) {
-                      return DropdownMenuItem<Staff>(
-                        value: staff,
-                        enabled: staff.isFree,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.circle,
-                              size: 12,
-                              color: staff.isFree ? Colors.green : Colors.red,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(staff.fullName),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (staff) {
-                      if (staff?.isFree == true) {
+            return AlertDialog(
+              title: const Text('Giao sự cố cho nhân viên'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: selectedPriority,
+                      decoration:
+                      const InputDecoration(labelText: 'Mức độ ưu tiên'),
+                      items: ['Cao', 'Trung bình', 'Thấp']
+                          .map((level) => DropdownMenuItem<String>(
+                        value: level,
+                        child: Text(level),
+                      ))
+                          .toList(),
+                      onChanged: (value) {
                         setState(() {
-                          _selectedStaff = staff;
+                          selectedPriority = value;
                         });
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: _noteController,
-                    decoration: const InputDecoration(
-                        labelText: 'Ghi chú cho nhân viên (nếu có)'),
-                  ),
-                ],
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<Staff>(
+                      value: selectedStaff,
+                      decoration:
+                      const InputDecoration(labelText: 'Chọn nhân viên'),
+                      items: _allStaffs.map((staff) {
+                        return DropdownMenuItem<Staff>(
+                          value: staff,
+                          enabled: staff.isFree,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.circle,
+                                size: 12,
+                                color: staff.isFree ? Colors.green : Colors.red,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(staff.fullName),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (staff) {
+                        if (staff?.isFree == true) {
+                          setState(() {
+                            selectedStaff = staff;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _noteController,
+                      decoration: const InputDecoration(
+                          labelText: 'Ghi chú cho nhân viên (nếu có)'),
+                    ),
+                  ],
+                ),
               ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Hủy'),
+                ),
+                ElevatedButton(
+                  onPressed: selectedStaff == null
+                      ? null
+                      : () async {
+                    Navigator.pop(context);
+                    await _assignToStaff(
+                      incident,
+                      _noteController.text.trim(),
+                      selectedStaff!,
+                      selectedPriority ?? 'Trung bình',
+                    );
+                  },
+                  child: const Text('Xác nhận giao'),
+                ),
+              ],
             );
           },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: _selectedStaff == null
-                ? null
-                : () async {
-              Navigator.pop(context);
-              await _assignToStaff(
-                incident,
-                _noteController.text.trim(),
-                _selectedStaff!,
-                _selectedPriority ?? 'Trung bình',
-              );
-            },
-            child: const Text('Xác nhận giao'),
-          ),
-        ],
-      ),
+        );
+      },
     );
+
   }
 
   Future<void> _assignToStaff(
@@ -161,7 +160,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
     batch.update(incidentRef, {
       'assignedStaffId': staff.uid,
       'assignedStaffName': staff.fullName,
-      'status': 'Đã giao',
+      'status': 'Đang xử lý',
       'priority': priority,
       'managerNote': managerNote,
     });

@@ -199,7 +199,12 @@ class _InfoPageState extends State<InfoPage> {
                             children: [
                               Flexible(
                                 flex: 4,
-                                child: _buildImagePicker(),
+                                child: Column(
+                                  children: [
+                                    SizedBox(height: 30.h,),
+                                    _buildImagePicker(),
+                                  ],
+                                ),
                               ),
                               SizedBox(width: 10.w),
                               Expanded(
@@ -342,7 +347,7 @@ class _InfoPageState extends State<InfoPage> {
           builder: (context, snapshot) {
             return TextField(
               controller: _infoController,
-              maxLines: 5,
+              maxLines: 10,
               onChanged: (value) => _messageStream.sink.add(value),
               decoration: InputDecoration(
                 labelText: "Nội dung thông báo",
