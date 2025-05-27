@@ -12,6 +12,7 @@ const { sendUpdatedDetailEmail1 } = require("./sendUpdatedDetailEmail1");
 const { sendUpdatedDetailEmail2 } = require("./sendUpdatedDetailEmail2");
 const { convertDocxToPdf } = require("./convertDocxToPdf");
 const { sendNotificationToResidents } = require("./sendNotificationToResidents");
+const { sendIncidentNotification } = require("./sendIncidentNotification");
 
 // Export tất cả các function Cloud Functions
 exports.createStaffAccount = createStaffAccount;
@@ -25,3 +26,4 @@ exports.sendUpdatedDetailEmail1 = sendUpdatedDetailEmail1;
 exports.sendUpdatedDetailEmail2 = sendUpdatedDetailEmail2;
 exports.convertDocxToPdf = convertDocxToPdf;
 exports.sendNotificationToResidents = sendNotificationToResidents;
+exports.sendIncidentNotification = sendIncidentNotification;

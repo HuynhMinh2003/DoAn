@@ -68,7 +68,7 @@ class _ReportPageState extends BaseResidentInfoScreen<ReportPage> {
         'building': building,
         'apartmentAddress': apartmentName,
         'priority': null,
-        'status': 'Đang chờ xử lý',
+        'status': 'Đang chờ xử lí',
         'imageUrl': imageUrl,
         'createdAt': FieldValue.serverTimestamp(),
         'assignedStaffId': null,
@@ -109,7 +109,7 @@ class _ReportPageState extends BaseResidentInfoScreen<ReportPage> {
               Positioned(
                 top: 0,
                 left: 0,
-                child: Image.asset('assets/images/two_circle.png', width: 160),
+                child: Image.asset('assets/images/two_circle_blue.png', width: 160),
               ),
               SingleChildScrollView(
                 padding: EdgeInsets.only(

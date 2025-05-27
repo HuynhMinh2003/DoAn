@@ -267,7 +267,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: SafeArea(bottom: true, top: true, child: Stack(
           children: [
-            Positioned(child: Image.asset('assets/images/two_circle.png',width: 160,),
+            Positioned(child: Image.asset('assets/images/two_circle_blue.png',width: 160,),
             ),
             SingleChildScrollView(
                 padding: EdgeInsets.only(
