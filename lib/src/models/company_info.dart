@@ -12,6 +12,7 @@ class CompanyInfo {
   final List<String> fcmTokens;
   final String description;
   final Timestamp? leaveAt;
+  final Timestamp? createdAt;
   final Timestamp lastUpdated;
 
   CompanyInfo({
@@ -26,6 +27,7 @@ class CompanyInfo {
     required this.fcmTokens,
     required this.description,
     this.leaveAt,
+    this.createdAt,
     required this.lastUpdated,
   });
 
@@ -43,6 +45,7 @@ class CompanyInfo {
       fcmTokens: List<String>.from(map['fcmTokens'] ?? []),
       description: map['description'] ?? '',
       leaveAt: map['leaveAt'],
+      createdAt: map['createdAt'],
       lastUpdated: map['lastUpdated'] ?? Timestamp.now(), // fallback in case of missing field
     );
   }
@@ -60,6 +63,7 @@ class CompanyInfo {
       'fcmTokens': fcmTokens,
       'description': description,
       'leaveAt': leaveAt,
+      'createdAt': createdAt,
       'lastUpdated': lastUpdated,
     };
   }
@@ -77,6 +81,7 @@ class CompanyInfo {
     List<String>? fcmTokens,
     String? description,
     Timestamp? leaveAt,
+    Timestamp? createdAt,
     Timestamp? lastUpdated,
   }) {
     return CompanyInfo(
@@ -91,6 +96,7 @@ class CompanyInfo {
       fcmTokens: fcmTokens ?? this.fcmTokens,
       description: description ?? this.description,
       leaveAt: leaveAt ?? this.leaveAt,
+      createdAt: createdAt ?? this.createdAt,
       lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
@@ -111,6 +117,7 @@ class CompanyInfo {
       fcmTokens: List<String>.from(json['fcmTokens'] ?? []),
       description: json['description'] ?? '',
       leaveAt: json['leaveAt'],
+      createdAt: json['createdAt'],
       lastUpdated: json['lastUpdated'] ?? Timestamp.now(),
     );
   }

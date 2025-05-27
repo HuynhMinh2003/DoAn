@@ -12,6 +12,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
+import '../models/company_info.dart';
 import 'add_parking_page.dart';
 
 class ResidentPage extends StatefulWidget {
@@ -32,6 +33,17 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
             .loadImageByResidentId(residentId); // đúng hàm và id
       });
     }
+  }
+
+  Future<List<CompanyInfo>> fetchActiveCompanies() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('companies')
+        .where('isExit', isEqualTo: false)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => CompanyInfo.fromMap(doc.data()))
+        .toList();
   }
 
 
@@ -138,7 +150,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                       top: 0,
                       left: 0,
                       child: Image.asset(
-                        'assets/images/two_circle_green.png',
+                        'assets/images/two_circle.png',
                         width: 160,
                       ),
                     ),
@@ -204,7 +216,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                             ),
                           ),
 
-                          SizedBox(height: 20.h),
+                          SizedBox(height: 5.h),
                           Text(
                             "Xin chào, ${residentInfo?.fullName ?? "người dùng"} 👋",
                             style: TextStyle(
@@ -213,132 +225,162 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                               color: Colors.white,
                             ),
                           ),
-                          SizedBox(height: 10.h),
                         ],
                       ),
                     )
                   ],
                 ),
               ),
-              SizedBox(height: 10.h,),
               Container(
-                child: Padding(padding: EdgeInsets.all(10),
+                child: Padding(
+                  padding: EdgeInsets.all(10),
                   child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('     Tiện ích cơ bản', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
-                      mainAxisSpacing: 45, // Khoảng cách dọc giữa các hàng
-                      crossAxisSpacing: 45, // Khoảng cách ngang giữa các cột
-                      children: [
-                        buildServiceCard(
-                          context,
-                          svgPath: 'assets/images/parking.svg',
-                          label: 'Gửi xe',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => GuiXeScreen()),
-                            );
-                          },
-                        ),
-                        buildServiceCard(
-                          context,
-                          svgPath: 'assets/images/water.svg',
-                          label: 'Chỉ số nước',
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-                    Text('     Chức năng', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
-                    GridView.count(
-                      crossAxisCount: 3,
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(8),
-                      mainAxisSpacing: 12, // Khoảng cách dọc giữa các hàng
-                      crossAxisSpacing: 12, // Khoảng cách ngang giữa các cột
-                      children: [
-                        buildServiceCard(
-                          context,
-                          svgPath: 'assets/images/contract.svg',
-                          label: 'Xem hợp đồng',
-                          onTap: () async {
-                            // Lấy user hiện tại
-                            final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-                            if (currentUserId == null) return;
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '   Tiện ích cơ bản',
+                        style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
+                      ),
+                      GridView.count(
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
+                        mainAxisSpacing: 45,
+                        crossAxisSpacing: 45,
+                        children: [
+                          buildServiceCard(
+                            context,
+                            svgPath: 'assets/images/parking.svg',
+                            label: 'Gửi xe',
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => GuiXeScreen()));
+                            },
+                          ),
+                          buildServiceCard(
+                            context,
+                            svgPath: 'assets/images/water.svg',
+                            label: 'Chỉ số nước',
+                            onTap: () {},
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '   Chức năng',
+                        style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
+                      ),
+                      GridView.count(
+                        crossAxisCount: 3,
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(8),
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        children: [
+                          buildServiceCard(
+                            context,
+                            svgPath: 'assets/images/contract.svg',
+                            label: 'Xem hợp đồng',
+                            onTap: () async {
+                              final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                              if (currentUserId == null) return;
 
-                            // Lấy apartmentId từ resident
-                            final residentSnapshot = await FirebaseFirestore.instance
-                                .collection('residents')
-                                .doc(currentUserId)
-                                .get();
+                              final residentSnapshot = await FirebaseFirestore.instance
+                                  .collection('residents')
+                                  .doc(currentUserId)
+                                  .get();
 
-                            final apartmentId = residentSnapshot.data()?['apartmentId'];
-                            if (apartmentId == null) return;
+                              final apartmentId = residentSnapshot.data()?['apartmentId'];
+                              if (apartmentId == null) return;
 
-                            // Tìm hợp đồng với apartmentDocId = apartmentId và isActive = true
-                            final contractsSnapshot = await FirebaseFirestore.instance
-                                .collection('contracts')
-                                .where('apartmentDocId', isEqualTo: apartmentId)
-                                .where('isActive', isEqualTo: true)
-                                .limit(1)
-                                .get();
+                              final contractsSnapshot = await FirebaseFirestore.instance
+                                  .collection('contracts')
+                                  .where('apartmentDocId', isEqualTo: apartmentId)
+                                  .where('isActive', isEqualTo: true)
+                                  .limit(1)
+                                  .get();
 
-                            if (contractsSnapshot.docs.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Không tìm thấy hợp đồng đang hoạt động')),
+                              if (contractsSnapshot.docs.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Không tìm thấy hợp đồng đang hoạt động')),
+                                );
+                                return;
+                              }
+
+                              final contractData = contractsSnapshot.docs.first.data();
+                              final contractUrl = contractData['pdfUrl'];
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => PdfViewerScreen(pdfUrl: contractUrl)),
                               );
-                              return;
-                            }
+                            },
+                          ),
+                          buildServiceCard(
+                            context,
+                            svgPath: 'assets/images/problem.svg',
+                            label: 'Báo cáo sự cố',
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => ReportPage()));
+                            },
+                          ),
+                          buildServiceCard(
+                            context,
+                            svgPath: 'assets/images/paycard.svg',
+                            label: 'Thanh toán',
+                            onTap: () {},
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '   Dịch vụ từ công ty ngoài',
+                        style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
+                      ),
+                      Padding(padding: EdgeInsets.only(left: 9.w, right: 9.w, top: 10.h),
+                      child: FutureBuilder<List<CompanyInfo>>(
+                        future: fetchActiveCompanies(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
 
-                            final contractData = contractsSnapshot.docs.first.data();
-                            final contractUrl = contractData['pdfUrl'];
+                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return const Center(child: Text('Không có công ty nào hoạt động'));
+                          }
 
-                            // Mở trang xem PDF
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PdfViewerScreen(pdfUrl: contractUrl),
-                              ),
-                            );
-                          },
-                        ),
+                          final companies = snapshot.data!;
 
-                        buildServiceCard(
-                          context,
-                          svgPath: 'assets/images/problem.svg',
-                          label: 'Báo cáo sự cố',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => ReportPage()),
-                            );
-                          },
-                        ),
-                        buildServiceCard(
-                          context,
-                          svgPath: 'assets/images/paycard.svg',
-                          label: 'Thanh toán',
-                          onTap: () {
-                          },
-                        ),
-                        // Thêm các ô khác tại đây
-                      ],
-                    )
-                  ],
-                ),)
-              ),
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: companies.map((company) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: buildServiceCard1(
+                                    context,
+                                    imagePath: company.imageUrl, // <-- sửa ở đây
+                                    label: company.type,
+                                    onTap: () {
+                                      // Handle tap here
+                                    },
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          );
+                        },
+                      ),)
+                    ],
+                  ),
+                ),
+              )
             ],
           )
         ],
       ),
     );
   }
+
   Widget buildServiceCard(
       BuildContext context, {
         required String svgPath, // Đường dẫn ảnh SVG
@@ -379,6 +421,73 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                     const SizedBox(height: 8),
                     Text(label, style:TextStyle(fontWeight: FontWeight.bold,fontSize: 12.sp),textAlign: TextAlign.center),
                   ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildServiceCard1(
+      BuildContext context, {
+        required String imagePath,
+        required String label,
+        required VoidCallback onTap,
+      }) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 100),
+      tween: Tween(begin: 1.0, end: 1.0),
+      builder: (context, scale, child) {
+        return GestureDetector(
+          onTapDown: (_) => (context as Element).markNeedsBuild(),
+          onTapUp: (_) => onTap(),
+          child: Material(
+            color: Colors.white,
+            elevation: 3,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(12),
+              splashColor: Colors.blue.withOpacity(0.2),
+              highlightColor: Colors.blue.withOpacity(0.1),
+              child: SizedBox(
+                width: 110,
+                height: 110,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          imagePath,
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(Icons.broken_image, size: 50);
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const SizedBox(
+                              width: 60,
+                              height: 60,
+                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        label,
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

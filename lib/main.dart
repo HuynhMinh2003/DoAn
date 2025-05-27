@@ -159,7 +159,7 @@ void main() async {
                   ],
                 ),
               ),
-              home: MainScreen(),
+              home: SplashScreen(),
             ),
 
           ),
