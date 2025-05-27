@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
+import 'package:do_an/src/resources/home_first_csn_page.dart';
 import 'package:do_an/src/resources/home_first_resident_page.dart';
 import 'package:do_an/src/resources/main_admin_page.dart';
 import 'package:do_an/src/resources/staff_page_1.dart';
@@ -17,6 +18,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../screens/main/main_screen.dart';
+import 'home_first_company_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -59,6 +61,41 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         // Nếu tài liệu của nhân viên chưa tồn tại, tạo mới với danh sách token
         await staffRef.set({
+          'fcmTokens': [newToken],  // Lưu mảng token FCM
+          'lastUpdate': FieldValue.serverTimestamp(),
+        });
+      }
+
+      print("FCM Token saved successfully!");
+    } catch (e) {
+      print("Error saving FCM Token: $e");
+    }
+  }
+
+  Future<void> _saveTokenAdminToFirestore(String newToken) async {
+    final adminId = FirebaseAuth.instance.currentUser?.uid;
+    if (adminId == null) return; // Không có userId thì thoát luôn
+
+    try {
+      // Đường dẫn Firestore cho nhân viên
+      DocumentReference adminRef =
+      FirebaseFirestore.instance.collection("admins").doc(adminId);
+      DocumentSnapshot adminDoc = await adminRef.get();
+
+      if (adminDoc.exists) {
+        // Lấy danh sách token hiện tại
+        List<String> tokens = List<String>.from(adminDoc['fcmTokens'] ?? []);
+
+        if (!tokens.contains(newToken)) {
+          // Nếu token chưa tồn tại thì thêm vào danh sách
+          await adminRef.update({
+            'fcmTokens': FieldValue.arrayUnion([newToken]),
+            'lastUpdate': FieldValue.serverTimestamp(),
+          });
+        }
+      } else {
+        // Nếu tài liệu của nhân viên chưa tồn tại, tạo mới với danh sách token
+        await adminRef.set({
           'fcmTokens': [newToken],  // Lưu mảng token FCM
           'lastUpdate': FieldValue.serverTimestamp(),
         });
@@ -600,6 +637,23 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Future<int?> getUserRole(String userId) async {
+    final collections = ['staffs', 'residents', 'companies', 'admins'];
+
+    for (final collection in collections) {
+      final doc = await FirebaseFirestore.instance
+          .collection(collection)
+          .doc(userId)
+          .get();
+
+      if (doc.exists && doc.data() != null && doc.data()!.containsKey('role')) {
+        return doc.get('role');
+      }
+    }
+
+    return null; // Không tìm thấy role
+  }
+
   _onLoginClick() async {
 // Ẩn bàn phím và remove focus
     FocusScope.of(context).requestFocus(FocusNode());
@@ -627,131 +681,105 @@ class _LoginPageState extends State<LoginPage> {
               // Lấy FCM token mới
               String? newToken = await FirebaseMessaging.instance.getToken();
 
-              int? role; // Biến để lưu role
-
-              // Kiểm tra trong collection staffs
-              DocumentSnapshot staffDoc = await FirebaseFirestore.instance
-                  .collection("staffs")
-                  .doc(userId)
-                  .get();
-
-              if (staffDoc.exists && staffDoc.data() != null) {
-                role = staffDoc.get('role');
-              } else {
-                // Kiểm tra trong collection residents
-                DocumentSnapshot residentDoc = await FirebaseFirestore.instance
-                    .collection("residents")
-                    .doc(userId)
-                    .get();
-
-                if (residentDoc.exists && residentDoc.data() != null) {
-                  role = residentDoc.get('role');
-                } else {
-                  // Kiểm tra trong collection companies
-                  DocumentSnapshot companyDoc = await FirebaseFirestore.instance
-                      .collection("companies")
-                      .doc(userId)
-                      .get();
-
-                  if (companyDoc.exists && companyDoc.data() != null) {
-                    role = companyDoc.get('role');
-                  }
-                }
-              }
+              int? role = await getUserRole(userId);
 
               bool isMobile = !kIsWeb;
 
-              if(role==null){
-                if (FirebaseAuth.instance.currentUser?.email == 'admin@gmail.com' && isMobile) {
+              if (role == 1) {
+                if (isMobile) {
                   MsgDialog.showMsgDialog(
                     context,
                     "Thông báo",
-                    "Tài khoản của bạn không hỗ trợ đăng nhập trên mobile",
+                    "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
                   );
-                } else {
-                  // Điều hướng đến trang khác (nếu cần)
+                }
+                else {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (context) => MainScreen()),
                   );
+                  // Lưu FCM token nếu có
+                  if (newToken != null) {
+                    await _saveTokenAdminToFirestore(newToken);
+                  }
                 }
               }
-
-              else if (role != null) {
-                if (role == 2) {
-                  if (isMobile) {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => HomeFirstKTVPage()),
-                    );
-                    if (newToken != null) {
-                      await _saveTokenToFirestore(newToken);
-                    }
-                  } else {
-                    MsgDialog.showMsgDialog(
-                      context,
-                      "Thông báo",
-                      "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
-                    );
+              else if (role == 2) {
+                if (isMobile) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => HomeFirstKTVPage()),
+                  );
+                  if (newToken != null) {
+                    await _saveTokenToFirestore(newToken);
                   }
-                } else if (role == 3) {
-                  if (isMobile) {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => HomeFirstKTVPage()), // <-- Đổi trang cho role 3
-                    );
-                    if (newToken != null) {
-                      await _saveTokenToFirestore(newToken);
-                    }
-                  } else {
-                    MsgDialog.showMsgDialog(
-                      context,
-                      "Thông báo",
-                      "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
-                    );
-                  }
+                } else {
+                  MsgDialog.showMsgDialog(
+                    context,
+                    "Thông báo",
+                    "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
+                  );
                 }
-                else if (role == 4) {
-                  if(isMobile){
-                    print('Hello nha');
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => HomeFirstResidentPage()),
-                    );
-                    // Lưu FCM token nếu có
-                    if (newToken != null) {
-                      await _saveResidentTokenToFirestore(newToken);
-                    }
-                  } else{
-                    MsgDialog.showMsgDialog(
-                      context,
-                      "Thông báo",
-                      "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
-                    );
+              } else if (role == 3) {
+                if (isMobile) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) =>
+                        HomeFirstCSNPage()), // <-- Đổi trang cho role 3
+                  );
+                  if (newToken != null) {
+                    await _saveTokenToFirestore(newToken);
                   }
-                }else if (role == 5) {
-                  if(isMobile){
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => TestPage1()),
-                    );
-                    // Lưu FCM token nếu có
-                    if (newToken != null) {
-                      await _saveTokenCompanyToFirestore(newToken);
-                    }
-                  } else{
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => TestPage1()),
-                    );
-                    // Lưu FCM token nếu có
-                    if (newToken != null) {
-                      await _saveTokenCompanyToFirestore(newToken);
-                    }
+                } else {
+                  MsgDialog.showMsgDialog(
+                    context,
+                    "Thông báo",
+                    "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
+                  );
+                }
+              }
+              else if (role == 4) {
+                if (isMobile) {
+                  print('Hello nha');
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                        builder: (context) => HomeFirstResidentPage()),
+                  );
+                  // Lưu FCM token nếu có
+                  if (newToken != null) {
+                    await _saveResidentTokenToFirestore(newToken);
                   }
+                } else {
+                  MsgDialog.showMsgDialog(
+                    context,
+                    "Thông báo",
+                    "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
+                  );
+                }
+              } else if (role == 5) {
+                if (isMobile) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => HomeFirstCompanyPage()),
+                  );
+                  // Lưu FCM token nếu có
+                  if (newToken != null) {
+                    await _saveTokenCompanyToFirestore(newToken);
+                  }
+                } else {
+                  MsgDialog.showMsgDialog(
+                    context,
+                    "Thông báo",
+                    "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
+                  );
                 }
               }
               else {
-                MsgDialog.showMsgDialog(context, "Lỗi", "Không tìm thấy role cho tài khoản này");
+                MsgDialog.showMsgDialog(
+                    context, "Lỗi", "Không tìm thấy role cho tài khoản này");
               }
             } else {
-              MsgDialog.showMsgDialog(context, "Lỗi", "Xác thực người dùng không thành công");
+              MsgDialog.showMsgDialog(
+                  context, "Lỗi", "Xác thực người dùng không thành công");
             }
           },
+
         onSignInError: (msg) {
           LoadingDialog.hideLoadingDialog(context);
           MsgDialog.showMsgDialog(context, "Đăng nhập", msg);

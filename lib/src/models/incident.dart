@@ -74,4 +74,25 @@ class Incident {
       'handledAt': handledAt,
     };
   }
+
+  /// ✅ Hàm fromMap để dùng với Map<String, dynamic> riêng biệt
+  factory Incident.fromMap(Map<String, dynamic> data, {required String id}) {
+    return Incident(
+      id: id,
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      reporterId: data['reporterId'] ?? '',
+      reporterName: data['reporterName'] ?? '',
+      building: data['building'] ?? '',
+      apartmentAddress: data['apartmentAddress'] ?? '',
+      priority: data['priority'],
+      status: data['status'] ?? 'Đang chờ xử lý',
+      imageUrl: data['imageUrl'],
+      createdAt: data['createdAt'],
+      assignedStaffId: data['assignedStaffId'],
+      assignedStaffName: data['assignedStaffName'],
+      managerNote: data['managerNote'],
+      handledAt: data['handledAt'],
+    );
+  }
 }
