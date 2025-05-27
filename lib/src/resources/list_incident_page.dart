@@ -1,5 +1,7 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:do_an/constants.dart';
 import 'package:do_an/custom_paginated_table.dart';
+import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:do_an/src/blocs/auth_bloc.dart';
@@ -33,7 +35,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
   List<String> _priorityItems = ["Tất cả", "Cao", "Trung bình", "Thấp"]; // Các giá trị trạng thái nhân viên
 
   // List<String> _positionItems = [];
-  List<String> _statusItems = ["Tất cả", "Đang chờ xử lý", "Đang xử lý", "Đã xử lý"];
+  List<String> _statusItems = ["Tất cả", "Đang chờ xử lí", "Đang xử lí", "Đang chờ xử lí (Trả lại)", "Đã xử lí"];
 
   List<Incident> _incidentList = [];
   List<Incident> _alIncidentList = [];
@@ -267,7 +269,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
             ),
           ),
           actions: [
-            if (incident.status == "Đang chờ xử lý") ...[
+            if (incident.status == "Đang chờ xử lí") ...[
               TextButton(
                 onPressed: () => _openAssignDialog(incident),
                 child: Text("Chọn nhân viên xử lí", style: TextStyle(fontSize: 4.sp)),
@@ -276,21 +278,35 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                 onPressed: () => Navigator.pop(context),
                 child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
               ),
-            ] else if (incident.status == "Đang xử lý") ...[
+            ] else if (incident.status == "Đang xử lí") ...[
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
               ),
-            ] else if (incident.status == "Đã xử lý") ...[
+            ]
+            else if (incident.status == "Đã xử lí") ...[
               TextButton(
                 onPressed: () => _showHandledHistoryDialog(context, incident.id),
-                child: Text("Xem lịch sử xử lý", style: TextStyle(fontSize: 4.sp)),
+                child: Text("Xem lịch sử xử lí", style: TextStyle(fontSize: 4.sp)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
               ),
-            ],
+            ] else if (incident.status == "Đang chờ xử lí (Trả lại)") ...[
+              TextButton(
+                onPressed: () => _openAssignDialog(incident),
+                child: Text("Chọn nhân viên xử lí", style: TextStyle(fontSize: 4.sp)),
+              ),
+                TextButton(
+                  onPressed: () => _showHandledHistoryDialog(context, incident.id),
+                  child: Text("Xem lịch sử xử lí", style: TextStyle(fontSize: 4.sp)),
+                ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+              ),
+            ]
           ],
 
         );
@@ -385,6 +401,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                       selectedStaff!,
                       selectedPriority ?? 'Trung bình',
                     );
+                    _fetchIncident();
                   },
                   child: const Text('Xác nhận giao'),
                 ),
@@ -403,29 +420,59 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
       Staff staff,
       String priority,
       ) async {
-    final batch = FirebaseFirestore.instance.batch();
+    try {
+      LoadingDialog.showLoadingDialog(context, "Đang tải ...");
 
-    final incidentRef =
-    FirebaseFirestore.instance.collection('incidents').doc(incident.id);
-    batch.update(incidentRef, {
-      'assignedStaffId': staff.uid,
-      'assignedStaffName': staff.fullName,
-      'status': 'Đang xử lý',
-      'priority': priority,
-      'managerNote': managerNote,
-    });
+      final batch = FirebaseFirestore.instance.batch();
 
-    final staffRef =
-    FirebaseFirestore.instance.collection('staffs').doc(staff.uid);
-    batch.update(staffRef, {'isFree': false});
+      final incidentRef =
+      FirebaseFirestore.instance.collection('incidents').doc(incident.id);
+      batch.update(incidentRef, {
+        'assignedStaffId': staff.uid,
+        'assignedStaffName': staff.fullName,
+        'status': 'Đang xử lí',
+        'priority': priority,
+        'managerNote': managerNote,
+      });
 
-    await batch.commit();
+      final staffRef =
+      FirebaseFirestore.instance.collection('staffs').doc(staff.uid);
+      batch.update(staffRef, {'isFree': false});
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đã giao cho ${staff.fullName}')),
-    );
-    _loadStaffs();
+      await batch.commit();
+      // Lấy fcmTokens
+      final staffDoc = await FirebaseFirestore.instance
+          .collection('staffs')
+          .doc(staff.uid)
+          .get();
+      final List<dynamic>? fcmTokens = staffDoc.data()?['fcmTokens'];
+
+      if (fcmTokens != null && fcmTokens.isNotEmpty) {
+        try {
+          final callable = FirebaseFunctions.instance.httpsCallable('sendIncidentNotification');
+          await callable.call({
+            'fcmTokens': fcmTokens,
+            'title': "Giao sự cố: ${incident.title}",
+            'body': "Mức độ ưu tiên: $priority. Kiểm tra và xử lý ngay.",
+          });
+        } catch (e) {
+          print("❌ Gửi thông báo lỗi: $e");
+        }
+      }
+
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+
+      MsgDialog.showMsgDialog(context, "Xử lí sự cố", "Điều phối sự cố cho nhân viên thành công");
+
+      _loadStaffs();
+    } catch (e) {
+      Navigator.of(context).pop(); // 👉 Đóng loading nếu lỗi
+      MsgDialog.showMsgDialog(context, "Xử lí sự cố", "Điều phối sự cố cho nhân viên thất bại");
+
+    }
   }
+
 
   Future<void> _showHandledHistoryDialog(BuildContext context, String incidentId) async {
     final historyRef = FirebaseFirestore.instance
@@ -441,11 +488,11 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
         return AlertDialog(
           backgroundColor: bgColor,
           title: Center(child: Text(
-            "Lịch sử xử lý",
+            "Lịch sử xử lí",
             style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold, color: Colors.blue),
           ),),
           content: historySnapshot.docs.isEmpty
-              ? Text("Không có dữ liệu lịch sử xử lý.")
+              ? Text("Không có dữ liệu lịch sử xử lí.")
               : SizedBox(
             width: 100.w,
             child: SingleChildScrollView(
@@ -519,11 +566,13 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
   }
   IconData _getStatusIcon(String? status) {
     switch (status) {
-      case 'Đang chờ xử lý':
+      case 'Đang chờ xử lí':
         return Icons.hourglass_empty;
-      case 'Đang xử lý':
+        case 'Đang chờ xử lí (Trả lại)':
+        return Icons.hourglass_empty;
+      case 'Đang xử lí':
         return Icons.settings;
-      case 'Đã xử lý':
+      case 'Đã xử lí':
         return Icons.check_circle;
       default:
         return Icons.help_outline;
@@ -532,11 +581,13 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
 
   Color _getStatusColor(String? status) {
     switch (status) {
-      case 'Đang chờ xử lý':
+      case 'Đang chờ xử lí':
         return Colors.orange;
-      case 'Đang xử lý':
+        case 'Đang chờ xử lí (Trả lại)':
+        return Colors.orange;
+      case 'Đang xử lí':
         return Colors.blue;
-      case 'Đã xử lý':
+      case 'Đã xử lí':
         return Colors.green;
       default:
         return Colors.grey;
@@ -634,7 +685,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                             SizedBox(width: 20.w), // Khoảng cách giữa tiêu đề và tìm kiếm
 
                             Expanded(child: buildFilterDropdown(
-                              label: "Lọc theo trạng thái xử lý",
+                              label: "Lọc theo trạng thái xử lí",
                               items: _statusItems,
                               selectedValue: _selectedStatus,
                               onChanged: (value) {
@@ -657,7 +708,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                                       child: Center(
                                         child: Text(
                                           "Không có sự cố nào",
-                                          style: TextStyle(fontSize: 4.sp, color: Colors.black54),
+                                          style: TextStyle(fontSize: 4.sp, color: Colors.white),
                                         ),
                                       ),
                                     )

@@ -3,7 +3,11 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+
+import '../models/incident.dart';
 
 class StaffIncidentPage extends StatefulWidget {
   final String staffId;
@@ -14,7 +18,7 @@ class StaffIncidentPage extends StatefulWidget {
 }
 
 class _StaffIncidentPageState extends State<StaffIncidentPage> {
-  List<DocumentSnapshot> _assignedIncidents = [];
+  List<Incident> _assignedIncidents = [];
   File? _proofImageFile;
   final TextEditingController _rejectReasonController = TextEditingController();
 
@@ -31,10 +35,15 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
         .where('assignedStaffId', isEqualTo: widget.staffId)
         .get();
 
+    final incidents = snapshot.docs
+        .map((doc) => Incident.fromFirestore(doc))
+        .toList();
+
     setState(() {
-      _assignedIncidents = snapshot.docs;
+      _assignedIncidents = incidents;
     });
   }
+
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -56,10 +65,10 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
     return await ref.getDownloadURL();
   }
 
-  Future<void> _handleIncident(DocumentSnapshot incident) async {
+  Future<void> _handleIncident(Incident incident) async {
     if (_proofImageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Vui lòng chọn ảnh xử lý")),
+        const SnackBar(content: Text("Vui lòng chọn ảnh xử lí")),
       );
       return;
     }
@@ -72,14 +81,14 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       // Dữ liệu đầy đủ cho handledHistory
       final fullData = {
         'staffId': widget.staffId,
-        'staffName': incident['assignedStaffName'],
+        'staffName': incident.assignedStaffName,
         'accepted': true,
         'responseTime': FieldValue.serverTimestamp(),
-        'note': 'Đã xử lý và đính kèm ảnh minh chứng.',
+        'note': 'Đã xử lí và đính kèm ảnh minh chứng.',
         'proofImageUrl': imageUrl,
         'rejectionReason': null,
         'incidentId': incident.id,
-        'title': incident['title'],
+        'title': incident.title,
       };
 
       // Dữ liệu rút gọn cho problemHistory
@@ -88,7 +97,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
         ..remove('staffName');
 
       await incidentRef.update({
-        'status': 'Đã xử lý',
+        'status': 'Đã xử lí',
         'handledAt': FieldValue.serverTimestamp(),
       });
 
@@ -97,7 +106,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       await staffRef.update({'isFree': true});
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Đã xác nhận xử lý")),
+        const SnackBar(content: Text("Đã xác nhận xử lí")),
       );
 
       setState(() {
@@ -107,12 +116,12 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       _loadAssignedIncidents();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lỗi xử lý: $e")),
+        SnackBar(content: Text("Lỗi xử lí: $e")),
       );
     }
   }
 
-  Future<void> _rejectIncident(DocumentSnapshot incident) async {
+  Future<void> _rejectIncident(Incident incident) async {
     final reason = _rejectReasonController.text.trim();
     if (reason.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -122,19 +131,24 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
     }
 
     try {
+      String? imageUrl;
+      if (_proofImageFile != null) {
+        imageUrl = await uploadProofImage(incident.id, _proofImageFile!);
+      }
+
       final incidentRef = FirebaseFirestore.instance.collection('incidents').doc(incident.id);
       final staffRef = FirebaseFirestore.instance.collection('staffs').doc(widget.staffId);
 
       final fullData = {
         'staffId': widget.staffId,
-        'staffName': incident['assignedStaffName'],
+        'staffName': incident.assignedStaffName,
         'accepted': false,
         'responseTime': FieldValue.serverTimestamp(),
         'note': 'Chưa xử lí được sự cố',
-        'proofImageUrl': null,
+        'proofImageUrl': imageUrl,
         'rejectionReason': reason,
         'incidentId': incident.id,
-        'title': incident['title'],
+        'title': incident.title,
       };
 
       final problemData = Map<String, dynamic>.from(fullData)
@@ -142,7 +156,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
         ..remove('staffName');
 
       await incidentRef.update({
-        'status': 'Đang chờ xử lý',
+        'status': 'Đang chờ xử lí (Trả lại)',
         'assignedStaffId': null,
         'assignedStaffName': null,
       });
@@ -152,71 +166,98 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       await staffRef.update({'isFree': true});
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Đã từ chối xử lý")),
+        const SnackBar(content: Text("Đã từ chối xử lí")),
       );
 
       _rejectReasonController.clear();
+      setState(() {
+        _proofImageFile = null;
+      });
       _loadAssignedIncidents();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lỗi từ chối xử lý: $e")),
+        SnackBar(content: Text("Lỗi từ chối xử lí: $e")),
       );
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Sự cố được giao")),
-      body: ListView.builder(
-        itemCount: _assignedIncidents.length,
-        itemBuilder: (context, index) {
-          final incident = _assignedIncidents[index];
-          return Card(
-            margin: const EdgeInsets.all(10),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Tiêu đề: ${incident['title']}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text("Mô tả: ${incident['description']}"),
-                  if (incident['imageUrl'] != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Image.network(incident['imageUrl'], height: 120),
-                    ),
-                  if (incident['managerNote'] != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text("Ghi chú từ quản lý: ${incident['managerNote']}"),
-                    ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => _showHandleDialog(incident),
-                        child: const Text("Xác nhận xử lý"),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        onPressed: () => _showRejectDialog(incident),
-                        child: const Text("Từ chối xử lý"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                        ),
-                      ),
-                    ],
+  Future<void> _showRejectDialog(Incident incident) async {
+    final TextEditingController reasonController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Center(child: Text("Từ chối xử lí",style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold,fontSize: 25.sp)),),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: reasonController,
+                  decoration: InputDecoration(
+                    hintText: "Nhập lý do từ chối...",
+                    hintStyle: TextStyle(fontSize: 15.sp),
+                    border: OutlineInputBorder(),
                   ),
-                ],
-              ),
+                  maxLines: 3,
+                ),
+                SizedBox(height: 16.h),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      setState(() {
+                        _proofImageFile = File(picked.path);
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.image),
+                  label: Text("Chọn ảnh minh chứng",style: TextStyle(fontSize: 15.sp),),
+                ),
+                if (_proofImageFile != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: Image.file(
+                      _proofImageFile!,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+              ],
             ),
-          );
-        },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _proofImageFile = null;
+              },
+              child: Text("Hủy",style: TextStyle(fontSize: 15.sp)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final reason = reasonController.text.trim();
+                if (reason.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Vui lòng nhập lý do từ chối",style: TextStyle(fontSize: 15.sp))),
+                  );
+                  return;
+                }
+
+                _rejectReasonController.text = reason;
+                Navigator.pop(context);
+                await _rejectIncident(incident);
+              },
+              child: Text("Từ chối",style: TextStyle(fontSize: 15.sp)),
+            ),
+          ],
+        ),
       ),
     );
   }
-  Future<void> _showHandleDialog(DocumentSnapshot incident) async {
+
+  Future<void> _showHandleDialog(Incident incident) async {
     File? selectedImage;
 
     await showDialog(
@@ -224,7 +265,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            title: const Text("Xác nhận đã xử lý"),
+            title: Center(child: Text("Xác nhận đã xử lí",style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold,fontSize: 25.sp),),),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -239,7 +280,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                     }
                   },
                   icon: const Icon(Icons.upload),
-                  label: const Text("Chọn ảnh minh chứng"),
+                  label: Text("Chọn ảnh minh chứng",style: TextStyle(fontSize: 15.sp)),
                 ),
                 if (selectedImage != null)
                   Padding(
@@ -251,13 +292,13 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text("Hủy"),
+                child: Text("Hủy",style: TextStyle(fontSize: 15.sp)),
               ),
               ElevatedButton(
                 onPressed: () async {
                   if (selectedImage == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Vui lòng chọn ảnh xử lý")),
+                      SnackBar(content: Text("Vui lòng chọn ảnh xử lí",style: TextStyle(fontSize: 15.sp))),
                     );
                     return;
                   }
@@ -269,7 +310,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                   Navigator.pop(context);
                   await _handleIncident(incident);
                 },
-                child: const Text("Xác nhận"),
+                child: Text("Xác nhận",style: TextStyle(fontSize: 15.sp)),
               ),
             ],
           ),
@@ -278,41 +319,124 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
     );
   }
 
-  Future<void> _showRejectDialog(DocumentSnapshot incident) async {
-    final TextEditingController reasonController = TextEditingController();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title:Text("Sự cố được giao",style: TextStyle(
+            color: Colors.white,
+            fontFamily: "Oswald",
+            fontWeight: FontWeight.bold,
+            fontSize: 25.sp),),
+        backgroundColor: const Color(0xFF3C4DFF),
+        foregroundColor: Colors.white,
+      ),
+      body: ListView.builder(
+        itemCount: _assignedIncidents.length,
+        itemBuilder: (context, index) {
+          final incident = _assignedIncidents[index]; // incident là kiểu Incident
+          return Card(
+            margin: const EdgeInsets.all(10),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: Center(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10.r),
+                            child: (incident.imageUrl != null && incident.imageUrl!.isNotEmpty)
+                                ? Image.network(
+                              incident.imageUrl!,
+                              width: 100,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            )
+                                : Image.asset(
+                              'assets/default_avatar.png',
+                              width: 100,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 2.w),
+                      Expanded(
+                        flex: 6,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _infoRow("Tiêu đề", incident.title),
+                            _infoRow("Mô tả", incident.description),
+                            if (incident.managerNote != null && incident.managerNote!.isNotEmpty)
+                              _infoRow("Ghi chú từ quản lý", incident.managerNote!),
+                            _infoRow("Ngày báo", DateFormat('dd/MM/yyyy HH:mm').format(incident.createdAt!.toDate())),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => _showHandleDialog(incident),
+                        child: Center(
+                          child: Text(
+                            "Xác nhận xử lí",
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: "Oswald",
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton(
+                        onPressed: () => _showRejectDialog(incident),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red, // Màu nền
 
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Từ chối xử lý"),
-        content: TextField(
-          controller: reasonController,
-          decoration: const InputDecoration(
-            hintText: "Nhập lý do từ chối...",
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Hủy"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final reason = reasonController.text.trim();
-              if (reason.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Vui lòng nhập lý do từ chối")),
-                );
-                return;
-              }
+                        ),
+                        child: Center(
+                          child: Text(
+                            "Từ chối xử lí",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: "Oswald",
+                            ),
+                          ),
+                        ),
+                      ),
 
-              _rejectReasonController.text = reason;
-              Navigator.pop(context);
-              await _rejectIncident(incident);
-            },
-            child: const Text("Từ chối"),
-          ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String? value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 20.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("$label: ", style: TextStyle(fontWeight: FontWeight.bold,fontSize: 13.sp)),
+          Expanded(child: Text(value ?? "Không có", style: TextStyle(fontSize: 13.sp),)),
         ],
       ),
     );
