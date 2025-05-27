@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/screens/main/main_screen.dart';
+import 'package:do_an/src/resources/home_first_company_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'home_first_csn_page.dart';
 import 'home_first_resident_page.dart';
 import 'home_first_ktv_page.dart';
 import 'login_page.dart';
@@ -14,30 +17,17 @@ class AuthWrapper extends StatelessWidget {
     if (uid == null) return null;
 
     final firestore = FirebaseFirestore.instance;
+    final collections = ['staffs', 'residents', 'companies', 'admins'];
 
-    // Tìm trong staff collection
-    final staffDoc = await firestore.collection('staffs').doc(uid).get();
-    if (staffDoc.exists) {
-      final role = staffDoc.data()?['role'];
-      if (role != null) return role;
+    for (final collection in collections) {
+      final doc = await firestore.collection(collection).doc(uid).get();
+      if (doc.exists) {
+        final role = doc.data()?['role'];
+        if (role != null) return role;
+      }
     }
 
-    // Tìm trong resident collection
-    final residentDoc = await firestore.collection('residents').doc(uid).get();
-    if (residentDoc.exists) {
-      final role = residentDoc.data()?['role'];
-      if (role != null) return role;
-    }
-
-    // Tìm trong companies collection
-    final companyDoc = await firestore.collection('companies').doc(uid).get();
-    if (companyDoc.exists) {
-      final role = companyDoc.data()?['role'];
-      if (role != null) return role;
-    }
-
-    // Nếu không tìm thấy role thì trả null
-    return null;
+    return null; // Không tìm thấy role
   }
 
   @override
@@ -67,12 +57,18 @@ class AuthWrapper extends StatelessWidget {
 
         final role = snapshot.data;
 
-        if (role == 2 || role == 3) {
+        if (role == 1) {
+          return MainScreen();
+        }
+        else if (role == 2) {
           return HomeFirstKTVPage();
+        }
+        else if (role == 3) {
+          return HomeFirstCSNPage();
         } else if (role == 4) {
           return HomeFirstResidentPage();
         } else if (role == 5) {
-          return HomeFirstResidentPage();
+          return HomeFirstCompanyPage();
         } else {
           // Không xác định được role, logout
           FirebaseAuth.instance.signOut();

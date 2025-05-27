@@ -27,7 +27,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
   Future<void> _loadIncidents() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('incidents')
-        .where('status', isEqualTo: 'Đang chờ xử lý')
+        .where('status', isEqualTo: 'Đang chờ xử lí')
         .get();
 
     setState(() {
@@ -160,7 +160,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
     batch.update(incidentRef, {
       'assignedStaffId': staff.uid,
       'assignedStaffName': staff.fullName,
-      'status': 'Đang xử lý',
+      'status': 'Đang xử lí',
       'priority': priority,
       'managerNote': managerNote,
     });
@@ -184,7 +184,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Quản lý sự cố cư dân')),
       body: _pendingIncidents.isEmpty
-          ? const Center(child: Text('Không có sự cố nào chờ xử lý'))
+          ? const Center(child: Text('Không có sự cố nào chờ xử lí'))
           : ListView.builder(
         itemCount: _pendingIncidents.length,
         itemBuilder: (context, index) {
@@ -212,7 +212,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: ElevatedButton(
-                      child: const Text("Giao xử lý"),
+                      child: const Text("Giao xử lí"),
                       onPressed: () => _openAssignDialog(incident),
                     ),
                   ),
