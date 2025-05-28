@@ -127,6 +127,14 @@ class SideMenu extends StatelessWidget {
                         },
                         isMenuOpen: isMenuOpen,
                       ),
+                      DrawerListTile(
+                        title: "Cập nhật dịch vụ chờ duyệt",
+                        svgSrc: "assets/icons/wait_update_service.svg",
+                        press: () {
+                          onMenuItemPressed(ListIncidentPage());
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
                     ],
                   ),
                   ExpandableDrawerListTile(
