@@ -394,24 +394,51 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Ảnh đại diện
-                    ClipOval(
-                      child: SizedBox(
-                        width: 100,
-                        height: 100,
-                        child: imageProvider.webImageBytes != null
-                            ? Image.memory(imageProvider.webImageBytes!,
-                                fit: BoxFit.cover)
-                            : imageProvider.selectedImageFile != null
-                                ? Image.file(imageProvider.selectedImageFile!,
-                                    fit: BoxFit.cover)
-                                : (residentInfo?.imageUrl?.isNotEmpty ?? false)
-                                    ? Image.network(residentInfo!.imageUrl!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, _, __) =>
-                                            SvgPicture.asset(
-                                                'assets/images/default_avatar.svg'))
-                                    : SvgPicture.asset(
-                                        'assets/images/default_avatar.svg'),
+                    Container(
+                      width: 110,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                      ),
+                      child: ClipOval(
+                        child: Container(
+                          color: Colors.white, // Nền trắng cho khung tròn
+                          alignment: Alignment.center,
+                          child: imageProvider.webImageBytes != null
+                              ? Image.memory(
+                            imageProvider.webImageBytes!,
+                            fit: BoxFit.cover,
+                            width: 100,
+                            height: 100,
+                          )
+                              : imageProvider.selectedImageFile != null
+                              ? Image.file(
+                            imageProvider.selectedImageFile!,
+                            fit: BoxFit.cover,
+                            width: 100,
+                            height: 100,
+                          )
+                              : (residentInfo?.imageUrl?.isNotEmpty ?? false)
+                              ? Image.network(
+                            residentInfo!.imageUrl!,
+                            fit: BoxFit.cover,
+                            width: 100,
+                            height: 100,
+                            errorBuilder: (context, _, __) => SvgPicture.asset(
+                              'assets/images/default_avatar.svg',
+                              width: 60, // giảm kích thước ảnh mặc định
+                              height: 60,
+                              fit: BoxFit.contain,
+                            ),
+                          )
+                              : SvgPicture.asset(
+                            'assets/images/default_avatar.svg',
+                            width: 60, // giảm kích thước ảnh mặc định
+                            height: 60,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
