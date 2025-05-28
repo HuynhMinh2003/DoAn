@@ -3,7 +3,6 @@ import 'package:do_an/src/resources/base_resident_info.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/pdf_Viewer_Screen_page.dart';
 import 'package:do_an/src/resources/provider/resident_image_provider.dart';
-import 'package:do_an/src/resources/rate_staff_page.dart';
 import 'package:do_an/src/resources/report_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -14,6 +13,7 @@ import 'package:provider/provider.dart';
 
 import '../models/company_info.dart';
 import 'add_parking_page.dart';
+import 'company_detail_page.dart';
 
 class ResidentPage extends StatefulWidget {
   const ResidentPage({super.key});
@@ -81,6 +81,42 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
     } catch (e) {
       print("❌ Lỗi khi xóa token FCM: $e");
     }
+  }
+
+  Future<List<CompanyInfo>> fetchCompaniesWithEnabledUpdateService() async {
+    final companyDocs = await FirebaseFirestore.instance.collection('companies').get();
+
+    List<CompanyInfo> filteredCompanies = [];
+
+    for (var doc in companyDocs.docs) {
+      final updateServiceSnap = await doc.reference
+          .collection('updateService')
+          .where('isEnable', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (updateServiceSnap.docs.isNotEmpty) {
+        // Lấy data công ty, giả sử có hàm fromDocument
+        final company = CompanyInfo.fromFirestore(doc);
+        filteredCompanies.add(company);
+      }
+    }
+
+    return filteredCompanies;
+  }
+
+  Future<Map<String, dynamic>?> fetchActiveUpdateService(String companyId) async {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('companies')
+        .doc(companyId)
+        .collection('updateService')
+        .where('isEnable', isEqualTo: true)
+        .limit(1)
+        .get();
+
+    if (querySnapshot.docs.isEmpty) return null;
+
+    return querySnapshot.docs.first.data();
   }
 
   void _logout() {
@@ -186,18 +222,18 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                                     errorBuilder: (context, error, stackTrace) {
                                       return SvgPicture.asset(
                                         'assets/images/default_avatar.svg',
-                                        width: 70.r,
-                                        height: 70.r,
-                                        fit: BoxFit.cover,
+                                        width: 65.r,
+                                        height: 65.r,
+                                        fit: BoxFit.contain,
                                       );
                                     },
                                   );
                                 } else {
                                   avatarChild = SvgPicture.asset(
                                     'assets/images/default_avatar.svg',
-                                    width: 70.r,
-                                    height: 70.r,
-                                    fit: BoxFit.cover,
+                                    width: 65.r,
+                                    height: 65.r,
+                                    fit: BoxFit.contain,
                                   );
                                 }
 
@@ -206,8 +242,10 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                                   height: 140.r,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2), // Viền trắng dày 4
+                                    color: Colors.white, // ✅ Nền trắng
+                                    border: Border.all(color: Colors.white, width: 2), // ✅ Viền trắng
                                   ),
+                                  alignment: Alignment.center,
                                   child: ClipOval(
                                     child: avatarChild,
                                   ),
@@ -338,14 +376,13 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                       ),
                       Padding(padding: EdgeInsets.only(left: 9.w, right: 9.w, top: 10.h),
                       child: FutureBuilder<List<CompanyInfo>>(
-                        future: fetchActiveCompanies(),
+                        future: fetchCompaniesWithEnabledUpdateService(),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState == ConnectionState.waiting) {
                             return const Center(child: CircularProgressIndicator());
                           }
-
                           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                            return const Center(child: Text('Không có công ty nào hoạt động'));
+                            return const Center(child: Text('Không có công ty nào có dịch vụ được duyệt'));
                           }
 
                           final companies = snapshot.data!;
@@ -358,18 +395,58 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                                   padding: const EdgeInsets.only(right: 12),
                                   child: buildServiceCard1(
                                     context,
-                                    imagePath: company.imageUrl, // <-- sửa ở đây
+                                    imagePath: company.imageUrl,
                                     label: company.type,
-                                    onTap: () {
-                                      // Handle tap here
+                                    onTap: () async {
+                                      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                                      if (currentUserId == null) return;
+
+                                      // Lấy thêm thông tin cư dân
+                                      final residentSnapshot = await FirebaseFirestore.instance
+                                          .collection('residents')
+                                          .doc(currentUserId)
+                                          .get();
+
+                                      final residentData = residentSnapshot.data();
+                                      if (residentData == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Không tìm thấy thông tin cư dân')),
+                                        );
+                                        return;
+                                      }
+
+                                      final updateService = await fetchActiveUpdateService(company.companyId ?? '');
+                                      if (updateService == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Không có dịch vụ được duyệt cho công ty này.')),
+                                        );
+                                        return;
+                                      }
+
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => CompanyDetailPage(
+                                            company: company,
+                                            updateService: updateService,
+                                            residentName: residentInfo!.fullName,
+                                            apartmentNumber: apartmentName,
+                                            building: building,
+                                            phone: residentInfo!.phone,
+                                          ),
+                                        ),
+                                      );
                                     },
                                   ),
+
                                 );
                               }).toList(),
                             ),
                           );
                         },
-                      ),)
+                      )
+                        ,
+                      )
                     ],
                   ),
                 ),

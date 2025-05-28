@@ -167,20 +167,18 @@ const convertDocxToPdf = onObjectFinalized(
     }
     console.log("✅ Upload PDF lên Firebase thành công:", pdfPath);
 
-    // 6. Lấy signed URL và cập nhật Firestore
+    // 6. Đặt file PDF thành public để không hết hạn URL
     try {
-      const signedUrlArr = await bucket.file(pdfPath).getSignedUrl({
-        action: "read",
-        expires: Date.now() + 365 * 24 * 60 * 60 * 1000,
-      });
+      await bucket.file(pdfPath).makePublic();
+      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${pdfPath}`;
 
       await admin.firestore().collection("contracts").doc(contractId).update({
-        pdfUrl: signedUrlArr[0],
+        pdfUrl: publicUrl,
         pdfGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      console.log("✅ Cập nhật Firestore thành công");
+      console.log("✅ Cập nhật Firestore thành công với URL public:", publicUrl);
     } catch (e) {
-      console.error("❌ Cập nhật Firestore lỗi:", e.message);
+      console.error("❌ Cập nhật Firestore hoặc set public URL lỗi:", e.message);
     }
 
     // Cleanup file tạm
