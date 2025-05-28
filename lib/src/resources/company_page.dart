@@ -1,15 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:do_an/src/resources/problem_history_page.dart';
 import 'package:do_an/src/resources/provider/company_image_provider.dart';
-import 'package:do_an/src/resources/provider/staff_image_provider.dart';
-import 'package:do_an/src/resources/staff_incident_page.dart';
+import 'package:do_an/src/resources/resident_request_list_page.dart';
+import 'package:do_an/src/resources/service_list_page.dart';
+import 'package:do_an/src/resources/update_service_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import '../../base_staff_info.dart';
 import 'base_company_info.dart';
 import 'login_page.dart';
 
@@ -33,7 +32,6 @@ class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
     }
   }
 
-
   Future<void> _removeFcmToken() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
@@ -46,7 +44,7 @@ class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
       }
 
       DocumentReference userRef =
-      FirebaseFirestore.instance.collection('companies').doc(userId);
+          FirebaseFirestore.instance.collection('companies').doc(userId);
       DocumentSnapshot userDoc = await userRef.get();
 
       if (!userDoc.exists) {
@@ -101,7 +99,7 @@ class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => LoginPage()),
-                      (route) => false,
+                  (route) => false,
                 );
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
@@ -195,7 +193,8 @@ class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
                                   height: 140.r,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white,
+                                    border: Border.all(
+                                        color: Colors.white,
                                         width: 2), // Viền trắng dày 4
                                   ),
                                   child: ClipOval(
@@ -205,11 +204,9 @@ class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
                               },
                             ),
                           ),
-
                           SizedBox(height: 20.h),
                           Text(
-                            "Xin chào, ${companyInfo?.name??
-                                "công ty"} 👋",
+                            "Xin chào, ${companyInfo?.name ?? "công ty"} 👋",
                             style: TextStyle(
                               fontFamily: "Oswald",
                               fontSize: 25.sp,
@@ -223,66 +220,104 @@ class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 10.h,),
-              // Container(
-              //   child: Padding(padding: EdgeInsets.all(10),
-              //       child: Column(
-              //         crossAxisAlignment: CrossAxisAlignment.start,
-              //         children: [
-              //           Text('     Tiện ích cơ bản', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
-              //           GridView.count(
-              //             crossAxisCount: 2,
-              //             shrinkWrap: true,
-              //             physics: NeverScrollableScrollPhysics(),
-              //             padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
-              //             mainAxisSpacing: 30, // Khoảng cách dọc giữa các hàng
-              //             crossAxisSpacing: 30, // Khoảng cách ngang giữa các cột
-              //             children: [
-              //               buildServiceCard(
-              //                 context,
-              //                 svgPath: 'assets/images/warning.svg',
-              //                 label: 'Sự cố mới',
-              //                 onTap: () {
-              //                   Navigator.push(
-              //                     context,
-              //                     MaterialPageRoute(builder: (context) => StaffIncidentPage(staffId: staffInfo!.uid,)),
-              //                   );
-              //                 },
-              //               ),
-              //               buildServiceCard(
-              //                 context,
-              //                 svgPath: 'assets/images/clipboard.svg',
-              //                 label: 'Lịch sử sự cố',
-              //                 onTap: () {
-              //                   Navigator.push(
-              //                     context,
-              //                     MaterialPageRoute(
-              //                       builder: (context) => ProblemHistoryScreen(
-              //                         staffId: staffInfo!.uid, // Truyền đúng staffId
-              //                       ),
-              //                     ),
-              //                   );
-              //                 },
-              //               ),
-              //
-              //             ],
-              //           ),
-              //         ],
-              //       )
-              //   ),)
+              SizedBox(
+                height: 10.h,
+              ),
+              Container(
+                child: Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 40.h,),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.only(
+                              left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
+                          mainAxisSpacing: 30,
+                          // Khoảng cách dọc giữa các hàng
+                          crossAxisSpacing: 30,
+                          // Khoảng cách ngang giữa các cột
+                          children: [
+                            buildServiceCard(
+                              context,
+                              svgPath: 'assets/images/request.svg',
+                              label: 'Danh sách đăng kí',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ResidentRequestListPage(
+                                      companyId: companyInfo!.companyId!,
+                                      // ID công ty hiện tại
+                                      companyName: companyInfo!.name,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            buildServiceCard(
+                              context,
+                              svgPath: 'assets/images/update_service.svg',
+                              label: 'Cập nhật dịch vụ',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => UpdateServicePage(
+                                        company: companyInfo!),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        GridView.count(
+                          crossAxisCount: 1,
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.only(
+                              left: 120.w, right: 120.w, top: 35.h, bottom: 40.h),
+                          mainAxisSpacing: 30,
+                          // Khoảng cách dọc giữa các hàng
+                          crossAxisSpacing: 30,
+                          // Khoảng cách ngang giữa các cột
+                          children: [
+                            buildServiceCard(
+                              context,
+                              svgPath: 'assets/images/pending_status.svg',
+                              label: 'Trạng thái chờ duyệt',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ServiceUpdateListPage(
+                                        companyId: companyInfo!.companyId!),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
 
+                      ],
+                    )),
+              )
             ],
           )
         ],
       ),
     );
   }
+
   Widget buildServiceCard(
-      BuildContext context, {
-        required String svgPath, // Đường dẫn ảnh SVG
-        required String label,
-        required VoidCallback onTap,
-      }) {
+    BuildContext context, {
+    required String svgPath, // Đường dẫn ảnh SVG
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 100),
       tween: Tween(begin: 1.0, end: 1.0),
@@ -312,10 +347,12 @@ class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
                       svgPath,
                       width: 50,
                       height: 50,
-
                     ),
                     const SizedBox(height: 8),
-                    Text(label, style:TextStyle(fontWeight: FontWeight.bold,fontSize: 12.sp),textAlign: TextAlign.center),
+                    Text(label,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 12.sp),
+                        textAlign: TextAlign.center),
                   ],
                 ),
               ),

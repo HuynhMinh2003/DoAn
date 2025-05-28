@@ -48,8 +48,7 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
 
   Future<void> updateCompanyInfo(String phone,
       String email,
-      String type,
-      String description,) async {
+     ) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       final uid = user?.uid;
@@ -60,7 +59,7 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
         await FirebaseFirestore.instance
             .collection('companies')
             .doc(uid)
-            .update({'phone': phone, 'type': type, 'description': description});
+            .update({'phone': phone});
       };
 
       if (email != user.email) {
@@ -148,8 +147,6 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
             .update({
           'phone': phone,
           'email': email,
-          'type': type,
-          'description': description,
         });
       }
 
@@ -268,12 +265,6 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
                                 title: "Địa chỉ",
                                 value: companyInfo?.address ?? ""),
                             InfoRow(
-                                title: "Loại dịch vụ",
-                                value: companyInfo?.type ?? ""),
-                            InfoRow(
-                              title: "Mô tả",
-                                value: companyInfo?.description ?? ""),
-                            InfoRow(
                               title: "Ngày tạo hồ sơ",
                               value: companyInfo?.createdAt != null
                                   ? DateFormat('dd/MM/yyyy – HH:mm')
@@ -344,8 +335,6 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
   void showEditDialog(BuildContext context) {
     final phoneController = TextEditingController(text: companyInfo?.phone ?? '');
     final emailController = TextEditingController(text: companyInfo?.email ?? '');
-    final typeController = TextEditingController(text: companyInfo?.type ?? '');
-    final descriptionController = TextEditingController(text: companyInfo?.description ?? '');
 
     final bloc = EditCompanyBloc();
 
@@ -423,21 +412,6 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
                         );
                       },
                     ),
-                    const SizedBox(height: 15),
-
-                    /// ✅ Type
-                    TextField(
-                      controller: typeController,
-                      decoration: const InputDecoration(labelText: 'Loại hình công ty'),
-                    ),
-                    const SizedBox(height: 15),
-
-                    /// ✅ Description
-                    TextField(
-                      controller: descriptionController,
-                      decoration: const InputDecoration(labelText: 'Mô tả'),
-                      maxLines: 3,
-                    ),
                   ],
                 ),
               ),
@@ -483,7 +457,7 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
                         }
                       }
 
-                      await updateCompanyInfo(phoneController.text, emailController.text, typeController.text, descriptionController.text);
+                      await updateCompanyInfo(phoneController.text, emailController.text);
 
                       bloc.dispose();
                       Navigator.of(context, rootNavigator: true).pop(); // close loading
