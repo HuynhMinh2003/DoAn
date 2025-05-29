@@ -129,7 +129,7 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
         'price': price,
         'fileLink': fileLink,
         'imageServiceUrl': imageUrl ?? _imagePreviewUrl,
-        'isEnable': false,
+        'status': "Đang chờ duyệt",
         'timestamp': FieldValue.serverTimestamp(),
       });
 
