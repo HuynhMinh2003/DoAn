@@ -4,6 +4,7 @@ import 'package:do_an/src/resources/ktv_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'csn_info_page.dart';
 import 'csn_page.dart';
@@ -83,7 +84,12 @@ class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
         // Email khác nhau, cập nhật Firestore
         await _firestore.collection('staffs').doc(uid).update({'email': currentEmail});
         print('Đã đồng bộ email mới từ Firebase Auth lên Firestore');
-        showSnackBar('Email đã được cập nhật thành công.');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Email đã được cập nhật thành công.',style: TextStyle(fontSize: 15.sp),),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e) {
       print('❌ Lỗi khi đồng bộ email: $e');
@@ -152,7 +158,7 @@ class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
     return Scaffold(
       body: CupertinoTabScaffold(
         tabBar: CupertinoTabBar(
-          backgroundColor: Color(0xFF00C2B3),
+          backgroundColor: Colors.teal,
           activeColor: Colors.white,
           items: [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
