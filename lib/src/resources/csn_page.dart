@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/resources/problem_history_page.dart';
 import 'package:do_an/src/resources/provider/staff_image_provider.dart';
 import 'package:do_an/src/resources/staff_incident_page.dart';
+import 'package:do_an/src/resources/water_reading_hisistory_page.dart';
 import 'package:do_an/src/resources/water_reading_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -130,7 +131,7 @@ class _CSNPageState extends BaseStaffInfoScreen<CSNPage> {
                     bottomRight: Radius.circular(30.r),
                   ),
                 ),
-                color: Color(0xFF00C2B3),
+                color: Colors.teal,
                 child: Stack(
                   children: [
                     Positioned(
@@ -228,7 +229,7 @@ class _CSNPageState extends BaseStaffInfoScreen<CSNPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('     Tiện ích cơ bản', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
+                        SizedBox(height: 90.h,),
                         GridView.count(
                           crossAxisCount: 2,
                           shrinkWrap: true,
@@ -239,12 +240,29 @@ class _CSNPageState extends BaseStaffInfoScreen<CSNPage> {
                           children: [
                             buildServiceCard(
                               context,
-                              svgPath: 'assets/images/warning.svg',
+                              svgPath: 'assets/images/csn.svg',
                               label: 'Ghi chỉ số nước',
                               onTap: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => WaterReadingScreen()),
+                                  MaterialPageRoute(builder: (context) => WaterReadingScreen(staffId: staffInfo!.uid, staffName: staffInfo!.fullName)),
+                                );
+                              },
+                            ),
+
+                            buildServiceCard(
+                              context,
+                              svgPath: 'assets/images/history.svg',
+                              label: 'Lịch sử ghi',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => WaterReadingHistoryScreen(
+                                      staffId: staffInfo!.uid,
+                                      staffName: staffInfo!.fullName,
+                                    ),
+                                  ),
                                 );
                               },
                             ),

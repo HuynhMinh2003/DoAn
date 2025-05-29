@@ -172,7 +172,7 @@ class _CSNInfoPageState extends BaseStaffInfoScreen<CSNInfoPage> {
                     fontWeight: FontWeight.bold),
               ),
             ),
-            backgroundColor: Color(0xFF00C2B3)
+            backgroundColor: Colors.teal
             ,
           ),
           body: isLoading
