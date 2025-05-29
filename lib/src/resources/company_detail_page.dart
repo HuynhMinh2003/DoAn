@@ -110,6 +110,7 @@ class CompanyDetailPage extends StatelessWidget {
                     'phone': phone,
                     'requestTime': requestTime,
                     'note': note,
+                    "seenBy": null,
                     'status': 'Đang chờ duyệt',
                     'createdAt': Timestamp.now(),
                   };

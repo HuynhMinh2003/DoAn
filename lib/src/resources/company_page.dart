@@ -20,6 +20,8 @@ class CompanyPage extends StatefulWidget {
 }
 
 class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
+  final String? userId = FirebaseAuth.instance.currentUser?.uid;
+
   @override
   void initState() {
     super.initState();
@@ -241,20 +243,47 @@ class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
                           crossAxisSpacing: 30,
                           // Khoảng cách ngang giữa các cột
                           children: [
-                            buildServiceCard(
-                              context,
-                              svgPath: 'assets/images/request.svg',
-                              label: 'Danh sách đăng kí',
-                              onTap: () {
-                                Navigator.push(
+                            StreamBuilder<QuerySnapshot>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('serviceRequests')
+                                  .where('companyId', isEqualTo: companyInfo?.companyId)
+                                  .where('status', isEqualTo: 'Đang chờ duyệt')
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                final docs = snapshot.data?.docs ?? [];
+
+                                final unseenDocs = docs.where((doc) {
+                                  final data = doc.data() as Map<String, dynamic>;
+                                  final seenBy = data.containsKey('seenBy') ? data['seenBy'] as String? : null;
+                                  return userId != null && seenBy != userId;
+                                }).toList();
+
+                                final count = unseenDocs.length;
+
+                                return buildServiceCard1(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ResidentRequestListPage(
-                                      companyId: companyInfo!.companyId!,
-                                      // ID công ty hiện tại
-                                      companyName: companyInfo!.name,
-                                    ),
-                                  ),
+                                  svgPath: 'assets/images/request.svg',
+                                  label: 'Danh sách đăng kí',
+                                  badgeCount: count,
+                                  onTap: () async {
+                                    if (userId != null) {
+                                      for (final doc in unseenDocs) {
+                                        await doc.reference.update({
+                                          'seenBy': userId,
+                                        });
+                                      }
+                                    }
+
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ResidentRequestListPage(
+                                          companyId: companyInfo!.companyId!,
+                                          companyName: companyInfo!.name,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 );
                               },
                             ),
@@ -362,4 +391,85 @@ class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
       },
     );
   }
+
+  Widget buildServiceCard1(
+      BuildContext context, {
+        required String svgPath,
+        required String label,
+        required VoidCallback onTap,
+        int? badgeCount,
+      }) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 100),
+      tween: Tween(begin: 1.0, end: 1.0),
+      builder: (context, scale, child) {
+        return Stack(
+          children: [
+            Material(
+              color: Colors.white,
+              elevation: 3,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(12),
+                splashColor: Colors.blue.withOpacity(0.2),
+                highlightColor: Colors.blue.withOpacity(0.1),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  width: double.infinity,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SvgPicture.asset(
+                        svgPath,
+                        width: 50,
+                        height: 50,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.sp,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (badgeCount != null && badgeCount > 0)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 24,
+                    minHeight: 24,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$badgeCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+
 }

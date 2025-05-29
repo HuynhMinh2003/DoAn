@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/resources/problem_history_page.dart';
 import 'package:do_an/src/resources/provider/staff_image_provider.dart';
 import 'package:do_an/src/resources/staff_incident_page.dart';
+import 'package:do_an/src/resources/water_reading_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -223,51 +224,36 @@ class _CSNPageState extends BaseStaffInfoScreen<CSNPage> {
               ),
               SizedBox(height: 10.h,),
               Container(
-                // child: Padding(padding: EdgeInsets.all(10),
-                //     child: Column(
-                //       crossAxisAlignment: CrossAxisAlignment.start,
-                //       children: [
-                //         Text('     Tiện ích cơ bản', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
-                //         GridView.count(
-                //           crossAxisCount: 2,
-                //           shrinkWrap: true,
-                //           physics: NeverScrollableScrollPhysics(),
-                //           padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
-                //           mainAxisSpacing: 30, // Khoảng cách dọc giữa các hàng
-                //           crossAxisSpacing: 30, // Khoảng cách ngang giữa các cột
-                //           children: [
-                //             buildServiceCard(
-                //               context,
-                //               svgPath: 'assets/images/warning.svg',
-                //               label: 'Sự cố mới',
-                //               onTap: () {
-                //                 Navigator.push(
-                //                   context,
-                //                   MaterialPageRoute(builder: (context) => StaffIncidentPage(staffId: staffInfo!.uid,)),
-                //                 );
-                //               },
-                //             ),
-                //             buildServiceCard(
-                //               context,
-                //               svgPath: 'assets/images/clipboard.svg',
-                //               label: 'Lịch sử sự cố',
-                //               onTap: () {
-                //                 Navigator.push(
-                //                   context,
-                //                   MaterialPageRoute(
-                //                     builder: (context) => ProblemHistoryScreen(
-                //                       staffId: staffInfo!.uid, // Truyền đúng staffId
-                //                     ),
-                //                   ),
-                //                 );
-                //               },
-                //             ),
-                //
-                //           ],
-                //         ),
-                //       ],
-                //     )
-                // ),
+                child: Padding(padding: EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('     Tiện ích cơ bản', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
+                          mainAxisSpacing: 30, // Khoảng cách dọc giữa các hàng
+                          crossAxisSpacing: 30, // Khoảng cách ngang giữa các cột
+                          children: [
+                            buildServiceCard(
+                              context,
+                              svgPath: 'assets/images/warning.svg',
+                              label: 'Ghi chỉ số nước',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => WaterReadingScreen()),
+                                );
+                              },
+                            ),
+
+                          ],
+                        ),
+                      ],
+                    )
+                ),
                 )
 
             ],

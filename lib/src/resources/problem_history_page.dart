@@ -108,7 +108,7 @@ class ProblemHistoryScreen extends StatelessWidget {
           final docs = snapshot.data?.docs ?? [];
 
           if (docs.isEmpty) {
-            return Center(child: Text("Không có lịch sử sự cố nào.",style: TextStyle(fontSize: 4.sp)));
+            return Center(child: Text("Không có lịch sử sự cố nào.",style: TextStyle(fontSize: 15.sp)));
           }
 
           return ListView.builder(

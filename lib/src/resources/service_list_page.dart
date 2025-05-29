@@ -21,7 +21,7 @@ class ServiceUpdateListPage extends StatelessWidget {
   void showDetailDialog(BuildContext context, Map<String, dynamic> data, String type, String description) {
     final String price = data['price'] ?? '';
     final String fileLink = data['fileLink'] ?? '';
-    final bool isEnable = data['isEnable'] ?? false;
+    final String status = data['status'] ?? '';
     final Timestamp? timestamp = data['timestamp'];
 
     String dateString;
@@ -49,7 +49,7 @@ class ServiceUpdateListPage extends StatelessWidget {
             SizedBox(height: 20.h),
             Text('Giá: $price', style: TextStyle(fontSize: 15.sp)),
             SizedBox(height: 20.h),
-            Text('Trạng thái: ${isEnable ? "Đã duyệt" : "Đang duyệt"}', style: TextStyle(fontSize: 15.sp)),
+            Text('Trạng thái: $status"}', style: TextStyle(fontSize: 15.sp)),
             SizedBox(height: 20.h),
             Text('Ngày cập nhật: $dateString', style: TextStyle(fontSize: 15.sp)),
             if (fileLink.isNotEmpty)
@@ -142,7 +142,7 @@ class ServiceUpdateListPage extends StatelessWidget {
                   final data = doc.data()! as Map<String, dynamic>;
 
                   final String imageUrl = data['imageServiceUrl'] ?? '';
-                  final bool isEnable = data['isEnable'] ?? false;
+                  final String status = data['status'] ?? '';
 
                   return Card(
                     shape: RoundedRectangleBorder(
@@ -196,18 +196,27 @@ class ServiceUpdateListPage extends StatelessWidget {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
-                                            color: isEnable ? Colors.green[100] : Colors.orange[100],
+                                            color: status == 'Đã duyệt'
+                                                ? Colors.green[100]
+                                                : status == 'Từ chối duyệt'
+                                                ? Colors.red[100]
+                                                : Colors.orange[100],
                                             borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: Text(
-                                            isEnable ? 'Đã duyệt' : 'Đang duyệt',
+                                            status,
                                             style: TextStyle(
-                                              color: isEnable ? Colors.green[800] : Colors.orange[800],
+                                              color: status == 'Đã duyệt'
+                                                  ? Colors.green[800]
+                                                  : status == 'Từ chối duyệt'
+                                                  ? Colors.red[800]
+                                                  : Colors.orange[800],
                                               fontWeight: FontWeight.w600,
                                               fontSize: 15.sp,
                                             ),
                                           ),
                                         ),
+
                                       ],
                                     ),
                                     SizedBox(height: 10.h),
