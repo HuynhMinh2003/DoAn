@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/screens/main/main_screen.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
@@ -17,7 +18,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../screens/main/main_screen.dart';
 import 'home_first_company_page.dart';
 
 class LoginPage extends StatefulWidget {

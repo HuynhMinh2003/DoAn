@@ -6,6 +6,7 @@ import 'package:do_an/src/resources/ds_nhanvien_page.dart';
 import 'package:do_an/src/resources/resident_page.dart';
 import 'package:do_an/src/resources/tao_tk_ctdv_ngoai.dart';
 import 'package:do_an/src/resources/tao_tk_nv.dart';
+import 'package:do_an/src/resources/wait_update_service_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -131,7 +132,7 @@ class SideMenu extends StatelessWidget {
                         title: "Cập nhật dịch vụ chờ duyệt",
                         svgSrc: "assets/icons/wait_update_service.svg",
                         press: () {
-                          onMenuItemPressed(ListIncidentPage());
+                          onMenuItemPressed(WaitUpdateServicePage());
                         },
                         isMenuOpen: isMenuOpen,
                       ),
