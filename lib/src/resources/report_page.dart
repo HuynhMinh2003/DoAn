@@ -68,6 +68,7 @@ class _ReportPageState extends BaseResidentInfoScreen<ReportPage> {
         'building': building,
         'apartmentAddress': apartmentName,
         'priority': null,
+        'seenBy': null,
         'status': 'Đang chờ xử lí',
         'imageUrl': imageUrl,
         'createdAt': FieldValue.serverTimestamp(),
