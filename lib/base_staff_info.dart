@@ -49,7 +49,7 @@ abstract class BaseStaffInfoScreen<T extends StatefulWidget> extends State<T> {
 
   void showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(content: Text(message),),
     );
   }
 

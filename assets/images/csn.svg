@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" id="agreement-paper">
+  <polygon fill="#b8e5fb" points="120 24 32 110.508 32 488 368 488 368 24 120 24"></polygon>
+  <polygon fill="#13bcdd" points="32 112 120 112 120 24 32 112"></polygon>
+  <rect width="40" height="248" x="363.899" y="181.519" fill="#0cad39" transform="rotate(22.868 383.903 305.523)"></rect>
+  <rect width="40" height="48" x="421.414" y="145.152" fill="#29e35d" transform="rotate(22.868 441.418 169.154)"></rect>
+  <polygon fill="#018934" points="317.058 464 354.139 427.545 317.283 412.001 317.058 464"></polygon>
+  <path fill="#29e35d" d="M450.064,303.037l-14.742-6.218,34.2-81.084-22.114-9.326,6.218-14.742L483.109,204.1a8,8,0,0,1,4.262,10.48Z"></path>
+  <rect width="88" height="16" x="232" y="112" fill="#032e6f"></rect>
+  <rect width="240" height="16" x="80" y="168" fill="#032e6f"></rect>
+  <rect width="240" height="16" x="80" y="224" fill="#032e6f"></rect>
+  <rect width="240" height="16" x="80" y="280" fill="#032e6f"></rect>
+  <rect width="240" height="16" x="80" y="336" fill="#032e6f"></rect>
+  <rect width="240" height="16" x="80" y="392" fill="#032e6f"></rect>
+</svg>
