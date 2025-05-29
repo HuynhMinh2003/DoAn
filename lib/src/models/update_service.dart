@@ -1,31 +1,42 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class UpdateService {
-  final String id;
-  final String imageUrl;
-  final String price;
+class CompanyServiceUpdate {
+  final String companyId;
+  final String companyName;
+  final String companyType;
   final String fileLink;
+  final String imageServiceUrl;
   final bool isEnable;
-  final Timestamp? timestamp;
+  final String price;
+  final Timestamp timestamp;
 
-  UpdateService({
-    required this.id,
-    required this.imageUrl,
-    required this.price,
+  CompanyServiceUpdate({
+    required this.companyId,
+    required this.companyName,
+    required this.companyType,
     required this.fileLink,
+    required this.imageServiceUrl,
     required this.isEnable,
+    required this.price,
     required this.timestamp,
   });
 
-  factory UpdateService.fromDoc(DocumentSnapshot doc) {
+  factory CompanyServiceUpdate.fromFirestore({
+    required String companyId,
+    required String companyName,
+    required String companyType,
+    required DocumentSnapshot doc,
+  }) {
     final data = doc.data() as Map<String, dynamic>;
-    return UpdateService(
-      id: doc.id,
-      imageUrl: data['imageServiceUrl'] ?? '',
-      price: data['price'] ?? '',
+    return CompanyServiceUpdate(
+      companyId: companyId,
+      companyName: companyName,
+      companyType: companyType,
       fileLink: data['fileLink'] ?? '',
+      imageServiceUrl: data['imageServiceUrl'] ?? '',
       isEnable: data['isEnable'] ?? false,
-      timestamp: data['timestamp'],
+      price: data['price'] ?? '',
+      timestamp: data['timestamp'] ?? Timestamp.now(),
     );
   }
 }

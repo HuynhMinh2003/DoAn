@@ -91,7 +91,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
     for (var doc in companyDocs.docs) {
       final updateServiceSnap = await doc.reference
           .collection('updateService')
-          .where('isEnable', isEqualTo: true)
+          .where('status', isEqualTo: "Đã duyệt")
           .limit(1)
           .get();
 
@@ -110,7 +110,8 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
         .collection('companies')
         .doc(companyId)
         .collection('updateService')
-        .where('isEnable', isEqualTo: true)
+        .where('status', isEqualTo: "Đã duyệt")
+        .orderBy('timestamp', descending: true) // Sắp xếp bản mới nhất trước
         .limit(1)
         .get();
 
@@ -118,6 +119,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
 
     return querySnapshot.docs.first.data();
   }
+
 
   void _logout() {
     showDialog(
