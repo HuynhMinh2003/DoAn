@@ -6,8 +6,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 
-class NotificationListPage extends StatelessWidget {
-  const NotificationListPage({super.key});
+class NotificationListKTVPage extends StatelessWidget {
+  const NotificationListKTVPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +23,11 @@ class NotificationListPage extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: Color(0xFF3C4DFF),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-            .collection("information")
+            .collection("information_staffs")
             .orderBy("timestamp", descending: true)
             .snapshots(),
         builder: (context, snapshot) {

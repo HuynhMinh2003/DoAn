@@ -163,8 +163,7 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
                               builder: (context, imageProvider, _) {
                                 Widget avatarChild;
 
-                                if (imageProvider.avatarUrl != null &&
-                                    imageProvider.avatarUrl!.isNotEmpty) {
+                                if (imageProvider.avatarUrl != null && imageProvider.avatarUrl!.isNotEmpty) {
                                   avatarChild = Image.network(
                                     imageProvider.avatarUrl!,
                                     width: 140.r,
@@ -173,18 +172,18 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
                                     errorBuilder: (context, error, stackTrace) {
                                       return SvgPicture.asset(
                                         'assets/images/default_avatar.svg',
-                                        width: 70.r,
-                                        height: 70.r,
-                                        fit: BoxFit.cover,
+                                        width: 65.r,
+                                        height: 65.r,
+                                        fit: BoxFit.contain,
                                       );
                                     },
                                   );
                                 } else {
                                   avatarChild = SvgPicture.asset(
                                     'assets/images/default_avatar.svg',
-                                    width: 70.r,
-                                    height: 70.r,
-                                    fit: BoxFit.cover,
+                                    width: 65.r,
+                                    height: 65.r,
+                                    fit: BoxFit.contain,
                                   );
                                 }
 
@@ -193,9 +192,10 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
                                   height: 140.r,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white,
-                                        width: 2), // Viền trắng dày 4
+                                    color: Colors.white, // ✅ Nền trắng
+                                    border: Border.all(color: Colors.white, width: 2), // ✅ Viền trắng
                                   ),
+                                  alignment: Alignment.center,
                                   child: ClipOval(
                                     child: avatarChild,
                                   ),

@@ -8,7 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'ds_congty_mobile_page.dart' if (dart.library.html) 'ds_congty_web_page.dart';
+import 'package:do_an/src/resources/admin/ds_congty_mobile_page.dart' if (dart.library.html) 'package:do_an/src/resources/admin/ds_congty_web_page.dart';
 
 class CompanyListPage extends StatefulWidget {
   const CompanyListPage({super.key});
