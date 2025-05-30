@@ -3,12 +3,10 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../custom_paginated_table.dart';
-import '../models/incident.dart';
-import 'ds_nhanvien_mobile_page.dart' if (dart.library.html) 'ds_nhanvien_web_page.dart';
+import '../../../custom_paginated_table.dart';
+import 'package:do_an/src/resources/wait_update_service_mobile_page.dart' if (dart.library.html) 'wait_update_service_web_page.dart';
 
 class WaitUpdateServicePage extends StatefulWidget {
   const WaitUpdateServicePage({super.key});
@@ -327,7 +325,20 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                               },
                             ),
                           ),
-                          SizedBox(width: 5.w),
+                          Flexible(
+                            flex:1,child: ElevatedButton(
+                            onPressed: () => exportServicesToExcel(_filteredServices),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.upload),
+                                SizedBox(width: 5.w,),
+                                Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),)
+                              ],
+                            ),
+                          ),),
+                          SizedBox(width:5.w),
+
                         ],
                       ),
                       SizedBox(height: 10.h),

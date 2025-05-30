@@ -13,7 +13,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-import 'ds_congty_mobile_page.dart' if (dart.library.html) 'ds_congty_web_page.dart';
+import 'package:do_an/src/resources/admin/ds_congty_mobile_page.dart' if (dart.library.html) 'ds_congty_web_page.dart';
 
 class CompanyListPage extends StatefulWidget {
   const CompanyListPage({super.key});

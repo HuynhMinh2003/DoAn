@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/resources/base_resident_info.dart';
 import 'package:do_an/src/resources/login_page.dart';
+import 'package:do_an/src/resources/payment_summary_screen_page.dart';
 import 'package:do_an/src/resources/pdf_Viewer_Screen_page.dart';
 import 'package:do_an/src/resources/provider/resident_image_provider.dart';
 import 'package:do_an/src/resources/report_page.dart';
@@ -301,7 +302,8 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                             context,
                             svgPath: 'assets/images/water.svg',
                             label: 'Chỉ số nước',
-                            onTap: () {},
+                            onTap: () {
+                            },
                           ),
                         ],
                       ),
@@ -368,7 +370,23 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                             context,
                             svgPath: 'assets/images/paycard.svg',
                             label: 'Thanh toán',
-                            onTap: () {},
+                            onTap: () {
+                              final contractId = residentInfo?.contractId;
+                              if (contractId != null && contractId.isNotEmpty) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PaymentScreen(contractId: contractId),
+                                  ),
+                                );
+                              } else {
+                                // Hiển thị thông báo nếu chưa có hợp đồng
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Không tìm thấy hợp đồng. Vui lòng liên hệ ban quản lý.")),
+                                );
+                              }
+                            },
+
                           ),
                         ],
                       ),

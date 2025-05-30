@@ -3,12 +3,13 @@ import 'package:do_an/base_staff_info.dart';
 import 'package:do_an/src/resources/base_company_info.dart';
 import 'package:do_an/src/resources/company_page.dart';
 import 'package:do_an/src/resources/ktv_page.dart';
+import 'package:do_an/src/resources/notification_list_company_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'company_info_page.dart';
-import 'notification_list_page.dart';
+import 'notification_list_resident_page.dart';
 
 class HomeFirstCompanyPage extends StatelessWidget {
   const HomeFirstCompanyPage({super.key});
@@ -44,7 +45,7 @@ class _HomeFirstPageState extends BaseCompanyInfoScreen<HomeFirstPage> {
   void _getNotificationCount() {
     if (userId == null) return;
 
-    FirebaseFirestore.instance.collection("information").snapshots().listen((snapshot) {
+    FirebaseFirestore.instance.collection("information_companies").snapshots().listen((snapshot) {
       int count = snapshot.docs.where((doc) {
         List seenBy = doc["seenBy"] ?? [];
         return !seenBy.contains(userId);
@@ -102,7 +103,7 @@ class _HomeFirstPageState extends BaseCompanyInfoScreen<HomeFirstPage> {
   void _markNotificationsAsRead() async {
     if (userId == null) return;
 
-    var notifications = await FirebaseFirestore.instance.collection("information").get();
+    var notifications = await FirebaseFirestore.instance.collection("information_companies").get();
     WriteBatch batch = FirebaseFirestore.instance.batch();
 
     for (var doc in notifications.docs) {
@@ -118,7 +119,7 @@ class _HomeFirstPageState extends BaseCompanyInfoScreen<HomeFirstPage> {
     print("✅ Batch commit completed");
 
     // Kiểm tra ngay Firestore có cập nhật seenBy không
-    var updatedNotifications = await FirebaseFirestore.instance.collection("information").get();
+    var updatedNotifications = await FirebaseFirestore.instance.collection("information_companies").get();
     for (var doc in updatedNotifications.docs) {
       print("📌 Notification ID: ${doc.id}, seenBy: ${doc["seenBy"]}");
     }
@@ -145,7 +146,7 @@ class _HomeFirstPageState extends BaseCompanyInfoScreen<HomeFirstPage> {
     final List<Widget> tabs = [
       // const HomePage(),
       CompanyPage(),
-      NotificationListPage(),
+      NotificationListCompanyPage(),
       CompanyInfoPage(),
     ];
 

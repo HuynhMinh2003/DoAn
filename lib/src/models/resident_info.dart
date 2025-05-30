@@ -10,6 +10,7 @@ class ResidentInfo {
   final DateTime? birthDate;
   final String email;
   final String? apartmentId;
+  final String? contractId; // ✅ Thêm trường mới
   final String? imageUrl;
   final bool isExit;
   final DateTime? lastUpdate;
@@ -27,6 +28,7 @@ class ResidentInfo {
     this.birthDate,
     required this.email,
     this.apartmentId,
+    this.contractId, // ✅ Thêm vào constructor
     this.imageUrl,
     this.isExit = false,
     this.lastUpdate,
@@ -46,6 +48,7 @@ class ResidentInfo {
       birthDate: _parseDate(map['birthDate']),
       email: map['email'] ?? '',
       apartmentId: map['apartmentId'],
+      contractId: map['contractId'], // ✅ Lấy contractId từ map
       imageUrl: map['imageUrl'],
       isExit: map['isExit'] ?? false,
       lastUpdate: _parseDate(map['lastUpdate']),
@@ -63,6 +66,7 @@ class ResidentInfo {
   Map<String, dynamic> toMap() {
     final data = <String, dynamic>{
       'apartmentId': apartmentId,
+      'contractId': contractId, // ✅ Lưu contractId vào Firestore nếu cần
       'cccd': cccd,
       'email': email,
       'gender': gender,
@@ -72,12 +76,11 @@ class ResidentInfo {
       'phone': phone,
       'role': 4,
       'isExit': isExit,
-      // dùng server time cho lần cập nhật cuối
       'lastUpdate': FieldValue.serverTimestamp(),
     };
 
     // ngày sinh
-    data['birthDate'] = Timestamp.fromDate(birthDate!);
+    data['birthDate'] = birthDate != null ? Timestamp.fromDate(birthDate!) : null;
 
     // createdAt chỉ set lần đầu nếu chưa có
     if (createdAt != null) {
@@ -97,7 +100,6 @@ class ResidentInfo {
     return data;
   }
 
-
   ResidentInfo copyWith({
     String? residentId,
     String? fullName,
@@ -108,6 +110,7 @@ class ResidentInfo {
     DateTime? birthDate,
     String? email,
     String? apartmentId,
+    String? contractId, // ✅ copyWith cho contractId
     String? imageUrl,
     bool? isExit,
     DateTime? lastUpdate,
@@ -125,6 +128,7 @@ class ResidentInfo {
       birthDate: birthDate ?? this.birthDate,
       email: email ?? this.email,
       apartmentId: apartmentId ?? this.apartmentId,
+      contractId: contractId ?? this.contractId,
       imageUrl: imageUrl ?? this.imageUrl,
       isExit: isExit ?? this.isExit,
       lastUpdate: lastUpdate ?? this.lastUpdate,
