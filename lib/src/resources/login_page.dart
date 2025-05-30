@@ -206,7 +206,7 @@ class _LoginPageState extends State<LoginPage> {
                   top: 0,
                   left: 0,
                   child: Image.asset(
-                    'assets/images/two_circle.png',
+                    'assets/images/two_circle_blue.png',
                     width: 160,
                   ),
                 ),
