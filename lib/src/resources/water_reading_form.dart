@@ -131,22 +131,33 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
     final newText = newController.text.trim();
 
     bool hasError = false;
+    const int maxReading = 9999; // Giả sử đồng hồ max 9999
 
+    // Kiểm tra chỉ số cũ
+    final oldParsed = int.tryParse(oldText);
     if (oldText.isEmpty) {
       _oldReadingErrorController.add('Vui lòng nhập chỉ số cũ');
       hasError = true;
-    } else if (int.tryParse(oldText) == null) {
+    } else if (oldParsed == null) {
       _oldReadingErrorController.add('Chỉ số cũ không hợp lệ');
+      hasError = true;
+    } else if (oldParsed < 0 || oldParsed > maxReading) {
+      _oldReadingErrorController.add('Chỉ số cũ phải từ 0 đến $maxReading');
       hasError = true;
     } else {
       _oldReadingErrorController.add(null);
     }
 
+    // Kiểm tra chỉ số mới
+    final newParsed = int.tryParse(newText);
     if (newText.isEmpty) {
       _newReadingErrorController.add('Vui lòng nhập chỉ số mới');
       hasError = true;
-    } else if (int.tryParse(newText) == null) {
+    } else if (newParsed == null) {
       _newReadingErrorController.add('Chỉ số mới không hợp lệ');
+      hasError = true;
+    } else if (newParsed < 0 || newParsed > maxReading) {
+      _newReadingErrorController.add('Chỉ số mới phải từ 0 đến $maxReading');
       hasError = true;
     } else {
       _newReadingErrorController.add(null);
@@ -154,8 +165,35 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
 
     if (hasError) return;
 
-    oldReading = int.tryParse(oldText);
-    newReading = int.tryParse(newText);
+    final int oldReading = oldParsed!;
+    final int newReading = newParsed!;
+
+    // Nếu đồng hồ xoay vòng (newReading < oldReading), hỏi xác nhận
+    if (newReading < oldReading) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Xác nhận đồng hồ quay vòng'),
+          content: const Text(
+              'Chỉ số mới nhỏ hơn chỉ số cũ, đồng nghĩa đồng hồ có thể đã quay vòng.\nBạn có chắc chắn muốn lưu?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Đồng ý'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) {
+        // Người dùng hủy thì không lưu, thoát hàm
+        return;
+      }
+    }
 
     setState(() => loading = true);
 
@@ -203,7 +241,7 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
 
     setState(() => loading = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Lưu thành công'), backgroundColor: Colors.green),
+      const SnackBar(content: Text('Lưu thành công'), backgroundColor: Colors.green),
     );
   }
 

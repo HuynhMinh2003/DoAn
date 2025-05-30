@@ -263,218 +263,203 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Gửi xe',
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: "Oswald",
+              fontWeight: FontWeight.bold,
+              fontSize: 25.sp,
+            ),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+        ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: SafeArea(bottom: true, top: true, child: Stack(
-          children: [
-            Positioned(child: Image.asset('assets/images/two_circle_blue.png',width: 160,),
+        child: SafeArea(bottom: true, top: true,
+            child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+                left: 20.w,
+                right: 15.w,
+                top: 50.h
             ),
-            SingleChildScrollView(
-                padding: EdgeInsets.only(
-                    left: 20.w,
-                    right: 15.w,
-                    top: 140.h
-                ),
-                child: Padding(
-                  padding: EdgeInsets.only(left:2.w,bottom: 10.h ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SvgPicture.asset(
-                            'assets/images/parking.svg',
-                            width: 45.w,
-                            height: 45.h,
+            child: Padding(
+              padding: EdgeInsets.only(left:2.w,bottom: 10.h ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Danh sách xe đã đăng ký
+                  FutureBuilder<String?>(
+                    future: _getContractId(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        // Khi đang load Future, hiện shimmer
+                        return SizedBox(
+                          height: 200.h,
+                          child: ListView.builder(
+                            itemCount: 3,
+                            itemBuilder: (_, __) => _buildShimmerListItem(),
                           ),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'Gửi xe',
-                            style: TextStyle(
-                              fontFamily: "Oswald",
-                              fontWeight: FontWeight.w700,
-                              fontSize: 45.sp,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      // Danh sách xe đã đăng ký
-                      FutureBuilder<String?>(
-                        future: _getContractId(),
+                        );
+                      }
+                      if (!snapshot.hasData) return Text("Chưa có danh sách xe",style: TextStyle(fontSize: 25.sp),);
+                      final contractId = snapshot.data!;
+                      return StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('contracts')
+                            .doc(contractId)
+                            .collection('parkingRegistrations')
+                            .snapshots(),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            // Khi đang load Future, hiện shimmer
-                            return SizedBox(
-                              height: 200.h,
-                              child: ListView.builder(
-                                itemCount: 3,
-                                itemBuilder: (_, __) => _buildShimmerListItem(),
-                              ),
-                            );
-                          }
-                          if (!snapshot.hasData) return Text("Chưa có danh sách xe",style: TextStyle(fontSize: 25.sp),);
-                          final contractId = snapshot.data!;
-                          return StreamBuilder<QuerySnapshot>(
-                            stream: FirebaseFirestore.instance
-                                .collection('contracts')
-                                .doc(contractId)
-                                .collection('parkingRegistrations')
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              if (!snapshot.hasData) return CircularProgressIndicator();
-                              final docs = snapshot.data!.docs;
-                              return SizedBox(
-                                height: 450.h,
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: docs.length,
-                                  itemBuilder: (_, index) {
-                                    final doc = docs[index];
-                                    final canceled = doc['canceledAt'] != null;
-                                    final canceledAt = doc['canceledAt'] as Timestamp?;
-                                    final vehicleType = doc['vehicleType'];
-                                    final licensePlate = doc['licensePlate'];
-                                    final registeredAt = doc['registeredAt'] as Timestamp?;
-                                    final formattedDate = registeredAt != null
-                                        ? DateFormat('dd/MM/yyyy – HH:mm').format(registeredAt.toDate())
-                                        : 'Không rõ ngày';
-                                    final formattedCanceledDate = canceledAt != null
-                                        ? DateFormat('dd/MM/yyyy – HH:mm').format(canceledAt.toDate())
-                                        : '';
+                          if (!snapshot.hasData) return CircularProgressIndicator();
+                          final docs = snapshot.data!.docs;
+                          return SizedBox(
+                            height: 450.h,
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: docs.length,
+                              itemBuilder: (_, index) {
+                                final doc = docs[index];
+                                final canceled = doc['canceledAt'] != null;
+                                final canceledAt = doc['canceledAt'] as Timestamp?;
+                                final vehicleType = doc['vehicleType'];
+                                final licensePlate = doc['licensePlate'];
+                                final registeredAt = doc['registeredAt'] as Timestamp?;
+                                final formattedDate = registeredAt != null
+                                    ? DateFormat('dd/MM/yyyy – HH:mm').format(registeredAt.toDate())
+                                    : 'Không rõ ngày';
+                                final formattedCanceledDate = canceledAt != null
+                                    ? DateFormat('dd/MM/yyyy – HH:mm').format(canceledAt.toDate())
+                                    : '';
 
-                                    // Gán biểu tượng và tên tiếng Việt
-                                    String emoji;
-                                    String readableType;
-                                    switch (vehicleType) {
-                                      case 'car_roofed':
-                                        emoji = '🚗';
-                                        readableType = 'Ô tô (có mái che)';
-                                        break;
-                                      case 'car_unroofed':
-                                        emoji = '🚗';
-                                        readableType = 'Ô tô (không mái che)';
-                                        break;
-                                      case 'motorbike_roofed':
-                                        emoji = '🛵';
-                                        readableType = 'Xe máy (có mái che)';
-                                        break;
-                                      case 'motorbike_unroofed':
-                                        emoji = '🛵';
-                                        readableType = 'Xe máy (không mái che)';
-                                        break;
-                                      case 'bike_roofed':
-                                        emoji = '🚲';
-                                        readableType = 'Xe đạp (có mái che)';
-                                        break;
-                                      case 'bike_unroofed':
-                                        emoji = '🚲';
-                                        readableType = 'Xe đạp (không mái che)';
-                                        break;
-                                      default:
-                                        emoji = '❓';
-                                        readableType = 'Không xác định';
-                                    }
+                                // Gán biểu tượng và tên tiếng Việt
+                                String emoji;
+                                String readableType;
+                                switch (vehicleType) {
+                                  case 'car_roofed':
+                                    emoji = '🚗';
+                                    readableType = 'Ô tô (có mái che)';
+                                    break;
+                                  case 'car_unroofed':
+                                    emoji = '🚗';
+                                    readableType = 'Ô tô (không mái che)';
+                                    break;
+                                  case 'motorbike_roofed':
+                                    emoji = '🛵';
+                                    readableType = 'Xe máy (có mái che)';
+                                    break;
+                                  case 'motorbike_unroofed':
+                                    emoji = '🛵';
+                                    readableType = 'Xe máy (không mái che)';
+                                    break;
+                                  case 'bike_roofed':
+                                    emoji = '🚲';
+                                    readableType = 'Xe đạp (có mái che)';
+                                    break;
+                                  case 'bike_unroofed':
+                                    emoji = '🚲';
+                                    readableType = 'Xe đạp (không mái che)';
+                                    break;
+                                  default:
+                                    emoji = '❓';
+                                    readableType = 'Không xác định';
+                                }
 
-                                    return ListTile(
-                                      title: Text("$emoji $licensePlate"),
-                                      subtitle: Text(
-                                        "Loại: $readableType\n"
-                                            "Ngày đăng ký: $formattedDate"
-                                            "${canceledAt != null ? '\nNgày hủy: $formattedCanceledDate' : ''}",
-                                      ),
-                                      isThreeLine: true,
-                                      trailing: canceled
-                                          ? Text(
-                                        "     ⛔\nĐã hủy",
-                                        style: TextStyle(color: Colors.red, fontSize: 15.sp),
-                                      )
-                                          : Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          TextButton(
-                                            onPressed: () {
-                                              // Dialog xác nhận hủy
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) => AlertDialog(
-                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                                  title: Center(
-                                                    child: Text("Xác nhận hủy", style: TextStyle(fontSize: 30.sp, fontWeight: FontWeight.bold)),
-                                                  ),
-                                                  content: Text("Bạn có chắc chắn muốn hủy đăng ký xe này không?", style: TextStyle(fontSize: 15.sp)),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () => Navigator.pop(context),
-                                                      child: Text("Không", style: TextStyle(fontSize: 15.sp)),
-                                                    ),
-                                                    ElevatedButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                        _cancelRegistration(contractId, doc.id);
-                                                      },
-                                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                                      child: Text("Hủy đăng ký", style: TextStyle(fontSize: 15.sp, color: Colors.white)),
-                                                    ),
-                                                  ],
+                                return ListTile(
+                                  title: Text("$emoji $licensePlate"),
+                                  subtitle: Text(
+                                    "Loại: $readableType\n"
+                                        "Ngày đăng ký: $formattedDate"
+                                        "${canceledAt != null ? '\nNgày hủy: $formattedCanceledDate' : ''}",
+                                  ),
+                                  isThreeLine: true,
+                                  trailing: canceled
+                                      ? Text(
+                                    "     ⛔\nĐã hủy",
+                                    style: TextStyle(color: Colors.red, fontSize: 15.sp),
+                                  )
+                                      : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      TextButton(
+                                        onPressed: () {
+                                          // Dialog xác nhận hủy
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                              title: Center(
+                                                child: Text("Xác nhận hủy", style: TextStyle(fontSize: 30.sp, fontWeight: FontWeight.bold)),
+                                              ),
+                                              content: Text("Bạn có chắc chắn muốn hủy đăng ký xe này không?", style: TextStyle(fontSize: 15.sp)),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(context),
+                                                  child: Text("Không", style: TextStyle(fontSize: 15.sp)),
                                                 ),
-                                              );
-                                            },
-                                            child: Text("Hủy", style: TextStyle(fontSize: 15.sp)),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              _showEditDialog(context, contractId, doc.id, licensePlate, vehicleType);
-                                            },
-                                            child: Text("Sửa", style: TextStyle(fontSize: 15.sp)),
-                                          ),
-                                        ],
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                    _cancelRegistration(contractId, doc.id);
+                                                  },
+                                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                                  child: Text("Hủy đăng ký", style: TextStyle(fontSize: 15.sp, color: Colors.white)),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                        child: Text("Hủy", style: TextStyle(fontSize: 15.sp)),
                                       ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
+                                      TextButton(
+                                        onPressed: () {
+                                          _showEditDialog(context, contractId, doc.id, licensePlate, vehicleType);
+                                        },
+                                        child: Text("Sửa", style: TextStyle(fontSize: 15.sp)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
                           );
                         },
-                      ),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SizedBox(width: 1.w,),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context), child: Text("Quay lại", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),),),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (dialogContext) => _buildVehicleRegistrationDialog(dialogContext),
-                              );
-                            },
-                            icon: Icon(Icons.add),
-                            label: Text("Đăng ký xe", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueAccent,
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                          SizedBox(width: 1.w,),
-                        ],
-                      )
-
-                    ],
+                      );
+                    },
                   ),
-                )
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(width: 1.w,),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context), child: Text("Quay lại", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),),),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (dialogContext) => _buildVehicleRegistrationDialog(dialogContext),
+                          );
+                        },
+                        icon: Icon(Icons.add),
+                        label: Text("Đăng ký xe", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      SizedBox(width: 1.w,),
+                    ],
+                  )
+
+                ],
+              ),
             )
-          ],
-        )),
+        )
+        ),
       )
     );
   }
@@ -580,6 +565,8 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
       ],
     );
   }
+
+
 
   Widget _buildShimmerListItem() {
     return ListTile(
