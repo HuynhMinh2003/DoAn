@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/base_staff_info.dart';
 import 'package:do_an/src/resources/ktv_page.dart';
+import 'package:do_an/src/resources/notification_list_csn_page.dart';
+import 'package:do_an/src/resources/notification_list_ktv_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +11,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'csn_info_page.dart';
 import 'csn_page.dart';
 import 'ktv_info_page.dart';
-import 'notification_list_page.dart';
+import 'notification_list_resident_page.dart';
 
 class HomeFirstCSNPage extends StatelessWidget {
   const HomeFirstCSNPage({super.key});
@@ -18,10 +20,22 @@ class HomeFirstCSNPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF00C2B3)
+        colorScheme: ColorScheme(
+          brightness: Brightness.light,
+          primary: Colors.teal,
+          onPrimary: Colors.white,
+          secondary: Colors.grey,
+          onSecondary: Colors.white,
+          error: Colors.red,
+          onError: Colors.white,
+          background: Colors.white,
+          onBackground: Colors.black,
+          surface: Colors.white,
+          onSurface: Colors.black,
         ),
         useMaterial3: true,
       ),
+
       home: const HomeFirstPage(),
       debugShowCheckedModeBanner: false,
     );
@@ -45,7 +59,7 @@ class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
   void _getNotificationCount() {
     if (userId == null) return;
 
-    FirebaseFirestore.instance.collection("information").snapshots().listen((snapshot) {
+    FirebaseFirestore.instance.collection("information_staffs").snapshots().listen((snapshot) {
       int count = snapshot.docs.where((doc) {
         List seenBy = doc["seenBy"] ?? [];
         return !seenBy.contains(userId);
@@ -108,7 +122,7 @@ class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
   void _markNotificationsAsRead() async {
     if (userId == null) return;
 
-    var notifications = await FirebaseFirestore.instance.collection("information").get();
+    var notifications = await FirebaseFirestore.instance.collection("information_staffs").get();
     WriteBatch batch = FirebaseFirestore.instance.batch();
 
     for (var doc in notifications.docs) {
@@ -124,7 +138,7 @@ class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
     print("✅ Batch commit completed");
 
     // Kiểm tra ngay Firestore có cập nhật seenBy không
-    var updatedNotifications = await FirebaseFirestore.instance.collection("information").get();
+    var updatedNotifications = await FirebaseFirestore.instance.collection("information_staffs").get();
     for (var doc in updatedNotifications.docs) {
       print("📌 Notification ID: ${doc.id}, seenBy: ${doc["seenBy"]}");
     }
@@ -151,14 +165,14 @@ class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
     final List<Widget> tabs = [
       // const HomePage(),
       CSNPage(),
-      NotificationListPage(),
+      NotificationListCSNPage(),
       CSNInfoPage(),
     ];
 
     return Scaffold(
       body: CupertinoTabScaffold(
         tabBar: CupertinoTabBar(
-          backgroundColor: Colors.teal,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           activeColor: Colors.white,
           items: [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),

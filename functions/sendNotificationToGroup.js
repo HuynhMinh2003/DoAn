@@ -1,15 +1,30 @@
-// sendNotificationToResidents.js
+// functions/sendNotificationToGroup.js
 const { onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
-const sendNotificationToResidents = onCall(async (request) => {
-  const { title, body } = request.data;
+const sendNotificationToGroup = onCall(async (request) => {
+  const { title, body, targetGroup } = request.data;
 
-  if (!title || !body) {
-    throw new Error("Missing title or body");
+  if (!title || !body || !targetGroup) {
+    throw new Error("Missing title, body, or targetGroup");
   }
 
-  const snapshot = await admin.firestore().collection("residents").get();
+  let collectionName;
+  switch (targetGroup) {
+    case "residents":
+      collectionName = "residents";
+      break;
+    case "staffs":
+      collectionName = "staffs"; // collection nhân viên
+      break;
+    case "companies":
+      collectionName = "companies"; // collection công ty
+      break;
+    default:
+      throw new Error("Invalid target group");
+  }
+
+  const snapshot = await admin.firestore().collection(collectionName).get();
 
   const allTokens = [];
 
@@ -25,18 +40,14 @@ const sendNotificationToResidents = onCall(async (request) => {
   }
 
   const message = {
-    notification: {
-      title,
-      body,
-    },
+    notification: { title, body },
     data: {
       click_action: "FLUTTER_NOTIFICATION_CLICK",
       type: "broadcast",
     },
-    tokens: allTokens, // vẫn cần cho sendEachForMulticast
+    tokens: allTokens,
   };
 
-  // ✅ Sử dụng sendEachForMulticast thay cho sendMulticast
   const response = await admin.messaging().sendEachForMulticast(message);
 
   const successCount = response.responses.filter(r => r.success).length;
@@ -50,5 +61,5 @@ const sendNotificationToResidents = onCall(async (request) => {
 });
 
 module.exports = {
-  sendNotificationToResidents,
+  sendNotificationToGroup,
 };

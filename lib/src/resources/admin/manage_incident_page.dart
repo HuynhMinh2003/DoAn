@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/src/models/incident.dart';
+import 'package:do_an/src/models/staffs.dart';
 import 'package:flutter/material.dart';
 
-import '../models/incident.dart';
-import '../models/staffs.dart';
 
 class ManagerIncidentPage extends StatefulWidget {
   const ManagerIncidentPage({super.key});
