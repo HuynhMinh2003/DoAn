@@ -3,21 +3,17 @@ import 'package:do_an/constants.dart';
 import 'package:do_an/custom_paginated_table.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:convert';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/models/staffs.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
-import 'package:do_an/src/resources/provider/staff_image_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import '../models/incident.dart';
+
+import '../../models/incident.dart';
 import 'ds_nhanvien_mobile_page.dart' if (dart.library.html) 'ds_nhanvien_web_page.dart';
 
 class ListIncidentPage extends StatefulWidget {

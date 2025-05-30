@@ -64,14 +64,21 @@ abstract class BaseResidentInfoScreen<T extends StatefulWidget> extends State<T>
           .get();
 
       if (doc.exists) {
+        final data = doc.data();
         setState(() {
-          apartmentName = doc.data()?['apartmentName'] ?? 'Không rõ';
-          building = doc.data()?['building'] ?? 'Không rõ';
-          area = doc.data()?['area'] as int? ?? 0;
+          apartmentName = data?['apartmentName'] ?? 'Không rõ';
+          building = data?['building'] ?? 'Không rõ';
+          area = data?['area'] as int? ?? 0;
+
+          // Gán contractId cho residentInfo từ field currentContractId
+          residentInfo = residentInfo!.copyWith(
+            contractId: data?['currentContractId'],
+          );
         });
       }
     }
   }
+
 
   void showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
