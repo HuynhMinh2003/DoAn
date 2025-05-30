@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -10,9 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_functions/cloud_functions.dart'; // THÊM DÒNG NÀY
-
-import '../../constants.dart';
-import 'dialog/msg_dialog.dart';
+import '../dialog/msg_dialog.dart';
 
 class InfoPage extends StatefulWidget {
   const InfoPage({super.key});
@@ -32,6 +31,15 @@ class _InfoPageState extends State<InfoPage> {
 
   final _titleStream = StreamController<String>.broadcast();
   final _messageStream = StreamController<String>.broadcast();
+
+  String _selectedTarget = 'residents'; // default: gửi cho cư dân
+
+  final Map<String, String> _targetLabels = {
+    'residents': 'Cư dân',
+    'staffs': 'Nhân viên',
+    'companies': 'Công ty',
+  };
+
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
@@ -83,24 +91,20 @@ class _InfoPageState extends State<InfoPage> {
     }
   }
 
-  void _sendInfo() async {
+  Future<void> _sendInfo() async {
     String title = _titleController.text.trim();
     String feedbackText = _infoController.text.trim();
 
     _titleStream.sink.add(title);
     _messageStream.sink.add(feedbackText);
 
-    if (title.isEmpty || feedbackText.isEmpty) {
-      // StreamBuilder sẽ hiển thị lỗi, không cần show SnackBar ở đây
-      return;
-    }
+    if (title.isEmpty || feedbackText.isEmpty) return;
 
     if (_image == null && _webImage == null) {
-      // Nếu chưa chọn ảnh → hiện dialog
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Center(child: Text("Thiếu ảnh", style: TextStyle(fontSize: 6.sp),),),
+          title: Center(child: Text("Thiếu ảnh", style: TextStyle(fontSize: 6.sp))),
           content: Text("Vui lòng chọn ảnh cho thông báo!", style: TextStyle(fontSize: 4.sp)),
           actions: [
             TextButton(
@@ -116,8 +120,15 @@ class _InfoPageState extends State<InfoPage> {
     try {
       String? uploadedImageUrl = await _uploadImage();
 
-      // 1. Lưu thông báo vào Firestore
-      await _firestore.collection("information").add({
+      /// 🟦 Map tên collection Firestore tương ứng
+      String collectionName = {
+        'residents': 'information_residents',
+        'staffs': 'information_staffs',
+        'companies': 'information_companies',
+      }[_selectedTarget]!;
+
+      // 🟨 1. Lưu thông báo vào collection tương ứng
+      await _firestore.collection(collectionName).add({
         "title": title,
         "message": feedbackText,
         "imageUrl": uploadedImageUrl,
@@ -125,27 +136,38 @@ class _InfoPageState extends State<InfoPage> {
         "seenBy": [],
       });
 
-      // 2. Gửi FCM
-      final callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToResidents');
-      final result = await callable.call({"title": title, "body": feedbackText});
+      // 🟩 2. Gửi FCM
+      final callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToGroup');
+      final result = await callable.call({
+        "title": title,
+        "body": feedbackText,
+        "targetGroup": _selectedTarget,
+      });
 
       final data = result.data;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(data['success'] == true
-            ? "Đã gửi thông báo đến ${data['sent']} người dùng."
-            : "Lưu thành công nhưng không gửi được FCM: ${data['message']}")),
+        SnackBar(
+          content: Text(data['success'] == true
+              ? "Đã gửi thông báo đến ${data['sent']} người dùng."
+              : "Lưu thành công nhưng không gửi được FCM: ${data['message']}"),
+          backgroundColor: Colors.green,
+        ),
       );
 
-      // 3. Reset form
+      // 🧹 3. Reset form
       _titleController.clear();
       _infoController.clear();
       setState(() {
         _image = null;
         _webImage = null;
       });
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lỗi khi gửi thông báo: $e")),
+        SnackBar(
+          content: Text("Lỗi khi gửi thông báo: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -225,6 +247,7 @@ class _InfoPageState extends State<InfoPage> {
       ),
     );
   }
+
   Widget _buildImagePicker() {
     final bool hasImage = _image != null || _webImage != null;
 
@@ -322,6 +345,8 @@ class _InfoPageState extends State<InfoPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildTargetDropdown(),
+        SizedBox(height: 50.h),
         StreamBuilder<String>(
           stream: _titleStream.stream,
           builder: (context, snapshot) {
@@ -377,5 +402,58 @@ class _InfoPageState extends State<InfoPage> {
     );
   }
 
+  Widget _buildTargetDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Gửi đến",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 5.sp),
+        ),
+        SizedBox(height: 10.h),
+        DropdownButtonFormField2<String>(
+          value: _selectedTarget,
+          isExpanded: true,
+          decoration: InputDecoration(
+            contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 1.w),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+          ),
+          hint: Text(
+            'Chọn nhóm nhận thông báo',
+            style: TextStyle(fontSize: 4.5.sp),
+          ),
+          items: _targetLabels.entries.map((entry) {
+            return DropdownMenuItem<String>(
+              value: entry.key,
+              child: Text(
+                entry.value,
+                style: TextStyle(fontSize: 4.5.sp),
+              ),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedTarget = value!;
+            });
+          },
+          buttonStyleData: ButtonStyleData(
+            height: 50.h,
+            padding: EdgeInsets.symmetric(horizontal: 1.w),
+            // ✅ KHÔNG dùng `decoration` ở đây
+          ),
+          iconStyleData: IconStyleData(
+            icon: Icon(Icons.arrow_drop_down, size: 5.sp),
+          ),
+          dropdownStyleData: DropdownStyleData(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+          ),
+        )
+      ],
+    );
+  }
 
 }

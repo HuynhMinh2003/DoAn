@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:do_an/custom_paginated_table.dart';
 import 'package:do_an/src/resources/provider/resident_image_provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -15,7 +16,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import '../../custom_paginated_table.dart';
 import 'resident_mobile_page.dart'
     if (dart.library.html) 'resident_web_page.dart';
 

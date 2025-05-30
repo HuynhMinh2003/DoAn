@@ -1,20 +1,19 @@
 import 'package:do_an/constants.dart';
 import 'package:do_an/screens/dashboard/dashboard_screen.dart';
-import 'package:do_an/src/resources/ds_canho_page.dart';
-import 'package:do_an/src/resources/ds_congty_page.dart';
-import 'package:do_an/src/resources/ds_nhanvien_page.dart';
-import 'package:do_an/src/resources/resident_page.dart';
-import 'package:do_an/src/resources/tao_tk_ctdv_ngoai.dart';
-import 'package:do_an/src/resources/tao_tk_nv.dart';
-import 'package:do_an/src/resources/wait_update_service_page.dart';
+import 'package:do_an/src/resources/admin/ds_canho_page.dart';
+import 'package:do_an/src/resources/admin/ds_congty_page.dart';
+import 'package:do_an/src/resources/admin/ds_hopdong_canho_page.dart';
+import 'package:do_an/src/resources/admin/list_incident_page.dart';
+import 'package:do_an/src/resources/admin/manage_incident_page.dart';
+import 'package:do_an/src/resources/admin/resident_page.dart';
+import 'package:do_an/src/resources/admin/send_notification_page.dart';
+import 'package:do_an/src/resources/admin/tao_tk_ctdv_ngoai.dart';
+import 'package:do_an/src/resources/admin/update_fee_page.dart';
+import 'package:do_an/src/resources/admin/wait_update_service_page.dart';
+import 'package:do_an/src/resources/admin/ds_nhanvien_page.dart';
+import 'package:do_an/src/resources/admin/tao_tk_nv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
-import '../../../src/resources/ds_hopdong_canho_page.dart';
-import '../../../src/resources/list_incident_page.dart';
-import '../../../src/resources/manage_incident_page.dart';
-import '../../../src/resources/send_notification_page.dart';
-import '../../../src/resources/update_fee_page.dart';
 
 class SideMenu extends StatelessWidget {
   final bool isMenuOpen; // Nhận trạng thái mở/đóng từ MainScreen

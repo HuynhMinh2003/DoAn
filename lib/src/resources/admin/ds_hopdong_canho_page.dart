@@ -4,16 +4,16 @@ import 'package:do_an/constants.dart';
 import 'package:do_an/custom_paginated_table.dart';
 import 'package:do_an/src/models/apartment.dart';
 import 'package:do_an/src/models/contract_data.dart';
+import 'package:do_an/src/resources/add_resident_screen_page.dart';
+import 'package:do_an/src/resources/admin/contract_form_page.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
+import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'add_resident_screen_page.dart';
-import 'contract_form_page.dart';
-import 'dialog/msg_dialog.dart';
 import 'ds_hopdong_canho_mobile_page.dart'
     if (dart.library.html) 'ds_hopdong_canho_web_page.dart';
 

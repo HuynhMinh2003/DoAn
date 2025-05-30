@@ -7,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'notification_list_page.dart';
+import 'notification_list_resident_page.dart';
 
 class HomeFirstResidentPage extends StatelessWidget {
   const HomeFirstResidentPage({super.key});
@@ -43,7 +43,7 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
   void _getNotificationCount() {
     if (userId == null) return;
 
-    FirebaseFirestore.instance.collection("information").snapshots().listen((snapshot) {
+    FirebaseFirestore.instance.collection("information_residents").snapshots().listen((snapshot) {
       int count = snapshot.docs.where((doc) {
         List seenBy = doc["seenBy"] ?? [];
         return !seenBy.contains(userId);
@@ -101,7 +101,7 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
   void _markNotificationsAsRead() async {
     if (userId == null) return;
 
-    var notifications = await FirebaseFirestore.instance.collection("information").get();
+    var notifications = await FirebaseFirestore.instance.collection("information_residents").get();
     WriteBatch batch = FirebaseFirestore.instance.batch();
 
     for (var doc in notifications.docs) {
@@ -117,7 +117,7 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
     print("✅ Batch commit completed");
 
     // Kiểm tra ngay Firestore có cập nhật seenBy không
-    var updatedNotifications = await FirebaseFirestore.instance.collection("information").get();
+    var updatedNotifications = await FirebaseFirestore.instance.collection("information_residents").get();
     for (var doc in updatedNotifications.docs) {
       print("📌 Notification ID: ${doc.id}, seenBy: ${doc["seenBy"]}");
     }
@@ -144,7 +144,7 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
     final List<Widget> tabs = [
       // const HomePage(),
       ResidentPage(),
-      NotificationListPage(),
+      NotificationListResidentPage(),
       ResidentInfoPage(),
     ];
 
