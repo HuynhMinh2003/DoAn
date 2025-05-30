@@ -5,7 +5,6 @@ import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:shimmer/shimmer.dart';
@@ -23,6 +22,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
   String _licensePlate = '';
   final _vehicleTypeController = StreamController<String?>.broadcast();
   final _licensePlateController = StreamController<String?>.broadcast();
+  int _selectedTab = 0; // 0 = Danh sách, 1 = Đăng ký
 
   void showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -210,6 +210,13 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
               ],
             ),
             actions: [
+              TextButton(
+                onPressed: () {
+                  _errorController.close();
+                  Navigator.of(context, rootNavigator: true).pop();
+                },
+                child: Text("Hủy", style: TextStyle(fontSize: 15.sp)),
+              ),
               ElevatedButton(
                 onPressed: () async {
                   final updatedPlate = _plateController.text.trim();
@@ -237,13 +244,6 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                 },
                 child: Text("Lưu", style: TextStyle(fontSize: 15.sp)),
               ),
-              TextButton(
-                onPressed: () {
-                  _errorController.close();
-                  Navigator.pop(context);
-                },
-                child: Text("Hủy", style: TextStyle(fontSize: 15.sp)),
-              ),
             ],
           );
         });
@@ -253,231 +253,206 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
     _errorController.close(); // 👈 Đảm bảo luôn đóng sau khi showDialog kết thúc
   }
 
-  @override
-  void dispose() {
-    _vehicleTypeController.close();
-    _licensePlateController.close();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Gửi xe',
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: "Oswald",
-              fontWeight: FontWeight.bold,
-              fontSize: 25.sp,
+  Widget _buildRegisteredList(BuildContext context) {
+    return FutureBuilder<String?>(
+      future: _getContractId(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return SizedBox(
+            height: 200.h,
+            child: ListView.builder(
+              itemCount: 7,
+              itemBuilder: (_, __) => _buildShimmerListItem(),
             ),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-        ),
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: SafeArea(bottom: true, top: true,
-            child: SingleChildScrollView(
-            padding: EdgeInsets.only(
-                left: 20.w,
-                right: 15.w,
-                top: 50.h
+          );
+        }
+
+        if (!snapshot.hasData) {
+          return Center(
+            child: Text(
+              "Chưa có danh sách xe",
+              style: TextStyle(fontSize: 25.sp),
             ),
-            child: Padding(
-              padding: EdgeInsets.only(left:2.w,bottom: 10.h ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Danh sách xe đã đăng ký
-                  FutureBuilder<String?>(
-                    future: _getContractId(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        // Khi đang load Future, hiện shimmer
-                        return SizedBox(
-                          height: 200.h,
-                          child: ListView.builder(
-                            itemCount: 3,
-                            itemBuilder: (_, __) => _buildShimmerListItem(),
-                          ),
-                        );
-                      }
-                      if (!snapshot.hasData) return Text("Chưa có danh sách xe",style: TextStyle(fontSize: 25.sp),);
-                      final contractId = snapshot.data!;
-                      return StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('contracts')
-                            .doc(contractId)
-                            .collection('parkingRegistrations')
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) return CircularProgressIndicator();
-                          final docs = snapshot.data!.docs;
-                          return SizedBox(
-                            height: 450.h,
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: docs.length,
-                              itemBuilder: (_, index) {
-                                final doc = docs[index];
-                                final canceled = doc['canceledAt'] != null;
-                                final canceledAt = doc['canceledAt'] as Timestamp?;
-                                final vehicleType = doc['vehicleType'];
-                                final licensePlate = doc['licensePlate'];
-                                final registeredAt = doc['registeredAt'] as Timestamp?;
-                                final formattedDate = registeredAt != null
-                                    ? DateFormat('dd/MM/yyyy – HH:mm').format(registeredAt.toDate())
-                                    : 'Không rõ ngày';
-                                final formattedCanceledDate = canceledAt != null
-                                    ? DateFormat('dd/MM/yyyy – HH:mm').format(canceledAt.toDate())
-                                    : '';
+          );
+        }
 
-                                // Gán biểu tượng và tên tiếng Việt
-                                String emoji;
-                                String readableType;
-                                switch (vehicleType) {
-                                  case 'car_roofed':
-                                    emoji = '🚗';
-                                    readableType = 'Ô tô (có mái che)';
-                                    break;
-                                  case 'car_unroofed':
-                                    emoji = '🚗';
-                                    readableType = 'Ô tô (không mái che)';
-                                    break;
-                                  case 'motorbike_roofed':
-                                    emoji = '🛵';
-                                    readableType = 'Xe máy (có mái che)';
-                                    break;
-                                  case 'motorbike_unroofed':
-                                    emoji = '🛵';
-                                    readableType = 'Xe máy (không mái che)';
-                                    break;
-                                  case 'bike_roofed':
-                                    emoji = '🚲';
-                                    readableType = 'Xe đạp (có mái che)';
-                                    break;
-                                  case 'bike_unroofed':
-                                    emoji = '🚲';
-                                    readableType = 'Xe đạp (không mái che)';
-                                    break;
-                                  default:
-                                    emoji = '❓';
-                                    readableType = 'Không xác định';
-                                }
+        final contractId = snapshot.data!;
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('contracts')
+              .doc(contractId)
+              .collection('parkingRegistrations')
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return Center(child: CircularProgressIndicator());
+            }
 
-                                return ListTile(
-                                  title: Text("$emoji $licensePlate"),
-                                  subtitle: Text(
-                                    "Loại: $readableType\n"
-                                        "Ngày đăng ký: $formattedDate"
-                                        "${canceledAt != null ? '\nNgày hủy: $formattedCanceledDate' : ''}",
-                                  ),
-                                  isThreeLine: true,
-                                  trailing: canceled
-                                      ? Text(
-                                    "     ⛔\nĐã hủy",
-                                    style: TextStyle(color: Colors.red, fontSize: 15.sp),
-                                  )
-                                      : Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      TextButton(
-                                        onPressed: () {
-                                          // Dialog xác nhận hủy
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                              title: Center(
-                                                child: Text("Xác nhận hủy", style: TextStyle(fontSize: 30.sp, fontWeight: FontWeight.bold)),
-                                              ),
-                                              content: Text("Bạn có chắc chắn muốn hủy đăng ký xe này không?", style: TextStyle(fontSize: 15.sp)),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () => Navigator.pop(context),
-                                                  child: Text("Không", style: TextStyle(fontSize: 15.sp)),
-                                                ),
-                                                ElevatedButton(
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                    _cancelRegistration(contractId, doc.id);
-                                                  },
-                                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                                  child: Text("Hủy đăng ký", style: TextStyle(fontSize: 15.sp, color: Colors.white)),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                        child: Text("Hủy", style: TextStyle(fontSize: 15.sp)),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          _showEditDialog(context, contractId, doc.id, licensePlate, vehicleType);
-                                        },
-                                        child: Text("Sửa", style: TextStyle(fontSize: 15.sp)),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+            final docs = snapshot.data!.docs;
+            if (docs.isEmpty) {
+              return Center(
+                child: Text(
+                  "Chưa có xe nào được đăng ký",
+                  style: TextStyle(fontSize: 18.sp),
+                ),
+              );
+            }
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(width: 1.w,),
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context), child: Text("Quay lại", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),),),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (dialogContext) => _buildVehicleRegistrationDialog(dialogContext),
-                          );
-                        },
-                        icon: Icon(Icons.add),
-                        label: Text("Đăng ký xe", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            return ListView.builder(
+              itemCount: docs.length,
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemBuilder: (_, index) {
+                final doc = docs[index];
+                final canceled = doc['canceledAt'] != null;
+                final canceledAt = doc['canceledAt'] as Timestamp?;
+                final vehicleType = doc['vehicleType'];
+                final licensePlate = doc['licensePlate'];
+                final registeredAt = doc['registeredAt'] as Timestamp?;
+
+                final formattedDate = registeredAt != null
+                    ? DateFormat('dd/MM/yyyy – HH:mm').format(registeredAt.toDate())
+                    : 'Không rõ ngày';
+
+                final formattedCanceledDate = canceledAt != null
+                    ? DateFormat('dd/MM/yyyy – HH:mm').format(canceledAt.toDate())
+                    : '';
+
+                // Gán biểu tượng và tên tiếng Việt
+                String emoji;
+                String readableType;
+                switch (vehicleType) {
+                  case 'car_roofed':
+                    emoji = '🚗';
+                    readableType = 'Ô tô (có mái che)';
+                    break;
+                  case 'car_unroofed':
+                    emoji = '🚗';
+                    readableType = 'Ô tô (không mái che)';
+                    break;
+                  case 'motorbike_roofed':
+                    emoji = '🛵';
+                    readableType = 'Xe máy (có mái che)';
+                    break;
+                  case 'motorbike_unroofed':
+                    emoji = '🛵';
+                    readableType = 'Xe máy (không mái che)';
+                    break;
+                  case 'bike_roofed':
+                    emoji = '🚲';
+                    readableType = 'Xe đạp (có mái che)';
+                    break;
+                  case 'bike_unroofed':
+                    emoji = '🚲';
+                    readableType = 'Xe đạp (không mái che)';
+                    break;
+                  default:
+                    emoji = '❓';
+                    readableType = 'Không xác định';
+                }
+
+                return Card(
+                  elevation: 2,
+                  margin: EdgeInsets.symmetric(vertical: 8.h),
+                  child: ListTile(
+                    title: Text("$emoji $licensePlate"),
+                    subtitle: Text(
+                      "Loại: $readableType\n"
+                          "Ngày đăng ký: $formattedDate"
+                          "${canceled ? '\nNgày hủy: $formattedCanceledDate' : ''}",
+                    ),
+                    isThreeLine: true,
+                    trailing: canceled
+                        ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.cancel, color: Colors.red),
+                        Text(
+                          "Đã hủy",
+                          style: TextStyle(color: Colors.red, fontSize: 13.sp),
                         ),
-                      ),
-                      SizedBox(width: 1.w,),
-                    ],
-                  )
-
-                ],
-              ),
-            )
-        )
-        ),
-      )
+                      ],
+                    )
+                        : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.cancel, color: Colors.red),
+                          tooltip: 'Hủy đăng ký',
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
+                                title: Center(
+                                  child: Text(
+                                    "Xác nhận hủy",
+                                    style: TextStyle(
+                                        fontSize: 30.sp, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                content: Text(
+                                  "Bạn có chắc chắn muốn hủy đăng ký xe này không?",
+                                  style: TextStyle(fontSize: 15.sp),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                                    child: Text("Không", style: TextStyle(fontSize: 15.sp)),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      _cancelRegistration(contractId, doc.id);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red),
+                                    child: Text("Hủy đăng ký",
+                                        style:
+                                        TextStyle(fontSize: 15.sp, color: Colors.white)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          tooltip: 'Chỉnh sửa',
+                          onPressed: () {
+                            _showEditDialog(
+                              context,
+                              contractId,
+                              doc.id,
+                              licensePlate,
+                              vehicleType,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildVehicleRegistrationDialog(BuildContext dialogContext) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Center(
-        child: Text("Đăng ký thêm xe",
-          style: TextStyle(fontFamily: "Oswald", fontSize: 30.sp, fontWeight: FontWeight.bold),
-        ),
-      ),
-      content: SingleChildScrollView(
+  Widget _buildVehicleRegistrationForm(BuildContext context) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.all(12.w),
         child: Form(
           key: _formKey,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              SizedBox(height: 20.h),
               StreamBuilder<String?>(
                 stream: _vehicleTypeController.stream,
                 builder: (context, snapshot) {
@@ -509,7 +484,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                   );
                 },
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 50.h),
               StreamBuilder<String?>(
                 stream: _licensePlateController.stream,
                 builder: (context, snapshot) {
@@ -532,41 +507,80 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                   );
                 },
               ),
+              SizedBox(height: 50.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(child: ElevatedButton(
+                    onPressed: () {
+                      // reset dữ liệu nếu cần
+                      _vehicleType = null;
+                      _licensePlate = "";
+                      _vehicleTypeController.sink.add(null);
+                      _licensePlateController.sink.add(null);
+                    },
+                    child: Text("Hủy", style: TextStyle(fontSize: 15.sp)),
+                  ),),
+                  SizedBox(width: 8.w),
+                  Expanded(child: ElevatedButton(
+                    onPressed: () {
+                      bool valid = true;
+
+                      if (_vehicleType == null) {
+                        _vehicleTypeController.sink.addError('Vui lòng chọn loại phương tiện');
+                        valid = false;
+                      }
+
+                      if (_licensePlate == null || _licensePlate!.trim().isEmpty) {
+                        _licensePlateController.sink.addError('Nhập biển số xe');
+                        valid = false;
+                      }
+
+                      if (valid) {
+                        _registerVehicle(); // Gọi hàm xử lý đăng ký xe
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    child: Text("Xác nhận", style: TextStyle(fontSize: 15.sp, color: Colors.white)),
+                  ),),
+                ],
+              ),
             ],
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
-          child: Text("Hủy", style: TextStyle(fontSize: 15.sp)),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            bool valid = true;
-
-            if (_vehicleType == null) {
-              _vehicleTypeController.sink.addError('Vui lòng chọn loại phương tiện');
-              valid = false;
-            }
-
-            if (_licensePlate == null || _licensePlate!.trim().isEmpty) {
-              _licensePlateController.sink.addError('Nhập biển số xe');
-              valid = false;
-            }
-
-            if (valid) {
-              _registerVehicle();
-            }
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-          child: Text("Xác nhận", style: TextStyle(fontSize: 15.sp, color: Colors.white)),
-        ),
-      ],
     );
   }
 
-
+  Widget _buildTabButton(BuildContext context,String text, int index, bool isSelected) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedTab = index;
+          });
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            text,
+            style: TextStyle(
+                color: isSelected ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.w600,
+                fontSize: 15.sp
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildShimmerListItem() {
     return ListTile(
@@ -588,4 +602,61 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
     );
   }
 
+  @override
+  void dispose() {
+    _vehicleTypeController.close();
+    _licensePlateController.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = (int index) => _selectedTab == index;
+
+    return GestureDetector(
+      onTap: (){
+        FocusScope.of(context).unfocus(); // Thoát khỏi focus (ẩn bàn phím)
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Gửi xe',
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: "Oswald",
+              fontWeight: FontWeight.bold,
+              fontSize: 25.sp,
+            ),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // === Tab Buttons ===
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildTabButton(context,"Đăng ký mới", 0, isSelected(0)),
+                    SizedBox(width: 12.w),
+                    _buildTabButton(context,"Danh sách", 1,isSelected(1)),
+                  ],
+                ),
+              ),
+
+              // === Tab Content ===
+              Expanded(
+                  child: Padding(padding: EdgeInsets.all(12.w),
+                    child: _selectedTab == 0
+                        ? _buildVehicleRegistrationForm(context)
+                        : _buildRegisteredList(context))
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -279,7 +279,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '   Tiện ích cơ bản',
+                        '   Dịch vụ cơ bản',
                         style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
                       ),
                       GridView.count(
@@ -308,7 +308,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                         ],
                       ),
                       Text(
-                        '   Chức năng',
+                        '   Tiện ích cư dân',
                         style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
                       ),
                       GridView.count(
