@@ -75,9 +75,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return null;
   }
 
-  Future<void> loadPaymentData() async {
+  Future<void> loadPaymentData({DateTime? forMonth}) async {
     try {
       setState(() => loading = true);
+
+      final DateTime targetMonth = forMonth ?? DateTime.now();
 
       // Lấy dữ liệu hợp đồng
       final contractDoc = await FirebaseFirestore.instance
@@ -89,12 +91,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final areaRaw = contractData['area'] ?? 0;
       final area = areaRaw is num ? areaRaw.toDouble() : 0.0;
 
-      // Lấy thời điểm đầu và cuối tháng hiện tại
-      final now = DateTime.now();
-      final startOfMonth = DateTime(now.year, now.month, 1);
-      final endOfMonth = DateTime(now.year, now.month + 1, 0);
+      // Tính thời điểm đầu và cuối tháng theo targetMonth
+      final startOfMonth = DateTime(targetMonth.year, targetMonth.month, 1);
+      final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1, 0);
 
-      // Lấy phí quản lý theo m2 áp dụng đúng theo thời điểm startOfMonth
+      // Lấy phí quản lý theo m2 áp dụng đúng thời điểm startOfMonth
       final mgFeeData = await getFeeForDate(
         feeHistoryCollection: FirebaseFirestore.instance
             .collection('services')
@@ -106,7 +107,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final feePerM2 = feePerM2Raw is num ? feePerM2Raw.toDouble() : 0.0;
       managementFee = (feePerM2 * area).round();
 
-      // Lấy dữ liệu đọc đồng hồ nước tháng hiện tại
+      // Lấy dữ liệu đọc đồng hồ nước tháng được chọn
       final waterSnap = await FirebaseFirestore.instance
           .collection('contracts')
           .doc(widget.contractId)
@@ -143,6 +144,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       // Phí gửi xe
       parkingFees.clear();
+
+      final now = DateTime.now();
+
       final parkingSnap = await FirebaseFirestore.instance
           .collection('contracts')
           .doc(widget.contractId)
@@ -159,9 +163,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ? (data['canceledAt'] as Timestamp).toDate()
             : null;
 
-        DateTime effectiveStart = registeredAt.isBefore(startOfMonth) ? startOfMonth : registeredAt;
-        DateTime effectiveEnd = (canceledAt == null || canceledAt.isAfter(endOfMonth)) ? endOfMonth : canceledAt;
+        // Loại xe đã huỷ trước tháng đang xét
+        if (canceledAt != null && canceledAt.isBefore(startOfMonth)) {
+          continue;
+        }
 
+        // Xác định khoảng thời gian có hiệu lực trong tháng được chọn
+        final effectiveStart = registeredAt.isBefore(startOfMonth) ? startOfMonth : registeredAt;
+        final effectiveEnd = (canceledAt == null || canceledAt.isAfter(endOfMonth)) ? endOfMonth : canceledAt;
+
+        // Nếu không có ngày hiệu lực trong tháng thì bỏ qua
+        if (effectiveEnd.isBefore(effectiveStart)) continue;
+
+        // Lấy phí theo ngày bắt đầu hiệu lực
         final feeData = await getFeeForDate(
           feeHistoryCollection: FirebaseFirestore.instance
               .collection('services')
@@ -178,11 +192,32 @@ class _PaymentScreenState extends State<PaymentScreen> {
         final monthlyFee = monthlyFeeRaw is num ? monthlyFeeRaw.toDouble() : 0.0;
 
         final totalDaysInMonth = (endOfMonth.difference(startOfMonth).inDays + 1).toDouble();
-        int activeDays = effectiveEnd.difference(effectiveStart).inDays + 1;
-        if (activeDays < 1) activeDays = 1;
 
-        final fee = ((monthlyFee / totalDaysInMonth) * activeDays.toDouble()).round();
+        // Tính số ngày thực tế đã trôi qua tính từ effectiveStart đến hôm nay (hoặc endOfMonth nếu hôm nay lớn hơn)
+        final lastChargeableDay = now.isBefore(endOfMonth) ? now : endOfMonth;
+
+        // Tính activeDays = số ngày từ effectiveStart đến lastChargeableDay, nếu < 0 thì = 0
+        int activeDays = lastChargeableDay.difference(effectiveStart).inDays + 1;
+        if (activeDays < 0) activeDays = 0;
+
+        // Nếu bạn muốn phí = 0 khi mới ngày đầu tháng (ví dụ hôm nay là 1/6), có thể:
+        if (now.day == 1) {
+          activeDays = 0;
+        }
+
+        final fee = ((monthlyFee / totalDaysInMonth) * activeDays).round();
         parkingFees.add({'licensePlate': license, 'fee': fee});
+
+        print('===== XE =====');
+        print('Biển số: $license');
+        print('Loại: $type');
+        print('registeredAt: $registeredAt');
+        print('canceledAt: $canceledAt');
+        print('effectiveStart: $effectiveStart');
+        print('effectiveEnd: $effectiveEnd');
+        print('activeDays: $activeDays');
+        print('monthlyFee: $monthlyFee');
+        print('Phí tính: $fee');
       }
 
       total = managementFee + waterFee + parkingFees.fold(0, (sum, p) => sum + (p['fee'] as int));

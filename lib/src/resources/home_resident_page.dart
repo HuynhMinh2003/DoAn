@@ -280,7 +280,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                     children: [
                       Text(
                         '   Dịch vụ cơ bản',
-                        style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
+                        style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
                       ),
                       GridView.count(
                         crossAxisCount: 2,
@@ -309,7 +309,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                       ),
                       Text(
                         '   Tiện ích cư dân',
-                        style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
+                        style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
                       ),
                       GridView.count(
                         crossAxisCount: 3,
@@ -392,7 +392,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                       ),
                       Text(
                         '   Dịch vụ từ công ty ngoài',
-                        style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
+                        style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
                       ),
                       Padding(padding: EdgeInsets.only(left: 9.w, right: 9.w, top: 10.h),
                       child: FutureBuilder<List<CompanyInfo>>(
@@ -551,7 +551,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
               highlightColor: Colors.blue.withOpacity(0.1),
               child: SizedBox(
                 width: 110,
-                height: 110,
+                height: 130,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
