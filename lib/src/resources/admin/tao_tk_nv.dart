@@ -479,9 +479,55 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
       }, SetOptions(merge: true));
 
       LoadingDialog.hideLoadingDialog(context);
+      // Xóa tất cả thông tin trong các trường nhập
+      _nameStaffController.clear();
+      _emailStaffController.clear();
+      _phoneStaffController.clear();
+      _emailStaffController.clear();
+      _cccdStaffController.clear();
+      _addressStaffController.clear();
+
+      // Reset ảnh
+      final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
+      avatarProvider.resetImage();  // Reset ảnh
+
+      setState(() {
+        selectedGender = null;  // Hoặc giá trị mặc định bạn muốn
+      });
+      // Reset vai trò nếu cần
+      setState(() {
+        _selectedRole = null;  // Hoặc giá trị mặc định bạn muốn
+      });
+      setState(() {
+        birthDate = null; // Đặt biến `birthDate` về null
+      });
+      _authBloc.updateBirthDate(null); // Cập nhật giá trị trong Stream về null
       MsgDialog.showMsgDialog(context, "Thành công", "Tạo tài khoản nhân viên thành công.");
     } catch (e) {
       LoadingDialog.hideLoadingDialog(context);
+      // Xóa tất cả thông tin trong các trường nhập
+      _nameStaffController.clear();
+      _emailStaffController.clear();
+      _phoneStaffController.clear();
+      _emailStaffController.clear();
+      _cccdStaffController.clear();
+      _addressStaffController.clear();
+
+      // Reset ảnh
+      final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
+      avatarProvider.resetImage();  // Reset ảnh
+
+      setState(() {
+        selectedGender = null;  // Hoặc giá trị mặc định bạn muốn
+      });
+      // Reset vai trò nếu cần
+      setState(() {
+        _selectedRole = null;  // Hoặc giá trị mặc định bạn muốn
+      });
+      setState(() {
+        birthDate = null; // Đặt biến `birthDate` về null
+      });
+      _authBloc.updateBirthDate(null); // Cập nhật giá trị trong Stream về null
       MsgDialog.showMsgDialog(context, "Lỗi", "Không thể tạo tài khoản: $e");
     }
   }
