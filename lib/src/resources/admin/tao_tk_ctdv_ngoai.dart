@@ -405,9 +405,27 @@ class _AddAccountCompanyPageState extends State<AddAccountCompanyPage> {
       }, SetOptions(merge: true));
 
       LoadingDialog.hideLoadingDialog(context);
+      _nameCompanyController.clear();
+      _emailCompanyController.clear();
+      _phoneCompanyController.clear();
+      _typeCompanyController.clear();
+      _addressCompanyController.clear();
+      _describeCompanyController.clear();
+      // Reset ảnh
+      final avatarProvider = Provider.of<CompanyImageProvider>(context, listen: false);
+      avatarProvider.resetImage();
       MsgDialog.showMsgDialog(context, "Thành công", "Tạo tài khoản công ty thành công.");
     } catch (e) {
       LoadingDialog.hideLoadingDialog(context);
+      _nameCompanyController.clear();
+      _emailCompanyController.clear();
+      _phoneCompanyController.clear();
+      _typeCompanyController.clear();
+      _addressCompanyController.clear();
+      _describeCompanyController.clear();
+      // Reset ảnh
+      final avatarProvider = Provider.of<CompanyImageProvider>(context, listen: false);
+      avatarProvider.resetImage();
       MsgDialog.showMsgDialog(context, "Lỗi", "Không thể tạo tài khoản: $e");
     }
   }
