@@ -100,6 +100,17 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
       _descriptionErrorController.sink.add(null);
     }
 
+    // Kiểm tra nếu không có ảnh nào được chọn
+    if (_selectedImageFile == null && _imagePreviewUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Vui lòng chọn ảnh dịch vụ trước khi cập nhật',style: TextStyle(fontSize: 15.sp)),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     if (hasError) return;
 
     // Show loading dialog
@@ -133,10 +144,9 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      Navigator.of(context).pop(); // Close loading dialog
-      Navigator.of(context).pop(); // Close current page (if needed)
+      Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cập nhật dịch vụ thành công')),
+        SnackBar(content: Text('Cập nhật dịch vụ thành công',style: TextStyle(fontSize: 15.sp)),backgroundColor: Colors.green,),
       );
     } catch (e) {
       Navigator.of(context).pop(); // Close loading dialog
@@ -212,46 +222,53 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
 
                   Stack(
                     children: [
-                      Container(
-                        height: 230.h,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: Colors.grey.shade400),
-                          color: Colors.grey.shade100,
-                          image: _selectedImageFile != null
-                              ? DecorationImage(
-                            image: FileImage(_selectedImageFile!),
-                            fit: BoxFit.cover,
-                          )
-                              : _imagePreviewUrl != null
-                              ? DecorationImage(
-                            image: NetworkImage(_imagePreviewUrl!),
-                            fit: BoxFit.cover,
+                      GestureDetector(
+                        onTap: () {
+                          if (_selectedImageFile == null && _imagePreviewUrl == null) {
+                            _pickImage(); // Gọi chọn ảnh nếu chưa có ảnh
+                          }
+                        },
+                        child: Container(
+                          height: 230.h,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.grey.shade400),
+                            color: Colors.grey.shade100,
+                            image: _selectedImageFile != null
+                                ? DecorationImage(
+                              image: FileImage(_selectedImageFile!),
+                              fit: BoxFit.cover,
+                            )
+                                : _imagePreviewUrl != null
+                                ? DecorationImage(
+                              image: NetworkImage(_imagePreviewUrl!),
+                              fit: BoxFit.cover,
+                            )
+                                : null,
+                          ),
+                          child: (_selectedImageFile == null && _imagePreviewUrl == null)
+                              ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_a_photo, size: 40.sp, color: Colors.grey),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  'Nhấn để chọn ảnh',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
                           )
                               : null,
                         ),
-                        child: (_selectedImageFile == null && _imagePreviewUrl == null)
-                            ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add_a_photo, size: 40.sp, color: Colors.grey),
-                              SizedBox(height: 8.h),
-                              Text(
-                                'Nhấn vào biểu tượng để chọn ảnh',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                            : null,
                       ),
 
-                      // Nút đổi ảnh
+                      // Nút đổi ảnh nếu đã có ảnh
                       if (_selectedImageFile != null || _imagePreviewUrl != null)
                         Positioned(
                           top: 8,
@@ -273,7 +290,6 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
                             ),
                           ),
                         ),
-
                     ],
                   ),
 
