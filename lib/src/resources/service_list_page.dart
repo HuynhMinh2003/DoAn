@@ -49,7 +49,7 @@ class ServiceUpdateListPage extends StatelessWidget {
             SizedBox(height: 20.h),
             Text('Giá: $price', style: TextStyle(fontSize: 15.sp)),
             SizedBox(height: 20.h),
-            Text('Trạng thái: $status"}', style: TextStyle(fontSize: 15.sp)),
+            Text('Trạng thái: $status', style: TextStyle(fontSize: 15.sp)),
             SizedBox(height: 20.h),
             Text('Ngày cập nhật: $dateString', style: TextStyle(fontSize: 15.sp)),
             if (fileLink.isNotEmpty)

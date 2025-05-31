@@ -378,6 +378,19 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          tooltip: 'Chỉnh sửa',
+                          onPressed: () {
+                            _showEditDialog(
+                              context,
+                              contractId,
+                              doc.id,
+                              licensePlate,
+                              vehicleType,
+                            );
+                          },
+                        ),
+                        IconButton(
                           icon: Icon(Icons.cancel, color: Colors.red),
                           tooltip: 'Hủy đăng ký',
                           onPressed: () {
@@ -415,19 +428,6 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                                   ),
                                 ],
                               ),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.edit, color: Colors.blue),
-                          tooltip: 'Chỉnh sửa',
-                          onPressed: () {
-                            _showEditDialog(
-                              context,
-                              contractId,
-                              doc.id,
-                              licensePlate,
-                              vehicleType,
                             );
                           },
                         ),

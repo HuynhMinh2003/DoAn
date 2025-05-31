@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/company_info.dart';
+import 'dialog/loading_dialog.dart';
 
 class CompanyDetailPage extends StatelessWidget {
   final CompanyInfo company;
@@ -115,25 +116,34 @@ class CompanyDetailPage extends StatelessWidget {
                     'createdAt': Timestamp.now(),
                   };
 
+                  // 👉 Hiện loading dialog
+                  LoadingDialog.showLoadingDialog(context, "Đang gửi ...");
+
                   try {
                     await FirebaseFirestore.instance.collection('serviceRequests').add(requestData);
 
-                    Navigator.of(dialogContext).pop(); // đóng dialog
+                    Navigator.of(context, rootNavigator: true).pop();
 
-                    // Gọi SnackBar sau khi dialog đóng xong
+                    // 👉 Hiện SnackBar
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Đã gửi yêu cầu dịch vụ thành công',style: TextStyle(fontSize: 15.sp, color: Colors.white),),backgroundColor: Colors.green,),
+                      SnackBar(
+                        content: Text(
+                          'Đã gửi yêu cầu dịch vụ thành công',
+                          style: TextStyle(fontSize: 15.sp, color: Colors.white),
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
                     );
-
                   } catch (e) {
-                    Navigator.of(dialogContext).pop(); // đóng dialog nếu có lỗi
+                    Navigator.of(context, rootNavigator: true).pop();
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                           'Gửi yêu cầu dịch vụ thất bại',
-                          style: TextStyle(fontSize: 15.sp, color: Colors.white
-                          ),
-                        ), backgroundColor: Colors.red,
+                          style: TextStyle(fontSize: 15.sp, color: Colors.white),
+                        ),
+                        backgroundColor: Colors.red,
                       ),
                     );
 
