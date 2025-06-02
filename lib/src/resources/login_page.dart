@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/constants.dart';
 import 'package:do_an/screens/main/main_screen.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
@@ -195,7 +196,6 @@ class _LoginPageState extends State<LoginPage> {
           FocusScope.of(context).unfocus();
         },
         child: Scaffold(
-          backgroundColor: const Color(0xFFF7FEFF),
           body: SafeArea(
             bottom: true, // bảo vệ khỏi thanh đh
             top: true, // bảo vệ khỏi thanh tb
@@ -206,7 +206,9 @@ class _LoginPageState extends State<LoginPage> {
                   top: 0,
                   left: 0,
                   child: Image.asset(
-                    'assets/images/two_circle_blue.png',
+                    kIsWeb
+                        ? 'assets/images/two_circle.png' // ảnh dành cho Web
+                        : 'assets/images/two_circle_blue.png',    // ảnh cho mobile
                     width: 160,
                   ),
                 ),
@@ -260,7 +262,7 @@ class _LoginPageState extends State<LoginPage> {
                     fontFamily: "Oswald",
                     fontWeight: FontWeight.w700,
                     fontSize: 15.sp,
-                    color: Colors.black,
+                    color: Colors.white,
                   ),
                 ),
 
@@ -330,23 +332,26 @@ class _LoginPageState extends State<LoginPage> {
                       _onLoginClick();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2D80F8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.r),
-                      ),
+                      backgroundColor: secondaryColor,
                       elevation: 4,
                       shadowColor: Colors.black45,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
+                        side: BorderSide(color: Colors.white, width: 0.1.w), // Viền trắng
+                      ),
                     ),
                     child: Text(
                       "Đăng nhập",
                       style: TextStyle(
-                          fontFamily: "Oswald",
-                          fontWeight: FontWeight.w700,
-                          fontSize: 8.sp,
-                          color: Colors.white),
+                        fontFamily: "Oswald",
+                        fontWeight: FontWeight.w700,
+                        fontSize: 7.sp,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
+
               ],
             )),
           ],
@@ -802,13 +807,21 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context, snapshot) {
             return TextField(
               controller: controller,
-              style: const TextStyle(fontSize: 18, color: Colors.black87),
+              style: TextStyle(
+                fontSize: 18,
+                color: kIsWeb ? Colors.white : Colors.black87, // ⬅ thay đổi màu chữ
+              ),
               decoration: InputDecoration(
                 labelText: label,
-                labelStyle: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp, color: Colors.black87),
+                labelStyle: TextStyle(
+                  fontSize: isLandscape ? 4.sp : 15.sp,
+                  color: kIsWeb ? Colors.white : Colors.black87, // ⬅ thay đổi màu label
+                ),
                 errorText: snapshot.hasError ? snapshot.error as String : null,
                 contentPadding: EdgeInsets.symmetric(
-                    vertical: 2.h, horizontal: isLandscape ? 8.w : 24.w),
+                  vertical: 2.h,
+                  horizontal: isLandscape ? 8.w : 24.w,
+                ),
                 border: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.black, width: 1.w),
                   borderRadius: BorderRadius.all(Radius.circular(30.r)),
@@ -825,13 +838,11 @@ class _LoginPageState extends State<LoginPage> {
     required TextEditingController controller,
     required String label,
     required Stream<String> stream,
-    bool isPassword = false, // Thêm cờ để xác định trường này có phải là mật khẩu hay không
+    bool isPassword = false,
   }) {
     return Builder(builder: (context) {
       final size = MediaQuery.of(context).size;
       final isLandscape = size.height < size.width;
-
-      // Biến để quản lý trạng thái hiển thị mật khẩu
       final ValueNotifier<bool> obscureTextNotifier = ValueNotifier<bool>(isPassword);
 
       return Padding(
@@ -844,28 +855,35 @@ class _LoginPageState extends State<LoginPage> {
               builder: (context, obscureText, child) {
                 return TextField(
                   controller: controller,
-                  obscureText: isPassword ? obscureText : false, // Ẩn hoặc hiển thị mật khẩu
-                  style: const TextStyle(fontSize: 18, color: Colors.black54),
+                  obscureText: isPassword ? obscureText : false,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: kIsWeb ? Colors.white : Colors.black54, // màu chữ
+                  ),
                   decoration: InputDecoration(
                     labelText: label,
-                    labelStyle: TextStyle(fontSize: isLandscape ? 4.sp : 15.sp, color: Colors.black87),
+                    labelStyle: TextStyle(
+                      fontSize: isLandscape ? 4.sp : 15.sp,
+                      color: kIsWeb ? Colors.white : Colors.black87, // màu label
+                    ),
                     errorText: snapshot.hasError ? snapshot.error as String : null,
                     contentPadding: EdgeInsets.symmetric(
-                        vertical: 2.h, horizontal: isLandscape ? 8.w : 24.w),
+                      vertical: 2.h,
+                      horizontal: isLandscape ? 8.w : 24.w,
+                    ),
                     border: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.black, width: 1.w),
                       borderRadius: BorderRadius.all(Radius.circular(30.r)),
                     ),
                     suffixIcon: isPassword
                         ? Padding(
-                      padding: EdgeInsets.only(right: 10.w), // Điều chỉnh khoảng cách của con mắt với cạnh phải
+                      padding: EdgeInsets.only(right: 10.w),
                       child: IconButton(
                         icon: Icon(
                           obscureText ? Icons.visibility : Icons.visibility_off,
                           color: Colors.grey,
                         ),
                         onPressed: () {
-                          // Thay đổi trạng thái hiển thị mật khẩu
                           obscureTextNotifier.value = !obscureTextNotifier.value;
                         },
                       ),
@@ -879,4 +897,5 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     });
-  }}
+  }
+}

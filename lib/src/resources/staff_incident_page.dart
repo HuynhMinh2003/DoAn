@@ -323,18 +323,31 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:Text("Sự cố được giao",style: TextStyle(
+        title: Text(
+          "Sự cố được giao",
+          style: TextStyle(
             color: Colors.white,
             fontFamily: "Oswald",
             fontWeight: FontWeight.bold,
-            fontSize: 25.sp),),
+            fontSize: 25.sp,
+          ),
+        ),
         backgroundColor: const Color(0xFF3C4DFF),
         foregroundColor: Colors.white,
       ),
-      body: ListView.builder(
+      body: _assignedIncidents.isEmpty
+          ? Center(
+        child: Text(
+          "Chưa có sự cố nào",
+          style: TextStyle(
+            fontSize: 16.sp,
+          ),
+        ),
+      )
+          : ListView.builder(
         itemCount: _assignedIncidents.length,
         itemBuilder: (context, index) {
-          final incident = _assignedIncidents[index]; // incident là kiểu Incident
+          final incident = _assignedIncidents[index];
           return Card(
             margin: const EdgeInsets.all(10),
             child: Padding(
@@ -402,8 +415,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                       ElevatedButton(
                         onPressed: () => _showRejectDialog(incident),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red, // Màu nền
-
+                          backgroundColor: Colors.red,
                         ),
                         child: Center(
                           child: Text(
@@ -417,7 +429,6 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                           ),
                         ),
                       ),
-
                     ],
                   ),
                 ],

@@ -223,80 +223,79 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
               ),
               SizedBox(height: 10.h,),
               Container(
-                  child: Padding(padding: EdgeInsets.all(10),
+                  child: Padding(padding: EdgeInsets.only(top: 50.h),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('     Tiện ích cơ bản', style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),),
-                        GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
-                          mainAxisSpacing: 30, // Khoảng cách dọc giữa các hàng
-                          crossAxisSpacing: 30, // Khoảng cách ngang giữa các cột
+                        Column(
                           children: [
-                            StreamBuilder<QuerySnapshot>(
-                              stream: FirebaseFirestore.instance
-                                  .collection('incidents')
-                                  .where('assignedStaffId', isEqualTo: staffInfo?.uid)
-                                  .where('status', isEqualTo: 'Đang xử lí') // hoặc điều kiện bạn muốn lọc sự cố mới
-                                  .snapshots(),
-                              builder: (context, snapshot) {
-                                final docs = snapshot.data?.docs ?? [];
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 50.w, vertical: 10.h),
+                              child: StreamBuilder<QuerySnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('incidents')
+                                    .where('assignedStaffId', isEqualTo: staffInfo?.uid)
+                                    .where('status', isEqualTo: 'Đang xử lí')
+                                    .snapshots(),
+                                builder: (context, snapshot) {
+                                  final docs = snapshot.data?.docs ?? [];
 
-                                // Lọc các sự cố chưa xem (seenBy != userId)
-                                final unseenDocs = docs.where((doc) {
-                                  final data = doc.data() as Map<String, dynamic>;
-                                  final seenBy = data.containsKey('seenBy') ? data['seenBy'] as String? : null;
-                                  return staffInfo?.uid != null && seenBy != staffInfo!.uid;
-                                }).toList();
+                                  final unseenDocs = docs.where((doc) {
+                                    final data = doc.data() as Map<String, dynamic>;
+                                    final seenBy = data.containsKey('seenBy') ? data['seenBy'] as String? : null;
+                                    return staffInfo?.uid != null && seenBy != staffInfo!.uid;
+                                  }).toList();
 
-                                final count = unseenDocs.length;
+                                  final count = unseenDocs.length;
 
-                                return buildServiceCard1(
-                                  context,
-                                  svgPath: 'assets/images/warning.svg',
-                                  label: 'Sự cố mới',
-                                  badgeCount: count, // Hiển thị số badge
-                                  onTap: () async {
-                                    if (staffInfo?.uid != null) {
-                                      for (final doc in unseenDocs) {
-                                        await doc.reference.update({
-                                          'seenBy': staffInfo!.uid, // Đánh dấu đã xem
-                                        });
+                                  return buildServiceCard1(
+                                    context,
+                                    svgPath: 'assets/images/warning.svg',
+                                    label: 'Sự cố mới',
+                                    badgeCount: count,
+                                    onTap: () async {
+                                      if (staffInfo?.uid != null) {
+                                        for (final doc in unseenDocs) {
+                                          await doc.reference.update({
+                                            'seenBy': staffInfo!.uid,
+                                          });
+                                        }
                                       }
-                                    }
 
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => StaffIncidentPage(
-                                          staffId: staffInfo!.uid,
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => StaffIncidentPage(
+                                            staffId: staffInfo!.uid,
+                                          ),
                                         ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+
+                            SizedBox(height: 30.h), // Khoảng cách giữa 2 card
+
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 50.w, vertical: 10.h),
+                              child: buildServiceCard(
+                                context,
+                                svgPath: 'assets/images/clipboard.svg',
+                                label: 'Lịch sử sự cố',
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ProblemHistoryScreen(
+                                        staffId: staffInfo!.uid,
                                       ),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-
-                            buildServiceCard(
-                              context,
-                              svgPath: 'assets/images/clipboard.svg',
-                              label: 'Lịch sử sự cố',
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ProblemHistoryScreen(
-                                      staffId: staffInfo!.uid, // Truyền đúng staffId
                                     ),
-                                  ),
-                                );
-                              },
+                                  );
+                                },
+                              ),
                             ),
-
                           ],
                         ),
                           ],
@@ -337,17 +336,18 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
               highlightColor: Colors.blue.withOpacity(0.1),
               child: Container(
                 padding: const EdgeInsets.all(12),
+                width: 120.w,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SvgPicture.asset(
                       svgPath,
-                      width: 50,
-                      height: 50,
+                      width: 70,
+                      height: 70
 
                     ),
-                    const SizedBox(height: 8),
-                    Text(label, style:TextStyle(fontWeight: FontWeight.bold,fontSize: 12.sp),textAlign: TextAlign.center),
+                    SizedBox(height: 8.h),
+                    Text(label, style:TextStyle(fontWeight: FontWeight.bold,fontSize: 13.sp),textAlign: TextAlign.center),
                   ],
                 ),
               ),
@@ -382,21 +382,21 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
                 highlightColor: Colors.blue.withOpacity(0.1),
                 child: Container(
                   padding: const EdgeInsets.all(12),
-                  width: double.infinity,
+                  width: 120.w,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SvgPicture.asset(
                         svgPath,
-                        width: 50,
-                        height: 50,
+                        width: 70,
+                        height: 70,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         label,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 12.sp,
+                          fontSize: 13.sp,
                         ),
                         textAlign: TextAlign.center,
                       ),
