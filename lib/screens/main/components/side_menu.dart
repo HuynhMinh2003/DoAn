@@ -100,7 +100,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   DrawerListTile(
                     title: "Thông tin cư dân",
-                    svgSrc: "assets/icons/menu_profile.svg",
+                    svgSrc: "assets/icons/person.svg",
                     press: () {
                       onMenuItemPressed(ResidentPage()); // Chuyển sang Dashboard
                     },
@@ -113,7 +113,7 @@ class SideMenu extends StatelessWidget {
                     children: [
                       DrawerListTile(
                         title: "Tạo tài khoản công ty",
-                        svgSrc: "assets/icons/menu_add_company.svg",
+                        svgSrc: "assets/icons/add_company.svg",
                         press: () {
                           onMenuItemPressed(AddAccountCompanyPage());
                         },
