@@ -353,7 +353,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
 
                 return Card(
                   elevation: 2,
-                  margin: EdgeInsets.symmetric(vertical: 8.h),
+                  margin: EdgeInsets.symmetric(horizontal: 10.w),
                   child: ListTile(
                     title: Text("$emoji $licensePlate"),
                     subtitle: Text(

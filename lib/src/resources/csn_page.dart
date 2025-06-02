@@ -225,18 +225,15 @@ class _CSNPageState extends BaseStaffInfoScreen<CSNPage> {
               ),
               SizedBox(height: 10.h,),
               Container(
-                child: Padding(padding: EdgeInsets.all(10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 90.h,),
-                        GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
-                          mainAxisSpacing: 30, // Khoảng cách dọc giữa các hàng
-                          crossAxisSpacing: 30, // Khoảng cách ngang giữa các cột
+                child: Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 60.h),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 30.w),
+                        child: Column(
                           children: [
                             buildServiceCard(
                               context,
@@ -245,11 +242,16 @@ class _CSNPageState extends BaseStaffInfoScreen<CSNPage> {
                               onTap: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => WaterReadingScreen(staffId: staffInfo!.uid, staffName: staffInfo!.fullName)),
+                                  MaterialPageRoute(
+                                    builder: (context) => WaterReadingScreen(
+                                      staffId: staffInfo!.uid,
+                                      staffName: staffInfo!.fullName,
+                                    ),
+                                  ),
                                 );
                               },
                             ),
-
+                            SizedBox(height: 40.h), // Khoảng cách giữa các card
                             buildServiceCard(
                               context,
                               svgPath: 'assets/images/history.svg',
@@ -266,14 +268,13 @@ class _CSNPageState extends BaseStaffInfoScreen<CSNPage> {
                                 );
                               },
                             ),
-
                           ],
                         ),
-                      ],
-                    )
+                      ),
+                    ],
+                  ),
                 ),
-                )
-
+              )
             ],
           )
         ],
@@ -307,6 +308,9 @@ class _CSNPageState extends BaseStaffInfoScreen<CSNPage> {
               splashColor: Colors.blue.withOpacity(0.2),
               highlightColor: Colors.blue.withOpacity(0.1),
               child: Container(
+                width: 120.w, // 🔥 Chiếm toàn bộ chiều ngang cha
+                height: 120.h,
+                constraints: BoxConstraints(minHeight: 110.h), // 🔥 Đảm bảo chiều cao tối thiểu
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -315,10 +319,16 @@ class _CSNPageState extends BaseStaffInfoScreen<CSNPage> {
                       svgPath,
                       width: 50,
                       height: 50,
-
                     ),
                     const SizedBox(height: 8),
-                    Text(label, style:TextStyle(fontWeight: FontWeight.bold,fontSize: 12.sp),textAlign: TextAlign.center),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.sp,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               ),
