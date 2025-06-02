@@ -440,7 +440,7 @@ class _ReportPageState extends BaseResidentInfoScreen<ReportPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            'Sự cố',
+            'Báo cáo sự cố',
             style: TextStyle(
               color: Colors.white,
               fontFamily: "Oswald",

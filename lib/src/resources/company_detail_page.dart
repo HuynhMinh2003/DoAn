@@ -59,11 +59,11 @@ class CompanyDetailPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Tên cư dân: $residentName', style: TextStyle(fontSize: 15.sp)),
-                  SizedBox(height: 8),
+                  SizedBox(height: 10.h),
                   Text('Số căn hộ: $apartmentNumber', style: TextStyle(fontSize: 15.sp)),
-                  SizedBox(height: 8),
+                  SizedBox(height: 10.h),
                   Text('Số điện thoại: $phone', style: TextStyle(fontSize: 15.sp)),
-                  SizedBox(height: 16),
+                  SizedBox(height: 10.h),
                   TextFormField(
                     decoration: InputDecoration(
                       labelText: 'Thời gian yêu cầu',
@@ -255,7 +255,7 @@ class CompanyDetailPage extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -263,24 +263,24 @@ class CompanyDetailPage extends StatelessWidget {
               Center(
                 child: Image.network(imageServiceUrl, height: 200),
               ),
-            SizedBox(height: 20.h),
+            SizedBox(height: 30.h),
             Text('Tên công ty: ${company.name}',
                 style: TextStyle(fontSize: 15.h)),
-            SizedBox(height: 20.h),
+            SizedBox(height: 30.h),
             Text('Loại dịch vụ: ${company.type}',
                 style: TextStyle(fontSize: 15.h)),
-            SizedBox(height: 20.h),
+            SizedBox(height: 30.h),
             Text('Mô tả: ${company.description}',
                 style: TextStyle(fontSize: 15.h)),
-            SizedBox(height: 20.h),
+            SizedBox(height: 30.h),
             Text('Số điện thoại: ${company.phone}',
                 style: TextStyle(fontSize: 15.h)),
-            SizedBox(height: 20.h),
+            SizedBox(height: 30.h),
             Text('Địa chỉ: ${company.address}',
                 style: TextStyle(fontSize: 15.h)),
-            SizedBox(height: 20.h),
+            SizedBox(height: 30.h),
             Text('Giá dịch vụ: $price', style: TextStyle(fontSize: 15.h)),
-            SizedBox(height: 10.h),
+            SizedBox(height: 20.h),
             if (fileLink.isNotEmpty)
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
