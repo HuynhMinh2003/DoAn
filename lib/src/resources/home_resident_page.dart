@@ -391,7 +391,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                         ],
                       ),
                       Text(
-                        '   Dịch vụ từ công ty ngoài',
+                        '   Dịch vụ ngoài',
                         style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
                       ),
                       Padding(padding: EdgeInsets.only(left: 9.w, right: 9.w, top: 10.h),
@@ -551,7 +551,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
               highlightColor: Colors.blue.withOpacity(0.1),
               child: SizedBox(
                 width: 110,
-                height: 130,
+                height: 110,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
@@ -582,7 +582,10 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                         label,
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp),
                         textAlign: TextAlign.center,
-                      ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      )
+
                     ],
                   ),
                 ),
