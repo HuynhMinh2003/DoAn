@@ -214,7 +214,7 @@ class _StaffListPageState extends State<StaffListPage> {
                     await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).update({
                       'isExit': false,
                       'leaveAt': null,
-                      'lastUpdate': Timestamp.now(),
+                      'lastUpdated': Timestamp.now(),
                     });
                     LoadingDialog.hideLoadingDialog(context);
                     Navigator.pop(context);
@@ -552,7 +552,7 @@ class _StaffListPageState extends State<StaffListPage> {
                               }
 
                               if (updateData.isNotEmpty) {
-                                updateData['lastUpdate'] = Timestamp.now();
+                                updateData['lastUpdated'] = Timestamp.now();
                                 await FirebaseFirestore.instance.collection('staffs').doc(staff.uid).update(updateData);
                               }
 
@@ -739,7 +739,7 @@ class _StaffListPageState extends State<StaffListPage> {
                             children: [
                               Icon(Icons.upload),
                               SizedBox(width: 5.w,),
-                              Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),)
+                              Text('Xuất file', style: TextStyle(color:Colors.white, fontSize: 4.sp, fontWeight: FontWeight.bold),)
                             ],
                           ),
                         ),),
@@ -803,7 +803,7 @@ class _StaffListPageState extends State<StaffListPage> {
                                   child: Center(
                                     child: Text(
                                       "Không có nhân viên nào",
-                                      style: TextStyle(fontSize: 4.sp, color: Colors.black54),
+                                      style: TextStyle(fontSize: 4.sp, color: Colors.white),
                                     ),
                                   ),
                                 )

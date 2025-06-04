@@ -7,7 +7,7 @@ class Staff {
   final String imageUrl;
   final bool isFree;
   final DateTime? birthDate;
-  final Timestamp lastUpdated;
+  final Timestamp lastUpdatedd;
   final String fullName;
   final String phone;
   final String cccd;
@@ -26,7 +26,7 @@ class Staff {
     required this.imageUrl,
     required this.isFree,
     this.birthDate,
-    required this.lastUpdated,
+    required this.lastUpdatedd,
     required this.fullName,
     required this.phone,
     required this.cccd,
@@ -49,7 +49,7 @@ class Staff {
       imageUrl: json['imageUrl'] ?? '',
       isFree: json['isFree'] ?? false,
       birthDate: json['birthDate'] != null ? (json['birthDate'] as Timestamp).toDate() : null,
-      lastUpdated: json['lastUpdated'] != null ? json['lastUpdated'] as Timestamp : Timestamp.fromMillisecondsSinceEpoch(0),
+      lastUpdatedd: json['lastUpdatedd'] != null ? json['lastUpdatedd'] as Timestamp : Timestamp.fromMillisecondsSinceEpoch(0),
       fullName: json['fullName'] ?? '',
       phone: json['phone'] ?? '',
       cccd: json['cccd'] ?? '',
@@ -70,7 +70,7 @@ class Staff {
       'imageUrl': imageUrl,
       'isFree': isFree,
       'birthDate': birthDate != null ? Timestamp.fromDate(birthDate!) : null,
-      'lastUpdated': lastUpdated,
+      'lastUpdatedd': lastUpdatedd,
       'fullName': fullName,
       'phone': phone,
       'cccd': cccd,

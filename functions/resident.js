@@ -56,7 +56,7 @@ const createResidentAccount = onRequest(
           await admin.firestore().collection("residents").doc(residentId).update({
             isExit: false,
             leaveAt: null,
-            lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
+            lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
             apartmentId,
           });
 
@@ -134,7 +134,7 @@ const createResidentAccount = onRequest(
           leaveAt: null,
           fcmTokens: [],
           imageUrl: "",
-          lastUpdate: null,
+          lastUpdated: null,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 

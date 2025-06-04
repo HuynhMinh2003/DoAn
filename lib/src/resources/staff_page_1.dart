@@ -53,7 +53,7 @@ class _StaffPage1State extends BaseStaffInfoScreen<StaffPage1> {
       if (tokens.contains(fcmToken)) {
         await userRef.update({
           'fcmTokens': FieldValue.arrayRemove([fcmToken]),
-          'lastUpdated': FieldValue.serverTimestamp(),
+          'lastUpdatedd': FieldValue.serverTimestamp(),
         });
         print("✅ Đã xóa token FCM: $fcmToken");
       } else {
