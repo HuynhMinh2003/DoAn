@@ -88,7 +88,6 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.w),
           child: Card(
-            color: secondaryColor,
             elevation: 4,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -109,7 +108,7 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 16.h),
+                    SizedBox(height: 30.h),
                     DropdownButtonFormField2<String>(
                       value: _feeType,
                       decoration: _inputDecoration(hint: 'Chọn loại phí'),
@@ -133,7 +132,7 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                       validator: (val) =>
                       val == null ? 'Vui lòng chọn loại phí' : null,
                     ),
-                    SizedBox(height: 16.h),
+                    SizedBox(height: 30.h),
                     if (_feeType == 'parking') ...[
                       DropdownButtonFormField2<String>(
                         value: _vehicleType,
@@ -164,7 +163,7 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                       validator: (val) =>
                       val == null || val.isEmpty ? 'Nhập phí' : null,
                     ),
-                    SizedBox(height: 16.h),
+                    SizedBox(height: 30.h),
                     TextFormField(
                       readOnly: true,
                       controller: _dateController,
@@ -191,10 +190,11 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                       validator: (val) =>
                       _selectedDate == null ? 'Vui lòng chọn ngày hiệu lực' : null,
                     ),
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 50.h),
                     Center(
                       child: SizedBox(
                         height: 60.h,
+                        width: 60.w,
                         child: ElevatedButton(
                           onPressed: () {
                             _saveFee();
