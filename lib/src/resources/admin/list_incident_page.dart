@@ -27,10 +27,8 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
   String? _selectedPriority;
   String? _selectedStatus;
 
-  String? _selectedEmploymentStatus;
   List<String> _priorityItems = ["Tất cả", "Cao", "Trung bình", "Thấp"]; // Các giá trị trạng thái nhân viên
 
-  // List<String> _positionItems = [];
   List<String> _statusItems = ["Tất cả", "Đang chờ xử lí", "Đang xử lí", "Đang chờ xử lí (Trả lại)", "Đã xử lí"];
 
   List<Incident> _incidentList = [];
@@ -45,8 +43,6 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
   List<Incident> paginatedIncidents = [];
   List<int> pageNumbers = [];
 
-  bool _isEditDialogShowing = false;
-  bool _isDeleteDialogShowing = false;
   bool _isViewDialogShowing = false;
 
   final AuthBloc _authBloc = AuthBloc();

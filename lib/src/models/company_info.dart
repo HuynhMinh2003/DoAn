@@ -13,7 +13,7 @@ class CompanyInfo {
   final String description;
   final Timestamp? leaveAt;
   final Timestamp? createdAt;
-  final Timestamp lastUpdated;
+  final Timestamp lastUpdatedd;
 
   CompanyInfo({
     this.companyId,
@@ -28,7 +28,7 @@ class CompanyInfo {
     required this.description,
     this.leaveAt,
     this.createdAt,
-    required this.lastUpdated,
+    required this.lastUpdatedd,
   });
 
   // ✅ From Firestore map
@@ -46,7 +46,7 @@ class CompanyInfo {
       description: map['description'] ?? '',
       leaveAt: map['leaveAt'],
       createdAt: map['createdAt'],
-      lastUpdated: map['lastUpdated'] ?? Timestamp.now(), // fallback in case of missing field
+      lastUpdatedd: map['lastUpdatedd'] ?? Timestamp.now(), // fallback in case of missing field
     );
   }
 
@@ -64,7 +64,7 @@ class CompanyInfo {
       'description': description,
       'leaveAt': leaveAt,
       'createdAt': createdAt,
-      'lastUpdated': lastUpdated,
+      'lastUpdatedd': lastUpdatedd,
     };
   }
 
@@ -82,7 +82,7 @@ class CompanyInfo {
     String? description,
     Timestamp? leaveAt,
     Timestamp? createdAt,
-    Timestamp? lastUpdated,
+    Timestamp? lastUpdatedd,
   }) {
     return CompanyInfo(
       companyId: companyId ?? this.companyId,
@@ -97,7 +97,7 @@ class CompanyInfo {
       description: description ?? this.description,
       leaveAt: leaveAt ?? this.leaveAt,
       createdAt: createdAt ?? this.createdAt,
-      lastUpdated: lastUpdated ?? this.lastUpdated,
+      lastUpdatedd: lastUpdatedd ?? this.lastUpdatedd,
     );
   }
 
@@ -118,7 +118,7 @@ class CompanyInfo {
       description: json['description'] ?? '',
       leaveAt: json['leaveAt'],
       createdAt: json['createdAt'],
-      lastUpdated: json['lastUpdated'] ?? Timestamp.now(),
+      lastUpdatedd: json['lastUpdatedd'] ?? Timestamp.now(),
     );
   }
 }
