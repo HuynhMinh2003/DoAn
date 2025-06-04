@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/incident.dart';
 import 'package:do_an/src/models/staffs.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 
 class ManagerIncidentPage extends StatefulWidget {
@@ -13,8 +15,6 @@ class ManagerIncidentPage extends StatefulWidget {
 
 class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
   List<Incident> _pendingIncidents = [];
-  String? _selectedPriority;
-  Staff? _selectedStaff;
   List<Staff> _allStaffs = [];
 
   @override
@@ -54,67 +54,54 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
       builder: (_) {
         final _noteController = TextEditingController();
         Staff? selectedStaff = null;
-        String? selectedPriority = incident.priority ?? 'Trung bình';
+        String? selectedPriority = null;
 
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Giao sự cố cho nhân viên'),
+              title: Text('Giao sự cố cho nhân viên', style: TextStyle(fontSize: 5.sp),),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    DropdownButtonFormField<String>(
-                      value: selectedPriority,
-                      decoration:
-                      const InputDecoration(labelText: 'Mức độ ưu tiên'),
-                      items: ['Cao', 'Trung bình', 'Thấp']
-                          .map((level) => DropdownMenuItem<String>(
-                        value: level,
-                        child: Text(level),
-                      ))
-                          .toList(),
-                      onChanged: (value) {
+                buildFilterDropdown2<String>(
+                hintText: 'Chọn mức độ xử lý',
+                  items: ['Cao', 'Trung bình', 'Thấp'],
+                  selectedValue: selectedPriority,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedPriority = value;
+                    });
+                  },
+                  itemBuilder: (level) => Text(level, style: const TextStyle(fontSize: 14)),
+                ),
+
+                  SizedBox(height: 10.h),
+                  buildFilterDropdown2<Staff>(
+                    hintText: 'Chọn nhân viên',
+                    items: _allStaffs,
+                    selectedValue: selectedStaff,
+                    isEnabled: (staff) => staff.isFree,
+                    onChanged: (staff) {
+                      if (staff?.isFree == true) {
                         setState(() {
-                          selectedPriority = value;
+                          selectedStaff = staff;
                         });
-                      },
+                      }
+                    },
+                    itemBuilder: (staff) => Row(
+                      children: [
+                        Icon(Icons.circle, size: 12, color: staff.isFree ? Colors.green : Colors.red),
+                        const SizedBox(width: 8),
+                        Text(staff.fullName),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<Staff>(
-                      value: selectedStaff,
-                      decoration:
-                      const InputDecoration(labelText: 'Chọn nhân viên'),
-                      items: _allStaffs.map((staff) {
-                        return DropdownMenuItem<Staff>(
-                          value: staff,
-                          enabled: staff.isFree,
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.circle,
-                                size: 12,
-                                color: staff.isFree ? Colors.green : Colors.red,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(staff.fullName),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (staff) {
-                        if (staff?.isFree == true) {
-                          setState(() {
-                            selectedStaff = staff;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 12),
+                  ),
+                    SizedBox(height: 10.h),
                     TextField(
                       controller: _noteController,
-                      decoration: const InputDecoration(
-                          labelText: 'Ghi chú cho nhân viên (nếu có)'),
+                      decoration: InputDecoration(
+                          labelText: 'Ghi chú cho nhân viên', labelStyle: TextStyle(fontSize: 4.sp)),
                     ),
                   ],
                 ),
@@ -122,7 +109,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Hủy'),
+                  child: Text('Hủy', style: TextStyle(fontSize: 4.sp)),
                 ),
                 ElevatedButton(
                   onPressed: selectedStaff == null
@@ -136,7 +123,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                       selectedPriority ?? 'Trung bình',
                     );
                   },
-                  child: const Text('Xác nhận giao'),
+                  child: Text('Xác nhận giao', style: TextStyle(fontSize: 4.sp)),
                 ),
               ],
             );
@@ -182,46 +169,159 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Quản lý sự cố cư dân')),
-      body: _pendingIncidents.isEmpty
-          ? const Center(child: Text('Không có sự cố nào chờ xử lí'))
-          : ListView.builder(
-        itemCount: _pendingIncidents.length,
-        itemBuilder: (context, index) {
-          final incident = _pendingIncidents[index];
-          return Card(
-            margin: const EdgeInsets.all(10),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Tiêu đề: ${incident.title}",
-                      style:
-                      const TextStyle(fontWeight: FontWeight.bold)),
-                  Text("Người báo: ${incident.reporterName}"),
-                  Text(
-                      "Căn hộ: ${incident.apartmentAddress}, Toà: ${incident.building}"),
-                  Text("Mô tả: ${incident.description}"),
-                  if (incident.imageUrl != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Image.network(incident.imageUrl!,
-                          height: 150),
-                    ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton(
-                      child: const Text("Giao xử lí"),
-                      onPressed: () => _openAssignDialog(incident),
-                    ),
-                  ),
-                ],
-              ),
+      body: SafeArea(child: Stack(
+        children: [
+        ConstrainedBox(
+          constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),child: Padding(padding: EdgeInsets.only(left: 10.w, right: 10.w, top: 40.h, bottom: 10.h),child: Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Flexible(child: Text("Quản lý sự cố cư dân",style: TextStyle(
+                  fontFamily: "Oswald",
+                  fontWeight: FontWeight.w700,
+                  fontSize: 7.sp,
+                ),)),
+              ],
             ),
+          SizedBox(
+            height: MediaQuery.of(context).size.height - 150.h,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return _pendingIncidents.isEmpty
+                    ? Center(
+                  child: Text(
+                    'Không có sự cố nào cần xử lý',
+                    style: TextStyle(fontSize: 4.sp),
+                  ),
+                )
+                    : Column(
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: _pendingIncidents.length,
+                        itemBuilder: (context, index) {
+                          final incident = _pendingIncidents[index];
+                          return Card(
+                            margin: const EdgeInsets.all(10),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Hình ảnh bên trái
+                                  if (incident.imageUrl != null && incident.imageUrl!.isNotEmpty)
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        incident.imageUrl!,
+                                        width: 60.w,
+                                        height: 200.h,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  else
+                                    Container(
+                                      width: 120.w,
+                                      height: 120.h,
+                                      color: Colors.grey[300],
+                                      child: Icon(Icons.image_not_supported, size: 40),
+                                    ),
+
+                                  SizedBox(width: 12.w),
+
+                                  // Nội dung bên phải
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Nội dung bên trên
+                                        Text(
+                                          "Tiêu đề: ${incident.title}",
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 4.sp),
+                                        ),
+                                        SizedBox(height: 30.h),
+                                        Text("Người báo: ${incident.reporterName}", style: TextStyle(fontSize: 4.sp)),
+                                        SizedBox(height: 30.h),
+                                        Text("Căn hộ: ${incident.apartmentAddress} / ${incident.building}", style: TextStyle(fontSize: 4.sp)),
+                                        SizedBox(height: 30.h),
+                                        Text("Mô tả: ${incident.description}", style: TextStyle(fontSize: 4.sp)),
+
+                                        // Spacer đẩy nút xuống dưới
+                                        Spacer(),
+
+                                        // Nút nằm dưới cùng bên phải
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            ElevatedButton(
+                                              onPressed: () => _openAssignDialog(incident),
+                                              child: Text("Giao xử lí", style: TextStyle(fontSize: 4.sp)),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          )
+        ],),)),
+      ],))
+    );
+  }
+  Widget buildFilterDropdown2<T>({
+    required String hintText,
+    required List<T> items,
+    required T? selectedValue,
+    required ValueChanged<T?> onChanged,
+    required Widget Function(T item) itemBuilder,
+    String? labelText,
+    bool Function(T)? isEnabled,
+    double height = 50,
+    double maxHeight = 250,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: DropdownButtonFormField2<T>(
+        value: selectedValue == null ? null : selectedValue,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: labelText,
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.zero,
+        ),
+        hint: Text(
+          hintText,
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
+        ),
+        items: items.map((item) {
+          return DropdownMenuItem<T>(
+            value: item,
+            enabled: isEnabled != null ? isEnabled(item) : true,
+            child: itemBuilder(item),
           );
-        },
+        }).toList(),
+        onChanged: onChanged,
+        buttonStyleData: ButtonStyleData(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          height: height,
+        ),
+        dropdownStyleData: DropdownStyleData(
+          maxHeight: maxHeight,
+        ),
       ),
     );
   }
+
+
 }

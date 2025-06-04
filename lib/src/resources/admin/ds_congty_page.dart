@@ -334,7 +334,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
                               }
 
                               if (updateData.isNotEmpty) {
-                                updateData['lastUpdate'] = Timestamp.now();
+                                updateData['lastUpdated'] = Timestamp.now();
                                 await FirebaseFirestore.instance.collection('companies').doc(company.companyId!).update(updateData);
                               }
 
@@ -503,7 +503,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
                     await FirebaseFirestore.instance.collection('companies').doc(company.companyId).update({
                       'isExit': false,
                       'leaveAt': null,
-                      'lastUpdated': Timestamp.now(),
+                      'lastUpdatedd': Timestamp.now(),
                     });
                     LoadingDialog.hideLoadingDialog(context);
                     Navigator.pop(context);
@@ -664,7 +664,8 @@ class _CompanyListPageState extends State<CompanyListPage> {
                               children: [
                                 
                                   if(_companyList.isEmpty)
-                                      Expanded(child: Center(child: Text("Không có công ty nào"),))
+                                      Expanded(child: Center(child: Text("Không có công ty nào",style: TextStyle(
+                                          fontSize: 4.sp, color: Colors.white),)))
                                       else
                                     Expanded(
                                       child: SingleChildScrollView(

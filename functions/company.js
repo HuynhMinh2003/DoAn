@@ -48,7 +48,7 @@ const createCompanyAccount = onRequest(
           isExit:false,
           leaveAt: null,
           role: 5,
-          lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
+          lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 

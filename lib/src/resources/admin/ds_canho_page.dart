@@ -525,6 +525,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                         Text(
                           'Thêm file',
                           style: TextStyle(
+                            color: Colors.white,
                             fontSize: 4.sp,
                             fontWeight: FontWeight.bold,
                           ),
@@ -546,6 +547,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                         Text(
                           'Xuất file',
                           style: TextStyle(
+                            color: Colors.white,
                             fontSize: 4.sp,
                             fontWeight: FontWeight.bold,
                           ),

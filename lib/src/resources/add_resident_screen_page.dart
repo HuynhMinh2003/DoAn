@@ -591,15 +591,13 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
                   await _submit();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2D80F8),
-                  minimumSize: Size(60.w, 60.h), // ✅ Chiều rộng và cao mong muốn
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.r),
-                  ),
+                  backgroundColor: secondaryColor,
                   elevation: 4,
                   shadowColor: Colors.black45,
-                  alignment: Alignment.center,
-                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                    side: BorderSide(color: Colors.white, width: 0.1.w), // Viền trắng
+                  ),
                 ),
                 child: Text(
                   "Xác nhận thêm",
