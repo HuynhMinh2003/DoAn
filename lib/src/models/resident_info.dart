@@ -13,7 +13,7 @@ class ResidentInfo {
   final String? contractId; // ✅ Thêm trường mới
   final String? imageUrl;
   final bool isExit;
-  final DateTime? lastUpdate;
+  final DateTime? lastUpdated;
   final DateTime? leaveAt;
   final DateTime? createdAt;
   final List<String> fcmTokens;
@@ -31,7 +31,7 @@ class ResidentInfo {
     this.contractId, // ✅ Thêm vào constructor
     this.imageUrl,
     this.isExit = false,
-    this.lastUpdate,
+    this.lastUpdated,
     this.leaveAt,
     this.createdAt,
     this.fcmTokens = const [],
@@ -51,7 +51,7 @@ class ResidentInfo {
       contractId: map['contractId'], // ✅ Lấy contractId từ map
       imageUrl: map['imageUrl'],
       isExit: map['isExit'] ?? false,
-      lastUpdate: _parseDate(map['lastUpdate']),
+      lastUpdated: _parseDate(map['lastUpdated']),
       leaveAt: _parseDate(map['leaveAt']),
       createdAt: _parseDate(map['createdAt']),
       fcmTokens: List<String>.from(map['fcmTokens'] ?? []),
@@ -76,7 +76,7 @@ class ResidentInfo {
       'phone': phone,
       'role': 4,
       'isExit': isExit,
-      'lastUpdate': FieldValue.serverTimestamp(),
+      'lastUpdated': FieldValue.serverTimestamp(),
     };
 
     // ngày sinh
@@ -113,7 +113,7 @@ class ResidentInfo {
     String? contractId, // ✅ copyWith cho contractId
     String? imageUrl,
     bool? isExit,
-    DateTime? lastUpdate,
+    DateTime? lastUpdated,
     DateTime? leaveAt,
     DateTime? createdAt,
     List<String>? fcmTokens,
@@ -131,7 +131,7 @@ class ResidentInfo {
       contractId: contractId ?? this.contractId,
       imageUrl: imageUrl ?? this.imageUrl,
       isExit: isExit ?? this.isExit,
-      lastUpdate: lastUpdate ?? this.lastUpdate,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
       leaveAt: leaveAt ?? this.leaveAt,
       createdAt: createdAt ?? this.createdAt,
       fcmTokens: fcmTokens ?? this.fcmTokens,

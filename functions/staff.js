@@ -62,7 +62,7 @@ const createStaffAccount = onRequest(
           leaveAt: null,
           isFree: true,
           role: role, // Gán role theo position
-          lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
+          lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 

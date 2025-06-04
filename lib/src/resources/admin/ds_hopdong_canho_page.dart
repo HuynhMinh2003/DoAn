@@ -319,18 +319,8 @@ class _ContractListPageState extends State<ContractListPage> {
       final contractRef = FirebaseFirestore.instance
           .collection("contracts")
           .doc(contract.contractId);
-      final billWaterCollectionRef = contractRef.collection("billWater");
       final updateHistoryCollectionRef =
           contractRef.collection("contractHistory");
-
-// ✅ Truy vấn hóa đơn nước đầu tiên
-      final billWaterSnapshot = await billWaterCollectionRef.limit(1).get();
-      String billWaterInfo = "Chưa có hóa đơn nước";
-
-      if (billWaterSnapshot.docs.isNotEmpty) {
-        final billDoc = billWaterSnapshot.docs.first;
-        billWaterInfo = "Số tiền: ${billDoc['totalAmount']} VND";
-      }
 
       showDialog(
         context: context,
@@ -421,12 +411,12 @@ class _ContractListPageState extends State<ContractListPage> {
                     'timestamp': FieldValue.serverTimestamp(),
                   });
 
-                  // 3. Cập nhật cư dân: isExit, lastUpdate và leftAt trong subcollection contractHistory
+                  // 3. Cập nhật cư dân: isExit, lastUpdated và leftAt trong subcollection contractHistory
                   final residentsSnapshot = await residentsRef
                       .where('apartmentId', isEqualTo: apartment.id)
                       .get();
                   for (var residentDoc in residentsSnapshot.docs) {
-                    // 3.1 update isExit và lastUpdate
+                    // 3.1 update isExit và lastUpdated
                     await residentDoc.reference.update({
                       'isExit': true,
                       'leaveAt': Timestamp.now(),
@@ -522,10 +512,10 @@ class _ContractListPageState extends State<ContractListPage> {
                 LoadingDialog.showLoadingDialog(context, "Đang gia hạn...");
 
                 try {
-                  // 3. Cập nhật endDate và lastUpdate
+                  // 3. Cập nhật endDate và lastUpdated
                   await contractDoc.reference.update({
                     'endDate': Timestamp.fromDate(newEndDate),
-                    'lastUpdate': FieldValue.serverTimestamp(),
+                    'lastUpdated': FieldValue.serverTimestamp(),
                   });
 
                   // 4. Ghi vào lịch sử
@@ -1523,10 +1513,8 @@ class _ContractListPageState extends State<ContractListPage> {
                                                 children: [
                                                   IconButton(
                                                     icon: Icon(
-                                                      (isRented && hasContract)
-                                                          ? Icons.info_outline
-                                                          : Icons.add,
-                                                      color: Colors.grey,
+                                                      (isRented && hasContract) ? Icons.info_outline : Icons.add,
+                                                      color: (isRented && hasContract) ? Colors.white : Colors.green,
                                                     ),
                                                     onPressed: () async {
                                                       if (_isDialogShowing)
