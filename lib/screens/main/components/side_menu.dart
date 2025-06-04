@@ -4,6 +4,7 @@ import 'package:do_an/src/resources/admin/ds_canho_page.dart';
 import 'package:do_an/src/resources/admin/ds_congty_page.dart';
 import 'package:do_an/src/resources/admin/ds_hopdong_canho_page.dart';
 import 'package:do_an/src/resources/admin/list_incident_page.dart';
+import 'package:do_an/src/resources/admin/list_wait_update_service_page.dart';
 import 'package:do_an/src/resources/admin/manage_incident_page.dart';
 import 'package:do_an/src/resources/admin/resident_page.dart';
 import 'package:do_an/src/resources/admin/send_notification_page.dart';
@@ -38,8 +39,8 @@ class SideMenu extends StatelessWidget {
           children: [
             DrawerHeader(
               child: isMenuOpen
-                  ? Image.asset("assets/images/logo.png") // Hiển thị logo khi mở
-                  : Image.asset("assets/images/logo.png"), // Chỉ icon khi đóng
+                  ? SvgPicture.asset("assets/images/logo.svg") // Hiển thị logo khi mở
+                  : SvgPicture.asset("assets/images/logo.svg"), // Chỉ icon khi đóng
             ),
             Expanded(
               child: ListView(
@@ -53,18 +54,10 @@ class SideMenu extends StatelessWidget {
                     isMenuOpen: isMenuOpen,
                   ),
                   ExpandableDrawerListTile(
-                    title: "Quản lý căn hộ",
+                    title: "Quản lý danh sách",
                     svgSrc: "assets/icons/menu_apartment.svg",
                     isMenuOpen: isMenuOpen,
                     children: [
-                      DrawerListTile(
-                        title: "Hợp đồng dịch vụ",
-                        svgSrc: "assets/icons/menu_hd_apartment.svg",
-                        press: () {
-                          onMenuItemPressed(ContractListPage()); // Chuyển sang Dashboard
-                        },
-                        isMenuOpen: isMenuOpen,
-                      ),
                       DrawerListTile(
                         title: "Danh sách căn hộ",
                         svgSrc: "assets/icons/menu_list_apartment.svg",
@@ -73,49 +66,11 @@ class SideMenu extends StatelessWidget {
                         },
                         isMenuOpen: isMenuOpen,
                       ),
-                    ],
-                  ),
-                  ExpandableDrawerListTile(
-                    title: "Quản lý nhân viên",
-                    svgSrc: "assets/icons/menu_staff.svg",
-                    isMenuOpen: isMenuOpen,
-                    children: [
-                      DrawerListTile(
-                        title: "Tạo tài khoản nhân viên",
-                        svgSrc: "assets/icons/menu_add_staff.svg",
-                        press: () {
-                          onMenuItemPressed(AddAccountStaffPage()); // Chuyển sang Dashboard
-                        },
-                        isMenuOpen: isMenuOpen,
-                      ),
                       DrawerListTile(
                         title: "Danh sách nhân viên",
                         svgSrc: "assets/icons/menu_list_staff.svg",
                         press: () {
                           onMenuItemPressed(StaffListPage()); // Chuyển sang Dashboard
-                        },
-                        isMenuOpen: isMenuOpen,
-                      ),
-                    ],
-                  ),
-                  DrawerListTile(
-                    title: "Thông tin cư dân",
-                    svgSrc: "assets/icons/person.svg",
-                    press: () {
-                      onMenuItemPressed(ResidentPage()); // Chuyển sang Dashboard
-                    },
-                    isMenuOpen: isMenuOpen,
-                  ),
-                  ExpandableDrawerListTile(
-                    title: "Quản lý công ty",
-                    svgSrc: "assets/icons/menu_company.svg",
-                    isMenuOpen: isMenuOpen,
-                    children: [
-                      DrawerListTile(
-                        title: "Tạo tài khoản công ty",
-                        svgSrc: "assets/icons/add_company.svg",
-                        press: () {
-                          onMenuItemPressed(AddAccountCompanyPage());
                         },
                         isMenuOpen: isMenuOpen,
                       ),
@@ -128,80 +83,106 @@ class SideMenu extends StatelessWidget {
                         isMenuOpen: isMenuOpen,
                       ),
                       DrawerListTile(
-                        title: "Cập nhật dịch vụ chờ duyệt",
-                        svgSrc: "assets/icons/wait_update_service.svg",
+                        title: "Danh sách cư dân",
+                        svgSrc: "assets/icons/person.svg",
                         press: () {
-                          onMenuItemPressed(WaitUpdateServicePage());
+                          onMenuItemPressed(ResidentPage()); // Chuyển sang Dashboard
                         },
                         isMenuOpen: isMenuOpen,
                       ),
-                    ],
-                  ),
-                  ExpandableDrawerListTile(
-                    title: "Quản lý dịch vụ",
-                    svgSrc: "assets/icons/service.svg",
-                    isMenuOpen: isMenuOpen,
-                    children: [
-                      DrawerListTile(
-                        title: "Cập nhật giá dịch vụ",
-                        svgSrc: "assets/icons/edit_fee_service.svg",
-                        press: () {
-                          onMenuItemPressed(UpdateFeeScreen());
-                        },
-                        isMenuOpen: isMenuOpen,
-                      ),
-                      DrawerListTile(
-                        title: "Danh sách dịch vụ",
-                        svgSrc: "assets/icons/menu_profile.svg",
-                        press: () {
-                          onMenuItemPressed(CompanyListPage());
-                        },
-                        isMenuOpen: isMenuOpen,
-                      ),
-                    ],
-                  ),
-                  ExpandableDrawerListTile(
-                    title: "Quản lý thông báo",
-                    svgSrc: "assets/icons/notification.svg",
-                    isMenuOpen: isMenuOpen,
-                    children: [
-                      DrawerListTile(
-                        title: "Đăng thông báo chung",
-                        svgSrc: "assets/icons/post_notification.svg",
-                        press: () {
-                          onMenuItemPressed(InfoPage());
-                        },
-                        isMenuOpen: isMenuOpen,
-                      ),
-                      DrawerListTile(
-                        title: "Danh sách thông báo",
-                        svgSrc: "assets/icons/menu_profile.svg",
-                        press: () {
-                          onMenuItemPressed(CompanyListPage());
-                        },
-                        isMenuOpen: isMenuOpen,
-                      ),
-                    ],
-                  ),
-                  ExpandableDrawerListTile(title: 'Quản lý sự cố', svgSrc: "assets/icons/attention.svg", isMenuOpen: isMenuOpen, children: [
-                    DrawerListTile(
-                      title: "Sự cố mới",
-                      svgSrc: "assets/icons/new_error.svg",
-                      press: () {
-                        onMenuItemPressed(ManagerIncidentPage()); // Chuyển sang Dashboard
-                      },
-                      isMenuOpen: isMenuOpen,
-                    ),
-                    DrawerListTile(
-                      title: "Danh sách sự cố",
-                      svgSrc: "assets/icons/list_error.svg",
-                      press: () {
-                        onMenuItemPressed(ListIncidentPage()); // Chuyển sang Dashboard
-                      },
-                      isMenuOpen: isMenuOpen,
-                    ),
-                  ])
 
+                    ],
+                  ),
+                  ExpandableDrawerListTile(
+                    title: "Quản lý tạo tài khoản",
+                    svgSrc: "assets/icons/menu_staff.svg",
+                    isMenuOpen: isMenuOpen,
+                    children: [
+                      DrawerListTile(
+                        title: "Tạo tài khoản nhân viên",
+                        svgSrc: "assets/icons/menu_add_staff.svg",
+                        press: () {
+                          onMenuItemPressed(AddAccountStaffPage()); // Chuyển sang Dashboard
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                      DrawerListTile(
+                        title: "Tạo tài khoản công ty",
+                        svgSrc: "assets/icons/add_company.svg",
+                        press: () {
+                          onMenuItemPressed(AddAccountCompanyPage());
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                    ],
+                  ),
+                  DrawerListTile(
+                    title: "Quản lý hợp đồng dịch vụ",
+                    svgSrc: "assets/icons/menu_hd_apartment.svg",
+                    press: () {
+                      onMenuItemPressed(ContractListPage()); // Chuyển sang Dashboard
+                    },
+                    isMenuOpen: isMenuOpen,
+                  ),
+                 ExpandableDrawerListTile(
+                     title: "Quản lý sự cố",
+                     svgSrc: "assets/icons/menu_staff.svg",
+                     isMenuOpen: isMenuOpen, children: [
+                   DrawerListTile(
+                     title: "Điều phối xử lý sự cố mới",
+                     svgSrc: "assets/icons/new_error.svg",
+                     press: () {
+                       onMenuItemPressed(ManagerIncidentPage()); // Chuyển sang Dashboard
+                     },
+                     isMenuOpen: isMenuOpen,
+                   ),
+                   DrawerListTile(
+                     title: "Danh sách sự cố",
+                     svgSrc: "assets/icons/list_error.svg",
+                     press: () {
+                       onMenuItemPressed(ListIncidentPage()); // Chuyển sang Dashboard
+                     },
+                     isMenuOpen: isMenuOpen,
+                   ),
+                 ]),
+                  ExpandableDrawerListTile(
+                      title: "Quản lý dịch vụ",
+                      svgSrc: "assets/icons/menu_hd_apartment.svg",
+                      isMenuOpen: isMenuOpen,
+                      children: [
+                    DrawerListTile(
+                      title: "Danh sách yêu cầu cập nhật dịch vụ ngoài",
+                      svgSrc: "assets/icons/wait_update_service.svg",
+                      press: () {
+                        onMenuItemPressed(WaitUpdateServicePage());
+                      },
+                      isMenuOpen: isMenuOpen,
+                    ),
+                    DrawerListTile(
+                      title: "Duyệt yêu cầu thông tin dịch vụ ngoài ",
+                      svgSrc: "assets/icons/service.svg",
+                      press: () {
+                        onMenuItemPressed(ListWaitUpdateServicePage()); // Chuyển sang Dashboard
+                      },
+                      isMenuOpen: isMenuOpen,
+                    ),
+                    DrawerListTile(
+                      title: "Cập nhật giá dịch vụ đi kèm",
+                      svgSrc: "assets/icons/edit_fee_service.svg",
+                      press: () {
+                        onMenuItemPressed(UpdateFeeScreen());
+                      },
+                      isMenuOpen: isMenuOpen,
+                    ),
+                  ]),
+                  DrawerListTile(
+                    title: "Đăng thông báo chung",
+                    svgSrc: "assets/icons/post_notification.svg",
+                    press: () {
+                      onMenuItemPressed(InfoPage());
+                    },
+                    isMenuOpen: isMenuOpen,
+                  ),
                 ],
               ),
             ),

@@ -37,6 +37,10 @@ class _ResidentPageState extends State<ResidentPage> {
   String _searchQuery = ""; // Biến lưu trữ giá trị tìm kiếm
   Timer? _debounce; // Biến debounce
 
+  bool _isEditDialogShowing = false;
+  bool _isViewDialogShowing = false;
+  bool _isHistoryDialogShowing = false;
+
   List<String> getBuildings() {
     return apartments.map((a) => a.building).toSet().toList()..sort();
   }
@@ -274,7 +278,7 @@ class _ResidentPageState extends State<ResidentPage> {
                 Center(
                   child: CircleAvatar(
                     radius: 70.r,
-                    backgroundColor: Colors.grey,
+                    backgroundColor: Colors.white,
                     child: ClipOval(
                       child: resident.imageUrl?.isNotEmpty == true
                           ? Image.network(
@@ -305,9 +309,9 @@ class _ResidentPageState extends State<ResidentPage> {
                 ),
                 buildInfoRow(
                   "Lần sửa thông tin gần nhất: ",
-                  resident.lastUpdate != null
+                  resident.lastUpdated != null
                       ? DateFormat('dd/MM/yyyy – HH:mm')
-                      .format(resident.lastUpdate!)
+                      .format(resident.lastUpdated!)
                       : "Chưa có",
                 ),
                 buildInfoRow("CCCD:", resident.cccd),
@@ -465,7 +469,7 @@ class _ResidentPageState extends State<ResidentPage> {
                     ),
                     content: SingleChildScrollView(
                       child: Padding(
-                        padding: EdgeInsets.only(left: 5.w),
+                        padding: EdgeInsets.only(left: 5.w, right: 5.w),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
@@ -473,12 +477,12 @@ class _ResidentPageState extends State<ResidentPage> {
                               alignment: Alignment.bottomRight,
                               children: [
                                 CircleAvatar(
-                                  radius: 80.r,
-                                  backgroundColor: Colors.grey,
+                                  radius: 70.r,
+                                  backgroundColor: Colors.white,
                                   child: ClipOval(
                                     child: SizedBox(
-                                      width: 160.r, // 2 * radius
-                                      height: 160.r,
+                                      width: 100.r, // 2 * radius
+                                      height: 100.r,
                                       child: imageProvider.webImageBytes != null
                                           ? Image.memory(
                                         imageProvider.webImageBytes!,
@@ -497,8 +501,8 @@ class _ResidentPageState extends State<ResidentPage> {
                                           : SvgPicture.asset(
                                         'assets/images/default_avatar.svg',
                                         fit: BoxFit.cover,
-                                        width: 160.r,
-                                        height: 160.r,
+                                        width: 100.r,
+                                        height: 100.r,
                                       ),
                                     ),
                                   ),
@@ -519,7 +523,7 @@ class _ResidentPageState extends State<ResidentPage> {
                               ],
                             ),
                             SizedBox(
-                              height: 30.h,
+                              height: 20.h,
                             ),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -757,7 +761,7 @@ class _ResidentPageState extends State<ResidentPage> {
                                 'phone': phoneController.text.trim(),
                                 'address': addressController.text.trim(),
                                 'gender': selectedGender.trim(),
-                                'lastUpdate': FieldValue.serverTimestamp(),
+                                'lastUpdated': FieldValue.serverTimestamp(),
                               };
 
                               if (newImageUrl != null) {
@@ -949,6 +953,7 @@ class _ResidentPageState extends State<ResidentPage> {
                               ),
                             ),
                           ),
+                          SizedBox(width: 5.w,)
                         ],
                       ),
                       SizedBox(height: 10.h),
@@ -1007,8 +1012,10 @@ class _ResidentPageState extends State<ResidentPage> {
                           children: [
                             Expanded(
                               child: matchedResidents.isEmpty
-                                  ? const Center(
-                                      child: Text("Không có cư dân"))
+                                  ? Center(
+                                      child: Text("Không có cư dân",style: TextStyle(
+                          fontSize: 4.sp, color: Colors.white
+                        ),))
                                   : CustomPaginatedTable(
                                       columns: [
                                         DataColumn(
@@ -1080,31 +1087,45 @@ class _ResidentPageState extends State<ResidentPage> {
                                             DataCell(
                                               Row(children: [
                                                 IconButton(
-                                                icon: const Icon(
-                                                    Icons.edit, color: Colors.blueAccent,),
-                                                tooltip: 'Sửa thông tin',
-                                                onPressed: () =>
-                                                    showEditResident(context,
-                                                        resident, refresh),
-                                              ),
+                                                  icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                                                  tooltip: 'Sửa thông tin',
+                                                  onPressed: () async {
+                                                    if (_isEditDialogShowing) return;
+                                                    _isEditDialogShowing = true;
+                                                    try {
+                                                      await showEditResident(context, resident, refresh);
+                                                    } finally {
+                                                      _isEditDialogShowing = false;
+                                                    }
+                                                  },
+                                                ),
                                                 IconButton(
-                                                  icon: const Icon(
-                                                      Icons.info_outline, color: Colors.white,),
+                                                  icon: const Icon(Icons.info_outline, color: Colors.white),
                                                   tooltip: 'Xem chi tiết',
-                                                  onPressed: () =>
-                                                      showViewResidentDialog(context,
-                                                          resident, refresh),
+                                                  onPressed: () async {
+                                                    if (_isViewDialogShowing) return;
+                                                    _isViewDialogShowing = true;
+                                                    try {
+                                                      await showViewResidentDialog(context, resident, refresh);
+                                                    } finally {
+                                                      _isViewDialogShowing = false;
+                                                    }
+                                                  },
                                                 ),
                                                 IconButton(
-                                                  icon: const Icon(
-                                                      Icons.insert_drive_file, color: Colors.green,),
+                                                  icon: const Icon(Icons.insert_drive_file, color: Colors.green),
                                                   tooltip: 'Xem lịch sử hợp đồng',
-                                                  onPressed: () =>
-                                                      showContractHistoryDialog(context,
-                                                          resident.residentId!),
+                                                  onPressed: () async {
+                                                    if (_isHistoryDialogShowing) return;
+                                                    _isHistoryDialogShowing = true;
+                                                    try {
+                                                      await showContractHistoryDialog(context, resident.residentId!);
+                                                    } finally {
+                                                      _isHistoryDialogShowing = false;
+                                                    }
+                                                  },
                                                 ),
-
-                                              ],)
+                                              ]),
                                             ),
                                           ],
                                         );

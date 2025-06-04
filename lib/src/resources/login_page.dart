@@ -55,14 +55,14 @@ class _LoginPageState extends State<LoginPage> {
           // Nếu token chưa tồn tại thì thêm vào danh sách
           await staffRef.update({
             'fcmTokens': FieldValue.arrayUnion([newToken]),
-            'lastUpdate': FieldValue.serverTimestamp(),
+            'lastUpdated': FieldValue.serverTimestamp(),
           });
         }
       } else {
         // Nếu tài liệu của nhân viên chưa tồn tại, tạo mới với danh sách token
         await staffRef.set({
           'fcmTokens': [newToken],  // Lưu mảng token FCM
-          'lastUpdate': FieldValue.serverTimestamp(),
+          'lastUpdated': FieldValue.serverTimestamp(),
         });
       }
 
@@ -90,14 +90,14 @@ class _LoginPageState extends State<LoginPage> {
           // Nếu token chưa tồn tại thì thêm vào danh sách
           await adminRef.update({
             'fcmTokens': FieldValue.arrayUnion([newToken]),
-            'lastUpdate': FieldValue.serverTimestamp(),
+            'lastUpdated': FieldValue.serverTimestamp(),
           });
         }
       } else {
         // Nếu tài liệu của nhân viên chưa tồn tại, tạo mới với danh sách token
         await adminRef.set({
           'fcmTokens': [newToken],  // Lưu mảng token FCM
-          'lastUpdate': FieldValue.serverTimestamp(),
+          'lastUpdated': FieldValue.serverTimestamp(),
         });
       }
 
@@ -125,14 +125,14 @@ class _LoginPageState extends State<LoginPage> {
           // Nếu token chưa tồn tại thì thêm vào danh sách
           await companyRef.update({
             'fcmTokens': FieldValue.arrayUnion([newToken]),
-            'lastUpdate': FieldValue.serverTimestamp(),
+            'lastUpdated': FieldValue.serverTimestamp(),
           });
         }
       } else {
         // Nếu tài liệu của nhân viên chưa tồn tại, tạo mới với danh sách token
         await companyRef.set({
           'fcmTokens': [newToken],  // Lưu mảng token FCM
-          'lastUpdate': FieldValue.serverTimestamp(),
+          'lastUpdated': FieldValue.serverTimestamp(),
         });
       }
 
@@ -160,14 +160,14 @@ class _LoginPageState extends State<LoginPage> {
           // Nếu token chưa tồn tại thì thêm vào danh sách
           await residentRef.update({
             'fcmTokens': FieldValue.arrayUnion([newToken]),
-            'lastUpdate': FieldValue.serverTimestamp(),
+            'lastUpdated': FieldValue.serverTimestamp(),
           });
         }
       } else {
         // Nếu tài liệu của nhân viên chưa tồn tại, tạo mới với danh sách token
         await residentRef.set({
           'fcmTokens': [newToken],  // Lưu mảng token FCM
-          'lastUpdate': FieldValue.serverTimestamp(),
+          'lastUpdated': FieldValue.serverTimestamp(),
         });
       }
 

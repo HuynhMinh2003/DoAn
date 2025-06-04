@@ -730,18 +730,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           "currentContractId": contractId
                         });
 
-                        // === 5. Tạo hóa đơn nước đầu tiên ===
-                        final billRef = contractRef.collection("billWater").doc();
-                        await billRef.set({
-                          "month": DateFormat("yyyy-MM").format(DateTime.now()),
-                          "oldMeterReading": 0,
-                          "photoUrl1": "",
-                          "newMeterReading": 0,
-                          "photoUrl2": "",
-                          "totalAmount": 0,
-                          "createdAt": Timestamp.now(),
-                        });
-
                         final residentNames = residents.map((r) => r.fullName).toList();
 
                       final contractHistoryRef = contractRef.collection("contractHistory").doc();
@@ -860,12 +848,13 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2D80F8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.r),
-                      ),
+                      backgroundColor: secondaryColor,
                       elevation: 4,
                       shadowColor: Colors.black45,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
+                        side: BorderSide(color: Colors.white, width: 0.1.w), // Viền trắng
+                      ),
                     ),
                     child: Text(
                       "Tạo hợp đồng",
