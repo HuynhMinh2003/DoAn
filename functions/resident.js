@@ -95,7 +95,7 @@ const createResidentAccount = onRequest(
           });
 
           await transporter.sendMail({
-            from: `"Ban quản lí chung cư" <${await SENDER_EMAIL.value()}>`,
+            from: `"Ban quản lý chung cư" <${await SENDER_EMAIL.value()}>`,
             to: email,
             subject: "Tài khoản cư dân đã được hoạt động lại",
             html: `
@@ -173,7 +173,7 @@ const createResidentAccount = onRequest(
         });
 
         await transporter.sendMail({
-          from: `"Ban quản lí chung cư" <${await SENDER_EMAIL.value()}>`,
+          from: `"Ban quản lý chung cư" <${await SENDER_EMAIL.value()}>`,
           to: email,
           subject: "Thông tin đăng nhập",
           html: `

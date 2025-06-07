@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/constants.dart';
+import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -117,17 +119,17 @@ class _InfoPageState extends State<InfoPage> {
       return;
     }
 
+    LoadingDialog.showLoadingDialog(context, "Đang gửi ...");
+
     try {
       String? uploadedImageUrl = await _uploadImage();
 
-      /// 🟦 Map tên collection Firestore tương ứng
       String collectionName = {
         'residents': 'information_residents',
         'staffs': 'information_staffs',
         'companies': 'information_companies',
       }[_selectedTarget]!;
 
-      // 🟨 1. Lưu thông báo vào collection tương ứng
       await _firestore.collection(collectionName).add({
         "title": title,
         "message": feedbackText,
@@ -136,7 +138,6 @@ class _InfoPageState extends State<InfoPage> {
         "seenBy": [],
       });
 
-      // 🟩 2. Gửi FCM
       final callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToGroup');
       final result = await callable.call({
         "title": title,
@@ -145,16 +146,26 @@ class _InfoPageState extends State<InfoPage> {
       });
 
       final data = result.data;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+
+      Navigator.pop(context); // Đóng loading
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Center(child: Text("Thông báo",style: TextStyle(fontSize: 6.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),),
           content: Text(data['success'] == true
               ? "Đã gửi thông báo đến ${data['sent']} người dùng."
-              : "Lưu thành công nhưng không gửi được FCM: ${data['message']}"),
-          backgroundColor: Colors.green,
+              : "Lưu thành công nhưng không gửi được FCM: ${data['message']}",style: TextStyle(fontSize: 4.sp)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("OK",style: TextStyle(fontSize: 4.sp)),
+            ),
+          ],
         ),
       );
 
-      // 🧹 3. Reset form
+      // Reset form sau khi thành công
       _titleController.clear();
       _infoController.clear();
       setState(() {
@@ -163,10 +174,19 @@ class _InfoPageState extends State<InfoPage> {
       });
 
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Lỗi khi gửi thông báo: $e"),
-          backgroundColor: Colors.red,
+      Navigator.pop(context); // Đóng loading nếu lỗi
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Lỗi"),
+          content: Text("Đã xảy ra lỗi khi gửi thông báo:\n$e"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Đóng"),
+            ),
+          ],
         ),
       );
     }
@@ -187,7 +207,7 @@ class _InfoPageState extends State<InfoPage> {
           children: [
             SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 40.h),
+                padding: EdgeInsets.symmetric(horizontal: 30.w, vertical: 40.h),
                 child: Center(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -223,7 +243,7 @@ class _InfoPageState extends State<InfoPage> {
                                 flex: 4,
                                 child: Column(
                                   children: [
-                                    SizedBox(height: 30.h,),
+                                    SizedBox(height: 100.h,),
                                     _buildImagePicker(),
                                   ],
                                 ),
@@ -320,7 +340,7 @@ class _InfoPageState extends State<InfoPage> {
               bottom: 0,
               child: Container(
                 margin: EdgeInsets.only(top: 8.h),
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 4.h),
                 decoration: BoxDecoration(
                   color: Colors.black26,
                   borderRadius: BorderRadius.circular(20.r),
@@ -346,7 +366,7 @@ class _InfoPageState extends State<InfoPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildTargetDropdown(),
-        SizedBox(height: 50.h),
+        SizedBox(height: 40.h),
         StreamBuilder<String>(
           stream: _titleStream.stream,
           builder: (context, snapshot) {
@@ -366,7 +386,7 @@ class _InfoPageState extends State<InfoPage> {
             );
           },
         ),
-        SizedBox(height: 50.h),
+        SizedBox(height: 40.h),
         StreamBuilder<String>(
           stream: _messageStream.stream,
           builder: (context, snapshot) {
@@ -390,11 +410,32 @@ class _InfoPageState extends State<InfoPage> {
         SizedBox(height: 30.h),
         Align(
           alignment: Alignment.centerRight,
-          child: ElevatedButton(
-            onPressed: _sendInfo,
-            child: Text(
-              "Gửi thông báo",
-              style: TextStyle(fontSize: 4.sp),
+          child: SizedBox(
+            height: 60.h,
+            width: 70.w,
+            child: ElevatedButton(
+              onPressed: _sendInfo,
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                secondaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                  BorderRadius.circular(30.r),
+                ),
+                elevation: 4,
+                shadowColor: Colors.black45,
+                alignment: Alignment.center,
+                padding: EdgeInsets.zero,
+              ),
+              child: Text(
+                "Gửi thông báo",
+                style: TextStyle(
+                  fontFamily: "Oswald",
+                  fontWeight: FontWeight.w700,
+                  fontSize: 7.sp,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ),

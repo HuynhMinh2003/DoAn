@@ -74,7 +74,7 @@ class _ReportPageState extends BaseResidentInfoScreen<ReportPage> {
         'apartmentAddress': apartmentName,
         'priority': null,
         'seenBy': null,
-        'status': 'Đang chờ xử lí',
+        'status': 'Đang chờ xử lý',
         'imageUrl': imageUrl,
         'createdAt': FieldValue.serverTimestamp(),
         'assignedStaffId': null,
@@ -298,15 +298,15 @@ class _ReportPageState extends BaseResidentInfoScreen<ReportPage> {
               Color statusColor;
               IconData statusIcon;
               switch (status) {
-                case 'Đang chờ xử lí':
+                case 'Đang chờ xử lý':
                   statusColor = Colors.orange;
                   statusIcon = Icons.hourglass_empty;
                   break;
-                case 'Đang xử lí':
+                case 'Đang xử lý':
                   statusColor = Colors.orange;
                   statusIcon = Icons.autorenew;
                   break;
-                case 'Đã xử lí':
+                case 'Đã xử lý':
                   statusColor = Colors.green;
                   statusIcon = Icons.check_circle;
                   break;
