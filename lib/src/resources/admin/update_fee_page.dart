@@ -103,6 +103,7 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                       child: Text(
                         'Cập nhật giá dịch vụ',
                         style: TextStyle(
+                          fontFamily: "Oswald",
                           fontWeight: FontWeight.bold,
                           fontSize: 8.sp,
                         ),
