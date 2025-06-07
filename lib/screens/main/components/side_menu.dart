@@ -2,7 +2,9 @@ import 'package:do_an/constants.dart';
 import 'package:do_an/screens/dashboard/dashboard_screen.dart';
 import 'package:do_an/src/resources/admin/ds_canho_page.dart';
 import 'package:do_an/src/resources/admin/ds_congty_page.dart';
+import 'package:do_an/src/resources/admin/ds_dangkixe_page.dart';
 import 'package:do_an/src/resources/admin/ds_hopdong_canho_page.dart';
+import 'package:do_an/src/resources/admin/ds_thongbao_page.dart';
 import 'package:do_an/src/resources/admin/list_incident_page.dart';
 import 'package:do_an/src/resources/admin/list_wait_update_service_page.dart';
 import 'package:do_an/src/resources/admin/manage_incident_page.dart';
@@ -90,7 +92,22 @@ class SideMenu extends StatelessWidget {
                         },
                         isMenuOpen: isMenuOpen,
                       ),
-
+                      DrawerListTile(
+                        title: "Danh sách thông báo",
+                        svgSrc: "assets/icons/notification.svg",
+                        press: () {
+                          onMenuItemPressed(InfoListPage()); // Chuyển sang Dashboard
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
+                      DrawerListTile(
+                        title: "Danh sách đăng ký xe",
+                        svgSrc: "assets/icons/parking.svg",
+                        press: () {
+                          onMenuItemPressed(RegistrationListPage()); // Chuyển sang Dashboard
+                        },
+                        isMenuOpen: isMenuOpen,
+                      ),
                     ],
                   ),
                   ExpandableDrawerListTile(
@@ -126,7 +143,7 @@ class SideMenu extends StatelessWidget {
                   ),
                  ExpandableDrawerListTile(
                      title: "Quản lý sự cố",
-                     svgSrc: "assets/icons/menu_staff.svg",
+                     svgSrc: "assets/icons/warning.svg",
                      isMenuOpen: isMenuOpen, children: [
                    DrawerListTile(
                      title: "Điều phối xử lý sự cố mới",

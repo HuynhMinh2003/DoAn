@@ -1308,7 +1308,7 @@ class _ContractListPageState extends State<ContractListPage> {
                         Flexible(
                           flex: 1,
                           child: Text(
-                            "Quản lí hợp đồng",
+                            "Quản lý hợp đồng",
                             style: TextStyle(
                               fontFamily: "Oswald",
                               fontWeight: FontWeight.w700,

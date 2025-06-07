@@ -170,7 +170,7 @@ class _ResidentPageState extends State<ResidentPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
+        title: Center(child: Text(
           "Lịch sử hợp đồng",
           style: TextStyle(
             fontFamily: "Oswald",
@@ -178,7 +178,7 @@ class _ResidentPageState extends State<ResidentPage> {
             fontSize: 7.sp,
             color: Colors.blueAccent,
           ),
-        ),
+        ),),
         content: SizedBox(
           width: double.minPositive,
           child: histories.isEmpty

@@ -6,9 +6,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 
-class NotificationListCompanyPage extends StatelessWidget {
+class NotificationListCompanyPage extends StatefulWidget {
   const NotificationListCompanyPage({super.key});
 
+  @override
+  State<NotificationListCompanyPage> createState() => _NotificationListCompanyPageState();
+}
+
+class _NotificationListCompanyPageState extends State<NotificationListCompanyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +45,7 @@ class NotificationListCompanyPage extends StatelessWidget {
           }
 
           var notifications = snapshot.data!.docs
-              .map((doc) => Information.fromDocument(doc))
+              .map((doc) => Information.fromFirestore(doc, "Công ty dịch vụ ngoài"))
               .toList();
 
           return ListView.separated(
@@ -137,3 +142,4 @@ class NotificationListCompanyPage extends StatelessWidget {
     );
   }
 }
+

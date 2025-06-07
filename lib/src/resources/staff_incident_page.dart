@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../models/incident.dart';
+import 'dialog/loading_dialog.dart';
 
 class StaffIncidentPage extends StatefulWidget {
   final String staffId;
@@ -31,7 +32,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
   Future<void> _loadAssignedIncidents() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('incidents')
-        .where('status', isEqualTo: 'Đang xử lí')
+        .where('status', isEqualTo: 'Đang xử lý')
         .where('assignedStaffId', isEqualTo: widget.staffId)
         .get();
 
@@ -42,17 +43,6 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
     setState(() {
       _assignedIncidents = incidents;
     });
-  }
-
-
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _proofImageFile = File(image.path);
-      });
-    }
   }
 
   Future<String> uploadProofImage(String incidentId, File imageFile) async {
@@ -68,10 +58,12 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
   Future<void> _handleIncident(Incident incident) async {
     if (_proofImageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Vui lòng chọn ảnh xử lí")),
+        const SnackBar(content: Text("Vui lòng chọn ảnh xử lý")),
       );
       return;
     }
+
+    LoadingDialog.showLoadingDialog(context, "Đang gửi ... ");
 
     try {
       final imageUrl = await uploadProofImage(incident.id, _proofImageFile!);
@@ -84,7 +76,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
         'staffName': incident.assignedStaffName,
         'accepted': true,
         'responseTime': FieldValue.serverTimestamp(),
-        'note': 'Đã xử lí và đính kèm ảnh minh chứng.',
+        'note': 'Đã xử lý và đính kèm ảnh minh chứng.',
         'proofImageUrl': imageUrl,
         'rejectionReason': null,
         'incidentId': incident.id,
@@ -97,7 +89,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
         ..remove('staffName');
 
       await incidentRef.update({
-        'status': 'Đã xử lí',
+        'status': 'Đã xử lý',
         'handledAt': FieldValue.serverTimestamp(),
       });
 
@@ -105,8 +97,10 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       await staffRef.collection('problemHistory').add(problemData);
       await staffRef.update({'isFree': true});
 
+      Navigator.of(context, rootNavigator: true).pop();
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Đã xác nhận xử lí")),
+        const SnackBar(content: Text("Đã xác nhận xử lý")),
       );
 
       setState(() {
@@ -115,8 +109,10 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
 
       _loadAssignedIncidents();
     } catch (e) {
+      Navigator.of(context, rootNavigator: true).pop();
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lỗi xử lí: $e")),
+        SnackBar(content: Text("Lỗi xử lý: $e")),
       );
     }
   }
@@ -129,6 +125,8 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       );
       return;
     }
+
+    LoadingDialog.showLoadingDialog(context, "Đang gửi ... ");
 
     try {
       String? imageUrl;
@@ -144,7 +142,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
         'staffName': incident.assignedStaffName,
         'accepted': false,
         'responseTime': FieldValue.serverTimestamp(),
-        'note': 'Chưa xử lí được sự cố',
+        'note': 'Chưa xử lý được sự cố',
         'proofImageUrl': imageUrl,
         'rejectionReason': reason,
         'incidentId': incident.id,
@@ -156,7 +154,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
         ..remove('staffName');
 
       await incidentRef.update({
-        'status': 'Đang chờ xử lí (Trả lại)',
+        'status': 'Đang chờ xử lý (Trả lại)',
         'assignedStaffId': null,
         'assignedStaffName': null,
       });
@@ -165,8 +163,10 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       await staffRef.collection('problemHistory').add(problemData);
       await staffRef.update({'isFree': true});
 
+      Navigator.of(context, rootNavigator: true).pop();
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Đã từ chối xử lí")),
+        const SnackBar(content: Text("Đã từ chối xử lý"), backgroundColor: Colors.red,),
       );
 
       _rejectReasonController.clear();
@@ -175,8 +175,10 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       });
       _loadAssignedIncidents();
     } catch (e) {
+      Navigator.of(context, rootNavigator: true).pop();
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lỗi từ chối xử lí: $e")),
+        SnackBar(content: Text("Lỗi từ chối xử lý: $e")),
       );
     }
   }
@@ -188,7 +190,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Center(child: Text("Từ chối xử lí",style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold,fontSize: 25.sp)),),
+          title: Center(child: Text("Từ chối xử lý",style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold,fontSize: 25.sp)),),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -265,7 +267,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            title: Center(child: Text("Xác nhận đã xử lí",style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold,fontSize: 25.sp),),),
+            title: Center(child: Text("Xác nhận đã xử lý",style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold,fontSize: 25.sp),),),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -298,7 +300,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                 onPressed: () async {
                   if (selectedImage == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Vui lòng chọn ảnh xử lí",style: TextStyle(fontSize: 15.sp))),
+                      SnackBar(content: Text("Vui lòng chọn ảnh xử lý",style: TextStyle(fontSize: 15.sp)),backgroundColor: Colors.green,),
                     );
                     return;
                   }
@@ -402,7 +404,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                         onPressed: () => _showHandleDialog(incident),
                         child: Center(
                           child: Text(
-                            "Xác nhận xử lí",
+                            "Xác nhận xử lý",
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.bold,
@@ -419,7 +421,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                         ),
                         child: Center(
                           child: Text(
-                            "Từ chối xử lí",
+                            "Từ chối xử lý",
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 13.sp,

@@ -89,7 +89,7 @@ const createStaffAccount = onRequest(
         });
 
         await transporter.sendMail({
-          from: `"Bản quản lí chung cư" <${await SENDER_EMAIL.value()}>`,
+          from: `"Bản quản lý chung cư" <${await SENDER_EMAIL.value()}>`,
           to: email,
           subject: "Thông tin đăng nhập nhân viên",
           html: `
