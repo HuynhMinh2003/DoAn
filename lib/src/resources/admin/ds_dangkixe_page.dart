@@ -6,35 +6,45 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../custom_paginated_table.dart';
-import 'package:do_an/src/resources/wait_update_service_mobile_page.dart' if (dart.library.html) 'wait_update_service_web_page.dart';
+import 'package:do_an/src/resources/admin/ds_dangkixe_mobile_page.dart' if (dart.library.html) 'ds_dangkixe_web_page.dart';
 
-class WaitUpdateServicePage extends StatefulWidget {
-  const WaitUpdateServicePage({super.key});
+class RegistrationListPage extends StatefulWidget {
+  const RegistrationListPage({super.key});
 
   @override
-  State<WaitUpdateServicePage> createState() => _WaitUpdateServicePageState();
+  State<RegistrationListPage> createState() => _RegistrationListPageState();
 }
 
-class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
-  String? _selectedServiceType;
-  String _searchCompanyName = "";
-  String? _selectedStatus = "Tất cả";
+class _RegistrationListPageState extends State<RegistrationListPage> {
+  String? _selectedVehicleType = "Tất cả";
+  String _searchLicensePlate = "";
+  String? _selectedCancellation = "Tất cả";
 
-  final List<String> _statusOptions = [
+  final Map<String, String> _vehicleTypeMap = {
+    'Tất cả': 'Tất cả',
+    'motorbike_roofed': 'Xe máy (có mái che)',
+    'motorbike_unroofed': 'Xe máy (không mái che)',
+    'bike_roofed': 'Xe đạp (có mái che)',
+    'bike_unroofed': 'Xe đạp (không mái che)',
+    'car_roofed': 'Ô tô (có mái che)',
+    'car_unroofed': 'Ô tô (không mái che)',
+  };
+
+  late List<String> _vehicleTypeOptions = _vehicleTypeMap.keys.toList();
+
+  final List<String> _cancellationOptions = [
     'Tất cả',
-    'Đang chờ duyệt',
-    'Đã duyệt',
-    'Từ chối duyệt',
+    'Chưa huỷ',
+    'Đã huỷ',
   ];
 
-  List<String> _serviceTypeOptions = ["Tất cả"];
-  List<Map<String, dynamic>> _allServices = [];
-  List<Map<String, dynamic>> _filteredServices = [];
+  List<Map<String, dynamic>> _allRegis = [];
+  List<Map<String, dynamic>> _filteredRegis = [];
 
   int currentPage = 1;
   int itemsPerPage = 10;
   int totalPages = 0;
-  List<Map<String, dynamic>> paginatedServices = [];
+  List<Map<String, dynamic>> paginatedRegis = [];
   List<int> pageNumbers = [];
 
   String _formatTimestamp(dynamic timestamp) {
@@ -48,119 +58,109 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
   @override
   void initState() {
     super.initState();
-    _loadServicesWithCompanyInfo();
+    _loadParkingRegistrations();
   }
 
-  Future<void> _loadServicesWithCompanyInfo() async {
+  Future<void> _loadParkingRegistrations() async {
     try {
-      final companiesSnapshot = await FirebaseFirestore.instance
-          .collection('companies')
+      final contractsSnapshot = await FirebaseFirestore.instance
+          .collection('contracts')
           .get();
 
-      List<Map<String, dynamic>> allServices = [];
+      List<Map<String, dynamic>> allRegistrations = [];
 
-      for (var companyDoc in companiesSnapshot.docs) {
-        final companyId = companyDoc.id;
-        final companyData = companyDoc.data();
+      for (var contractDoc in contractsSnapshot.docs) {
+        final contractId = contractDoc.id;
 
-        final servicesSnapshot = await FirebaseFirestore.instance
-            .collection('companies')
-            .doc(companyId)
-            .collection('updateService')
+        final registrationSnapshot = await FirebaseFirestore.instance
+            .collection('contracts')
+            .doc(contractId)
+            .collection('parkingRegistrations')
             .get();
 
-        print("Công ty ${companyData['name']} có ${servicesSnapshot.docs.length} dịch vụ");
+        for (var regDoc in registrationSnapshot.docs) {
+          final regData = regDoc.data();
 
-        for (var serviceDoc in servicesSnapshot.docs) {
-          final serviceData = serviceDoc.data();
-
-          allServices.add({
-            'id': serviceDoc.id,
-            ...serviceData,
-            'companyId': companyId,
-            'companyName': companyData['name'] ?? '',
-            'companyType': companyData['type'] ?? '',
-            'companyDescription': companyData['description'] ?? '',
-            'price': serviceData['price'] ?? '',
+          allRegistrations.add({
+            'contractId': contractId,
+            'registrationId': regDoc.id,
+            ...regData,
           });
-
         }
       }
 
-      print("Tổng số dịch vụ sau khi ghép company info: ${allServices.length}");
+      print("Tổng số đăng ký xe: ${allRegistrations.length}");
 
       setState(() {
-        _allServices = allServices;
-        _filteredServices = allServices;
-
-        _serviceTypeOptions = ["Tất cả"];
-        _serviceTypeOptions.addAll({
-          for (var c in companiesSnapshot.docs.map((e) => e.data()))
-            c['type']
-        }.whereType<String>().toSet());
-
-        print("Danh sách loại dịch vụ: $_serviceTypeOptions");
-
+        _allRegis = allRegistrations;
+        _filteredRegis = allRegistrations;
         currentPage = 1;
-        _updatePaginatedServices();
+        _updatePaginatedRegis();
       });
     } catch (e) {
-      print("Lỗi khi load services hoặc companies: $e");
+      print("Lỗi khi load parking registrations: $e");
     }
   }
 
-  void _filterServices() {
-    List<Map<String, dynamic>> filtered = _allServices;
+  void _filterRegis() {
+    List<Map<String, dynamic>> filtered = _allRegis;
 
-    // Lọc theo tên công ty
-    if (_searchCompanyName.isNotEmpty) {
+    // Lọc theo biển số xe
+    if (_searchLicensePlate.isNotEmpty) {
       filtered = filtered
-          .where((service) =>
-          service['companyName']
+          .where((reg) =>
+          reg['licensePlate']
               .toString()
               .toLowerCase()
-              .contains(_searchCompanyName.toLowerCase()))
+              .contains(_searchLicensePlate.toLowerCase()))
           .toList();
     }
 
-    // Lọc theo loại dịch vụ
-    if (_selectedServiceType != null && _selectedServiceType != "Tất cả") {
+    // Lọc theo loại xe
+    if (_selectedVehicleType != null && _selectedVehicleType != "Tất cả") {
       filtered = filtered
-          .where((service) =>
-      service['companyType'].toString().trim().toLowerCase() ==
-          _selectedServiceType!.toLowerCase())
+          .where((reg) =>
+      reg['vehicleType']
+          .toString()
+          .toLowerCase()
+          .trim() ==
+          _selectedVehicleType!.toLowerCase())
           .toList();
     }
 
-    // ✅ Lọc thêm theo trạng thái
-    if (_selectedStatus != null && _selectedStatus != "Tất cả") {
-      filtered = filtered
-          .where((service) =>
-      service['status'].toString().trim().toLowerCase() ==
-          _selectedStatus!.toLowerCase())
-          .toList();
+    // Lọc theo đã huỷ hay chưa
+    if (_selectedCancellation != null && _selectedCancellation != "Tất cả") {
+      if (_selectedCancellation == "Đã huỷ") {
+        filtered = filtered
+            .where((reg) => reg['isCancelled'] == true)
+            .toList();
+      } else if (_selectedCancellation == "Chưa huỷ") {
+        filtered = filtered
+            .where((reg) => reg['isCancelled'] != true)
+            .toList();
+      }
     }
 
     setState(() {
-      _filteredServices = filtered;
+      _filteredRegis = filtered;
       currentPage = 1;
-      _updatePaginatedServices();
+      _updatePaginatedRegis();
     });
   }
 
-  void _updatePaginatedServices() {
+  void _updatePaginatedRegis() {
     int startIndex = (currentPage - 1) * itemsPerPage;
     int endIndex = startIndex + itemsPerPage;
-    if (endIndex > _filteredServices.length) {
-      endIndex = _filteredServices.length;
+    if (endIndex > _filteredRegis.length) {
+      endIndex = _filteredRegis.length;
     }
 
-    paginatedServices = _filteredServices.sublist(startIndex, endIndex);
-    totalPages = (_filteredServices.length / itemsPerPage).ceil();
+    paginatedRegis = _filteredRegis.sublist(startIndex, endIndex);
+    totalPages = (_filteredRegis.length / itemsPerPage).ceil();
     _updatePageNumbers();
 
     print("Hiển thị dịch vụ từ index $startIndex đến $endIndex");
-    print("Số dịch vụ phân trang: ${paginatedServices.length}");
+    print("Số dịch vụ phân trang: ${paginatedRegis.length}");
     print("Tổng số trang: $totalPages");
     print("Trang hiện tại: $currentPage");
     print("Danh sách số trang hiển thị: $pageNumbers");
@@ -234,6 +234,27 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
     );
   }
 
+  Future<void> _updateServiceStatus(String serviceId, String newStatus) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('companies')
+          .doc(serviceId)
+          .update({'status': newStatus});
+
+      setState(() {
+        _loadParkingRegistrations(); // Hoặc bạn gọi lại hàm load danh sách
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cập nhật trạng thái thành công')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cập nhật thất bại: $e')),
+      );
+    }
+  }
+
   /// Hàm hỗ trợ để hiển thị thông tin dưới dạng hàng
   Widget buildInfoRow(String label, String value) {
     return Padding(
@@ -277,7 +298,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                           Flexible(
                             flex: 3,
                             child: Text(
-                              'Danh sách yêu cầu',
+                              'Danh sách đăng ký xe',
                               style: TextStyle(
                                 fontFamily: "Oswald",
                                 fontWeight: FontWeight.w700,
@@ -289,8 +310,8 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                             flex: 2,
                             child: TextField(
                               decoration: InputDecoration(
-                                labelText: "Tìm kiếm theo tên công ty",
-                                hintText: "Nhập tên công ty",
+                                labelText: "Tìm theo biển số",
+                                hintText: "Nhập biển số",
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(30.r),
                                 ),
@@ -298,15 +319,15 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                               ),
                               onChanged: (value) {
                                 setState(() {
-                                  _searchCompanyName = value;
-                                  _filterServices(); // Lọc danh sách khi nhập
+                                  _searchLicensePlate = value;
+                                  _filterRegis();
                                 });
                               },
                             ),
                           ),
                           Flexible(
                             flex:1,child: ElevatedButton(
-                            onPressed: () => exportServicesToExcel(_filteredServices),
+                            onPressed: () => exportRegistrationsToExcel(_filteredRegis),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -325,45 +346,46 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                       Row(
                         children: [
                           Expanded(
-                            child: buildFilterDropdown<String>(
-                              label: "Chọn loại dịch vụ",
-                              items: _serviceTypeOptions,
-                              selectedValue: _selectedServiceType == "Tất cả" ? null : _selectedServiceType,
+                            child: buildFilterDropdown1<String>(
+                              label: "Loại xe",
+                              items: _vehicleTypeOptions,
+                              selectedValue: _selectedVehicleType == "Tất cả" ? null : _selectedVehicleType,
                               onChanged: (value) {
                                 setState(() {
-                                  _selectedServiceType = value ?? "Tất cả";
-                                  _filterServices();
+                                  _selectedVehicleType = value ?? "Tất cả";
+                                  _filterRegis();
                                 });
                               },
+                              itemLabels: _vehicleTypeMap, // 👈 Truyền map tiếng Việt vào đây
                             ),
                           ),
+
                           SizedBox(width: 10.w),
                           Expanded(
                             child: buildFilterDropdown<String>(
-                              label: "Chọn trạng thái",
-                              items: _statusOptions,
-                              selectedValue: _selectedStatus == "Tất cả" ? null : _selectedStatus,
+                              label: "Tình trạng xe",
+                              items: _cancellationOptions,
+                              selectedValue: _selectedCancellation == "Tất cả" ? null : _selectedCancellation,
                               onChanged: (value) {
                                 setState(() {
-                                  _selectedStatus = value ?? "Tất cả";
-                                  _filterServices();
+                                  _selectedCancellation = value ?? "Tất cả";
+                                  _filterRegis();
                                 });
                               },
                             ),
                           ),
                         ],
                       ),
-
                       SizedBox(height: 20.h),
 
                       SizedBox(
                         height: MediaQuery.of(context).size.height - 150.h,
                         child: LayoutBuilder(
                           builder: (context, constraints) {
-                            if (_filteredServices.isEmpty) {
+                            if (_filteredRegis.isEmpty) {
                               return Center(
                                 child: Text(
-                                  "Không có dịch vụ nào",
+                                  "Không có xe nào",
                                   style: TextStyle(fontSize: 4.sp, color: Colors.white),
                                 ),
                               );
@@ -380,68 +402,29 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                                       ),
                                       child: CustomPaginatedTable(
                                         columns: [
-                                          DataColumn(label: Text("Tên công ty", style: TextStyle(fontSize: 4.sp))),
-                                          DataColumn(label: Text("Loại dịch vụ", style: TextStyle(fontSize: 4.sp))),
-                                          DataColumn(label: Text("Mô tả", style: TextStyle(fontSize: 4.sp))),
+                                          DataColumn(label: Text("Biển số xe", style: TextStyle(fontSize: 4.sp))),
+                                          DataColumn(label: Text("Loại xe", style: TextStyle(fontSize: 4.sp))),
+                                          DataColumn(label: Text("Thời gian đăng ký", style: TextStyle(fontSize: 4.sp))),
                                           DataColumn(label: Text("Trạng thái", style: TextStyle(fontSize: 4.sp))),
-                                          DataColumn(label: Text("Chi tiết", style: TextStyle(fontSize: 4.sp))),
                                         ],
+                                        rows: paginatedRegis.map((registration) {
+                                          final vehicleTypeKey = registration['vehicleType'] ?? '';
+                                          final vehicleTypeVN = _vehicleTypeMap[vehicleTypeKey] ?? vehicleTypeKey;
 
-                                        rows: paginatedServices.map((service) {
                                           return DataRow(cells: [
-                                            DataCell(Text(service['companyName'] ?? '', style: TextStyle(fontSize: 4.sp))),
-                                            DataCell(Text(service['companyType'] ?? '', style: TextStyle(fontSize: 4.sp))),
-                                            DataCell(Text(service['companyDescription'] ?? '', style: TextStyle(fontSize: 4.sp))),
-                                            DataCell(
-                                              Row(
-                                                children: [
-                                                  Icon(
-                                                    service['status'] == 'Đã duyệt'
-                                                        ? Icons.check_circle
-                                                        : service['status'] == 'Từ chối duyệt'
-                                                        ? Icons.cancel
-                                                        : Icons.hourglass_top,
-                                                    color: service['status'] == 'Đã duyệt'
-                                                        ? Colors.green
-                                                        : service['status'] == 'Từ chối duyệt'
-                                                        ? Colors.red
-                                                        : Colors.orange,
-                                                    size: 24, // nhỏ gọn hơn, không nên dùng sp cho icon
-                                                  ),
-                                                  SizedBox(width: 1.w),
-                                                  Text(
-                                                    service['status'] ?? 'Không rõ',
-                                                    style: TextStyle(
-                                                      color: service['status'] == 'Đã duyệt'
-                                                          ? Colors.green
-                                                          : service['status'] == 'Từ chối duyệt'
-                                                          ? Colors.red
-                                                          : Colors.orange,
-                                                      fontSize: 4.sp, // hoặc 3.5.sp nếu bạn vẫn muốn theo responsive
-                                                      fontWeight: FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            DataCell(
-                                              Column(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: [
-                                                  IconButton(
-                                                    icon: Icon(Icons.info_outline),
-                                                    onPressed: () {
-                                                      _showServiceDetailDialog(context, service);
-                                                    },
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-
+                                            DataCell(Text(registration['licensePlate'] ?? '', style: TextStyle(fontSize: 4.sp))),
+                                            DataCell(Text(vehicleTypeVN, style: TextStyle(fontSize: 4.sp))),
+                                            DataCell(Text(_formatTimestamp(registration['registeredAt']), style: TextStyle(fontSize: 4.sp))),
+                                            DataCell(Text(
+                                              registration['canceledAt'] != null
+                                                  ? 'Đã huỷ (${_formatTimestamp(registration['canceledAt'])})'
+                                                  : 'Chưa huỷ',
+                                              style: TextStyle(fontSize: 4.sp),
+                                            )),
                                           ]);
                                         }).toList(),
-
-                                      ),
+                                      )
+                                      ,
                                     ),
                                   ),
                                 ),
@@ -459,7 +442,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                                         onPressed: () {
                                           setState(() {
                                             currentPage = page;
-                                            _updatePaginatedServices();
+                                            _updatePaginatedRegis();
                                           });
                                         },
                                         child: Text(
@@ -508,6 +491,61 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                 value: item,
                 child: Text(
                   item.toString(),
+                  style: TextStyle(fontSize: 4.sp),
+                ),
+              );
+            }).toList(),
+            value: selectedValue == "Tất cả" ? null : selectedValue,
+            onChanged: onChanged,
+            buttonStyleData: ButtonStyleData(
+              height: 40.h,
+              padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 10.w),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30.r),
+                border: Border.all(color: Color(0xe2707070)),
+              ),
+            ),
+            dropdownStyleData: DropdownStyleData(
+              maxHeight: 200.h,
+              width: 170.w,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30.r),
+              ),
+              elevation: 4,
+            ),
+            menuItemStyleData: MenuItemStyleData(
+              height: 40.h,
+              padding: EdgeInsets.symmetric(horizontal: 10.w),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildFilterDropdown1<T>({
+    required String label,
+    required List<T> items,
+    required T? selectedValue,
+    required ValueChanged<T?> onChanged,
+    Map<T, String>? itemLabels, // 👈 Thêm map ánh xạ giá trị → nhãn
+  }) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0.w, 10.h, 0.w, 8.h),
+      child: SizedBox(
+        height: 60.h,
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton2<T>(
+            isExpanded: true,
+            hint: Text(
+              label,
+              style: TextStyle(fontSize: 4.sp),
+            ),
+            items: items.map((item) {
+              return DropdownMenuItem<T>(
+                value: item,
+                child: Text(
+                  itemLabels?[item] ?? item.toString(), // 👈 Dùng nhãn nếu có
                   style: TextStyle(fontSize: 4.sp),
                 ),
               );

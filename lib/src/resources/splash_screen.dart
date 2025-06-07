@@ -11,8 +11,8 @@ class SplashScreen extends StatelessWidget {
     return AnimatedSplashScreen(
       splash: Center(
         child: Transform.scale(
-          scale: 5, // Bạn có thể tăng/giảm để vừa ý (ví dụ: 2.0, 2.5...)
-          child: Lottie.asset('assets/animation/Animation_1747910892464.json'),
+          scale: 4, // Bạn có thể tăng/giảm để vừa ý (ví dụ: 2.0, 2.5...)
+          child: Lottie.asset('assets/animation/Animation_1749271510415.json'),
         ),
       ),
       nextScreen: AuthWrapper(),

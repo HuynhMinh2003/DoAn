@@ -87,8 +87,6 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
       });
 
       Navigator.of(context, rootNavigator: true).pop(); // Đóng loading dialog
-      Navigator.of(context, rootNavigator: true).pop(); // Đóng loading dialog
-
       showSnackBar("✅ Đăng ký xe thành công");
     } catch (e) {
       Navigator.of(context, rootNavigator: true).pop(); // Đóng loading dialog nếu có lỗi
