@@ -136,7 +136,6 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
     return now.day >= 25;
   }
 
-
   @override
   Widget build(BuildContext context) {
     final monthOptions = generateMonthList();

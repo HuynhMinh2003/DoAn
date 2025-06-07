@@ -235,7 +235,7 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
                                 stream: FirebaseFirestore.instance
                                     .collection('incidents')
                                     .where('assignedStaffId', isEqualTo: staffInfo?.uid)
-                                    .where('status', isEqualTo: 'Đang xử lí')
+                                    .where('status', isEqualTo: 'Đang xử lý')
                                     .snapshots(),
                                 builder: (context, snapshot) {
                                   final docs = snapshot.data?.docs ?? [];

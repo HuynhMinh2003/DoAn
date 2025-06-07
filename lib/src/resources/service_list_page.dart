@@ -84,6 +84,7 @@ class ServiceUpdateListPage extends StatelessWidget {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final companyDocRef =
@@ -143,6 +144,7 @@ class ServiceUpdateListPage extends StatelessWidget {
 
                   final String imageUrl = data['imageServiceUrl'] ?? '';
                   final String status = data['status'] ?? '';
+                  final Timestamp? timestamp = data['timestamp'];
 
                   return Card(
                     shape: RoundedRectangleBorder(
@@ -182,49 +184,50 @@ class ServiceUpdateListPage extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            type,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 15.sp,
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: status == 'Đã duyệt'
-                                                ? Colors.green[100]
-                                                : status == 'Từ chối duyệt'
-                                                ? Colors.red[100]
-                                                : Colors.orange[100],
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            status,
-                                            style: TextStyle(
-                                              color: status == 'Đã duyệt'
-                                                  ? Colors.green[800]
-                                                  : status == 'Từ chối duyệt'
-                                                  ? Colors.red[800]
-                                                  : Colors.orange[800],
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 15.sp,
-                                            ),
-                                          ),
-                                        ),
-
-                                      ],
-                                    ),
-                                    SizedBox(height: 10.h),
+                                    /// Dòng 1: Type (tên dịch vụ)
                                     Text(
-                                      description,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 15.sp),
+                                      type,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15.sp,
+                                      ),
+                                    ),
+
+                                    SizedBox(height: 8.h),
+
+                                    /// Dòng 2: Ngày cập nhật
+                                    Text(
+                                      'Ngày cập nhật: ${timestamp != null ? DateFormat('dd/MM/yyyy – HH:mm').format(timestamp.toDate()) : 'Không rõ'}',
+                                      style: TextStyle(fontSize: 13.sp, color: Colors.grey[700]),
+                                    ),
+
+                                    SizedBox(height: 10.h),
+                                    /// Dòng cuối: trạng thái (status) nằm góc phải
+                                    Align(
+                                      alignment: Alignment.bottomRight,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: status == 'Đã duyệt'
+                                              ? Colors.green[100]
+                                              : status == 'Từ chối duyệt'
+                                              ? Colors.red[100]
+                                              : Colors.orange[100],
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          status,
+                                          style: TextStyle(
+                                            color: status == 'Đã duyệt'
+                                                ? Colors.green[800]
+                                                : status == 'Từ chối duyệt'
+                                                ? Colors.red[800]
+                                                : Colors.orange[800],
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15.sp,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),

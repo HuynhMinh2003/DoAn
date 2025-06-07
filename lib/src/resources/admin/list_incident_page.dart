@@ -3,7 +3,6 @@ import 'package:do_an/constants.dart';
 import 'package:do_an/custom_paginated_table.dart';
 import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:flutter/foundation.dart';
-import 'package:do_an/src/blocs/auth_bloc.dart';
 import 'package:do_an/src/models/staffs.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
@@ -14,7 +13,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/incident.dart';
-import 'ds_nhanvien_mobile_page.dart' if (dart.library.html) 'ds_nhanvien_web_page.dart';
+import 'list_incident_mobile_page.dart' if (dart.library.html) 'list_incident_web_page.dart';
 
 class ListIncidentPage extends StatefulWidget {
   const ListIncidentPage({super.key});
@@ -29,7 +28,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
 
   List<String> _priorityItems = ["Tất cả", "Cao", "Trung bình", "Thấp"]; // Các giá trị trạng thái nhân viên
 
-  List<String> _statusItems = ["Tất cả", "Đang chờ xử lí", "Đang xử lí", "Đang chờ xử lí (Trả lại)", "Đã xử lí"];
+  List<String> _statusItems = ["Tất cả", "Đang chờ xử lý", "Đang xử lý", "Đang chờ xử lý (Trả lại)", "Đã xử lý"];
 
   List<Incident> _incidentList = [];
   List<Incident> _alIncidentList = [];
@@ -44,8 +43,6 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
   List<int> pageNumbers = [];
 
   bool _isViewDialogShowing = false;
-
-  final AuthBloc _authBloc = AuthBloc();
 
   Future<void> _loadStaffs() async {
     final snapshot = await FirebaseFirestore.instance
@@ -228,7 +225,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                       buildInfoRow("Người báo:", incident.reporterName),
                       buildInfoRow("Tiêu đề:", incident.title),
                       buildInfoRow("Mô tả:", incident.description),
-                      buildInfoRow("Nhân viên xử lí:", incident.assignedStaffName ?? "Chưa cập nhật"),
+                      buildInfoRow("Nhân viên xử lý:", incident.assignedStaffName ?? "Chưa cập nhật"),
                       Row(
                         children: [
                           Expanded(
@@ -244,7 +241,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                           SizedBox(width: 10.w),
                           Expanded(
                             child: buildInfoRow(
-                              "Đã xử lí vào:",
+                              "Đã xử lý vào:",
                               incident.handledAt != null
                                   ? DateFormat('dd/MM/yyyy HH:mm').format(incident.handledAt!.toDate())
                                   : "Chưa cập nhật",
@@ -252,7 +249,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                           ),
                         ],
                       ),
-                      buildInfoRow("Ghi chú của quản lí:", incident.managerNote ?? "Không có"),
+                      buildInfoRow("Ghi chú của quản lý:", incident.managerNote ?? "Không có"),
                       buildInfoRow("Trạng thái:", incident.status),
                     ],
                   ),
@@ -261,38 +258,38 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
             ),
           ),
           actions: [
-            if (incident.status == "Đang chờ xử lí") ...[
-              TextButton(
-                onPressed: () => _openAssignDialog(incident),
-                child: Text("Chọn nhân viên xử lí", style: TextStyle(fontSize: 4.sp)),
-              ),
+            if (incident.status == "Đang chờ xử lý") ...[
+              // TextButton(
+              //   onPressed: () => _openAssignDialog(incident),
+              //   child: Text("Chọn nhân viên xử lý", style: TextStyle(fontSize: 4.sp)),
+              // ),
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
               ),
-            ] else if (incident.status == "Đang xử lí") ...[
+            ] else if (incident.status == "Đang xử lý") ...[
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
               ),
             ]
-            else if (incident.status == "Đã xử lí") ...[
+            else if (incident.status == "Đã xử lý") ...[
               TextButton(
                 onPressed: () => _showHandledHistoryDialog(context, incident.id),
-                child: Text("Xem lịch sử xử lí", style: TextStyle(fontSize: 4.sp)),
+                child: Text("Xem lịch sử xử lý", style: TextStyle(fontSize: 4.sp)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
               ),
-            ] else if (incident.status == "Đang chờ xử lí (Trả lại)") ...[
-              TextButton(
-                onPressed: () => _openAssignDialog(incident),
-                child: Text("Chọn nhân viên xử lí", style: TextStyle(fontSize: 4.sp)),
-              ),
+            ] else if (incident.status == "Đang chờ xử lý (Trả lại)") ...[
+              // TextButton(
+              //   onPressed: () => _openAssignDialog(incident),
+              //   child: Text("Chọn nhân viên xử lý", style: TextStyle(fontSize: 4.sp)),
+              // ),
                 TextButton(
                   onPressed: () => _showHandledHistoryDialog(context, incident.id),
-                  child: Text("Xem lịch sử xử lí", style: TextStyle(fontSize: 4.sp)),
+                  child: Text("Xem lịch sử xử lý", style: TextStyle(fontSize: 4.sp)),
                 ),
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -422,7 +419,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
       batch.update(incidentRef, {
         'assignedStaffId': staff.uid,
         'assignedStaffName': staff.fullName,
-        'status': 'Đang xử lí',
+        'status': 'Đang xử lý',
         'priority': priority,
         'managerNote': managerNote,
       });
@@ -455,16 +452,15 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
       Navigator.of(context).pop();
       Navigator.of(context).pop();
 
-      MsgDialog.showMsgDialog(context, "Xử lí sự cố", "Điều phối sự cố cho nhân viên thành công");
+      MsgDialog.showMsgDialog(context, "Xử lý sự cố", "Điều phối sự cố cho nhân viên thành công");
 
       _loadStaffs();
     } catch (e) {
       Navigator.of(context).pop(); // 👉 Đóng loading nếu lỗi
-      MsgDialog.showMsgDialog(context, "Xử lí sự cố", "Điều phối sự cố cho nhân viên thất bại");
+      MsgDialog.showMsgDialog(context, "Xử lý sự cố", "Điều phối sự cố cho nhân viên thất bại");
 
     }
   }
-
 
   Future<void> _showHandledHistoryDialog(BuildContext context, String incidentId) async {
     final historyRef = FirebaseFirestore.instance
@@ -480,11 +476,11 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
         return AlertDialog(
           backgroundColor: bgColor,
           title: Center(child: Text(
-            "Lịch sử xử lí",
+            "Lịch sử xử lý",
             style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold, color: Colors.blue),
           ),),
           content: historySnapshot.docs.isEmpty
-              ? Text("Không có dữ liệu lịch sử xử lí.")
+              ? Text("Không có dữ liệu lịch sử xử lý.")
               : SizedBox(
             width: 100.w,
             child: SingleChildScrollView(
@@ -530,7 +526,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                               SizedBox(height: 10.h),
                               Text("Ghi chú: ${data['note'] ?? 'Không có'}", style: TextStyle(fontSize:3.sp)),
                               SizedBox(height: 10.h),
-                              Text("Trạng thái: ${data['accepted'] == true ? 'Đã xử lí' : 'Từ chối'}",
+                              Text("Trạng thái: ${data['accepted'] == true ? 'Đã xử lý' : 'Từ chối'}",
                                   style: TextStyle(color: data['accepted'] == true ? Colors.green : Colors.red, fontSize: 3.sp)),
                               SizedBox(height: 10.h),
                               if (data['rejectionReason'] != null) ...[
@@ -558,13 +554,13 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
   }
   IconData _getStatusIcon(String? status) {
     switch (status) {
-      case 'Đang chờ xử lí':
+      case 'Đang chờ xử lý':
         return Icons.hourglass_empty;
-        case 'Đang chờ xử lí (Trả lại)':
+        case 'Đang chờ xử lý (Trả lại)':
         return Icons.hourglass_empty;
-      case 'Đang xử lí':
+      case 'Đang xử lý':
         return Icons.settings;
-      case 'Đã xử lí':
+      case 'Đã xử lý':
         return Icons.check_circle;
       default:
         return Icons.help_outline;
@@ -573,13 +569,13 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
 
   Color _getStatusColor(String? status) {
     switch (status) {
-      case 'Đang chờ xử lí':
+      case 'Đang chờ xử lý':
         return Colors.orange;
-        case 'Đang chờ xử lí (Trả lại)':
+        case 'Đang chờ xử lý (Trả lại)':
         return Colors.orange;
-      case 'Đang xử lí':
+      case 'Đang xử lý':
         return Colors.blue;
-      case 'Đã xử lí':
+      case 'Đã xử lý':
         return Colors.green;
       default:
         return Colors.grey;
@@ -651,8 +647,20 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                                 });
                               },
                             ),),
+                            Flexible(
+                              flex:1,child: ElevatedButton(
+                              onPressed: ()
+                                => exportIncidentsToExcel(_incidentList),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.upload),
+                                  SizedBox(width: 5.w,),
+                                  Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.white),)
+                                ],
+                              ),
+                            ),),
                             SizedBox(width:5.w),
-
                           ],
                         ),
                         SizedBox(height: 10.h,),
@@ -677,7 +685,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                             SizedBox(width: 20.w), // Khoảng cách giữa tiêu đề và tìm kiếm
 
                             Expanded(child: buildFilterDropdown(
-                              label: "Lọc theo trạng thái xử lí",
+                              label: "Lọc theo trạng thái xử lý",
                               items: _statusItems,
                               selectedValue: _selectedStatus,
                               onChanged: (value) {
@@ -797,7 +805,8 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                               );
                             },
                           ),
-                        )                  ],
+                        )
+                      ],
                     ),
                   ),)
             ),
@@ -806,7 +815,6 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
       ),
     );
   }
-
 
 // Hàm lọc nhân viên theo chức vụ
   Widget buildFilterDropdown<T>({
@@ -848,7 +856,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
               ),
               dropdownStyleData: DropdownStyleData(
                 maxHeight: 200.h,
-                width: 101.w,
+                width: 162.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                 ),

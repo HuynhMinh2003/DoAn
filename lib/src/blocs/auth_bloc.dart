@@ -51,6 +51,12 @@ class AuthBloc {
   Stream<String> get emailResidentStream => _emailResidentController.stream;
   Stream<String> get addressResidentStream => _addressResidentController.stream;
 
+  final StreamController<String> _titleIncidentController = StreamController<String>.broadcast();
+  final StreamController<String> _messageIncidentController = StreamController<String>.broadcast();
+
+  Stream<String> get titleIncidentStream => _titleIncidentController.stream;
+  Stream<String> get messageIncidentStream => _messageIncidentController.stream;
+
   // login chung
   final StreamController<String> _emailController = StreamController<String>.broadcast();
   final StreamController<String> _passController = StreamController<String>.broadcast();
@@ -103,6 +109,29 @@ class AuthBloc {
     const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#\$";
     final rand = Random.secure();
     return List.generate(length, (_) => chars[rand.nextInt(chars.length)]).join();
+  }
+
+  /// Kiểm tra dữ liệu hợp lệ (không cần kiểm tra password nếu không nhập từ form)
+  bool isValidInformation(
+      String titleIncident,
+      String messageIncident,
+      ) {
+    bool isValid = true;
+
+    if (titleIncident.isEmpty) {
+      _titleIncidentController.sink.addError("Phải nhập tiêu đề !");
+      isValid = false;
+    } else {
+      _titleIncidentController.sink.add("");
+    }
+
+    if (messageIncident.isEmpty) {
+      _messageIncidentController.sink.addError("Phải nhập nội dung !");
+      isValid = false;
+    } else {
+      _messageIncidentController.sink.add("");
+    }
+    return isValid;
   }
 
   /// Kiểm tra dữ liệu hợp lệ (không cần kiểm tra password nếu không nhập từ form)
@@ -556,6 +585,9 @@ class AuthBloc {
 
     _emailController.close();
     _passController.close();
+
+    _titleIncidentController.close();
+    _messageIncidentController.close();
   }
 
 }

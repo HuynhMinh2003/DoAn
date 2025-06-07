@@ -332,13 +332,16 @@ class _LoginPageState extends State<LoginPage> {
                       _onLoginClick();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: secondaryColor,
+                      backgroundColor:
+                      secondaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                        BorderRadius.circular(30.r),
+                      ),
                       elevation: 4,
                       shadowColor: Colors.black45,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.r),
-                        side: BorderSide(color: Colors.white, width: 0.1.w), // Viền trắng
-                      ),
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.zero,
                     ),
                     child: Text(
                       "Đăng nhập",

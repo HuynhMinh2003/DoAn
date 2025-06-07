@@ -1,9 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:do_an/src/models/incident.dart';
 import 'package:do_an/src/models/staffs.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import '../../../constants.dart';
+import '../dialog/loading_dialog.dart';
+import '../dialog/msg_dialog.dart';
 
 
 class ManagerIncidentPage extends StatefulWidget {
@@ -27,7 +32,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
   Future<void> _loadIncidents() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('incidents')
-        .where('status', isEqualTo: 'Đang chờ xử lí')
+        .where('status', whereIn: ['Đang chờ xử lý', 'Đang chờ xử lý (Trả lại)'])
         .get();
 
     setState(() {
@@ -140,30 +145,59 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
       Staff staff,
       String priority,
       ) async {
-    final batch = FirebaseFirestore.instance.batch();
+    try{
+      LoadingDialog.showLoadingDialog(context, "Đang tải ...");
 
-    final incidentRef =
-    FirebaseFirestore.instance.collection('incidents').doc(incident.id);
-    batch.update(incidentRef, {
-      'assignedStaffId': staff.uid,
-      'assignedStaffName': staff.fullName,
-      'status': 'Đang xử lí',
-      'priority': priority,
-      'managerNote': managerNote,
-    });
+      final batch = FirebaseFirestore.instance.batch();
 
-    final staffRef =
-    FirebaseFirestore.instance.collection('staffs').doc(staff.uid);
-    batch.update(staffRef, {'isFree': false});
+      final incidentRef =
+      FirebaseFirestore.instance.collection('incidents').doc(incident.id);
+      batch.update(incidentRef, {
+        'assignedStaffId': staff.uid,
+        'assignedStaffName': staff.fullName,
+        'status': 'Đang xử lý',
+        'priority': priority,
+        'managerNote': managerNote,
+      });
 
-    await batch.commit();
+      final staffRef =
+      FirebaseFirestore.instance.collection('staffs').doc(staff.uid);
+      batch.update(staffRef, {'isFree': false});
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đã giao cho ${staff.fullName}')),
-    );
+      await batch.commit();
 
-    _loadIncidents();
-    _loadStaffs();
+      // Lấy fcmTokens
+      final staffDoc = await FirebaseFirestore.instance
+          .collection('staffs')
+          .doc(staff.uid)
+          .get();
+      final List<dynamic>? fcmTokens = staffDoc.data()?['fcmTokens'];
+
+      if (fcmTokens != null && fcmTokens.isNotEmpty) {
+        try {
+          final callable = FirebaseFunctions.instance.httpsCallable('sendIncidentNotification');
+          await callable.call({
+            'fcmTokens': fcmTokens,
+            'title': "Giao sự cố: ${incident.title}",
+            'body': "Mức độ ưu tiên: $priority. Kiểm tra và xử lý ngay.",
+          });
+        } catch (e) {
+          print("❌ Gửi thông báo lỗi: $e");
+        }
+      }
+
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+
+      MsgDialog.showMsgDialog(context, "Xử lý sự cố", "Điều phối sự cố cho nhân viên thành công");
+
+      _loadIncidents();
+      _loadStaffs();
+    }
+    catch (e) {
+      Navigator.of(context).pop(); // 👉 Đóng loading nếu lỗi
+      MsgDialog.showMsgDialog(context, "Xử lý sự cố", "Điều phối sự cố cho nhân viên thất bại");
+    }
   }
 
   @override
@@ -216,7 +250,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                                       child: Image.network(
                                         incident.imageUrl!,
                                         width: 60.w,
-                                        height: 200.h,
+                                        height: 250.h,
                                         fit: BoxFit.cover,
                                       ),
                                     )
@@ -248,16 +282,29 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                                         Text("Mô tả: ${incident.description}", style: TextStyle(fontSize: 4.sp)),
 
                                         // Spacer đẩy nút xuống dưới
-                                        Spacer(),
+                                        SizedBox(height:30.h),
 
                                         // Nút nằm dưới cùng bên phải
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.end,
                                           children: [
-                                            ElevatedButton(
+                                            SizedBox(width: 30.w, child: ElevatedButton(
                                               onPressed: () => _openAssignDialog(incident),
-                                              child: Text("Giao xử lí", style: TextStyle(fontSize: 4.sp)),
-                                            ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                secondaryColor,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(30.r),
+                                                ),
+                                                elevation: 4,
+                                                shadowColor: Colors.black45,
+                                                alignment: Alignment.center,
+                                                padding: EdgeInsets.zero,
+                                              ),
+                                              child: Text("Giao xử lý", style: TextStyle(fontSize: 4.sp,color: Colors.white)),
+                                            ),),
+                                            SizedBox(width: 10.w,)
                                           ],
                                         ),
                                       ],

@@ -54,7 +54,6 @@ class WaterReadingHistoryScreen extends StatelessWidget {
 
               final apartment = data['apartmentName'] ?? '';
               final building = data['building'] ?? '';
-              final contractId = data['contractId'] ?? '';
               final month = data['month'] ?? '';
               final oldReading = data['oldReading'] ?? 0;
               final newReading = data['newReading'] ?? 0;
