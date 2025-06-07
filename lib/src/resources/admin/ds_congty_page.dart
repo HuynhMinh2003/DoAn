@@ -593,10 +593,11 @@ class _CompanyListPageState extends State<CompanyListPage> {
                             children: [
                               Icon(Icons.upload),
                               SizedBox(width: 5.w,),
-                              Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),)
+                              Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.white),)
                             ],
                           ),
-                        ),)
+                        ),),
+                          SizedBox(width: 5.w,)
                       ],),
                       SizedBox(height: 10.h),
                       Row(

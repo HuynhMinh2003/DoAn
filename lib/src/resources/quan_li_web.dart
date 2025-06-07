@@ -71,7 +71,7 @@ class _AdminWebPageState extends State<AdminWebPage> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 0.w),
                 child: Text(
-                  'Xin chào quản lí 👋',
+                  'Xin chào quản lý 👋',
                   style: TextStyle(
                     fontFamily: "Oswald",
                     fontSize: 8.sp,

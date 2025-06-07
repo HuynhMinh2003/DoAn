@@ -1,14 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/information.dart';
 import 'package:do_an/src/resources/notification_detail_page.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 
-class NotificationListKTVPage extends StatelessWidget {
+class NotificationListKTVPage extends StatefulWidget {
   const NotificationListKTVPage({super.key});
 
+  @override
+  State<NotificationListKTVPage> createState() => _NotificationListKTVPageState();
+}
+
+class _NotificationListKTVPageState extends State<NotificationListKTVPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +46,7 @@ class NotificationListKTVPage extends StatelessWidget {
           }
 
           var notifications = snapshot.data!.docs
-              .map((doc) => Information.fromDocument(doc))
+              .map((doc) => Information.fromFirestore(doc, "Nhân viên"))
               .toList();
 
           return ListView.separated(
@@ -137,3 +143,4 @@ class NotificationListKTVPage extends StatelessWidget {
     );
   }
 }
+

@@ -100,11 +100,10 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
       _descriptionErrorController.sink.add(null);
     }
 
-    // Kiểm tra nếu không có ảnh nào được chọn
     if (_selectedImageFile == null && _imagePreviewUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Vui lòng chọn ảnh dịch vụ trước khi cập nhật',style: TextStyle(fontSize: 15.sp)),
+          content: Text('Vui lòng chọn ảnh dịch vụ trước khi cập nhật', style: TextStyle(fontSize: 15.sp)),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -113,7 +112,6 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
 
     if (hasError) return;
 
-    // Show loading dialog
     LoadingDialog.showLoadingDialog(context, "Đang cập nhật ...");
 
     try {
@@ -121,19 +119,22 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
           .collection('companies')
           .doc(widget.company.companyId);
 
-      // Cập nhật description và type
       await companyRef.update({
         'description': description,
         'type': type,
       });
 
-      // Upload ảnh nếu có
       String? imageUrl;
       if (_selectedImageFile != null) {
         final fileName = 'service_${DateTime.now().millisecondsSinceEpoch}.jpg';
         final ref = FirebaseStorage.instance.ref().child('service_images/$fileName');
-        await ref.putFile(_selectedImageFile!);
+
+        // Upload ảnh
+        final uploadTask = await ref.putFile(_selectedImageFile!);
         imageUrl = await ref.getDownloadURL();
+
+        // ✅ Chờ ảnh sẵn sàng (đặc biệt quan trọng với Flutter Web)
+        await Future.delayed(Duration(seconds: 1));
       }
 
       await companyRef.collection('updateService').add({
@@ -146,7 +147,7 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
 
       Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cập nhật dịch vụ thành công',style: TextStyle(fontSize: 15.sp)),backgroundColor: Colors.green,),
+        SnackBar(content: Text('Cập nhật dịch vụ thành công', style: TextStyle(fontSize: 15.sp)), backgroundColor: Colors.green),
       );
     } catch (e) {
       Navigator.of(context).pop(); // Close loading dialog
