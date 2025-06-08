@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -67,6 +68,29 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
         .doc(serviceId)
         .update({'status': 'Đã duyệt'});
 
+    // Lấy fcmTokens
+    final companyDoc = await FirebaseFirestore.instance
+        .collection('companies')
+        .doc(companyId)
+        .get();
+
+    final data = companyDoc.data();
+    final List<dynamic>? fcmTokens = data?['fcmTokens'];
+    final String? type = data?['type'];
+
+    if (fcmTokens != null && fcmTokens.isNotEmpty) {
+      try {
+        final callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToOne');
+        await callable.call({
+          'fcmTokens': fcmTokens,
+          'title': "Yêu cầu cập nhật dịch vụ",
+          'body': "Đã được duyệt: $type.",
+        });
+      } catch (e) {
+        print("❌ Gửi thông báo lỗi: $e");
+      }
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Đã duyệt"),backgroundColor: Colors.green,));
     _loadServicesWithCompanyInfo();
   }
@@ -78,6 +102,29 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
         .collection('updateService')
         .doc(serviceId)
         .update({'status': 'Từ chối duyệt'});
+
+    // Lấy fcmTokens
+    final companyDoc = await FirebaseFirestore.instance
+        .collection('companies')
+        .doc(companyId)
+        .get();
+
+    final data = companyDoc.data();
+    final List<dynamic>? fcmTokens = data?['fcmTokens'];
+    final String? type = data?['type'];
+
+    if (fcmTokens != null && fcmTokens.isNotEmpty) {
+      try {
+        final callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToOne');
+        await callable.call({
+          'fcmTokens': fcmTokens,
+          'title': "Yêu cầu cập nhật dịch vụ",
+          'body': "Từ chối duyệt: $type.",
+        });
+      } catch (e) {
+        print("❌ Gửi thông báo lỗi: $e");
+      }
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Đã từ chối duyệt"),backgroundColor: Colors.red));
     _loadServicesWithCompanyInfo();
@@ -124,6 +171,7 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
       ),
     );
   }
+
   Widget _buildServiceCard(Map<String, dynamic> service) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 10.h),

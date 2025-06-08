@@ -503,7 +503,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
                     await FirebaseFirestore.instance.collection('companies').doc(company.companyId).update({
                       'isExit': false,
                       'leaveAt': null,
-                      'lastUpdatedd': Timestamp.now(),
+                      'lastUpdated': Timestamp.now(),
                     });
                     LoadingDialog.hideLoadingDialog(context);
                     Navigator.pop(context);
