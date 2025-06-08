@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../constants.dart';
+
 class ChangePasswordPage extends StatefulWidget {
   @override
   _ChangePasswordPageState createState() => _ChangePasswordPageState();
@@ -143,17 +145,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldMessengerKey,
-      appBar: AppBar(
-        title: Text('Đổi mật khẩu',style: TextStyle(
-            color: Colors.white,
-            fontFamily: "Oswald",
-            fontWeight: FontWeight.bold,
-            fontSize: 25.sp),),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      ),
+      appBar: AppBar(title: Text('      Đổi mật khẩu', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: bgColor,),
+
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
+        padding: EdgeInsets.symmetric(vertical: 10.h,horizontal: 20.w),
+        child: Column(
           children: [
             SizedBox(height: 20.h),
 
@@ -163,38 +159,54 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               decoration: InputDecoration(
                 labelText: 'Mật khẩu cũ',
                 labelStyle: TextStyle(
-                    fontSize: 15.sp),
+                    fontSize: 5.sp,color: Colors.white),
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: 40.h),
             TextField(
               controller: _newPasswordController,
               obscureText: true,
               decoration: InputDecoration(
                 labelText: 'Mật khẩu mới',
                 labelStyle: TextStyle(
-                    fontSize: 15.sp),
+                    fontSize: 5.sp,color: Colors.white),
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: 40.h),
             TextField(
               controller: _confirmPasswordController,
               obscureText: true,
               decoration: InputDecoration(
                 labelText: 'Xác nhận mật khẩu mới',
                 labelStyle: TextStyle(
-                    fontSize: 15.sp),
+                    fontSize: 5.sp,color: Colors.white),
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 20.h),
-            ElevatedButton(
-              onPressed: _changePassword,
-              child: Text('Đổi Mật Khẩu',style: TextStyle(
-                  fontSize: 15.sp),),
-            ),
+            SizedBox(height: 80.h),
+            SizedBox(
+              width: 70.w,
+              height: 60.h,
+              child: ElevatedButton(
+                onPressed: _changePassword,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                  secondaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                    BorderRadius.circular(30.r),
+                  ),
+                  elevation: 4,
+                  shadowColor: Colors.black45,
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.zero,
+                ),
+                child: Text('Đổi mật khẩu',style: TextStyle(
+                    fontSize: 5.sp,color: Colors.white),),
+              ),
+            )
           ],
         ),
       ),

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" id="Loan">
+  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="colorStroke404041 svgStroke">
+    <rect width="20" height="26" x="6" y="3" rx="3" ry="3" fill="#000000" class="color000000 svgShape"></rect>
+    <path d="M13 8h-2.5A1.5 1.5 0 0 0 9 9.5h0a1.5 1.5 0 0 0 1.5 1.5h1a1.5 1.5 0 0 1 1.5 1.5h0a1.5 1.5 0 0 1-1.5 1.5H9M11 6v2M11 14v2M16 8h7M16 12h7M15 16h8" fill="#000000" class="color000000 svgShape"></path>
+  </g>
+</svg>

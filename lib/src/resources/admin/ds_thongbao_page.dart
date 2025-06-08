@@ -384,7 +384,7 @@ class _InfoListPageState extends State<InfoListPage> {
                     await FirebaseFirestore.instance.collection('companies').doc(company.companyId).update({
                       'isExit': false,
                       'leaveAt': null,
-                      'lastUpdatedd': Timestamp.now(),
+                      'lastUpdated': Timestamp.now(),
                     });
                     LoadingDialog.hideLoadingDialog(context);
                     Navigator.pop(context);
@@ -428,7 +428,7 @@ class _InfoListPageState extends State<InfoListPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Flexible(flex:1,child:  Text(
+                            Flexible(flex:2,child:  Text(
                               'Danh sách thông báo',
                               style: TextStyle(
                                 fontFamily: "Oswald",
