@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 
-class ResidentImageProvider extends ChangeNotifier {
+class AdminImageProvider extends ChangeNotifier {
   String? _avatarUrl;
 
   String? get avatarUrl => _avatarUrl;
@@ -34,7 +34,7 @@ class ResidentImageProvider extends ChangeNotifier {
     if (userId == null) return;
 
     // Tham chiếu Firestore đến tài liệu người dùng
-    DocumentReference docRef = FirebaseFirestore.instance.collection("residents").doc(userId);
+    DocumentReference docRef = FirebaseFirestore.instance.collection("admins").doc(userId);
 
     _avatarListener?.cancel();
     _avatarListener = docRef.snapshots().listen((event) {
@@ -89,7 +89,7 @@ class ResidentImageProvider extends ChangeNotifier {
     try {
       final storageRef = FirebaseStorage.instance
           .ref()
-          .child('residents/$userId/$uniqueFileName'); // Sử dụng tên file duy nhất
+          .child('admins/$userId/$uniqueFileName'); // Sử dụng tên file duy nhất
 
       UploadTask uploadTask;
 
@@ -142,7 +142,7 @@ class ResidentImageProvider extends ChangeNotifier {
       // 📤 Upload ảnh mới
       final storageRef = FirebaseStorage.instance
           .ref()
-          .child('residents/$userId/$uniqueFileName');
+          .child('admins/$userId/$uniqueFileName');
 
       UploadTask uploadTask;
 
@@ -210,7 +210,7 @@ class ResidentImageProvider extends ChangeNotifier {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
       // 🔹 Lấy thông tin người dùng từ Firestore để biết tên file ảnh
-      final snapshot = await FirebaseFirestore.instance.collection('residents').doc(user.uid).get();
+      final snapshot = await FirebaseFirestore.instance.collection('admins').doc(user.uid).get();
       final data = snapshot.data();
       if (data == null || !data.containsKey('imageFileName')) {
         _avatarUrl = null;
@@ -230,9 +230,9 @@ class ResidentImageProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loadImageByResidentId(String residentId) async {
+  Future<void> loadImageByAdminId(String residentId) async {
     try {
-      final snapshot = await FirebaseFirestore.instance.collection('residents').doc(residentId).get();
+      final snapshot = await FirebaseFirestore.instance.collection('admins').doc(residentId).get();
       print("Snapshot data: ${snapshot.data()}");  // Log dữ liệu nhận được từ Firestore
 
       final data = snapshot.data();
