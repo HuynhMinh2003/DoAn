@@ -73,7 +73,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
       if (tokens.contains(fcmToken)) {
         await userRef.update({
           'fcmTokens': FieldValue.arrayRemove([fcmToken]),
-          'lastUpdatedd': FieldValue.serverTimestamp(),
+          'lastUpdated': FieldValue.serverTimestamp(),
         });
         print("✅ Đã xóa token FCM: $fcmToken");
       } else {
