@@ -12,10 +12,10 @@ class Chart extends StatefulWidget {
 }
 
 class _ChartState extends State<Chart> {
-  int rented = 0;
-  int sold = 0;
-  int available = 0;
+  int withContract = 0;
+  int withoutContract = 0;
   bool isLoading = true;
+  int? touchedIndex;
 
   @override
   void initState() {
@@ -25,99 +25,109 @@ class _ChartState extends State<Chart> {
 
   Future<void> fetchDataFromFirebase() async {
     try {
-      // Truy cập collection `apartments` từ Firestore
       QuerySnapshot snapshot =
       await FirebaseFirestore.instance.collection('apartments').get();
 
-      int tempRented = 0;
-      int tempSold = 0;
-      int tempAvailable = 0;
+      int tempWithContract = 0;
+      int tempWithoutContract = 0;
 
       for (var doc in snapshot.docs) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        final currentContractId = data['currentContractId'];
 
-        bool isRent = data['isRent'] ?? false;
-        bool isSale = data['isSale'] ?? false;
-
-        if (isRent) {
-          tempRented++;
-        } else if (isSale) {
-          tempSold++;
+        if (currentContractId != null &&
+            currentContractId.toString().isNotEmpty) {
+          tempWithContract++;
         } else {
-          tempAvailable++;
+          tempWithoutContract++;
         }
       }
 
       if (mounted) {
         setState(() {
-          rented = tempRented;
-          sold = tempSold;
-          available = tempAvailable;
-          isLoading = false; // Kết thúc quá trình tải dữ liệu
+          withContract = tempWithContract;
+          withoutContract = tempWithoutContract;
+          isLoading = false;
         });
       }
     } catch (e) {
       print("Error fetching data: $e");
       if (mounted) {
         setState(() {
-          isLoading = false; // Kết thúc quá trình tải dữ liệu kể cả khi lỗi
+          isLoading = false;
         });
       }
     }
   }
 
+  List<PieChartSectionData> showingSections() {
+    return List.generate(2, (index) {
+      final isTouched = index == touchedIndex;
+      final double radius = isTouched ? 30.0 : 25.0;
+      final double fontSize = isTouched ? 16.0 : 0.0;
+      final contractLabel = index == 0 ? "Có hợp đồng" : "Chưa có hợp đồng";
+      final value = index == 0 ? withContract : withoutContract;
+
+      return PieChartSectionData(
+        color: index == 0 ? primaryColor : const Color(0xFFFFCF26),
+        value: value.toDouble(),
+        title: isTouched ? "$contractLabel\n$value căn" : '',
+        radius: radius,
+        titleStyle: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        titlePositionPercentageOffset: 0.6,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return isLoading
-        ? const Center(child: CircularProgressIndicator()) // Hiển thị khi đang tải dữ liệu
+        ? const Center(child: CircularProgressIndicator())
         : SizedBox(
-      height: 200,
+      height: 220,
       child: Stack(
         children: [
           PieChart(
             PieChartData(
+              pieTouchData: PieTouchData(
+                touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                  setState(() {
+                    if (!event.isInterestedForInteractions ||
+                        pieTouchResponse == null ||
+                        pieTouchResponse.touchedSection == null) {
+                      touchedIndex = -1;
+                      return;
+                    }
+                    touchedIndex = pieTouchResponse
+                        .touchedSection!.touchedSectionIndex;
+                  });
+                },
+              ),
               sectionsSpace: 0,
               centerSpaceRadius: 70,
               startDegreeOffset: -90,
-              sections: [
-                PieChartSectionData(
-                  color: primaryColor,
-                  value: rented.toDouble(),
-                  showTitle: false,
-                  radius: 25,
-                ),
-                PieChartSectionData(
-                  color: const Color(0xFF26E5FF),
-                  value: sold.toDouble(),
-                  showTitle: false,
-                  radius: 22,
-                ),
-                PieChartSectionData(
-                  color: const Color(0xFFFFCF26),
-                  value: available.toDouble(),
-                  showTitle: false,
-                  radius: 19,
-                ),
-              ],
+              sections: showingSections(),
             ),
           ),
           Positioned.fill(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(height: defaultPadding),
+                const SizedBox(height: defaultPadding),
                 Text(
-                  "${rented + sold + available}",
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium!
-                      .copyWith(
+                  "${withContract + withoutContract}",
+                  style:
+                  Theme.of(context).textTheme.headlineMedium!.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                     height: 0.5,
                   ),
                 ),
-                const Text("Total Apartments")
+                const Text("Tổng căn hộ"),
               ],
             ),
           ),

@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/base_staff_info.dart';
-import 'package:do_an/src/resources/ktv_page.dart';
 import 'package:do_an/src/resources/notification_list_csn_page.dart';
-import 'package:do_an/src/resources/notification_list_ktv_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +8,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'csn_info_page.dart';
 import 'csn_page.dart';
-import 'ktv_info_page.dart';
-import 'notification_list_resident_page.dart';
 
 class HomeFirstCSNPage extends StatelessWidget {
   const HomeFirstCSNPage({super.key});

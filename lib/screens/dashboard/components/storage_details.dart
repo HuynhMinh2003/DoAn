@@ -1,19 +1,24 @@
+import 'package:do_an/screens/dashboard/components/chart.dart';
+import 'package:do_an/screens/dashboard/components/storage_info_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../constants.dart';
-import 'chart.dart';
-import 'storage_info_card.dart';
 
 class StorageDetails extends StatelessWidget {
-  final int rentedRooms; // Số lượng phòng đã thuê
-  final int soldRooms; // Số lượng phòng đã bán
-  final int availableRooms; // Số lượng phòng còn trống
+  final int totalApartments;
+  final int apartmentsWithContract;
+  final int apartmentsWithoutContract;
+  final int activeContracts;
+  final int expiredContracts;
 
   const StorageDetails({
     Key? key,
-    required this.rentedRooms,
-    required this.soldRooms,
-    required this.availableRooms,
+    required this.totalApartments,
+    required this.apartmentsWithContract,
+    required this.apartmentsWithoutContract,
+    this.activeContracts = 0,
+    this.expiredContracts = 0,
   }) : super(key: key);
 
   @override
@@ -28,31 +33,33 @@ class StorageDetails extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Room Details",
+            "Thống kê hợp đồng dịch vụ",
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 4.sp,
               fontWeight: FontWeight.w500,
             ),
           ),
           SizedBox(height: defaultPadding),
-          Chart(), // Biểu đồ PieChart hiển thị trạng thái phòng
+          Chart(),
           StorageInfoCard(
-            svgSrc: "assets/icons/sound_file.svg",
-            title: "Rented Rooms",
-            amountOfFiles: "$rentedRooms Rooms",
-            numOfFiles: rentedRooms,
+            svgSrc: "assets/icons/contract_co.svg",
+            title: "Căn đã có",
+            amountOfFiles: "$apartmentsWithContract căn",
           ),
           StorageInfoCard(
-            svgSrc: "assets/icons/sound_file.svg",
-            title: "Sold Rooms",
-            amountOfFiles: "$soldRooms Rooms",
-            numOfFiles: soldRooms,
+            svgSrc: "assets/icons/contract_ko.svg",
+            title: "Căn chưa có",
+            amountOfFiles: "$apartmentsWithoutContract căn",
           ),
           StorageInfoCard(
-            svgSrc: "assets/icons/sound_file.svg",
-            title: "Available Rooms",
-            amountOfFiles: "$availableRooms Rooms",
-            numOfFiles: availableRooms,
+            svgSrc: "assets/icons/contract_con.svg",
+            title: "Còn hiệu lực",
+            amountOfFiles: "$activeContracts hợp đồng",
+          ),
+          StorageInfoCard(
+            svgSrc: "assets/icons/contract_het.svg",
+            title: "Hết hạn",
+            amountOfFiles: "$expiredContracts hợp đồng",
           ),
         ],
       ),

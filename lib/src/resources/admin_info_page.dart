@@ -1,27 +1,26 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/constants.dart';
 import 'package:do_an/main.dart';
-import 'package:do_an/src/resources/base_resident_info.dart';
-import 'package:do_an/src/resources/provider/resident_image_provider.dart';
-import 'package:do_an/src/resources/reset_pass_page.dart';
+import 'package:do_an/src/resources/base_admin_screen_page.dart';
+import 'package:do_an/src/resources/provider/admin_image_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'dialog/loading_dialog.dart';
 
-class ResidentInfoPage extends StatefulWidget {
-  const ResidentInfoPage({Key? key}) : super(key: key);
+class AdminInfoPage extends StatefulWidget {
+  const AdminInfoPage({Key? key}) : super(key: key);
 
   @override
-  _ResidentInfoPageState createState() => _ResidentInfoPageState();
+  _AdminInfoPageState createState() => _AdminInfoPageState();
 }
 
-class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
+class _AdminInfoPageState extends BaseAdminInfoScreen<AdminInfoPage> {
   double xPosition = 20;
   double yPosition = 600;
 
@@ -29,21 +28,21 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
   void initState() {
     super.initState();
 
-    final residentId =
+    final adminId =
         FirebaseAuth.instance.currentUser?.uid; // UID người dùng đăng nhập
-    if (residentId != null) {
+    if (adminId != null) {
       Future.microtask(() {
         // Tải ảnh người dùng (nếu có)
-        Provider.of<ResidentImageProvider>(context, listen: false)
-            .loadImageByResidentId(residentId);
+        Provider.of<AdminImageProvider>(context, listen: false)
+            .loadImageByAdminId(adminId);
 
         // Lấy thông tin cư dân + apartmentName luôn
-        getResidentInfo(residentId);
+        getAdminInfo(adminId);
       });
     }
   }
 
-  Future<void> updateResidentInfo(String phone, String email) async {
+  Future<void> updateAdminInfo(String phone, String email) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       final uid = user?.uid;
@@ -52,7 +51,7 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
 
       final updatePhone = () async {
         await FirebaseFirestore.instance
-            .collection('residents')
+            .collection('admins')
             .doc(uid)
             .update({'phone': phone});
       };
@@ -137,7 +136,7 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
       } else {
         // Email không đổi thì cập nhật phone + email Firestore luôn cho đồng bộ
         await FirebaseFirestore.instance
-            .collection('residents')
+            .collection('admins')
             .doc(uid)
             .update({
           'phone': phone,
@@ -146,223 +145,156 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
       }
 
       // Tải lại thông tin để cập nhật UI
-      await getResidentInfo(uid);
-      showSnackBar('Cập nhật thông tin thành công');
+      await getAdminInfo(uid);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cập nhật thông tin thành công'),backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
       print('❌ Lỗi khi cập nhật thông tin: $e');
       showSnackBar('Không thể cập nhật thông tin.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể cập nhật thông tin.'),backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final avatarProvider = Provider.of<ResidentImageProvider>(context);
+    final avatarProvider = Provider.of<AdminImageProvider>(context);
     String? avatarUrl = avatarProvider.avatarUrl;
 
     return Stack(
       children: [
         Scaffold(
-          appBar: AppBar(
-            title: Center(
-              child: Text(
-                'Thông tin cá nhân',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: "Oswald",
-                    fontSize: 25.sp,
-                    fontWeight: FontWeight.bold),
-              ),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
+          appBar: AppBar(title: Text('      Thông tin cá nhân', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: bgColor,),
           body: isLoading
               ? const Center(child: CircularProgressIndicator())
-              : residentInfo == null
-                  ? const Center(child: Text("Không có thông tin cư dân."))
-                  : Align(
-                      alignment: Alignment.topCenter,
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 20.h),
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                                left: 20.w, right: 10.w, top: 10.h),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Consumer<ResidentImageProvider>(
-                                  builder: (context, imageProvider, _) {
-                                    Widget avatarChild;
+              : adminInfo == null
+              ? const Center(child: Text("Không có thông tin quản lý."))
+              : Align(
+            alignment: Alignment.topCenter,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(top: 20.h),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                      left: 20.w, right: 10.w, top: 10.h),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Consumer<AdminImageProvider>(
+                        builder: (context, imageProvider, _) {
+                          Widget avatarChild;
 
-                                    if (imageProvider.avatarUrl != null &&
-                                        imageProvider.avatarUrl!.isNotEmpty) {
-                                      avatarChild = Image.network(
-                                        imageProvider.avatarUrl!,
-                                        width: 120,
-                                        height: 120,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                          return SvgPicture.asset(
-                                            'assets/images/default_avatar.svg',
-                                            width: 60.r,
-                                            height: 60.r,
-                                            fit: BoxFit.cover,
-                                          );
-                                        },
-                                      );
-                                    } else {
-                                      avatarChild = SvgPicture.asset(
-                                        'assets/images/default_avatar.svg',
-                                        width: 60.r,
-                                        height: 60.r,
-                                        fit: BoxFit.cover,
-                                      );
-                                    }
+                          if (imageProvider.avatarUrl != null &&
+                              imageProvider.avatarUrl!.isNotEmpty) {
+                            avatarChild = Image.network(
+                              imageProvider.avatarUrl!,
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (context, error, stackTrace) {
+                                return SvgPicture.asset(
+                                  'assets/images/default_avatar.svg',
+                                  width: 60.r,
+                                  height: 60.r,
+                                  fit: BoxFit.cover,
+                                );
+                              },
+                            );
+                          } else {
+                            avatarChild = SvgPicture.asset(
+                              'assets/images/default_avatar.svg',
+                              width: 60.r,
+                              height: 60.r,
+                              fit: BoxFit.cover,
+                            );
+                          }
 
-                                    return CircleAvatar(
-                                      radius: 60,
-                                      backgroundColor: Colors.grey[200],
-                                      child: ClipOval(child: avatarChild),
-                                    );
-                                  },
-                                ),
-                                SizedBox(height: 10.h),
-                                Padding(
-                                  padding:
-                                      EdgeInsets.only(left: 20.w, right: 10.w),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Divider(
-                                        color: Colors.grey,
-                                        thickness: 1,
-                                        height: 10.h,
-                                        indent: 0.w,
-                                        endIndent: 20.w,
-                                      ),
-                                      Text(
-                                        'Thông tin căn hộ',
-                                        style: TextStyle(
-                                            fontFamily: "Oswald",
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 20.sp),
-                                      ),
-                                      InfoRow(
-                                          title: "Căn hộ",
-                                          value:
-                                              apartmentName ?? "Đang tải..."),
-                                      InfoRow(
-                                          title: "Diện tích",
-                                          value: area != null
-                                              ? "$area m²"
-                                              : "Đang tải..."),
-                                      InfoRow(
-                                          title: "Tòa",
-                                          value: building ?? "Đang tải..."),
-                                      Divider(
-                                        color: Colors.grey,
-                                        thickness: 1,
-                                        height: 10.h,
-                                        indent: 0.w,
-                                        endIndent: 20.w,
-                                      ),
-                                      Text(
-                                        'Thông tin cá nhân',
-                                        style: TextStyle(
-                                            fontFamily: "Oswald",
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 20.sp),
-                                      ),
-                                      InfoRow(
-                                          title: "Họ và tên",
-                                          value: residentInfo?.fullName ?? ""),
-                                      InfoRow(
-                                          title: "Giới tính",
-                                          value: residentInfo?.gender ?? ""),
-                                      InfoRow(
-                                          title: "Địa chỉ",
-                                          value: residentInfo?.address ?? ""),
-                                      InfoRow(
-                                          title: "Số CCCD",
-                                          value: residentInfo?.cccd ?? ""),
-                                      InfoRow(
-                                        title: "Ngày sinh",
-                                        value: residentInfo?.birthDate != null
-                                            ? DateFormat('dd/MM/yyyy').format(
-                                                residentInfo!.birthDate!)
-                                            : "Chưa có",
-                                      ),
-                                      InfoRow(
-                                          title: "Số điện thoại",
-                                          value: residentInfo?.phone ?? ""),
-                                      InfoRow(
-                                          title: "Email",
-                                          value: residentInfo?.email ?? ""),
-                                      InfoRow(
-                                        title: "Ngày tạo hồ sơ",
-                                        value: residentInfo?.createdAt != null
-                                            ? DateFormat('dd/MM/yyyy – HH:mm')
-                                                .format(
-                                                    residentInfo!.createdAt!)
-                                            : "Không rõ",
-                                      ),
-                                      Divider(
-                                        color: Colors.grey,
-                                        thickness: 1,
-                                        height: 10.h,
-                                        indent: 0.w,
-                                        endIndent: 20.w,
-                                      ),
-                                      SizedBox(
-                                        height: 10.h,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ChangePasswordPage()),
-                                              );
-                                            },
-                                            child: Text(
-                                              "Đổi mật khẩu",
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 15.sp),
-                                            ),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              showEditDialog(context);
-                                            },
-                                            child: Text(
-                                              "Sửa thông tin",
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 15.sp),
-                                            ),
-                                          ),
-                                          SizedBox(
-                                            width: 4.w,
-                                          ),
-                                        ],
-                                      )
-                                    ],
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
+                          return CircleAvatar(
+                            radius: 60,
+                            backgroundColor: Colors.grey[200],
+                            child: ClipOval(child: avatarChild),
+                          );
+                        },
                       ),
-                    ),
+                      SizedBox(height: 10.h),
+                      Padding(
+                        padding:
+                        EdgeInsets.only(left: 20.w, right: 20.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Center(
+                              child: Text(
+                              'Thông tin cá nhân',
+                              style: TextStyle(
+                                  fontFamily: "Oswald",
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 6.sp),
+                            ),),
+                            SizedBox(height: 20.h,),
+                            Align(
+                              alignment: Alignment.center,
+                              child:
+                              Column(
+                                children: [
+                                  InfoRow(
+                                    title: "Họ và tên",
+                                    value: adminInfo?.fullName ?? "",
+                                    titleColor: Colors.white,),
+                                  InfoRow(
+                                      title: "Số điện thoại",
+                                      value: adminInfo?.phone ?? "",
+                                      titleColor: Colors.white),
+                                  InfoRow(
+                                      title: "Email",
+                                      value: adminInfo?.email ?? "",
+                                      titleColor: Colors.white),
+                                ],
+                              ),),
+                            SizedBox(height: 40.h,),
+                            SizedBox(height: 60.h,width: 60.w,
+                            child:
+                            ElevatedButton(
+                              onPressed: () {
+                                showEditDialog(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                secondaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                  BorderRadius.circular(30.r),
+                                ),
+                                elevation: 4,
+                                shadowColor: Colors.black45,
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.zero,
+                              ),
+                              child: Text(
+                                "Sửa thông tin",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 4.sp),
+                              ),
+                            ),
+                            )
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -370,22 +302,22 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
 
   void showEditDialog(BuildContext context) {
     final phoneController =
-        TextEditingController(text: residentInfo?.phone ?? '');
+    TextEditingController(text: adminInfo?.phone ?? '');
     final emailController =
-        TextEditingController(text: residentInfo?.email ?? '');
-    final bloc = EditResidentBloc();
+    TextEditingController(text: adminInfo?.email ?? '');
+    final bloc = EditAdminBloc();
 
     showDialog(
       context: context,
       builder: (context) {
-        return Consumer<ResidentImageProvider>(
+        return Consumer<AdminImageProvider>(
           builder: (context, imageProvider, _) {
             return AlertDialog(
               title: Center(
                   child: Text('Chỉnh sửa thông tin',
                       style: TextStyle(
                           fontFamily: "Osward",
-                          fontSize: 20.sp,
+                          fontSize: 6.sp,
                           fontWeight: FontWeight.bold))),
               content: SingleChildScrollView(
                 child: Column(
@@ -417,9 +349,9 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
                             width: 100,
                             height: 100,
                           )
-                              : (residentInfo?.imageUrl?.isNotEmpty ?? false)
+                              : (adminInfo?.imageUrl?.isNotEmpty ?? false)
                               ? Image.network(
-                            residentInfo!.imageUrl!,
+                            adminInfo!.imageUrl!,
                             fit: BoxFit.cover,
                             width: 100,
                             height: 100,
@@ -443,10 +375,10 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
                     ElevatedButton.icon(
                       icon: const Icon(Icons.image),
                       label: Text('Đổi ảnh đại diện',
-                          style: TextStyle(fontSize: 15.sp)),
+                          style: TextStyle(fontSize: 4.sp)),
                       onPressed: () async => await imageProvider.pickImage(),
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 4),
 
                     /// ✅ TextField with StreamBuilder (Email)
                     StreamBuilder<String?>(
@@ -464,7 +396,7 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
                       },
                     ),
 
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 4),
 
                     /// ✅ TextField with StreamBuilder (Phone)
                     StreamBuilder<String?>(
@@ -514,20 +446,20 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
                         final uniqueFileName = '${DateTime.now().millisecondsSinceEpoch}_avatar.jpg';
 
                         newUrl = await imageProvider.uploadSelectedImageAndGetUrl1(
-                          residentInfo!.residentId!,
+                          adminInfo!.uid!,
                           uniqueFileName,
-                          oldImageUrl: residentInfo!.imageUrl,
+                          oldImageUrl: adminInfo!.imageUrl,
                         );
 
                         if (newUrl != null) {
                           await FirebaseFirestore.instance
-                              .collection('residents')
-                              .doc(residentInfo!.residentId!)
+                              .collection('admins')
+                              .doc(adminInfo!.uid!)
                               .update({'imageUrl': newUrl});
                         }
                       }
 
-                      await updateResidentInfo(phoneController.text, emailController.text);
+                      await updateAdminInfo(phoneController.text, emailController.text);
 
                       bloc.dispose();
                       Navigator.of(context, rootNavigator: true).pop(); // Đóng dialog loading
@@ -541,7 +473,7 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
                     }
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                  child: Text('Lưu', style: TextStyle(fontSize: 15.sp,color: Colors.white)),
+                  child: Text('Lưu', style: TextStyle(fontSize: 4.sp,color: Colors.white)),
                 ),
 
               ],
@@ -553,17 +485,22 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
   }
 }
 
-class EditResidentBloc {
+class EditAdminBloc {
   final _phoneController = StreamController<String>.broadcast();
+  final _nameController = StreamController<String>.broadcast();
   final _emailController = StreamController<String>.broadcast();
 
   Stream<String?> get phoneStream => _phoneController.stream.map(validatePhone);
+
+  Stream<String?> get nameStream => _nameController.stream.map(validateName);
 
   Stream<String?> get emailStream => _emailController.stream.map(validateEmail);
 
   Function(String) get changePhone => _phoneController.sink.add;
 
   Function(String) get changeEmail => _emailController.sink.add;
+
+  Function(String) get changeName => _nameController.sink.add;
 
   String? validatePhone(String value) {
     if (value.isEmpty) return 'Không được để trống';
@@ -581,46 +518,58 @@ class EditResidentBloc {
     return null;
   }
 
+  String? validateName(String value) {
+    if (value.isEmpty) return 'Không được để trống';
+    return null;
+  }
+
   void dispose() {
     _phoneController.close();
     _emailController.close();
+    _nameController.close();
   }
 }
 
 class InfoRow extends StatelessWidget {
   final String title;
   final String value;
+  final Color titleColor;
 
   const InfoRow({
     Key? key,
     required this.title,
     required this.value,
+    this.titleColor = Colors.black87,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.h), // Khoảng cách giữa các dòng
+      padding: EdgeInsets.symmetric(vertical: 20.h),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
-            flex: 5,
+          SizedBox(
+            width: 120.w, // hoặc dùng .w nếu dùng flutter_screenutil
             child: Text(
               title,
+              textAlign: TextAlign.right,
               style: TextStyle(
-                fontSize: 15.sp,
-                color: Colors.black87,
+                color: titleColor,
+                fontSize: 5.sp
               ),
             ),
           ),
-          Expanded(
-            flex: 5,
+          SizedBox(width: 24),
+          SizedBox(
+            width: 160.w,
             child: Text(
               value,
+              textAlign: TextAlign.left,
               style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
+                  fontSize: 5.sp
               ),
             ),
           ),

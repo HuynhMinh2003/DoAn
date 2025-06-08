@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 32 32" viewBox="0 0 32 32" id="paper">
+  <path d="M3.3734417,30L30,3.3734417L28.6265583,2l-3.9131947,3.9131947L20.869173,2.402168H4.6017613v23.6226292L2,28.6265583
+	L3.3734417,30z M21.4629402,9.1636181V5.576118l1.8753815,1.7121186L21.4629402,9.1636181z M6.5443091,4.3447156h12.9760838
+	v6.7614493l-4.7880764,4.7880764v-0.8655148h-4.0506096v1.9425468h2.9735775l-7.1109757,7.1109753V4.3447156z" fill="#ffffff" class="color000000 svgShape"></path>
+  <polygon points="8.875 29.598 28.884 29.598 28.884 10.153 26.941 10.153 26.941 27.655 8.875 27.655" fill="#ffffff" class="color000000 svgShape"></polygon>
+  <rect width="2.283" height="1.943" x="20.521" y="15.029" fill="#ffffff" class="color000000 svgShape"></rect>
+  <rect width="7.362" height="1.943" x="15.441" y="20.118" fill="#ffffff" class="color000000 svgShape"></rect>
+  <rect width="7.035" height="1.943" x="10.679" y="9.937" fill="#ffffff" class="color000000 svgShape"></rect>
+</svg>
