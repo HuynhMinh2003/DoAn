@@ -1,23 +1,17 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/firebase_options.dart';
-import 'package:do_an/screens/main/main_screen.dart';
 import 'package:do_an/src/fire_base/firebase_auth_service.dart';
-import 'package:do_an/src/fire_base/notification_service.dart';
-import 'package:do_an/src/resources/auth_wrapper_page.dart';
-import 'package:do_an/src/resources/login_page.dart';
+import 'package:do_an/src/resources/provider/admin_image_provider.dart';
 import 'package:do_an/src/resources/provider/company_image_provider.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:do_an/src/resources/provider/resident_image_provider.dart';
 import 'package:do_an/src/resources/provider/staff_image_provider.dart';
 import 'package:do_an/src/resources/provider/user__provider.dart';
 import 'package:do_an/src/resources/splash_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:do_an/src/app.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
@@ -129,6 +123,7 @@ void main() async {
             ChangeNotifierProvider(create: (_) => CompanyImageProvider()),
             ChangeNotifierProvider(create: (_) => StaffImageProvider()),
             ChangeNotifierProvider(create: (_) => ResidentImageProvider()),
+            ChangeNotifierProvider(create: (_) => AdminImageProvider()),
             ChangeNotifierProvider(create: (_) => ContractNotifier()),
             ChangeNotifierProvider(create: (_) => MenuAppController()),
           ],

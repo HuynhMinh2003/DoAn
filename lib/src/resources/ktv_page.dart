@@ -57,7 +57,7 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
       if (tokens.contains(fcmToken)) {
         await userRef.update({
           'fcmTokens': FieldValue.arrayRemove([fcmToken]),
-          'lastUpdatedd': FieldValue.serverTimestamp(),
+          'lastUpdated': FieldValue.serverTimestamp(),
         });
         print("✅ Đã xóa token FCM: $fcmToken");
       } else {

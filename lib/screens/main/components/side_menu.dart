@@ -141,6 +141,14 @@ class SideMenu extends StatelessWidget {
                     },
                     isMenuOpen: isMenuOpen,
                   ),
+                  DrawerListTile(
+                    title: "Quản lý thanh toán",
+                    svgSrc: "assets/icons/wallet.svg",
+                    press: () {
+                      // onMenuItemPressed(ContractListPage()); // Chuyển sang Dashboard
+                    },
+                    isMenuOpen: isMenuOpen,
+                  ),
                  ExpandableDrawerListTile(
                      title: "Quản lý sự cố",
                      svgSrc: "assets/icons/warning.svg",
@@ -164,7 +172,7 @@ class SideMenu extends StatelessWidget {
                  ]),
                   ExpandableDrawerListTile(
                       title: "Quản lý dịch vụ",
-                      svgSrc: "assets/icons/menu_hd_apartment.svg",
+                      svgSrc: "assets/icons/customer_service.svg",
                       isMenuOpen: isMenuOpen,
                       children: [
                     DrawerListTile(
