@@ -100,7 +100,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
       Navigator.of(context, rootNavigator: true).pop();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Đã xác nhận xử lý")),
+        const SnackBar(content: Text("Đã xác nhận xử lý"),backgroundColor: Colors.green,),
       );
 
       setState(() {

@@ -87,12 +87,12 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
       });
 
       Navigator.of(context, rootNavigator: true).pop(); // Đóng loading dialog
-      showSnackBar("✅ Đăng ký xe thành công");
+      showSnackBar("Đăng ký xe thành công");
     } catch (e) {
       Navigator.of(context, rootNavigator: true).pop(); // Đóng loading dialog nếu có lỗi
       print('❌ Lỗi: $e');
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("❌ Đăng ký thất bại")));
+          .showSnackBar(SnackBar(content: Text("Đăng ký thất bại"),backgroundColor: Colors.red,));
     }
   }
 
@@ -104,7 +104,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
           .collection('parkingRegistrations')
           .doc(docId)
           .update({'canceledAt': Timestamp.now()});
-      showSnackBar("✅ Hủy đăng ký thành công");
+      showSnackBar("Hủy đăng ký thành công");
       setState(() {}); // Refresh
     } catch (e) {
       print('❌ Lỗi khi hủy đăng ký: $e');

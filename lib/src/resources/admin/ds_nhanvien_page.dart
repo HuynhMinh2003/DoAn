@@ -14,6 +14,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import '../../../constants.dart';
 import 'ds_nhanvien_mobile_page.dart' if (dart.library.html) 'ds_nhanvien_web_page.dart';
 
 class StaffListPage extends StatefulWidget {
@@ -28,6 +29,7 @@ class _StaffListPageState extends State<StaffListPage> {
   String? _selectedStatus;
 
   String? _selectedEmploymentStatus;
+
   List<String> _employmentStatusItems = ["Tất cả", "Đang làm", "Đã nghỉ"]; // Các giá trị trạng thái nhân viên
 
   List<String> _positionItems = [];
@@ -606,7 +608,7 @@ class _StaffListPageState extends State<StaffListPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Center(child: Text("Xác nhận xóa", style: TextStyle(fontSize: 5.sp),),),
+          title: Center(child: Text("Xác nhận xóa", style: TextStyle(fontSize: 7.sp,fontFamily: "Oswald",fontWeight: FontWeight.bold),),),
           content: Text("Bạn có chắc chắn muốn xóa nhân viên \"${staff.fullName}\" không?", style: TextStyle(fontSize: 4.sp)),
           actions: [
             TextButton(
@@ -668,27 +670,6 @@ class _StaffListPageState extends State<StaffListPage> {
     }
   }
 
-  Future<bool> deleteStaffAccount(String uid) async {
-    try {
-      final response = await http.post(
-        Uri.parse("https://deletestaffaccount-ttrkrlo35a-uc.a.run.app"),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'uid': uid}),
-      );
-
-      if (response.statusCode == 200) {
-        print("✅ Xóa tài khoản $uid thành công.");
-        return true;
-      } else {
-        print("❌ Lỗi khi xóa tài khoản $uid: ${response.body}");
-        return false;
-      }
-    } catch (e) {
-      print("❌ Exception khi gọi Cloud Function xóa user $uid: $e");
-      return false;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -732,19 +713,34 @@ class _StaffListPageState extends State<StaffListPage> {
                           },
                         ),),
                         Flexible(
-                          flex:1,child: ElevatedButton(
-                          onPressed: () => exportStaffsToExcel(_staffList),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.upload),
-                              SizedBox(width: 5.w,),
-                              Text('Xuất file', style: TextStyle(color:Colors.white, fontSize: 4.sp, fontWeight: FontWeight.bold),)
-                            ],
+                          flex:1,child: SizedBox(
+                          height: 55.h,
+                          width: 40.w,
+                          child: ElevatedButton(
+                            onPressed: () => exportStaffsToExcel(_staffList),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                              secondaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                BorderRadius.circular(30.r),
+                              ),
+                              elevation: 4,
+                              shadowColor: Colors.black45,
+                              alignment: Alignment.center,
+                              padding: EdgeInsets.zero,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.upload),
+                                SizedBox(width: 5.w,),
+                                Text('Xuất file', style: TextStyle(color:Colors.white, fontSize: 4.sp, fontWeight: FontWeight.bold),)
+                              ],
+                            ),
                           ),
-                        ),),
+                        )),
                         SizedBox(width:5.w),
-
                       ],
                     ),
                     SizedBox(height: 10.h,),

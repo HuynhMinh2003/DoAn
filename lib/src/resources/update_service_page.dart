@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -32,6 +33,7 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
 
   File? _selectedImageFile;
   String? _imagePreviewUrl;
+  Uint8List? _imageBytes;
 
   @override
   void initState() {
@@ -64,10 +66,20 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
   Future<void> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked != null) {
-      setState(() {
-        _selectedImageFile = File(picked.path);
-        _imagePreviewUrl = null; // clear old preview
-      });
+      if (kIsWeb) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _imageBytes = bytes;
+          _selectedImageFile = null;
+          _imagePreviewUrl = null;
+        });
+      } else {
+        setState(() {
+          _selectedImageFile = File(picked.path);
+          _imageBytes = null;
+          _imagePreviewUrl = null;
+        });
+      }
     }
   }
 
@@ -129,8 +141,12 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
         final fileName = 'service_${DateTime.now().millisecondsSinceEpoch}.jpg';
         final ref = FirebaseStorage.instance.ref().child('service_images/$fileName');
 
-        // Upload ảnh
-        final uploadTask = await ref.putFile(_selectedImageFile!);
+        // ✅ Thêm metadata để đảm bảo trình duyệt hiểu đây là ảnh
+        final metadata = SettableMetadata(contentType: 'image/jpeg');
+
+        // ✅ Upload ảnh với metadata
+        final uploadTask = await ref.putFile(_selectedImageFile!, metadata);
+
         imageUrl = await ref.getDownloadURL();
 
         // ✅ Chờ ảnh sẵn sàng (đặc biệt quan trọng với Flutter Web)
@@ -142,6 +158,7 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
         'fileLink': fileLink,
         'imageServiceUrl': imageUrl ?? _imagePreviewUrl,
         'status': "Đang chờ duyệt",
+        'seenBy': [],
         'timestamp': FieldValue.serverTimestamp(),
       });
 
@@ -225,7 +242,7 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          if (_selectedImageFile == null && _imagePreviewUrl == null) {
+                          if (_selectedImageFile == null && _imagePreviewUrl == null && _imageBytes == null) {
                             _pickImage(); // Gọi chọn ảnh nếu chưa có ảnh
                           }
                         },
@@ -236,19 +253,24 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
                             borderRadius: BorderRadius.circular(12.r),
                             border: Border.all(color: Colors.grey.shade400),
                             color: Colors.grey.shade100,
-                            image: _selectedImageFile != null
+                            image: _imageBytes != null
                                 ? DecorationImage(
-                              image: FileImage(_selectedImageFile!),
+                              image: MemoryImage(_imageBytes!), // Web
+                              fit: BoxFit.cover,
+                            )
+                                : _selectedImageFile != null
+                                ? DecorationImage(
+                              image: FileImage(_selectedImageFile!), // Mobile
                               fit: BoxFit.cover,
                             )
                                 : _imagePreviewUrl != null
                                 ? DecorationImage(
-                              image: NetworkImage(_imagePreviewUrl!),
+                              image: NetworkImage(_imagePreviewUrl!), // Từ URL
                               fit: BoxFit.cover,
                             )
                                 : null,
                           ),
-                          child: (_selectedImageFile == null && _imagePreviewUrl == null)
+                          child: (_imageBytes == null && _selectedImageFile == null && _imagePreviewUrl == null)
                               ? Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -270,7 +292,7 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
                       ),
 
                       // Nút đổi ảnh nếu đã có ảnh
-                      if (_selectedImageFile != null || _imagePreviewUrl != null)
+                      if (_imageBytes != null || _selectedImageFile != null || _imagePreviewUrl != null)
                         Positioned(
                           top: 8,
                           right: 8,
