@@ -16,6 +16,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import '../../../constants.dart';
+import '../../blocs/auth_bloc.dart';
 import 'resident_mobile_page.dart'
     if (dart.library.html) 'resident_web_page.dart';
 
@@ -34,12 +36,16 @@ class _ResidentPageState extends State<ResidentPage> {
   int? selectedFloor;
   Apartment? selectedApartment;
 
+  String? selectedStatus;
+
   String _searchQuery = ""; // Biến lưu trữ giá trị tìm kiếm
   Timer? _debounce; // Biến debounce
 
   bool _isEditDialogShowing = false;
   bool _isViewDialogShowing = false;
   bool _isHistoryDialogShowing = false;
+
+  final AuthBloc _authBloc = AuthBloc();
 
   List<String> getBuildings() {
     return apartments.map((a) => a.building).toSet().toList()..sort();
@@ -253,8 +259,7 @@ class _ResidentPageState extends State<ResidentPage> {
     }
   }
 
-  Future<void> showViewResidentDialog(BuildContext context,
-      ResidentInfo resident, VoidCallback onRefresh) async {
+  Future<void> showViewResidentDialog(BuildContext context, ResidentInfo resident, VoidCallback onRefresh) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -339,8 +344,7 @@ class _ResidentPageState extends State<ResidentPage> {
     );
   }
 
-  Future<void> showEditResident(
-      BuildContext context, ResidentInfo resident, VoidCallback refresh) async {
+  Future<void> showEditResident(BuildContext context, ResidentInfo resident, VoidCallback refresh) async {
     final apartmentSnapshot = await FirebaseFirestore.instance
         .collection('apartments')
         .doc(resident.apartmentId)
@@ -481,8 +485,8 @@ class _ResidentPageState extends State<ResidentPage> {
                                   backgroundColor: Colors.white,
                                   child: ClipOval(
                                     child: SizedBox(
-                                      width: 100.r, // 2 * radius
-                                      height: 100.r,
+                                      width: 140.r,
+                                      height: 140.r,
                                       child: imageProvider.webImageBytes != null
                                           ? Image.memory(
                                         imageProvider.webImageBytes!,
@@ -493,28 +497,29 @@ class _ResidentPageState extends State<ResidentPage> {
                                         imageProvider.selectedImageFile!,
                                         fit: BoxFit.cover,
                                       )
-                                          : (resident.imageUrl != null && resident.imageUrl!.isNotEmpty)
+                                          : (resident.imageUrl != null &&
+                                          resident.imageUrl!.isNotEmpty)
                                           ? Image.network(
                                         resident.imageUrl!,
                                         fit: BoxFit.cover,
                                       )
-                                          : SvgPicture.asset(
-                                        'assets/images/default_avatar.svg',
-                                        fit: BoxFit.cover,
-                                        width: 100.r,
-                                        height: 100.r,
+                                          : Center( // ✅ Center default avatar & make it smaller
+                                        child: SvgPicture.asset(
+                                          'assets/images/default_avatar.svg',
+                                          fit: BoxFit.contain,
+                                          width: 70.r, // Smaller size
+                                          height: 70.r,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-
                                 if (isEditing)
                                   Positioned(
                                     bottom: 0,
                                     right: 0,
                                     child: IconButton(
-                                      icon: Icon(Icons.camera_alt,
-                                          color: Colors.blueAccent),
+                                      icon: Icon(Icons.camera_alt, color: Colors.blueAccent),
                                       onPressed: () async {
                                         await imageProvider.pickImage();
                                       },
@@ -528,98 +533,183 @@ class _ResidentPageState extends State<ResidentPage> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Căn hộ: $apartmentName",
-                                    style: TextStyle(fontSize: 4.sp)),
-                                SizedBox(height: 15.h),
+                                // ✅ Tên căn hộ căn giữa
+                                Center(
+                                  child: Text(
+                                    "Căn hộ: $apartmentName",
+                                    style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                SizedBox(height: 20.h),
 
-                                // Name field
-                                StreamBuilder<String?>(
-                                  stream: nameErrorController.stream,
-                                  builder: (context, snapshot) {
-                                    return TextField(
-                                      controller: nameController,
-                                      enabled: isEditing,
-                                      style: TextStyle(fontSize: 4.sp),
-                                      decoration: InputDecoration(
-                                        labelText: 'Họ và tên',
-                                        labelStyle: TextStyle(fontSize: 4.sp),
-                                        errorText: snapshot.data,
+                                // ✅ Row: Họ tên + Email
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: StreamBuilder<String?>(
+                                        stream: nameErrorController.stream,
+                                        builder: (context, snapshot) {
+                                          return TextField(
+                                            controller: nameController,
+                                            enabled: isEditing,
+                                            style: TextStyle(fontSize: 4.sp),
+                                            decoration: InputDecoration(
+                                              labelText: 'Họ và tên',
+                                              labelStyle: TextStyle(fontSize: 4.sp),
+                                              errorText: snapshot.data,
+                                            ),
+                                            onChanged: (_) {
+                                              if (isEditing) validateFields();
+                                            },
+                                          );
+                                        },
                                       ),
-                                      onChanged: (_) {
-                                        if (isEditing) validateFields();
-                                      },
-                                    );
-                                  },
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: StreamBuilder<String?>(
+                                        stream: emailErrorController.stream,
+                                        builder: (context, snapshot) {
+                                          return TextField(
+                                            controller: emailController,
+                                            enabled: isEditing,
+                                            style: TextStyle(fontSize: 4.sp),
+                                            decoration: InputDecoration(
+                                              labelText: 'Email',
+                                              labelStyle: TextStyle(fontSize: 4.sp),
+                                              errorText: snapshot.data,
+                                            ),
+                                            keyboardType: TextInputType.emailAddress,
+                                            onChanged: (_) {
+                                              if (isEditing) validateFields();
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 SizedBox(height: 15.h),
 
-                                // CCCD field
-                                StreamBuilder<String?>(
-                                  stream: cccdErrorController.stream,
-                                  builder: (context, snapshot) {
-                                    return TextField(
-                                      controller: cccdController,
-                                      enabled: isEditing,
-                                      style: TextStyle(fontSize: 4.sp),
-                                      decoration: InputDecoration(
-                                        labelText: 'CCCD',
-                                        labelStyle: TextStyle(fontSize: 4.sp),
-                                        errorText: snapshot.data,
+                                // ✅ Row: Ngày sinh + CCCD
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: StreamBuilder<String?>(
+                                        stream: birthDateErrorController.stream,
+                                        builder: (context, snapshot) {
+                                          return GestureDetector(
+                                            onTap: isEditing
+                                                ? () async {
+                                              final pickedDate = await showDatePicker(
+                                                context: context,
+                                                initialDate: DateTime.now(),
+                                                firstDate: DateTime(1900),
+                                                lastDate: DateTime.now(),
+                                              );
+                                              if (pickedDate != null) {
+                                                _authBloc.updateBirthDate(pickedDate);
+                                                birthDateController.text =
+                                                    DateFormat('dd/MM/yyyy').format(pickedDate);
+                                              }
+                                            }
+                                                : null,
+                                            child: AbsorbPointer(
+                                              absorbing: !isEditing,
+                                              child: TextField(
+                                                controller: birthDateController,
+                                                enabled: isEditing,
+                                                style: TextStyle(fontSize: 4.sp),
+                                                decoration: InputDecoration(
+                                                  labelText: 'Ngày sinh',
+                                                  labelStyle: TextStyle(fontSize: 4.sp),
+                                                  errorText: snapshot.data,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
                                       ),
-                                      keyboardType: TextInputType.number,
-                                      onChanged: (_) {
-                                        if (isEditing) validateFields();
-                                      },
-                                    );
-                                  },
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: StreamBuilder<String?>(
+                                        stream: cccdErrorController.stream,
+                                        builder: (context, snapshot) {
+                                          return TextField(
+                                            controller: cccdController,
+                                            enabled: isEditing,
+                                            style: TextStyle(fontSize: 4.sp),
+                                            decoration: InputDecoration(
+                                              labelText: 'CCCD',
+                                              labelStyle: TextStyle(fontSize: 4.sp),
+                                              errorText: snapshot.data,
+                                            ),
+                                            keyboardType: TextInputType.number,
+                                            onChanged: (_) {
+                                              if (isEditing) validateFields();
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 SizedBox(height: 15.h),
 
-                                // Email field
-                                StreamBuilder<String?>(
-                                  stream: emailErrorController.stream,
-                                  builder: (context, snapshot) {
-                                    return TextField(
-                                      controller: emailController,
-                                      enabled: isEditing,
-                                      style: TextStyle(fontSize: 4.sp),
-                                      decoration: InputDecoration(
-                                        labelText: 'Email',
-                                        labelStyle: TextStyle(fontSize: 4.sp),
-                                        errorText: snapshot.data,
+                                // ✅ Row: Giới tính + Số điện thoại
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: DropdownButtonFormField<String>(
+                                        value: selectedGender,
+                                        decoration: InputDecoration(
+                                          labelText: 'Giới tính',
+                                          labelStyle: TextStyle(fontSize: 4.sp),
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        items: ['Nam', 'Nữ', 'Khác']
+                                            .map((gender) => DropdownMenuItem<String>(
+                                          value: gender,
+                                          child: Text(gender, style: TextStyle(fontSize: 4.sp)),
+                                        ))
+                                            .toList(),
+                                        onChanged: isEditing
+                                            ? (value) {
+                                          setState(() {
+                                            selectedGender = value ?? "Khác";
+                                          });
+                                        }
+                                            : null,
                                       ),
-                                      keyboardType: TextInputType.emailAddress,
-                                      onChanged: (_) {
-                                        if (isEditing) validateFields();
-                                      },
-                                    );
-                                  },
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: StreamBuilder<String?>(
+                                        stream: phoneErrorController.stream,
+                                        builder: (context, snapshot) {
+                                          return TextField(
+                                            controller: phoneController,
+                                            enabled: isEditing,
+                                            style: TextStyle(fontSize: 4.sp),
+                                            decoration: InputDecoration(
+                                              labelText: 'Số điện thoại',
+                                              labelStyle: TextStyle(fontSize: 4.sp),
+                                              errorText: snapshot.data,
+                                            ),
+                                            onChanged: (_) {
+                                              if (isEditing) validateFields();
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 SizedBox(height: 15.h),
 
-                                // Email field
-                                StreamBuilder<String?>(
-                                  stream: phoneErrorController.stream,
-                                  builder: (context, snapshot) {
-                                    return TextField(
-                                      controller: phoneController,
-                                      enabled: isEditing,
-                                      style: TextStyle(fontSize: 4.sp),
-                                      decoration: InputDecoration(
-                                        labelText: 'Số điện thoại',
-                                        labelStyle: TextStyle(fontSize: 4.sp),
-                                        errorText: snapshot.data,
-                                      ),
-                                      onChanged: (_) {
-                                        if (isEditing) validateFields();
-                                      },
-                                    );
-                                  },
-                                ),
-
-                                SizedBox(height: 15.h),
-
-                                // Email field
+                                // ✅ Địa chỉ (cuối)
                                 StreamBuilder<String?>(
                                   stream: addressErrorController.stream,
                                   builder: (context, snapshot) {
@@ -637,32 +727,6 @@ class _ResidentPageState extends State<ResidentPage> {
                                       },
                                     );
                                   },
-                                ),
-                                SizedBox(
-                                  height: 15.h,
-                                ),
-                                // Gender dropdown
-                                DropdownButtonFormField<String>(
-                                  value: selectedGender,
-                                  decoration: InputDecoration(
-                                    labelText: 'Giới tính',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  items: ['Nam', 'Nữ', 'Khác']
-                                      .map((gender) => DropdownMenuItem<String>(
-                                            value: gender,
-                                            child: Text(gender,
-                                                style:
-                                                    TextStyle(fontSize: 4.sp)),
-                                          ))
-                                      .toList(),
-                                  onChanged: isEditing
-                                      ? (value) {
-                                          setState(() {
-                                            selectedGender = value ?? "Khác";
-                                          });
-                                        }
-                                      : null,
                                 ),
                               ],
                             )
@@ -862,7 +926,7 @@ class _ResidentPageState extends State<ResidentPage> {
 
     final matchedResidents = residents.where((r) {
       final apt = apartments.firstWhere(
-        (a) => a.id == r.apartmentId,
+            (a) => a.id == r.apartmentId,
         orElse: () => Apartment(
           id: '',
           apartmentName: '',
@@ -883,10 +947,20 @@ class _ResidentPageState extends State<ResidentPage> {
       bool matchesSearch = _searchQuery.isEmpty ||
           r.fullName.toLowerCase().contains(_searchQuery.toLowerCase());
 
+      bool matchesStatus = true;
+      if (selectedStatus == "Đang ở") {
+        matchesStatus = r.isExit == false;
+      } else if (selectedStatus == "Đã rời") {
+        matchesStatus = r.isExit == true;
+      } else if (selectedStatus == "Tất cả" || selectedStatus == null) {
+        matchesStatus = true; // Không lọc gì cả
+      }
+
       return matchesApartment &&
           matchesBuilding &&
           matchesFloor &&
-          matchesSearch;
+          matchesSearch &&
+          matchesStatus;
     }).toList();
 
     return Scaffold(
@@ -932,9 +1006,21 @@ class _ResidentPageState extends State<ResidentPage> {
                               )),
                           Flexible(
                             flex: 2,
-                            child: ElevatedButton(
+                            child: SizedBox(height: 55.h,width: 40.w,child: ElevatedButton(
                               onPressed: () => exportResidentsToExcel(
                                   residents, matchedResidents, apartments),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                secondaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                  BorderRadius.circular(30.r),
+                                ),
+                                elevation: 4,
+                                shadowColor: Colors.black45,
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.zero,
+                              ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -951,7 +1037,7 @@ class _ResidentPageState extends State<ResidentPage> {
                                   )
                                 ],
                               ),
-                            ),
+                            ),)
                           ),
                           SizedBox(width: 5.w,)
                         ],
@@ -1002,7 +1088,24 @@ class _ResidentPageState extends State<ResidentPage> {
                               },
                               itemLabelBuilder: (apt) => apt.apartmentName,
                             ),
-                          )
+                          ),
+                          SizedBox(width: 20.w),
+                          Expanded(
+                            child: buildFilterDropdown1<String>(
+                              label: 'Trạng thái cư dân',
+                              items: ['Tất cả','Đang ở', 'Đã rời'],
+                              selectedValue: selectedStatus,
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedStatus = val;
+                                });
+                              },
+                              hintText: 'Chọn trạng thái', // Thêm dòng này nếu bạn custom được
+                            ),
+                          ),
+                          SizedBox(width: 20.w),
+
+
                         ],
                       ),
                       SizedBox(height: 10.h,),
@@ -1208,7 +1311,7 @@ class _ResidentPageState extends State<ResidentPage> {
             ),
             dropdownStyleData: DropdownStyleData(
               maxHeight: 200.h,
-              width: 139.w,
+              width: 67.w,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30.r),
               ),
@@ -1225,4 +1328,85 @@ class _ResidentPageState extends State<ResidentPage> {
       ),
     );
   }
+
+  Widget buildFilterDropdown1<T>({
+    required String label,
+    required List<T> items,
+    required T? selectedValue,
+    required ValueChanged<T?> onChanged,
+    String Function(T)? itemLabelBuilder,
+    String? hintText, // Thêm tham số hintText tùy chọn
+  }) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 8.h),
+      child: SizedBox(
+        height: 60.h,
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton2<T>(
+            isExpanded: true,
+            hint: Text(
+              hintText ?? label, // Hiển thị hintText nếu có, nếu không thì label
+              style: TextStyle(fontSize: 4.sp, color: Colors.white70), // Màu hơi mờ
+            ),
+            items: items.map((item) {
+              final displayText = itemLabelBuilder != null
+                  ? itemLabelBuilder(item)
+                  : item.toString();
+
+              return DropdownMenuItem<T>(
+                value: item,
+                child: Text(
+                  displayText,
+                  style: TextStyle(fontSize: 4.sp),
+                ),
+              );
+            }).toList(),
+            value: selectedValue,
+            onChanged: onChanged,
+            selectedItemBuilder: (context) {
+              return items.map((item) {
+                final displayText = itemLabelBuilder != null
+                    ? itemLabelBuilder(item)
+                    : item.toString();
+
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    displayText,
+                    style: TextStyle(fontSize: 4.sp),
+                  ),
+                );
+              }).toList();
+            },
+            buttonStyleData: ButtonStyleData(
+              height: 40.h,
+              padding: EdgeInsets.symmetric(
+                vertical: 2.h,
+                horizontal: 10.w,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30.r),
+                border: Border.all(color: const Color(0xe2707070)),
+              ),
+            ),
+            dropdownStyleData: DropdownStyleData(
+              maxHeight: 200.h,
+              width: 67.w,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30.r),
+              ),
+              elevation: 4,
+            ),
+            menuItemStyleData: MenuItemStyleData(
+              height: 40.h,
+              padding: EdgeInsets.symmetric(
+                horizontal: 10.w,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
 }

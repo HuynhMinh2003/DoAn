@@ -64,7 +64,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Giao sự cố cho nhân viên', style: TextStyle(fontSize: 5.sp),),
+              title: Text('Giao sự cố cho nhân viên', style: TextStyle(fontSize: 7.sp,fontFamily: "Oswald",fontWeight: FontWeight.bold),),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -114,7 +114,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Hủy', style: TextStyle(fontSize: 4.sp)),
+                  child: Text('Hủy', style: TextStyle(fontSize: 4.sp, color: Colors.white)),
                 ),
                 ElevatedButton(
                   onPressed: selectedStaff == null
@@ -128,7 +128,8 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                       selectedPriority ?? 'Trung bình',
                     );
                   },
-                  child: Text('Xác nhận giao', style: TextStyle(fontSize: 4.sp)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  child: Text('Xác nhận giao', style: TextStyle(fontSize: 4.sp, color: Colors.white)),
                 ),
               ],
             );
@@ -186,7 +187,6 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
         }
       }
 
-      Navigator.of(context).pop();
       Navigator.of(context).pop();
 
       MsgDialog.showMsgDialog(context, "Xử lý sự cố", "Điều phối sự cố cho nhân viên thành công");

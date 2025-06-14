@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../constants.dart';
 import '../../../custom_paginated_table.dart';
 import 'package:do_an/src/resources/admin/ds_dangkixe_mobile_page.dart' if (dart.library.html) 'ds_dangkixe_web_page.dart';
 
@@ -326,8 +327,20 @@ class _RegistrationListPageState extends State<RegistrationListPage> {
                             ),
                           ),
                           Flexible(
-                            flex:1,child: ElevatedButton(
+                            flex:1,child: SizedBox(height: 55.h,width: 40.w,child: ElevatedButton(
                             onPressed: () => exportRegistrationsToExcel(_filteredRegis),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                              secondaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                BorderRadius.circular(30.r),
+                              ),
+                              elevation: 4,
+                              shadowColor: Colors.black45,
+                              alignment: Alignment.center,
+                              padding: EdgeInsets.zero,
+                            ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -336,7 +349,7 @@ class _RegistrationListPageState extends State<RegistrationListPage> {
                                 Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.white),)
                               ],
                             ),
-                          ),),
+                          ),)),
                           SizedBox(width:5.w),
 
                         ],
