@@ -11,6 +11,7 @@ class Incident {
   final String? priority;
   final String status;
   final String? imageUrl;
+  final List<String> seenBy;
   final Timestamp? createdAt;
   final String? assignedStaffId;
   final String? assignedStaffName;
@@ -28,6 +29,7 @@ class Incident {
     required this.status,
     this.priority,
     this.imageUrl,
+    required this.seenBy,
     this.createdAt,
     this.assignedStaffId,
     this.assignedStaffName,
@@ -48,6 +50,7 @@ class Incident {
       priority: data['priority'],
       status: data['status'] ?? 'Đang chờ xử lý',
       imageUrl: data['imageUrl'],
+      seenBy: List<String>.from(data['seenBy'] ?? []), // ✅ thêm seenBy ở đây
       createdAt: data['createdAt'],
       assignedStaffId: data['assignedStaffId'],
       assignedStaffName: data['assignedStaffName'],
@@ -67,6 +70,7 @@ class Incident {
       'priority': priority,
       'status': status,
       'imageUrl': imageUrl,
+      'seenBy': seenBy, // ✅ thêm seenBy vào Firestore map
       'createdAt': createdAt,
       'assignedStaffId': assignedStaffId,
       'assignedStaffName': assignedStaffName,
@@ -75,7 +79,6 @@ class Incident {
     };
   }
 
-  /// ✅ Hàm fromMap để dùng với Map<String, dynamic> riêng biệt
   factory Incident.fromMap(Map<String, dynamic> data, {required String id}) {
     return Incident(
       id: id,
@@ -88,6 +91,7 @@ class Incident {
       priority: data['priority'],
       status: data['status'] ?? 'Đang chờ xử lý',
       imageUrl: data['imageUrl'],
+      seenBy: List<String>.from(data['seenBy'] ?? []), // ✅ thêm seenBy ở đây
       createdAt: data['createdAt'],
       assignedStaffId: data['assignedStaffId'],
       assignedStaffName: data['assignedStaffName'],

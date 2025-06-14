@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/main.dart';
+import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -11,6 +13,7 @@ import '../../../responsive.dart';
 import '../../../src/resources/admin_info_page.dart';
 import '../../../src/resources/base_admin_screen_page.dart';
 import '../../../src/resources/dialog/loading_dialog.dart';
+import '../../../src/resources/login_page.dart';
 import '../../../src/resources/provider/admin_image_provider.dart';
 import '../../../src/resources/reset_pass_page.dart';
 
@@ -32,7 +35,7 @@ class Header extends StatelessWidget {
         if (!Responsive.isMobile(context))
           Text(
             "Trang chủ",
-            style: Theme.of(context).textTheme.titleLarge,
+            style: TextStyle(fontSize: 7.sp,fontWeight: FontWeight.bold, fontFamily: "Oswald")
           ),
         if (!Responsive.isMobile(context))
           Spacer(flex: Responsive.isDesktop(context) ? 2 : 1),
@@ -68,12 +71,16 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
       ),
       items: const [
         PopupMenuItem(
+          value: 'editProfile',
+          child: Text("Chỉnh sửa thông tin"),
+        ),
+        PopupMenuItem(
           value: 'changePassword',
           child: Text("Đổi mật khẩu"),
         ),
         PopupMenuItem(
-          value: 'editProfile',
-          child: Text("Chỉnh sửa thông tin"),
+          value: 'logOut',
+          child: Text("Đăng xuất"),
         ),
       ],
     );
@@ -84,88 +91,82 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
   }
 
   void showEditDialog(BuildContext context) {
-    final phoneController =
-    TextEditingController(text: adminInfo?.phone ?? '');
-    final nameController =
-    TextEditingController(text: adminInfo?.fullName ?? '');
-    final emailController =
-    TextEditingController(text: adminInfo?.email ?? '');
+    final phoneController = TextEditingController(text: adminInfo?.phone ?? '');
+    final nameController = TextEditingController(text: adminInfo?.fullName ?? '');
+    final emailController = TextEditingController(text: adminInfo?.email ?? '');
     final bloc = EditAdminBloc();
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return Consumer<AdminImageProvider>(
           builder: (context, imageProvider, _) {
             return AlertDialog(
               title: Center(
-                  child: Text('Chỉnh sửa thông tin',
-                      style: TextStyle(
-                          fontFamily: "Osward",
-                          fontSize: 6.sp,
-                          fontWeight: FontWeight.bold))),
+                child: Text(
+                  'Chỉnh sửa thông tin',
+                  style: TextStyle(
+                    fontFamily: "Oswald",
+                    fontSize: 6.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Ảnh đại diện
-                    Container(
-                      width: 110,
-                      height: 110,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                      ),
-                      child: ClipOval(
-                        child: Container(
-                          color: Colors.white, // Nền trắng cho khung tròn
-                          alignment: Alignment.center,
-                          child: imageProvider.webImageBytes != null
-                              ? Image.memory(
-                            imageProvider.webImageBytes!,
-                            fit: BoxFit.cover,
-                            width: 100,
-                            height: 100,
-                          )
-                              : imageProvider.selectedImageFile != null
-                              ? Image.file(
-                            imageProvider.selectedImageFile!,
-                            fit: BoxFit.cover,
-                            width: 100,
-                            height: 100,
-                          )
-                              : (adminInfo?.imageUrl?.isNotEmpty ?? false)
-                              ? Image.network(
-                            adminInfo!.imageUrl!,
-                            fit: BoxFit.cover,
-                            width: 100,
-                            height: 100,
-                            errorBuilder: (context, _, __) => SvgPicture.asset(
-                              'assets/images/default_avatar.svg',
-                              width: 60, // giảm kích thước ảnh mặc định
-                              height: 60,
-                              fit: BoxFit.contain,
-                            ),
-                          )
-                              : SvgPicture.asset(
-                            'assets/images/default_avatar.svg',
-                            width: 60, // giảm kích thước ảnh mặc định
-                            height: 60,
-                            fit: BoxFit.contain,
+                    // Ảnh đại diện có thể bấm vào + icon camera
+                    Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        GestureDetector(
+                          onTap: () async => await imageProvider.pickImage(),
+                          child: CircleAvatar(
+                            radius: 55,
+                            backgroundImage: imageProvider.webImageBytes != null
+                                ? MemoryImage(imageProvider.webImageBytes!)
+                                : imageProvider.selectedImageFile != null
+                                ? FileImage(imageProvider.selectedImageFile!)
+                                : (adminInfo?.imageUrl?.isNotEmpty ?? false)
+                                ? NetworkImage(adminInfo!.imageUrl!)
+                                : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+                            backgroundColor: Colors.white,
                           ),
                         ),
-                      ),
+                        Positioned(
+                          bottom: -3,
+                          right: 2,
+                          child: IconButton(
+                            icon: Icon(Icons.camera_alt, color: Colors.blueAccent, size: 22),
+                            onPressed: () async => await imageProvider.pickImage(),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.image),
-                      label: Text('Đổi ảnh đại diện',
-                          style: TextStyle(fontSize: 4.sp)),
-                      onPressed: () async => await imageProvider.pickImage(),
-                    ),
-                    const SizedBox(height: 4),
 
-                    /// ✅ TextField with StreamBuilder (Email)
+                    SizedBox(height: 10.h),
+
+                    // TextField - Họ và tên
+                    StreamBuilder<String?>(
+                      stream: bloc.nameStream,
+                      builder: (context, snapshot) {
+                        return TextField(
+                          controller: nameController,
+                          decoration: InputDecoration(
+                            labelText: 'Họ và tên',
+                            labelStyle: TextStyle(fontSize: 4.sp),
+                            errorText: snapshot.data,
+                          ),
+                          onChanged: bloc.changeName,
+                        );
+                      },
+                    ),
+
+                    SizedBox(height: 4.h),
+
+                    // TextField - Email
                     StreamBuilder<String?>(
                       stream: bloc.emailStream,
                       builder: (context, snapshot) {
@@ -173,6 +174,7 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
                           controller: emailController,
                           decoration: InputDecoration(
                             labelText: 'Email',
+                            labelStyle: TextStyle(fontSize: 4.sp),
                             errorText: snapshot.data,
                           ),
                           keyboardType: TextInputType.emailAddress,
@@ -181,9 +183,9 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
                       },
                     ),
 
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4.h),
 
-                    /// ✅ TextField with StreamBuilder (Phone)
+                    // TextField - Số điện thoại
                     StreamBuilder<String?>(
                       stream: bloc.phoneStream,
                       builder: (context, snapshot) {
@@ -191,26 +193,11 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
                           controller: phoneController,
                           decoration: InputDecoration(
                             labelText: 'Số điện thoại',
+                            labelStyle: TextStyle(fontSize: 4.sp),
                             errorText: snapshot.data,
                           ),
                           keyboardType: TextInputType.phone,
                           onChanged: bloc.changePhone,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 4),
-
-                    /// ✅ TextField with StreamBuilder (Phone)
-                    StreamBuilder<String?>(
-                      stream: bloc.nameStream,
-                      builder: (context, snapshot) {
-                        return TextField(
-                          controller: nameController,
-                          decoration: InputDecoration(
-                            labelText: 'Họ và tên',
-                            errorText: snapshot.data,
-                          ),
-                          onChanged: bloc.changeName,
                         );
                       },
                     ),
@@ -224,7 +211,10 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
                     imageProvider.deleteImage();
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Hủy'),
+                  child: Text(
+                    'Hủy',
+                    style: TextStyle(fontSize: 4.sp, color: Colors.white),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -240,12 +230,12 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
                     }
 
                     try {
-                      // Hiện loading dialog
                       LoadingDialog.showLoadingDialog(context, "Đang lưu...");
 
                       String? newUrl;
 
-                      if (imageProvider.webImageBytes != null || imageProvider.selectedImageFile != null) {
+                      if (imageProvider.webImageBytes != null ||
+                          imageProvider.selectedImageFile != null) {
                         final uniqueFileName = '${DateTime.now().millisecondsSinceEpoch}_avatar.jpg';
 
                         newUrl = await imageProvider.uploadSelectedImageAndGetUrl1(
@@ -262,13 +252,17 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
                         }
                       }
 
-                      await updateAdminInfo(phoneController.text, emailController.text, nameController.text);
+                      await updateAdminInfo(
+                        phoneController.text,
+                        emailController.text,
+                        nameController.text,
+                      );
 
                       bloc.dispose();
-                      Navigator.of(context, rootNavigator: true).pop(); // Đóng dialog loading
-                      Navigator.of(context).pop(); // Đóng màn hình hiện tại
+                      Navigator.of(context, rootNavigator: true).pop(); // Close loading
+                      Navigator.of(context).pop(); // Close dialog
                     } catch (e) {
-                      Navigator.of(context, rootNavigator: true).pop(); // Đóng dialog loading nếu có lỗi
+                      Navigator.of(context, rootNavigator: true).pop();
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text("Lỗi khi lưu thông tin: $e")),
@@ -276,9 +270,8 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
                     }
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                  child: Text('Lưu', style: TextStyle(fontSize: 4.sp,color: Colors.white)),
+                  child: Text('Lưu', style: TextStyle(fontSize: 4.sp, color: Colors.white)),
                 ),
-
               ],
             );
           },
@@ -287,7 +280,133 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
     );
   }
 
+  void showChangePasswordDialog(BuildContext context) {
+    final FirebaseAuth _auth = FirebaseAuth.instance;
+
+    final oldPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+
+    Future<void> handleChangePassword() async {
+      try {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(child: CircularProgressIndicator()),
+        );
+
+        final user = _auth.currentUser;
+
+        final oldPass = oldPasswordController.text;
+        final newPass = newPasswordController.text;
+        final confirmPass = confirmPasswordController.text;
+
+        if (oldPass.isEmpty || newPass.isEmpty || confirmPass.isEmpty) {
+          Navigator.of(context, rootNavigator: true).pop();
+          MsgDialog.showMsgDialog(context, "Lỗi", 'Vui lòng điền đầy đủ thông tin.');
+          return;
+        }
+
+        if (newPass.length < 6) {
+          Navigator.of(context, rootNavigator: true).pop();
+          MsgDialog.showMsgDialog(context, "Lỗi", 'Mật khẩu mới phải có ít nhất 6 ký tự.');
+          return;
+        }
+
+        if (newPass != confirmPass) {
+          Navigator.of(context, rootNavigator: true).pop();
+          MsgDialog.showMsgDialog(context, "Lỗi", 'Mật khẩu mới và xác nhận không khớp.');
+          return;
+        }
+
+        if (newPass == oldPass) {
+          Navigator.of(context, rootNavigator: true).pop();
+          MsgDialog.showMsgDialog(context, "Lỗi", 'Mật khẩu mới không được trùng mật khẩu cũ.');
+          return;
+        }
+
+        final credential = EmailAuthProvider.credential(
+          email: user!.email!,
+          password: oldPass,
+        );
+
+        await user.reauthenticateWithCredential(credential);
+        await user.updatePassword(newPass);
+
+        Navigator.of(context, rootNavigator: true).pop(); // Close loading
+        Navigator.of(context).pop(); // Close dialog
+        MsgDialog.showMsgDialog(context, "Thành công", "Đổi mật khẩu thành công!");
+      } on FirebaseAuthException catch (e) {
+        Navigator.of(context, rootNavigator: true).pop();
+        switch (e.code) {
+          case 'wrong-password':
+            MsgDialog.showMsgDialog(context, "Lỗi", "Mật khẩu cũ không đúng.");
+            break;
+          case 'weak-password':
+            MsgDialog.showMsgDialog(context, "Lỗi", "Mật khẩu mới quá yếu.");
+            break;
+          case 'requires-recent-login':
+            MsgDialog.showMsgDialog(context, "Lỗi", "Bạn cần đăng nhập lại.");
+            break;
+          case 'too-many-requests':
+            MsgDialog.showMsgDialog(context, "Lỗi", "Quá nhiều yêu cầu, thử lại sau.");
+            break;
+          default:
+            MsgDialog.showMsgDialog(context, "Lỗi", "Đổi mật khẩu thất bại.");
+        }
+      } catch (e) {
+        Navigator.of(context, rootNavigator: true).pop();
+        MsgDialog.showMsgDialog(context, "Lỗi", "Có lỗi xảy ra. Vui lòng thử lại.");
+      }
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Center(child: Text('Đổi mật khẩu', style: TextStyle(fontSize: 6.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold)),),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: oldPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(labelText: 'Mật khẩu cũ',labelStyle: TextStyle(fontSize: 4.sp)),
+                ),
+                SizedBox(height: 12.h),
+                TextField(
+                  controller: newPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(labelText: 'Mật khẩu mới',labelStyle: TextStyle(fontSize: 4.sp)),
+                ),
+                SizedBox(height: 12.h),
+                TextField(
+                  controller: confirmPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(labelText: 'Xác nhận mật khẩu mới',labelStyle: TextStyle(fontSize: 4.sp)),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Hủy',style: TextStyle(fontSize: 4.sp,color: Colors.white)),
+            ),
+            ElevatedButton(
+              onPressed: handleChangePassword,
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: Text('Đổi mật khẩu',style: TextStyle(fontSize: 4.sp,color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> updateAdminInfo(String phone, String email, String name) async {
+    LoadingDialog.showLoadingDialog(context, "Đang cập nhật ...");
     try {
       final user = FirebaseAuth.instance.currentUser;
       final uid = user?.uid;
@@ -312,10 +431,9 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
         try {
           // Gửi email xác nhận thay đổi email
           await user.verifyBeforeUpdateEmail(email);
-          showSnackBar(
-            'Một email xác nhận đã được gửi đến $email. Vui lòng xác nhận để hoàn tất cập nhật.',
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Một email xác nhận đã được gửi đến $email. Vui lòng xác nhận để hoàn tất cập nhật.', style: TextStyle(fontSize: 4.sp))),
           );
-
           // Cập nhật phone trước, email sẽ cập nhật sau khi user xác nhận email mới
           await updatePhone();
 
@@ -337,22 +455,22 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('Bạn cần xác thực lại tài khoản để thay đổi email.'),
+                      Text('Bạn cần xác thực lại tài khoản để thay đổi email.',style: TextStyle(fontSize: 4.sp),),
                       TextField(
                         controller: passwordController,
                         obscureText: true,
-                        decoration: const InputDecoration(labelText: 'Mật khẩu'),
+                        decoration: InputDecoration(labelText: 'Mật khẩu',labelStyle: TextStyle(fontSize: 4.sp)),
                       ),
                     ],
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(null),
-                      child: const Text('Hủy'),
+                      child: Text('Hủy',style: TextStyle(fontSize: 4.sp),),
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(passwordController.text),
-                      child: const Text('Xác nhận'),
+                      child: Text('Xác nhận',style: TextStyle(fontSize: 4.sp)),
                     ),
                   ],
                 );
@@ -399,6 +517,7 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
         });
       }
 
+      LoadingDialog.hideLoadingDialog(context);
       // Tải lại thông tin để cập nhật UI
       await getAdminInfo(uid);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -407,8 +526,13 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
         ),
       );
     } catch (e) {
+      LoadingDialog.hideLoadingDialog(context);
       print('❌ Lỗi khi cập nhật thông tin: $e');
-      showSnackBar('Không thể cập nhật thông tin.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể cập nhật thông tin.'),backgroundColor: Colors.red,
+        ),
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Không thể cập nhật thông tin.'),backgroundColor: Colors.red,
@@ -420,15 +544,96 @@ class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopu
   void _handleMenuSelection(String choice) {
     switch (choice) {
       case 'changePassword':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ChangePasswordPage()),
-        );        break;
+        showChangePasswordDialog(context);
+        break;
       case 'editProfile':
         showEditDialog(context);
         break;
+      case 'logOut':
+        logOut();
+        break;
     }
   }
+
+  void logOut() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Center(
+            child: Text(
+              'Đăng xuất',
+              style: TextStyle(
+                  fontFamily: "Oswald",
+                  fontWeight: FontWeight.bold,
+                  fontSize: 7.sp),
+            ),
+          ),
+          content: Text(
+            'Bạn có chắc chắn muốn đăng xuất không?',
+            style: TextStyle(fontSize: 4.sp),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Hủy', style: TextStyle(fontSize: 4.sp)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await _removeFcmToken();
+                await FirebaseAuth.instance.signOut();
+                Navigator.of(context).pop();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                      (route) => false,
+                );
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: Text('Đồng ý', style: TextStyle(fontSize: 4.sp,color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _removeFcmToken() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    try {
+      String? fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken == null) {
+        print("⚠️ Không lấy được FCM Token");
+        return;
+      }
+
+      DocumentReference userRef =
+      FirebaseFirestore.instance.collection('admins').doc(userId);
+      DocumentSnapshot userDoc = await userRef.get();
+
+      if (!userDoc.exists) {
+        print("⚠️ User document không tồn tại trong Firestore!");
+        return;
+      }
+
+      List<String> tokens = List<String>.from(userDoc['fcmTokens'] ?? []);
+
+      if (tokens.contains(fcmToken)) {
+        await userRef.update({
+          'fcmTokens': FieldValue.arrayRemove([fcmToken]),
+          'lastUpdated': FieldValue.serverTimestamp(),
+        });
+        print("✅ Đã xóa token FCM: $fcmToken");
+      } else {
+        print("⚠️ Token không tồn tại trong danh sách, không cần xóa.");
+      }
+    } catch (e) {
+      print("❌ Lỗi khi xóa token FCM: $e");
+    }
+  }
+
 
   @override
   void initState() {
