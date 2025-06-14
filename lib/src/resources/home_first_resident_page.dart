@@ -133,6 +133,7 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
       _notificationCount = newCount;
     });
   }
+
   @override
   Widget build(BuildContext context) {
     if (residentInfo == null) {
@@ -170,7 +171,7 @@ class _HomeFirstPageState extends BaseResidentInfoScreen<HomeFirstPage> {
               _selectedIndex = index;
             });
 
-            if (index == 2) {
+            if (index == 1) {
               _markNotificationsAsRead();
             }
           },

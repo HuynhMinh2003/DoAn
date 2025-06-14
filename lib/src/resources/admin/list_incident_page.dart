@@ -648,18 +648,34 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                               },
                             ),),
                             Flexible(
-                              flex:1,child: ElevatedButton(
-                              onPressed: ()
+                              flex:1,child: SizedBox(
+                              height: 55.h,
+                              width: 40.w,
+                              child: ElevatedButton(
+                                onPressed: ()
                                 => exportIncidentsToExcel(_incidentList),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.upload),
-                                  SizedBox(width: 5.w,),
-                                  Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.white),)
-                                ],
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                  secondaryColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.circular(30.r),
+                                  ),
+                                  elevation: 4,
+                                  shadowColor: Colors.black45,
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.zero,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.upload),
+                                    SizedBox(width: 5.w,),
+                                    Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.white),)
+                                  ],
+                                ),
                               ),
-                            ),),
+                            )),
                             SizedBox(width:5.w),
                           ],
                         ),

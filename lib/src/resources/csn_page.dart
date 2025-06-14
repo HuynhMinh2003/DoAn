@@ -208,8 +208,8 @@ class _CSNPageState extends BaseStaffInfoScreen<CSNPage> {
 
                           SizedBox(height: 20.h),
                           Text(
-                            "Xin chào, ${staffInfo?.fullName ??
-                                "người dùng"} 👋",
+                            "${staffInfo?.fullName ??
+                                "nhân viên"}",
                             style: TextStyle(
                               fontFamily: "Oswald",
                               fontSize: 25.sp,
@@ -217,6 +217,17 @@ class _CSNPageState extends BaseStaffInfoScreen<CSNPage> {
                             ),
                           ),
                           SizedBox(height: 10.h),
+                          Text(
+                            "- Nhân viên ghi chỉ số nước -" ,
+                            style: TextStyle(
+                                fontFamily: "Oswald",
+                                fontSize: 20.sp,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontStyle: FontStyle.italic
+                            ),
+                          ),
+                          SizedBox(height: 5.h),
                         ],
                       ),
                     )

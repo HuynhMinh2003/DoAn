@@ -164,6 +164,7 @@ class _ContractListPageState extends State<ContractListPage> {
       BuildContext context, Apartment apartment) async {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (_) => AlertDialog(
         title: Text(
           "Phòng ${apartment.apartmentName}",
@@ -171,7 +172,7 @@ class _ContractListPageState extends State<ContractListPage> {
           style: TextStyle(
               fontFamily: "Oswald",
               fontWeight: FontWeight.bold,
-              fontSize: 8.sp),
+              fontSize: 7.sp),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -214,6 +215,9 @@ class _ContractListPageState extends State<ContractListPage> {
               style: TextStyle(fontSize: 3.5.sp),
             ),
           ),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)))
         ],
       ),
     );
@@ -372,7 +376,7 @@ class _ContractListPageState extends State<ContractListPage> {
                       child: Text(
                         "Xác nhận xóa",
                         style: TextStyle(
-                            fontSize: 6.sp,
+                            fontSize: 7.sp,
                             fontFamily: "Oswald",
                             fontWeight: FontWeight.bold),
                       ),
@@ -1337,23 +1341,39 @@ class _ContractListPageState extends State<ContractListPage> {
                         ),
                         Flexible(
                           flex: 1,
-                          child: ElevatedButton(
-                            onPressed: () =>
-                                exportContractApartmentsToExcel(filteredApartments),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.upload),
-                                SizedBox(width: 5.w),
-                                Text(
-                                  'Xuất file',
-                                  style: TextStyle(
-                                    fontSize: 4.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white
-                                  ),
+                          child: SizedBox(
+                            height: 55.h,
+                            width: 40.w,
+                            child: ElevatedButton(
+                              onPressed: () =>
+                                  exportContractApartmentsToExcel(filteredApartments),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                secondaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                  BorderRadius.circular(30.r),
                                 ),
-                              ],
+                                elevation: 4,
+                                shadowColor: Colors.black45,
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.zero,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.upload),
+                                  SizedBox(width: 5.w),
+                                  Text(
+                                    'Xuất file',
+                                    style: TextStyle(
+                                        fontSize: 4.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

@@ -606,6 +606,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
               children: [
                 SizedBox(
                   height: 60.h,
+                  width: 80.w,
                   child: ElevatedButton(
                     onPressed: () async {
                       LoadingDialog.showLoadingDialog(context, "Đang tải ...");

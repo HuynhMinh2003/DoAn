@@ -9,6 +9,7 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import '../../../constants.dart';
 import 'ds_canho_mobile_page.dart' if (dart.library.html) 'ds_canho_web_page.dart';
 
 class ApartmentListPage extends StatefulWidget {
@@ -132,7 +133,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
     final confirm = await showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Center(child: Text('Xác nhận xóa', style: TextStyle(fontSize: 5.sp),),),
+        title: Center(child: Text('Xác nhận xóa', style: TextStyle(fontSize: 7.sp,fontFamily: "Oswald",fontWeight: FontWeight.bold),),),
         content: Text('Bạn có chắc muốn xóa căn hộ này không?', style: TextStyle(fontSize: 4.sp)),
         actions: [
           TextButton(
@@ -515,45 +516,77 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                 // Nút Thêm file
                 Flexible(
                   flex: 1,
-                  child: ElevatedButton(
-                    onPressed: () => importApartmentsFromExcel,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add),
-                        SizedBox(width: 5.w),
-                        Text(
-                          'Thêm file',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 4.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  child: SizedBox(
+                    height: 55.h,
+                    width: 40.w,
+                    child: ElevatedButton(
+                      onPressed: () => importApartmentsFromExcel,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                        secondaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                          BorderRadius.circular(30.r),
                         ),
-                      ],
+                        elevation: 4,
+                        shadowColor: Colors.black45,
+                        alignment: Alignment.center,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add),
+                          SizedBox(width: 5.w),
+                          Text(
+                            'Thêm file',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 4.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  )
                 ),
                 // Nút Xuất file
                 Flexible(
                   flex: 1,
-                  child: ElevatedButton(
-                    onPressed: () => exportApartmentsToExcel(filteredApartments),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.upload),
-                        SizedBox(width: 5.w),
-                        Text(
-                          'Xuất file',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 4.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  child: SizedBox(
+                    height: 55.h,
+                    width: 40.w,
+                    child: ElevatedButton(
+                      onPressed: () => exportApartmentsToExcel(filteredApartments),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                        secondaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                          BorderRadius.circular(30.r),
                         ),
-                      ],
-                    ),
+                        elevation: 4,
+                        shadowColor: Colors.black45,
+                        alignment: Alignment.center,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.upload),
+                          SizedBox(width: 5.w),
+                          Text(
+                            'Xuất file',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 4.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   ),
                 ),
                 SizedBox(width: 5.w,)
@@ -630,7 +663,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                           child: Center(
                             child: Text(
                               'Không có căn hộ nào',
-                              style: TextStyle(fontSize: 4.sp, color: Colors.black54),
+                              style: TextStyle(fontSize: 4.sp, color: Colors.white),
                             ),
                           ),
                         )
