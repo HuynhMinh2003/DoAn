@@ -25,7 +25,7 @@ class ResidentImageProvider extends ChangeNotifier {
 
   Uint8List? get webImageBytes => _webImageBytes;
 
-  AdminImageProvider() {
+  ResidentImageProvider() {
     _fetchAvatar();
   }
 

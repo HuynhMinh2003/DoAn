@@ -174,11 +174,13 @@ class ProblemHistoryScreen extends StatelessWidget {
                                     Text("Ghi chú: ${problemHistory.note}", style: TextStyle(fontSize: 12.sp)),
                                   if (problemHistory.rejectionReason != null)
                                     Text("Lý do từ chối: ${problemHistory.rejectionReason}", style: TextStyle(fontSize: 12.sp, color: Colors.red)),
+                                  SizedBox(height: 8.h),
                                   Text(
                                     "Trạng thái: ${problemHistory.accepted ? 'Đã hoàn thành' : 'Xử lý thất bại'}",
                                     style: TextStyle(
                                       fontSize: 12.sp,
                                       color: problemHistory.accepted ? Colors.green : Colors.red,
+                                      fontWeight: FontWeight.bold
                                     ),
                                   ),
                                 ],
