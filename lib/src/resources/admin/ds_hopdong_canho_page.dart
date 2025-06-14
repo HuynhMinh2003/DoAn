@@ -279,8 +279,7 @@ class _ContractListPageState extends State<ContractListPage> {
     }
   }
 
-  Future<void> showApartmentContractInfoDialog(BuildContext context,
-      Apartment apartment, Contract contract, VoidCallback onRefresh) async {
+  Future<void> showApartmentContractInfoDialog(BuildContext context, Apartment apartment, Contract contract, VoidCallback onRefresh) async {
     final apartmentDocRef =
         FirebaseFirestore.instance.collection("apartments").doc(apartment.id);
     final residentsRef = FirebaseFirestore.instance
@@ -605,8 +604,7 @@ class _ContractListPageState extends State<ContractListPage> {
     }
   }
 
-  void showUpdateResidentsDialog(BuildContext context, Apartment apartment,
-      Contract contract, VoidCallback onRefresh) {
+  void showUpdateResidentsDialog(BuildContext context, Apartment apartment, Contract contract, VoidCallback onRefresh) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -645,8 +643,7 @@ class _ContractListPageState extends State<ContractListPage> {
     );
   }
 
-  void showAddResidentsFlow(BuildContext context, Apartment apartment,
-      Contract contract, VoidCallback onRefresh) async {
+  void showAddResidentsFlow(BuildContext context, Apartment apartment, Contract contract, VoidCallback onRefresh) async {
     int maxCanAdd = 10 - contract.numberOfResidents;
     int? numberToAdd;
 
@@ -746,8 +743,7 @@ class _ContractListPageState extends State<ContractListPage> {
     });
   }
 
-  void showRemoveResidentsDialog(BuildContext context, Apartment apartment,
-      Contract contract, VoidCallback onRefresh) async {
+  void showRemoveResidentsDialog(BuildContext context, Apartment apartment, Contract contract, VoidCallback onRefresh) async {
     final apartmentDocRef =
         FirebaseFirestore.instance.collection("apartments").doc(apartment.id);
 
@@ -1099,8 +1095,7 @@ class _ContractListPageState extends State<ContractListPage> {
     }
   }
 
-  void _showUpdateHistoryDialog(BuildContext context,
-      CollectionReference updateHistoryCollectionRef) async {
+  void _showUpdateHistoryDialog(BuildContext context, CollectionReference updateHistoryCollectionRef) async {
     try {
       // Lấy dữ liệu lịch sử từ Firestore
       final updateHistorySnapshot = await updateHistoryCollectionRef
@@ -1249,8 +1244,7 @@ class _ContractListPageState extends State<ContractListPage> {
     }
   }
 
-  List<int> getFloorsByBuilding(
-      List<Apartment> apartments, String selectedBuilding) {
+  List<int> getFloorsByBuilding(List<Apartment> apartments, String selectedBuilding) {
     final filtered =
         apartments.where((apt) => apt.building == selectedBuilding);
     final floors = filtered.map((apt) => apt.floor).toSet().toList();

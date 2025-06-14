@@ -20,6 +20,8 @@ import 'package:do_an/src/resources/base_admin_screen_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../src/resources/admin/ds_thanhtoan_page.dart';
+
 class SideMenu extends StatefulWidget {
   final bool isMenuOpen; // Nhận trạng thái mở/đóng từ MainScreen
   final Function(Widget) onMenuItemPressed; // Callback để thay đổi màn hình
@@ -153,7 +155,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                     title: "Quản lý thanh toán",
                     svgSrc: "assets/icons/wallet.svg",
                     press: () {
-                      // onMenuItemPressed(ContractListPage()); // Chuyển sang Dashboard
+                    widget.onMenuItemPressed(PaymentPage()); // Chuyển sang Dashboard
                     },
                     isMenuOpen: widget.isMenuOpen,
                   ),

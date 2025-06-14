@@ -11,8 +11,9 @@ const { convertDocxToPdf } = require("./convertDocxToPdf");
 const { sendNotificationToGroup } = require("./sendNotificationToGroup");
 const { sendIncidentNotification } = require("./sendIncidentNotification");
 const { sendNotificationToOne } = require("./sendNotificationToOne");
+const { generateMonthlyBill, onWaterReadingUpdate } = require("./generateBills"); // 💡 mới
+const { generatePaymentNow } = require("./generatePaymentNow");
 
-// Export tất cả các function Cloud Functions
 exports.createStaffAccount = createStaffAccount;
 exports.createResidentAccount = createResidentAccount;
 exports.createCompanyAccount = createCompanyAccount;
@@ -23,3 +24,8 @@ exports.convertDocxToPdf = convertDocxToPdf;
 exports.sendNotificationToGroup = sendNotificationToGroup;
 exports.sendIncidentNotification = sendIncidentNotification;
 exports.sendNotificationToOne = sendNotificationToOne;
+
+// 💡 mới thêm
+exports.generateMonthlyBill = generateMonthlyBill;
+exports.onWaterReadingUpdate = onWaterReadingUpdate;
+exports.generatePaymentNow = generatePaymentNow;
