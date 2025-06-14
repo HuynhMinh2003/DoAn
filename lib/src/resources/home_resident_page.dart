@@ -121,6 +121,33 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
     return querySnapshot.docs.first.data();
   }
 
+  Future<bool> _isContractEffective() async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) return false;
+
+    final residentSnapshot = await FirebaseFirestore.instance
+        .collection('residents')
+        .doc(currentUserId)
+        .get();
+
+    final apartmentId = residentSnapshot.data()?['apartmentId'];
+    if (apartmentId == null) return false;
+
+    final contractsSnapshot = await FirebaseFirestore.instance
+        .collection('contracts')
+        .where('apartmentDocId', isEqualTo: apartmentId)
+        .where('isActive', isEqualTo: true)
+        .limit(1)
+        .get();
+
+    if (contractsSnapshot.docs.isEmpty) return false;
+
+    final contractData = contractsSnapshot.docs.first.data();
+    final Timestamp startTimestamp = contractData['startDate'];
+    final startDate = startTimestamp.toDate();
+
+    return DateTime.now().isAfter(startDate);
+  }
 
   void _logout() {
     showDialog(
@@ -169,320 +196,328 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Card(
-                margin: EdgeInsets.zero,
-                elevation: 9,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30.r),
-                    bottomRight: Radius.circular(30.r),
-                  ),
-                ),
-                color: Theme.of(context).colorScheme.primary,
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      child: Image.asset(
-                        'assets/images/two_circle.png',
-                        width: 160,
-                      ),
-                    ),
-                    Positioned(
-                      top: 32,
-                      right: 16,
-                      child: IconButton(
-                        icon: Icon(Icons.logout),
-                        onPressed: _logout,
-                        tooltip: 'Đăng xuất',
-                        color: Colors.black,
-                      ),
-                    ),
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(vertical: 20.h),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SizedBox(height: 80.h),
-                          Center(
-                            child: Consumer<ResidentImageProvider>(
-                              builder: (context, imageProvider, _) {
-                                Widget avatarChild;
+      body: FutureBuilder<bool>(
+        future: _isContractEffective(),
+        builder: (context,snapshot){
+          final isEffective = snapshot.data ?? false;
 
-                                if (imageProvider.avatarUrl != null && imageProvider.avatarUrl!.isNotEmpty) {
-                                  avatarChild = Image.network(
-                                    imageProvider.avatarUrl!,
-                                    width: 140.r,
-                                    height: 140.r,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return SvgPicture.asset(
+          return Stack(
+            children: [
+              Column(
+                children: [
+                  Card(
+                    margin: EdgeInsets.zero,
+                    elevation: 9,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(30.r),
+                        bottomRight: Radius.circular(30.r),
+                      ),
+                    ),
+                    color: Theme.of(context).colorScheme.primary,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          child: Image.asset(
+                            'assets/images/two_circle.png',
+                            width: 160,
+                          ),
+                        ),
+                        Positioned(
+                          top: 32,
+                          right: 16,
+                          child: IconButton(
+                            icon: Icon(Icons.logout),
+                            onPressed: _logout,
+                            tooltip: 'Đăng xuất',
+                            color: Colors.black,
+                          ),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(vertical: 20.h),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              SizedBox(height: 80.h),
+                              Center(
+                                child: Consumer<ResidentImageProvider>(
+                                  builder: (context, imageProvider, _) {
+                                    Widget avatarChild;
+
+                                    if (imageProvider.avatarUrl != null && imageProvider.avatarUrl!.isNotEmpty) {
+                                      avatarChild = Image.network(
+                                        imageProvider.avatarUrl!,
+                                        width: 140.r,
+                                        height: 140.r,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return SvgPicture.asset(
+                                            'assets/images/default_avatar.svg',
+                                            width: 65.r,
+                                            height: 65.r,
+                                            fit: BoxFit.contain,
+                                          );
+                                        },
+                                      );
+                                    } else {
+                                      avatarChild = SvgPicture.asset(
                                         'assets/images/default_avatar.svg',
                                         width: 65.r,
                                         height: 65.r,
                                         fit: BoxFit.contain,
                                       );
-                                    },
+                                    }
+
+                                    return Container(
+                                      width: 140.r,
+                                      height: 140.r,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.white, // ✅ Nền trắng
+                                        border: Border.all(color: Colors.white, width: 2), // ✅ Viền trắng
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: ClipOval(
+                                        child: avatarChild,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+
+                              SizedBox(height: 5.h),
+                              Text(
+                                "Xin chào, ${residentInfo?.fullName ?? "người dùng"} 👋",
+                                style: TextStyle(
+                                  fontFamily: "Oswald",
+                                  fontSize: 25.sp,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                  Container(
+                    child: Padding(
+                      padding: EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '   Dịch vụ cơ bản',
+                            style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
+                          ),
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
+                            mainAxisSpacing: 45,
+                            crossAxisSpacing: 45,
+                            children: [
+                              buildServiceCard(
+                                context,
+                                svgPath: 'assets/images/parking.svg',
+                                label: 'Gửi xe',
+                                onTap: isEffective ? () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => GuiXeScreen()));
+                                } : null,
+                              ),
+                              buildServiceCard(
+                                context,
+                                svgPath: 'assets/images/water.svg',
+                                label: 'Chỉ số nước',
+                                onTap: isEffective ? () {
+                                  // Thêm hành động nếu cần
+                                } : null,
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '   Tiện ích cư dân',
+                            style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
+                          ),
+                          GridView.count(
+                            crossAxisCount: 3,
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            padding: const EdgeInsets.all(8),
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            children: [
+                              buildServiceCard(
+                                context,
+                                svgPath: 'assets/images/contract.svg',
+                                label: 'Xem hợp đồng',
+                                onTap: () async {
+                                  final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                                  if (currentUserId == null) return;
+
+                                  final residentSnapshot = await FirebaseFirestore.instance
+                                      .collection('residents')
+                                      .doc(currentUserId)
+                                      .get();
+
+                                  final apartmentId = residentSnapshot.data()?['apartmentId'];
+                                  if (apartmentId == null) return;
+
+                                  final contractsSnapshot = await FirebaseFirestore.instance
+                                      .collection('contracts')
+                                      .where('apartmentDocId', isEqualTo: apartmentId)
+                                      .where('isActive', isEqualTo: true)
+                                      .limit(1)
+                                      .get();
+
+                                  if (contractsSnapshot.docs.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Không tìm thấy hợp đồng đang hoạt động')),
+                                    );
+                                    return;
+                                  }
+
+                                  final contractData = contractsSnapshot.docs.first.data();
+                                  final contractUrl = contractData['pdfUrl'];
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => PdfViewerScreen(pdfUrl: contractUrl)),
                                   );
-                                } else {
-                                  avatarChild = SvgPicture.asset(
-                                    'assets/images/default_avatar.svg',
-                                    width: 65.r,
-                                    height: 65.r,
-                                    fit: BoxFit.contain,
-                                  );
+                                },
+                              ),
+                              buildServiceCard(
+                                context,
+                                svgPath: 'assets/images/problem.svg',
+                                label: 'Báo cáo sự cố',
+                                onTap: isEffective ? () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => ReportPage()));
+                                } : null,
+                              ),
+                              buildServiceCard(
+                                context,
+                                svgPath: 'assets/images/paycard.svg',
+                                label: 'Thanh toán',
+                                onTap: isEffective
+                                    ? () {
+                                  final contractId = residentInfo?.contractId;
+                                  if (contractId != null && contractId.isNotEmpty) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) => PaymentScreen(contractId: contractId)),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Không tìm thấy hợp đồng. Vui lòng liên hệ ban quản lý.")),
+                                    );
+                                  }
+                                }
+                                    : null,
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '   Dịch vụ ngoài',
+                            style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
+                          ),
+                          Padding(padding: EdgeInsets.only(left: 9.w, right: 9.w, top: 10.h),
+                            child: FutureBuilder<List<CompanyInfo>>(
+                              future: fetchCompaniesWithEnabledUpdateService(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                  return const Center(child: CircularProgressIndicator());
+                                }
+                                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                  return const Center(child: Text('Không có công ty nào có dịch vụ được duyệt'));
                                 }
 
-                                return Container(
-                                  width: 140.r,
-                                  height: 140.r,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white, // ✅ Nền trắng
-                                    border: Border.all(color: Colors.white, width: 2), // ✅ Viền trắng
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: ClipOval(
-                                    child: avatarChild,
+                                final companies = snapshot.data!;
+
+                                return SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: companies.map((company) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 12),
+                                        child: buildServiceCard1(
+                                          context,
+                                          imagePath: company.imageUrl,
+                                          label: company.type,
+                                          onTap: isEffective
+                                              ? () async{
+                                            final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                                            if (currentUserId == null) return;
+
+                                            // Lấy thêm thông tin cư dân
+                                            final residentSnapshot = await FirebaseFirestore.instance
+                                                .collection('residents')
+                                                .doc(currentUserId)
+                                                .get();
+
+                                            final residentData = residentSnapshot.data();
+                                            if (residentData == null) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Không tìm thấy thông tin cư dân')),
+                                              );
+                                              return;
+                                            }
+
+                                            final updateService = await fetchActiveUpdateService(company.companyId ?? '');
+                                            if (updateService == null) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Không có dịch vụ được duyệt cho công ty này.')),
+                                              );
+                                              return;
+                                            }
+
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => CompanyDetailPage(
+                                                  company: company,
+                                                  updateService: updateService,
+                                                  residentName: residentInfo!.fullName,
+                                                  apartmentNumber: apartmentName,
+                                                  building: building,
+                                                  phone: residentInfo!.phone,
+                                                ),
+                                              ),
+                                            );
+                                          }:null
+                                        )
+
+                                      );
+                                    }).toList(),
                                   ),
                                 );
                               },
-                            ),
-                          ),
-
-                          SizedBox(height: 5.h),
-                          Text(
-                            "Xin chào, ${residentInfo?.fullName ?? "người dùng"} 👋",
-                            style: TextStyle(
-                              fontFamily: "Oswald",
-                              fontSize: 25.sp,
-                              color: Colors.white,
-                            ),
-                          ),
+                            )
+                            ,
+                          )
                         ],
                       ),
-                    )
-                  ],
-                ),
-              ),
-              Container(
-                child: Padding(
-                  padding: EdgeInsets.all(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '   Dịch vụ cơ bản',
-                        style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
-                      ),
-                      GridView.count(
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        padding: EdgeInsets.only(left: 50.w, right: 50.w, top: 10.h, bottom: 10.h),
-                        mainAxisSpacing: 45,
-                        crossAxisSpacing: 45,
-                        children: [
-                          buildServiceCard(
-                            context,
-                            svgPath: 'assets/images/parking.svg',
-                            label: 'Gửi xe',
-                            onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => GuiXeScreen()));
-                            },
-                          ),
-                          buildServiceCard(
-                            context,
-                            svgPath: 'assets/images/water.svg',
-                            label: 'Chỉ số nước',
-                            onTap: () {
-                            },
-                          ),
-                        ],
-                      ),
-                      Text(
-                        '   Tiện ích cư dân',
-                        style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
-                      ),
-                      GridView.count(
-                        crossAxisCount: 3,
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(8),
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        children: [
-                          buildServiceCard(
-                            context,
-                            svgPath: 'assets/images/contract.svg',
-                            label: 'Xem hợp đồng',
-                            onTap: () async {
-                              final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-                              if (currentUserId == null) return;
-
-                              final residentSnapshot = await FirebaseFirestore.instance
-                                  .collection('residents')
-                                  .doc(currentUserId)
-                                  .get();
-
-                              final apartmentId = residentSnapshot.data()?['apartmentId'];
-                              if (apartmentId == null) return;
-
-                              final contractsSnapshot = await FirebaseFirestore.instance
-                                  .collection('contracts')
-                                  .where('apartmentDocId', isEqualTo: apartmentId)
-                                  .where('isActive', isEqualTo: true)
-                                  .limit(1)
-                                  .get();
-
-                              if (contractsSnapshot.docs.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Không tìm thấy hợp đồng đang hoạt động')),
-                                );
-                                return;
-                              }
-
-                              final contractData = contractsSnapshot.docs.first.data();
-                              final contractUrl = contractData['pdfUrl'];
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => PdfViewerScreen(pdfUrl: contractUrl)),
-                              );
-                            },
-                          ),
-                          buildServiceCard(
-                            context,
-                            svgPath: 'assets/images/problem.svg',
-                            label: 'Báo cáo sự cố',
-                            onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => ReportPage()));
-                            },
-                          ),
-                          buildServiceCard(
-                            context,
-                            svgPath: 'assets/images/paycard.svg',
-                            label: 'Thanh toán',
-                            onTap: () {
-                              final contractId = residentInfo?.contractId;
-                              if (contractId != null && contractId.isNotEmpty) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PaymentScreen(contractId: contractId),
-                                  ),
-                                );
-                              } else {
-                                // Hiển thị thông báo nếu chưa có hợp đồng
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Không tìm thấy hợp đồng. Vui lòng liên hệ ban quản lý.")),
-                                );
-                              }
-                            },
-
-                          ),
-                        ],
-                      ),
-                      Text(
-                        '   Dịch vụ ngoài',
-                        style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
-                      ),
-                      Padding(padding: EdgeInsets.only(left: 9.w, right: 9.w, top: 10.h),
-                      child: FutureBuilder<List<CompanyInfo>>(
-                        future: fetchCompaniesWithEnabledUpdateService(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                            return const Center(child: Text('Không có công ty nào có dịch vụ được duyệt'));
-                          }
-
-                          final companies = snapshot.data!;
-
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: companies.map((company) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 12),
-                                  child: buildServiceCard1(
-                                    context,
-                                    imagePath: company.imageUrl,
-                                    label: company.type,
-                                    onTap: () async {
-                                      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-                                      if (currentUserId == null) return;
-
-                                      // Lấy thêm thông tin cư dân
-                                      final residentSnapshot = await FirebaseFirestore.instance
-                                          .collection('residents')
-                                          .doc(currentUserId)
-                                          .get();
-
-                                      final residentData = residentSnapshot.data();
-                                      if (residentData == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Không tìm thấy thông tin cư dân')),
-                                        );
-                                        return;
-                                      }
-
-                                      final updateService = await fetchActiveUpdateService(company.companyId ?? '');
-                                      if (updateService == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Không có dịch vụ được duyệt cho công ty này.')),
-                                        );
-                                        return;
-                                      }
-
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => CompanyDetailPage(
-                                            company: company,
-                                            updateService: updateService,
-                                            residentName: residentInfo!.fullName,
-                                            apartmentNumber: apartmentName,
-                                            building: building,
-                                            phone: residentInfo!.phone,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-
-                                );
-                              }).toList(),
-                            ),
-                          );
-                        },
-                      )
-                        ,
-                      )
-                    ],
-                  ),
-                ),
+                    ),
+                  )
+                ],
               )
             ],
-          )
-        ],
-      ),
+          );
+        },
+      )
     );
   }
 
   Widget buildServiceCard(
       BuildContext context, {
-        required String svgPath, // Đường dẫn ảnh SVG
+        required String svgPath,
         required String label,
-        required VoidCallback onTap,
+        required VoidCallback? onTap, // cho phép null
       }) {
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 100),
@@ -493,17 +528,30 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
             (context as Element).markNeedsBuild();
           },
           onTapUp: (_) {
-            onTap();
+            // Không cần xử lý ở đây nữa vì đã xử lý trong InkWell.onTap
           },
           child: Material(
-            color: Colors.white,
+            color: onTap == null ? Colors.grey[300] : Colors.white,
             elevation: 3,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
-              onTap: onTap,
+              onTap: () {
+                if (onTap != null) {
+                  onTap();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Tính năng này chưa có hiệu lực."),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
               borderRadius: BorderRadius.circular(12),
-              splashColor: Colors.blue.withOpacity(0.2),
-              highlightColor: Colors.blue.withOpacity(0.1),
+              splashColor:
+              onTap == null ? Colors.transparent : Colors.blue.withOpacity(0.2),
+              highlightColor:
+              onTap == null ? Colors.transparent : Colors.blue.withOpacity(0.1),
               child: Container(
                 padding: const EdgeInsets.all(12),
                 child: Column(
@@ -513,10 +561,18 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                       svgPath,
                       width: 50,
                       height: 50,
-
+                      color: onTap == null ? Colors.grey : null,
                     ),
                     const SizedBox(height: 8),
-                    Text(label, style:TextStyle(fontWeight: FontWeight.bold,fontSize: 12.sp),textAlign: TextAlign.center),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.sp,
+                        color: onTap == null ? Colors.grey : null,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               ),
@@ -527,11 +583,13 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
     );
   }
 
+
+
   Widget buildServiceCard1(
       BuildContext context, {
         required String imagePath,
         required String label,
-        required VoidCallback onTap,
+        required VoidCallback? onTap, // Cho phép null
       }) {
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 100),
@@ -539,16 +597,26 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
       builder: (context, scale, child) {
         return GestureDetector(
           onTapDown: (_) => (context as Element).markNeedsBuild(),
-          onTapUp: (_) => onTap(),
           child: Material(
-            color: Colors.white,
+            color: onTap == null ? Colors.grey[300] : Colors.white,
             elevation: 3,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
-              onTap: onTap,
+              onTap: () {
+                if (onTap != null) {
+                  onTap();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Tính năng này chưa có hiệu lực."),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
               borderRadius: BorderRadius.circular(12),
-              splashColor: Colors.blue.withOpacity(0.2),
-              highlightColor: Colors.blue.withOpacity(0.1),
+              splashColor: onTap == null ? Colors.transparent : Colors.blue.withOpacity(0.2),
+              highlightColor: onTap == null ? Colors.transparent : Colors.blue.withOpacity(0.1),
               child: SizedBox(
                 width: 110,
                 height: 110,
@@ -564,6 +632,8 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,
+                          color: onTap == null ? Colors.grey : null,
+                          colorBlendMode: onTap == null ? BlendMode.saturation : null,
                           errorBuilder: (context, error, stackTrace) {
                             return const Icon(Icons.broken_image, size: 50);
                           },
@@ -580,12 +650,15 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                       SizedBox(height: 8.h),
                       Text(
                         label,
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.sp,
+                          color: onTap == null ? Colors.grey : null,
+                        ),
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       )
-
                     ],
                   ),
                 ),
@@ -596,5 +669,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
       },
     );
   }
+
+
 
 }

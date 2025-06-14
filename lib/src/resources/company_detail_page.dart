@@ -124,6 +124,8 @@ class CompanyDetailPage extends StatelessWidget {
 
                     Navigator.of(context, rootNavigator: true).pop();
 
+                    Navigator.of(context).pop();
+
                     // 👉 Hiện SnackBar
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -178,7 +180,7 @@ class CompanyDetailPage extends StatelessWidget {
           title: Center(
             child: Text(
               'Lịch sử đặt dịch vụ',
-              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
             ),
           ),
           content: Padding(
@@ -188,7 +190,7 @@ class CompanyDetailPage extends StatelessWidget {
               child: requests.isEmpty
                   ? Text(
                 'Không có lịch sử đặt dịch vụ nào.',
-                style: TextStyle(fontSize: 25.sp),
+                style: TextStyle(fontSize: 15.sp),
               )
                   : ListView.separated(
                 shrinkWrap: true,

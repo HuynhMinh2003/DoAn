@@ -206,8 +206,8 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
 
                           SizedBox(height: 20.h),
                           Text(
-                            "Xin chào, ${staffInfo?.fullName ??
-                                "người dùng"} 👋",
+                            "${staffInfo?.fullName ??
+                                "kỹ thuật viên"}",
                             style: TextStyle(
                               fontFamily: "Oswald",
                               fontSize: 25.sp,
@@ -215,6 +215,17 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
                             ),
                           ),
                           SizedBox(height: 10.h),
+                          Text(
+                            "- Kỹ thuật viên -" ,
+                            style: TextStyle(
+                              fontFamily: "Oswald",
+                              fontSize: 20.sp,
+                              color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontStyle: FontStyle.italic
+                            ),
+                          ),
+                          SizedBox(height: 5.h),
                         ],
                       ),
                     )
@@ -242,8 +253,8 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
 
                                   final unseenDocs = docs.where((doc) {
                                     final data = doc.data() as Map<String, dynamic>;
-                                    final seenBy = data.containsKey('seenBy') ? data['seenBy'] as String? : null;
-                                    return staffInfo?.uid != null && seenBy != staffInfo!.uid;
+                                    final seenByList = data['seenBy'] as List<dynamic>? ?? [];
+                                    return staffInfo?.uid != null && !seenByList.contains(staffInfo!.uid);
                                   }).toList();
 
                                   final count = unseenDocs.length;
@@ -257,7 +268,7 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
                                       if (staffInfo?.uid != null) {
                                         for (final doc in unseenDocs) {
                                           await doc.reference.update({
-                                            'seenBy': staffInfo!.uid,
+                                            'seenBy': FieldValue.arrayUnion([staffInfo!.uid]),
                                           });
                                         }
                                       }

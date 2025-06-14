@@ -75,6 +75,7 @@ class _ReportPageState extends BaseResidentInfoScreen<ReportPage> {
         'priority': null,
         'seenBy': null,
         'status': 'Đang chờ xử lý',
+        'seenBy': [],
         'imageUrl': imageUrl,
         'createdAt': FieldValue.serverTimestamp(),
         'assignedStaffId': null,

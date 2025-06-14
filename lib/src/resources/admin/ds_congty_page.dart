@@ -15,6 +15,8 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:do_an/src/resources/admin/ds_congty_mobile_page.dart' if (dart.library.html) 'ds_congty_web_page.dart';
 
+import '../../../constants.dart';
+
 class CompanyListPage extends StatefulWidget {
   const CompanyListPage({super.key});
 
@@ -383,7 +385,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Xác nhận xóa", style: TextStyle(fontSize: 5.sp),),
+          title: Text("Xác nhận xóa", style: TextStyle(fontSize: 7.sp,fontFamily: "Oswald",fontWeight: FontWeight.bold),),
           content: Text("Bạn có chắc chắn muốn xóa công ty \"${company.name}\" không?", style: TextStyle(fontSize: 4.sp)),
           actions: [
             TextButton(
@@ -586,17 +588,32 @@ class _CompanyListPageState extends State<CompanyListPage> {
                             fontSize: 7.sp,
                           ),
                         ),),
-                        Flexible(flex:1,child: ElevatedButton(
-                          onPressed: () => exportCompaniesToExcel(_companyList),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.upload),
-                              SizedBox(width: 5.w,),
-                              Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.white),)
-                            ],
+                        Flexible(flex:1,child:SizedBox(
+                          height: 55.h,width: 40.w,
+                          child:  ElevatedButton(
+                            onPressed: () => exportCompaniesToExcel(_companyList),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                              secondaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                BorderRadius.circular(30.r),
+                              ),
+                              elevation: 4,
+                              shadowColor: Colors.black45,
+                              alignment: Alignment.center,
+                              padding: EdgeInsets.zero,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.upload),
+                                SizedBox(width: 5.w,),
+                                Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.white),)
+                              ],
+                            ),
                           ),
-                        ),),
+                        )),
                           SizedBox(width: 5.w,)
                       ],),
                       SizedBox(height: 10.h),
