@@ -206,7 +206,8 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
               title: Text(
                 "Thông tin phòng ${apartment.apartmentName}",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp),
+                style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp, color: Colors.blueAccent,
+                ),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -312,7 +313,8 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text("Phòng ${apartment.apartmentName}", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp),),
+        title: Text("Phòng ${apartment.apartmentName}", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp,                        color: Colors.blueAccent,
+        ),),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

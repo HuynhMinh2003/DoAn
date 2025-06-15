@@ -172,7 +172,7 @@ class _ContractListPageState extends State<ContractListPage> {
           style: TextStyle(
               fontFamily: "Oswald",
               fontWeight: FontWeight.bold,
-              fontSize: 7.sp),
+              fontSize: 7.sp,color: Colors.blueAccent),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -300,7 +300,7 @@ class _ContractListPageState extends State<ContractListPage> {
                 style: TextStyle(
                     fontSize: 4.sp,
                     fontFamily: "Oswald",
-                    fontWeight: FontWeight.bold)),
+                    fontWeight: FontWeight.bold,color: Colors.blueAccent)),
             content: Text("Căn hộ này không có hợp đồng còn hiệu lực.",
                 style: TextStyle(fontSize: 3.5.sp)),
             actions: [
@@ -335,7 +335,9 @@ class _ContractListPageState extends State<ContractListPage> {
               style: TextStyle(
                   fontSize: 7.sp,
                   fontFamily: "Oswald",
-                  fontWeight: FontWeight.bold),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent
+              ),
             ),
           ),
           content: Column(
@@ -613,7 +615,7 @@ class _ContractListPageState extends State<ContractListPage> {
               style: TextStyle(
                   fontSize: 6.sp,
                   fontFamily: "Oswald",
-                  fontWeight: FontWeight.bold)),
+                  fontWeight: FontWeight.bold,color: Colors.blueAccent)),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -657,7 +659,7 @@ class _ContractListPageState extends State<ContractListPage> {
                   style: TextStyle(
                       fontSize: 6.sp,
                       fontFamily: "Oswald",
-                      fontWeight: FontWeight.bold)),
+                      fontWeight: FontWeight.bold,color: Colors.blueAccent)),
               content: DropdownButtonHideUnderline(
                 child: DropdownButton2<int>(
                   isExpanded: true,
@@ -813,7 +815,7 @@ class _ContractListPageState extends State<ContractListPage> {
                         style: TextStyle(
                             fontSize: 6.sp,
                             fontFamily: "Oswald",
-                            fontWeight: FontWeight.bold))),
+                            fontWeight: FontWeight.bold,color: Colors.blueAccent))),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: residentList.map((r) {
@@ -1108,7 +1110,7 @@ class _ContractListPageState extends State<ContractListPage> {
           context: context,
           builder: (_) => AlertDialog(
             title: Text("Lịch sử thay đổi",
-                style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontFamily: "Oswald", fontSize: 6.sp, fontWeight: FontWeight.bold,color: Colors.blueAccent)),
             content:
                 Text("Chưa có gì thay đổi.", style: TextStyle(fontSize: 4.sp)),
             actions: [
@@ -1129,7 +1131,7 @@ class _ContractListPageState extends State<ContractListPage> {
           title: Center(
               child: Text(
             "Lịch sử thay đổi",
-            style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold,color: Colors.blueAccent),
           )),
           content: SizedBox(
             width: 80.w,

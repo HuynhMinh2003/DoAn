@@ -440,35 +440,18 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
 
                                           ]);
                                         }).toList(),
-
+                                        rowsPerPage: itemsPerPage,
+                                        availableRowsPerPage: [5, 10, 20, 50],
+                                        // Các tùy chọn số dòng mỗi trang
+                                        onRowsPerPageChanged: (value) {
+                                          setState(() {
+                                            itemsPerPage = value ??
+                                                10; // Cập nhật số dòng mỗi trang
+                                          });
+                                        },
                                       ),
                                     ),
                                   ),
-                                ),
-                                // Phân trang
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: pageNumbers.map((page) {
-                                    final isSelected = page == currentPage;
-                                    return Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: 5.w),
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: isSelected ? Colors.blue : Colors.grey,
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            currentPage = page;
-                                            _updatePaginatedServices();
-                                          });
-                                        },
-                                        child: Text(
-                                          "$page",
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
                                 ),
                               ],
                             );
