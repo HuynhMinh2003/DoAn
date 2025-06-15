@@ -2,9 +2,12 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 class WaterReadingForm extends StatefulWidget {
@@ -88,7 +91,8 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
   }
 
   bool get canEdit {
-    final selectedDate = DateTime.parse('${widget.selectedMonth}-01');
+    final parts = widget.selectedMonth.split('-'); // ["MM", "yyyy"]
+    final selectedDate = DateTime(int.parse(parts[1]), int.parse(parts[0]));
     final now = DateTime.now();
 
     // Chỉ cho ghi nếu:
@@ -96,11 +100,49 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
     // - Chưa thanh toán
     // - Ngày hiện tại >= 25
     final isCurrentOrPastMonth = selectedDate.isBefore(DateTime(now.year, now.month + 1));
-    final isAfter25 = now.day >= 25;
+    final isAfter25 = now.day >= 10;
 
     return isCurrentOrPastMonth && !isPaid && isAfter25;
   }
 
+  Future<void> _pickImage(bool isOld) async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 75,
+    );
+
+    if (picked == null) return;
+
+    // 👉 Crop ảnh vuông
+    final cropped = await ImageCropper().cropImage(
+      sourcePath: picked.path,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1), // Vuông
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Cắt ảnh',
+          toolbarColor: Colors.teal,
+          toolbarWidgetColor: Colors.white,
+          lockAspectRatio: true,
+          initAspectRatio: CropAspectRatioPreset.square,
+        ),
+        IOSUiSettings(
+          title: 'Cắt ảnh',
+          aspectRatioLockEnabled: true,
+        ),
+      ],
+    );
+
+    if (cropped != null) {
+      final croppedFile = File(cropped.path);
+      setState(() {
+        if (isOld) {
+          oldImageFile = croppedFile;
+        } else {
+          newImageFile = croppedFile;
+        }
+      });
+    }
+  }
 
   Future<String?> _uploadImage(File image, String type) async {
     final ref = FirebaseStorage.instance
@@ -113,27 +155,14 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
     await ref.putFile(image);
     return await ref.getDownloadURL();
   }
-  Future<void> _pickImage(bool isOld) async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() {
-        if (isOld) {
-          oldImageFile = File(picked.path);
-        } else {
-          newImageFile = File(picked.path);
-        }
-      });
-    }
-  }
 
   Future<void> _saveReading() async {
     final oldText = oldController.text.trim();
     final newText = newController.text.trim();
 
     bool hasError = false;
-    const int maxReading = 9999; // Giả sử đồng hồ max 9999
+    const int maxReading = 9999;
 
-    // Kiểm tra chỉ số cũ
     final oldParsed = int.tryParse(oldText);
     if (oldText.isEmpty) {
       _oldReadingErrorController.add('Vui lòng nhập chỉ số cũ');
@@ -148,7 +177,6 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
       _oldReadingErrorController.add(null);
     }
 
-    // Kiểm tra chỉ số mới
     final newParsed = int.tryParse(newText);
     if (newText.isEmpty) {
       _newReadingErrorController.add('Vui lòng nhập chỉ số mới');
@@ -168,81 +196,97 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
     final int oldReading = oldParsed!;
     final int newReading = newParsed!;
 
-    // Nếu đồng hồ xoay vòng (newReading < oldReading), hỏi xác nhận
     if (newReading < oldReading) {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Xác nhận đồng hồ quay vòng'),
-          content: const Text(
-              'Chỉ số mới nhỏ hơn chỉ số cũ, đồng nghĩa đồng hồ có thể đã quay vòng.\nBạn có chắc chắn muốn lưu?'),
+          title: Center(
+            child: Text(
+              'Xác nhận đồng hồ quay vòng',
+              style: TextStyle(fontSize: 15.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),
+            ),
+          ),
+          content: Text(
+            'Chỉ số mới nhỏ hơn chỉ số cũ, đồng nghĩa đồng hồ có thể đã quay vòng.\nBạn có chắc chắn muốn lưu?',
+            style: TextStyle(fontSize: 15.sp),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Hủy'),
+              child: Text('Hủy', style: TextStyle(fontSize: 14.sp)),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Đồng ý'),
+              child: Text('Đồng ý', style: TextStyle(fontSize: 14.sp)),
             ),
           ],
         ),
       );
 
-      if (confirm != true) {
-        // Người dùng hủy thì không lưu, thoát hàm
-        return;
+      if (confirm != true) return;
+    }
+
+    // 👉 Hiển thị dialog loading
+    LoadingDialog.showLoadingDialog(context, "Đang cập nhật ...");
+
+    try {
+      if (oldImageFile != null) {
+        oldImageUrl = await _uploadImage(oldImageFile!, 'old');
       }
+      if (newImageFile != null) {
+        newImageUrl = await _uploadImage(newImageFile!, 'new');
+      }
+
+      final data = {
+        'oldReading': oldReading,
+        'newReading': newReading,
+        'isPaid': isPaid,
+        'oldImageUrl': oldImageUrl,
+        'newImageUrl': newImageUrl,
+        'staffId': widget.staffId,
+        'staffName': widget.staffName,
+        'timestamp': FieldValue.serverTimestamp(),
+      };
+
+      await FirebaseFirestore.instance
+          .collection('contracts')
+          .doc(widget.contractId)
+          .collection('waterReadings')
+          .doc(widget.selectedMonth)
+          .set(data, SetOptions(merge: true));
+
+      await FirebaseFirestore.instance
+          .collection('staffs')
+          .doc(widget.staffId)
+          .collection('waterReadings')
+          .doc('${widget.contractId}_${widget.selectedMonth}')
+          .set({
+        'contractId': widget.contractId,
+        'apartmentName': widget.apartmentName,
+        'building': widget.building,
+        'month': widget.selectedMonth,
+        'oldReading': oldReading,
+        'newReading': newReading,
+        'timestamp': FieldValue.serverTimestamp(),
+        'staffId': widget.staffId,
+        'staffName': widget.staffName,
+      }, SetOptions(merge: true));
+
+      // ✅ Tắt loading
+      Navigator.of(context, rootNavigator: true).pop();
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lưu thành công'), backgroundColor: Colors.green),
+      );
+    } catch (e) {
+      Navigator.of(context, rootNavigator: true).pop(); // đảm bảo pop nếu lỗi
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
+      );
     }
-
-    setState(() => loading = true);
-
-    if (oldImageFile != null) {
-      oldImageUrl = await _uploadImage(oldImageFile!, 'old');
-    }
-    if (newImageFile != null) {
-      newImageUrl = await _uploadImage(newImageFile!, 'new');
-    }
-
-    final data = {
-      'oldReading': oldReading,
-      'newReading': newReading,
-      'isPaid': isPaid,
-      'oldImageUrl': oldImageUrl,
-      'newImageUrl': newImageUrl,
-      'staffId': widget.staffId,
-      'staffName': widget.staffName,
-      'timestamp': FieldValue.serverTimestamp(),
-    };
-
-    await FirebaseFirestore.instance
-        .collection('contracts')
-        .doc(widget.contractId)
-        .collection('waterReadings')
-        .doc(widget.selectedMonth)
-        .set(data, SetOptions(merge: true));
-
-    await FirebaseFirestore.instance
-        .collection('staffs')
-        .doc(widget.staffId)
-        .collection('waterReadings')
-        .doc('${widget.contractId}_${widget.selectedMonth}')
-        .set({
-      'contractId': widget.contractId,
-      'apartmentName': widget.apartmentName,
-      'building': widget.building,
-      'month': widget.selectedMonth,
-      'oldReading': oldReading,
-      'newReading': newReading,
-      'timestamp': FieldValue.serverTimestamp(),
-      'staffId': widget.staffId,
-      'staffName': widget.staffName,
-    }, SetOptions(merge: true));
-
-    setState(() => loading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Lưu thành công'), backgroundColor: Colors.green),
-    );
   }
 
   @override
@@ -316,11 +360,13 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
                 onPick: canEdit ? () => _pickImage(false) : null,
               ),
               SizedBox(height: 10.h),
-              SwitchListTile(
-                title: Text("Đã thanh toán", style: TextStyle(fontSize: 15.sp)),
-                value: isPaid,
-                onChanged: canEdit ? (val) => setState(() => isPaid = val) : null,
-              ),
+              canEdit
+                  ? SizedBox.shrink() // không hiển thị gì cả
+                  : Center(child: Text(
+                "Đã thanh toán - không thể chỉnh sửa",
+                style: TextStyle(fontSize: 15.sp, color: Colors.grey),
+              ),),
+
               if (canEdit)
                 Align(
                   alignment: Alignment.centerRight,
@@ -337,7 +383,6 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
       ),
     );
   }
-
 
   Widget _buildImagePicker({
     required String label,

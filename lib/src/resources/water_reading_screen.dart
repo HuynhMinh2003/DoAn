@@ -29,7 +29,7 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    selectedMonth = DateFormat('yyyy-MM').format(DateTime(now.year, now.month));
+    selectedMonth = DateFormat('MM-yyyy').format(DateTime(now.year, now.month));
     fetchBuildingOptions();
   }
 
@@ -37,7 +37,7 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
     final now = DateTime.now();
     return List.generate(12, (index) {
       final date = DateTime(now.year, now.month - index, 1);
-      return DateFormat('yyyy-MM').format(date);
+      return DateFormat('MM-yyyy').format(date);
     });
   }
 
@@ -55,7 +55,9 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
   }
 
   Future<List<Map<String, dynamic>>> fetchValidContracts(String monthKey) async {
-    final selectedMonthStart = DateTime.parse('$monthKey-01');
+    // Chuyển "MM-yyyy" → DateTime
+    final parts = monthKey.split('-');
+    final selectedMonthStart = DateTime(int.parse(parts[1]), int.parse(parts[0]), 1);
     final selectedMonthEnd = DateTime(selectedMonthStart.year, selectedMonthStart.month + 1, 0);
 
     final querySnapshot = await FirebaseFirestore.instance
@@ -91,7 +93,7 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
           .collection('contracts')
           .doc(contractId)
           .collection('waterReadings')
-          .doc(selectedMonth)
+          .doc(selectedMonth) // selectedMonth = MM-yyyy
           .get();
 
       final hasRecorded = doc.exists;
@@ -133,7 +135,7 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
     }
 
     // Nếu là tháng hiện tại → chỉ cho ghi từ ngày 25 trở đi
-    return now.day >= 25;
+    return now.day >= 10;
   }
 
   @override
@@ -173,7 +175,7 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
 
                   // Tùy chỉnh cách hiển thị label trong item
                   itemLabelBuilder: (item) =>
-                  "Tháng ${item?.substring(5)} - ${item?.substring(0, 4)}",
+                  "Tháng ${item?.substring(0, 2)} - ${item?.substring(3)}",
                 ),
 
                 SizedBox(height: 10.h),
@@ -249,7 +251,7 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
                   if (contracts.isEmpty) {
                     return Center(
                       child: Text(
-                        "Không có hợp đồng hợp lệ.",
+                        "Không có dữ liệu hợp lệ.",
                         style: TextStyle(fontSize: 15.sp),
                       ),
                     );
@@ -399,7 +401,7 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
             isExpanded: true,
             hint: Text(
               label,
-              style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 14.sp, color: Colors.black),
             ),
             items: items.map((item) {
               final labelText = itemLabelBuilder != null

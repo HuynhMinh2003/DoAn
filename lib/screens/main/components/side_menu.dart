@@ -20,6 +20,7 @@ import 'package:do_an/src/resources/base_admin_screen_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../src/resources/admin/ds_ghichisonuoc_page.dart';
 import '../../../src/resources/admin/ds_thanhtoan_page.dart';
 
 class SideMenu extends StatefulWidget {
@@ -115,6 +116,14 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                         svgSrc: "assets/icons/parking.svg",
                         press: () {
                           widget.onMenuItemPressed(RegistrationListPage()); // Chuyển sang Dashboard
+                        },
+                        isMenuOpen: widget.isMenuOpen,
+                      ),
+                      DrawerListTile(
+                        title: "Danh sách chỉ số nước",
+                        svgSrc: "assets/icons/parking.svg",
+                        press: () {
+                          widget.onMenuItemPressed(ReadCSNPage()); // Chuyển sang Dashboard
                         },
                         isMenuOpen: widget.isMenuOpen,
                       ),
