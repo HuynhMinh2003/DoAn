@@ -64,7 +64,7 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
   }
 
   Future<void> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery,imageQuality: 75,);
     if (picked != null) {
       if (kIsWeb) {
         final bytes = await picked.readAsBytes();
@@ -138,20 +138,23 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
 
       String? imageUrl;
       if (_selectedImageFile != null) {
+        // ✅ Mobile/desktop: dùng File
         final fileName = 'service_${DateTime.now().millisecondsSinceEpoch}.jpg';
         final ref = FirebaseStorage.instance.ref().child('service_images/$fileName');
-
-        // ✅ Thêm metadata để đảm bảo trình duyệt hiểu đây là ảnh
         final metadata = SettableMetadata(contentType: 'image/jpeg');
-
-        // ✅ Upload ảnh với metadata
-        final uploadTask = await ref.putFile(_selectedImageFile!, metadata);
-
+        await ref.putFile(_selectedImageFile!, metadata);
         imageUrl = await ref.getDownloadURL();
-
-        // ✅ Chờ ảnh sẵn sàng (đặc biệt quan trọng với Flutter Web)
+        await Future.delayed(Duration(seconds: 1));
+      } else if (kIsWeb && _imageBytes != null) {
+        // ✅ Web: dùng byte array
+        final fileName = 'service_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final ref = FirebaseStorage.instance.ref().child('service_images/$fileName');
+        final metadata = SettableMetadata(contentType: 'image/jpeg');
+        await ref.putData(_imageBytes!, metadata);
+        imageUrl = await ref.getDownloadURL();
         await Future.delayed(Duration(seconds: 1));
       }
+
 
       await companyRef.collection('updateService').add({
         'price': price,

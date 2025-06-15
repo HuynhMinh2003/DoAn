@@ -20,6 +20,7 @@ import 'package:flutter/foundation.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'constants.dart';
 import 'controllers/menu_app_controller.dart';
@@ -38,6 +39,10 @@ const firebaseOptions = FirebaseOptions(
 
 // Tạo StreamController để quản lý luồng tin nhắn
 final _messageStreamController = BehaviorSubject<RemoteMessage>();
+
+// ✅ Plugin local notifications
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
 
 // Trình xử lý tin nhắn nền
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -219,25 +224,26 @@ Future<void> _handleInitialMessage() async {
   }
 }
 
-// Hàm xử lý tin nhắn foreground
 void _setupForegroundMessageHandler() {
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    if (message.notification != null) {
-      print('Foreground message received: ${message.notification!.title}, ${message.notification!.body}');
+    final title = message.notification?.title ?? "Thông báo";
+    final body = message.notification?.body ?? "";
 
-      if (navigatorKey.currentContext != null) {
-        showDialog(
-          context: navigatorKey.currentContext!,
-          builder: (context) => AlertDialog(
-            title: Text(message.notification!.title ?? "No Title"),
-            content: Text(message.notification!.body ?? "No Body"),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: Text("OK"))
-            ],
-          ),
-        );
-      }
-    }
+    flutterLocalNotificationsPlugin.show(
+      0,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'default_channel_id',
+          'Thông báo hệ thống',
+          channelDescription: 'Thông báo hiển thị khi app đang mở',
+          importance: Importance.max,
+          priority: Priority.high,
+          styleInformation: BigTextStyleInformation(body),
+        ),
+      ),
+    );
   });
 }
 
