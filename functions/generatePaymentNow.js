@@ -57,61 +57,65 @@ async function generatePaymentForContract(contractId, targetDate) {
     waitingForWater = false;
   }
 
-    const parkingSnap = await db.collection(`contracts/${contractId}/parkingRegistrations`)
-      .where("registeredAt", "<=", endOfMonth)
-      .get();
+  const parkingSnap = await db.collection(`contracts/${contractId}/parkingRegistrations`)
+    .where("registeredAt", "<=", endOfMonth)
+    .get();
 
-    let parkingTotal = 0;
-    const today = new Date();
+  let parkingTotal = 0;
+  const today = new Date();
 
-    for (const p of parkingSnap.docs) {
-      const data = p.data();
-      const type = data.vehicleType;
-      const registeredAt = data.registeredAt.toDate();
-      const canceledAt = data.canceledAt?.toDate();
+  for (const p of parkingSnap.docs) {
+    const data = p.data();
+    const type = data.vehicleType;
+    const registeredAt = data.registeredAt.toDate();
+    const canceledAt = data.canceledAt?.toDate();
 
-      const effectiveStart = registeredAt < startOfMonth ? startOfMonth : registeredAt;
-      const effectiveEnd = !canceledAt || canceledAt > endOfMonth ? endOfMonth : canceledAt;
+    const effectiveStart = registeredAt < startOfMonth ? startOfMonth : registeredAt;
+    const effectiveEnd = !canceledAt || canceledAt > endOfMonth ? endOfMonth : canceledAt;
 
-      if (effectiveEnd < effectiveStart) continue;
+    if (effectiveEnd < effectiveStart) continue;
 
-      const feeData = await getFeeForDate(
-        `services/parking/vehicleTypes/${type}/feeHistory`,
-        effectiveStart
-      );
-      if (!feeData) continue;
+    const feeData = await getFeeForDate(
+      `services/parking/vehicleTypes/${type}/feeHistory`,
+      effectiveStart
+    );
+    if (!feeData) continue;
 
-      const monthlyFee = feeData.fee || 0;
-      const totalDaysInMonth = endOfMonth.getDate();
+    const monthlyFee = feeData.fee || 0;
+    const totalDaysInMonth = endOfMonth.getDate();
+    const lastChargeableDay = today < endOfMonth ? today : endOfMonth;
 
-      // Tính ngày tính phí tối đa (không vượt quá ngày hiện tại nếu còn trong tháng)
-      const lastChargeableDay = today < endOfMonth ? today : endOfMonth;
+    let activeDays = Math.max(0, (lastChargeableDay - effectiveStart) / (1000 * 60 * 60 * 24) + 1);
 
-      let activeDays = Math.max(0, (lastChargeableDay - effectiveStart) / (1000 * 60 * 60 * 24) + 1);
-
-      // Nếu là ngày đầu tháng thì không tính phí
-      if (today.getDate() === 1) {
-        activeDays = 0;
-      }
-
-      const fee = Math.round((monthlyFee / totalDaysInMonth) * activeDays);
-      parkingTotal += fee;
+    if (today.getDate() === 1) {
+      activeDays = 0;
     }
 
-  const total = managementFee + waterFee + parkingTotal;
+    const fee = Math.round((monthlyFee / totalDaysInMonth) * activeDays);
+    parkingTotal += fee;
+  }
+
+  // 🧮 TÍNH DEBT THÁNG TRƯỚC
+  const prevMonth = new Date(year, month - 1, 1);
+  const prevMMYYYY = `${String(prevMonth.getMonth() + 1).padStart(2, "0")}-${prevMonth.getFullYear()}`;
+  const prevPaymentDoc = await db.collection(`contracts/${contractId}/payments`).doc(prevMMYYYY).get();
+  const debt = prevPaymentDoc.exists ? (prevPaymentDoc.data().debt || 0) : 0;
+
+  const total = managementFee + waterFee + parkingTotal + debt;
 
   await db.collection(`contracts/${contractId}/payments`).doc(mmYYYY).set({
     managementFee,
     waterFee,
     parkingFee: parkingTotal,
+    debt, // 👈 Ghi nhận để hiển thị chi tiết công nợ tháng trước
     total,
-    month: mmYYYY, // lưu kiểu '06-2025'
+    month: mmYYYY,
     waitingForWater,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     status: "Chưa thanh toán",
   }, { merge: true });
 
-console.log(`✅ Bill generated for ${contractId} - ${mmYYYY}`);
+  console.log(`✅ Bill generated for ${contractId} - ${mmYYYY} (debt: ${debt})`);
 }
 
 // ✅ Cloud Function HTTPS callable

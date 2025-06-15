@@ -83,6 +83,8 @@ dependencies:
   url_launcher: ^6.3.1
   syncfusion_flutter_pdfviewer: ^29.2.5
   device_info_plus: ^11.4.0
+  flutter_local_notifications: ^19.2.1
+  image_cropper: ^9.1.0
 
 dev_dependencies:
   flutter_test:

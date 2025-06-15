@@ -2,11 +2,10 @@ const { onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 const sendNotificationToOne = onCall(async (request) => {
-  const { token, title, body } = request.data;
+  const { tokens, title, body } = request.data;
 
-  // Validate dữ liệu đầu vào
-  if (typeof token !== "string" || token.trim() === "") {
-    throw new Error("Thiếu hoặc sai định dạng token");
+  if (!Array.isArray(tokens) || tokens.length === 0) {
+    throw new Error("Thiếu hoặc sai định dạng tokens");
   }
   if (typeof title !== "string" || title.trim() === "") {
     throw new Error("Thiếu tiêu đề thông báo");
@@ -16,11 +15,7 @@ const sendNotificationToOne = onCall(async (request) => {
   }
 
   const message = {
-    token,
-    notification: {
-      title,
-      body,
-    },
+    notification: { title, body },
     data: {
       click_action: "FLUTTER_NOTIFICATION_CLICK",
       type: "service_request_update",
@@ -28,18 +23,27 @@ const sendNotificationToOne = onCall(async (request) => {
   };
 
   try {
-    const response = await admin.messaging().send(message);
+    const response = await admin.messaging().sendEachForMulticast({
+      tokens,
+      ...message,
+    });
+
+    const successCount = response.responses.filter((r) => r.success).length;
+    const failureCount = response.responses.length - successCount;
+    const failedTokens = response.responses
+      .map((res, i) => (!res.success ? tokens[i] : null))
+      .filter((t) => t !== null);
+
     return {
       success: true,
-      messageId: response,
+      sent: successCount,
+      failed: failureCount,
+      failedTokens,
     };
   } catch (error) {
     console.error("FCM Error:", error);
-    // Ném lỗi ra ngoài để client biết, hoặc bạn có thể trả về object lỗi
     throw new Error("Lỗi gửi thông báo: " + error.message);
   }
 });
 
-module.exports = {
-  sendNotificationToOne,
-};
+module.exports = { sendNotificationToOne };

@@ -16,10 +16,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
   late Map<String, dynamic> contractData;
   int managementFee = 0;
   int waterFee = 0;
+  int debt = 0;
   bool isWaterPaid = true;
   List<Map<String, dynamic>> parkingFees = [];
   int total = 0;
   bool loading = true;
+  String paymentStatus = '';
+  String? paymentDocId;
 
   @override
   void initState() {
@@ -32,22 +35,51 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return "${formatter.format(amount)} đ";
   }
 
-  int _calculateWaterFee(int usage) {
-    if (usage <= 10) return usage * 6000;
-    if (usage <= 20) return 10 * 6000 + (usage - 10) * 8000;
-    return 10 * 6000 + 10 * 8000 + (usage - 20) * 10000;
-  }
-
   Widget _feeRow(String label, int amount, {bool? isPaid, bool bold = false}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 20.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: TextStyle(fontSize: 15.sp, fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
-          Text('${formatCurrency(amount)}${isPaid == true ? " ✅" : ""}',
-              style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          Text(
+            formatCurrency(amount),
+            style: TextStyle(
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _feeRow1(String label, int amount, {bool? isPaid, bool bold = false}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 20.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.red,
+              fontSize: 15.sp,
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          Text(
+            formatCurrency(amount),
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
         ],
       ),
     );
@@ -80,150 +112,55 @@ class _PaymentScreenState extends State<PaymentScreen> {
       setState(() => loading = true);
 
       final DateTime targetMonth = forMonth ?? DateTime.now();
+      final formattedMonth = DateFormat('MM-yyyy').format(targetMonth); // ví dụ "06-2025"
 
       // Lấy dữ liệu hợp đồng
       final contractDoc = await FirebaseFirestore.instance
           .collection('contracts')
           .doc(widget.contractId)
           .get();
+
       contractData = contractDoc.data() ?? {};
 
-      final areaRaw = contractData['area'] ?? 0;
-      final area = areaRaw is num ? areaRaw.toDouble() : 0.0;
-
-      // Tính thời điểm đầu và cuối tháng theo targetMonth
-      final startOfMonth = DateTime(targetMonth.year, targetMonth.month, 1);
-      final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1, 0);
-
-      // Lấy phí quản lý theo m2 áp dụng đúng thời điểm startOfMonth
-      final mgFeeData = await getFeeForDate(
-        feeHistoryCollection: FirebaseFirestore.instance
-            .collection('services')
-            .doc('managementFee')
-            .collection('feeHistory'),
-        date: startOfMonth,
-      );
-      final feePerM2Raw = mgFeeData != null ? mgFeeData['feePerM2'] ?? 0 : 0;
-      final feePerM2 = feePerM2Raw is num ? feePerM2Raw.toDouble() : 0.0;
-      managementFee = (feePerM2 * area).round();
-
-      // Lấy dữ liệu đọc đồng hồ nước tháng được chọn
-      final waterSnap = await FirebaseFirestore.instance
+      // Lấy dữ liệu thanh toán trong subcollection 'payments' cho tháng đang xét
+      final paymentQuery = await FirebaseFirestore.instance
           .collection('contracts')
           .doc(widget.contractId)
-          .collection('waterReadings')
-          .where('timestamp', isGreaterThanOrEqualTo: startOfMonth)
-          .where('timestamp', isLessThanOrEqualTo: endOfMonth)
-          .orderBy('timestamp', descending: true)
+          .collection('payments')
+          .where('month', isEqualTo: formattedMonth)
           .limit(1)
           .get();
 
-      const int maxReading = 9999;
-
-      if (waterSnap.docs.isNotEmpty) {
-        final water = waterSnap.docs.first.data();
-        final oldReadingRaw = water['oldReading'];
-        final newReadingRaw = water['newReading'];
-
-        final oldReading = oldReadingRaw != null ? (oldReadingRaw as num).toInt() : 0;
-        final newReading = newReadingRaw != null ? (newReadingRaw as num).toInt() : 0;
-
-        int usage = 0;
-        if (newReading >= oldReading) {
-          usage = newReading - oldReading;
-        } else {
-          usage = (maxReading - oldReading) + newReading + 1;
-        }
-
-        waterFee = _calculateWaterFee(usage);
-        isWaterPaid = water['isPaid'] ?? true;
-      } else {
+      if (paymentQuery.docs.isEmpty) {
+        managementFee = 0;
         waterFee = 0;
+        total = 0;
+        parkingFees = [];
         isWaterPaid = true;
+        paymentStatus = 'Không có dữ liệu';
+      } else {
+        final doc = paymentQuery.docs.first;
+        final payment = doc.data();
+        debt = (payment['debt'] ?? 0) as int;
+
+        paymentDocId = doc.id;
+
+        managementFee = (payment['managementFee'] ?? 0) as int;
+        waterFee = (payment['waterFee'] ?? 0) as int;
+        total = (payment['total'] ?? 0) as int;
+
+        final parkingFee = (payment['parkingFee'] ?? 0) as int;
+        parkingFees = parkingFee > 0
+            ? [{'licensePlate': 'Xe', 'fee': parkingFee}]
+            : [];
+
+        isWaterPaid = (payment['waitingForWater'] == false);
+        paymentStatus = (payment['status'] ?? '');
       }
 
-      // Phí gửi xe
-      parkingFees.clear();
-
-      final now = DateTime.now();
-
-      final parkingSnap = await FirebaseFirestore.instance
-          .collection('contracts')
-          .doc(widget.contractId)
-          .collection('parkingRegistrations')
-          .where('registeredAt', isLessThanOrEqualTo: endOfMonth)
-          .get();
-
-      for (var doc in parkingSnap.docs) {
-        final data = doc.data();
-        final type = data['vehicleType'];
-        final license = data['licensePlate'];
-        final registeredAt = (data['registeredAt'] as Timestamp).toDate();
-        final canceledAt = data['canceledAt'] != null
-            ? (data['canceledAt'] as Timestamp).toDate()
-            : null;
-
-        // Loại xe đã huỷ trước tháng đang xét
-        if (canceledAt != null && canceledAt.isBefore(startOfMonth)) {
-          continue;
-        }
-
-        // Xác định khoảng thời gian có hiệu lực trong tháng được chọn
-        final effectiveStart = registeredAt.isBefore(startOfMonth) ? startOfMonth : registeredAt;
-        final effectiveEnd = (canceledAt == null || canceledAt.isAfter(endOfMonth)) ? endOfMonth : canceledAt;
-
-        // Nếu không có ngày hiệu lực trong tháng thì bỏ qua
-        if (effectiveEnd.isBefore(effectiveStart)) continue;
-
-        // Lấy phí theo ngày bắt đầu hiệu lực
-        final feeData = await getFeeForDate(
-          feeHistoryCollection: FirebaseFirestore.instance
-              .collection('services')
-              .doc('parking')
-              .collection('vehicleTypes')
-              .doc(type)
-              .collection('feeHistory'),
-          date: effectiveStart,
-        );
-
-        if (feeData == null) continue;
-
-        final monthlyFeeRaw = feeData['fee'] ?? 0;
-        final monthlyFee = monthlyFeeRaw is num ? monthlyFeeRaw.toDouble() : 0.0;
-
-        final totalDaysInMonth = (endOfMonth.difference(startOfMonth).inDays + 1).toDouble();
-
-        // Tính số ngày thực tế đã trôi qua tính từ effectiveStart đến hôm nay (hoặc endOfMonth nếu hôm nay lớn hơn)
-        final lastChargeableDay = now.isBefore(endOfMonth) ? now : endOfMonth;
-
-        // Tính activeDays = số ngày từ effectiveStart đến lastChargeableDay, nếu < 0 thì = 0
-        int activeDays = lastChargeableDay.difference(effectiveStart).inDays + 1;
-        if (activeDays < 0) activeDays = 0;
-
-        // Nếu bạn muốn phí = 0 khi mới ngày đầu tháng (ví dụ hôm nay là 1/6), có thể:
-        if (now.day == 1) {
-          activeDays = 0;
-        }
-
-        final fee = ((monthlyFee / totalDaysInMonth) * activeDays).round();
-        parkingFees.add({'licensePlate': license, 'fee': fee});
-
-        print('===== XE =====');
-        print('Biển số: $license');
-        print('Loại: $type');
-        print('registeredAt: $registeredAt');
-        print('canceledAt: $canceledAt');
-        print('effectiveStart: $effectiveStart');
-        print('effectiveEnd: $effectiveEnd');
-        print('activeDays: $activeDays');
-        print('monthlyFee: $monthlyFee');
-        print('Phí tính: $fee');
-      }
-
-      total = managementFee + waterFee + parkingFees.fold(0, (sum, p) => sum + (p['fee'] as int));
       setState(() => loading = false);
     } catch (e) {
-      print('Lỗi khi tải dữ liệu thanh toán: $e');
+      print('❌ Lỗi khi tải dữ liệu thanh toán: $e');
       setState(() => loading = false);
     }
   }
@@ -269,17 +206,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
               _feeRow('Phí quản lý', managementFee),
               _feeRow('Phí nước', waterFee, isPaid: isWaterPaid),
               for (var p in parkingFees)
-                _feeRow('Gửi xe (${p['licensePlate']})', p['fee']),
+                _feeRow('Gửi xe', p['fee']),
               const Divider(),
               _feeRow('Tổng cộng', total, bold: true),
+              if (debt > 0)
+                _feeRow1('Công nợ', debt),
               SizedBox(height: 20.h),
-              if (!isWaterPaid)
-                Center(child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Xử lý thanh toán hoặc cập nhật trạng thái
-                  },
-                  child: Text('Thanh toán ngay',style: TextStyle(fontSize: 15.sp)),
-                ),)
+              if (paymentStatus != 'Đã thanh toán' && paymentStatus != 'Đã thanh toán (chưa kiểm tra)' && paymentDocId != null)
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await FirebaseFirestore.instance
+                          .collection("contracts")
+                          .doc(widget.contractId)
+                          .collection("payments")
+                          .doc(paymentDocId)
+                          .update({
+                        'status': 'Đã thanh toán (chưa kiểm tra)',
+                      });
+                      // Refresh lại sau khi cập nhật
+                      await loadPaymentData();
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Đã cập nhật trạng thái thanh toán, vui lòng chờ kiểm tra"),backgroundColor: Colors.green,),
+                      );
+                    },
+                    child: Text('Thanh toán ngay', style: TextStyle(fontSize: 15.sp)),
+                  ),
+                ),
             ],
           ),
         ),

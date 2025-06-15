@@ -82,7 +82,7 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
       try {
         final callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToOne');
         await callable.call({
-          'fcmTokens': fcmTokens,
+          'tokens': fcmTokens, // ✅ đúng key 'tokens'
           'title': "Yêu cầu cập nhật dịch vụ",
           'body': "Đã được duyệt: $type.",
         });
@@ -91,7 +91,13 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
       }
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Đã duyệt"),backgroundColor: Colors.green,));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Đã duyệt"),
+        backgroundColor: Colors.green,
+      ),
+    );
+
     _loadServicesWithCompanyInfo();
   }
 
@@ -117,7 +123,7 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
       try {
         final callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToOne');
         await callable.call({
-          'fcmTokens': fcmTokens,
+          'tokens': fcmTokens,
           'title': "Yêu cầu cập nhật dịch vụ",
           'body': "Từ chối duyệt: $type.",
         });
@@ -126,7 +132,13 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
       }
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Đã từ chối duyệt"),backgroundColor: Colors.red));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Đã từ chối duyệt"),
+        backgroundColor: Colors.red,
+      ),
+    );
+
     _loadServicesWithCompanyInfo();
   }
 
