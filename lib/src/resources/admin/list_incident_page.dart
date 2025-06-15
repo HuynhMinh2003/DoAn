@@ -178,7 +178,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
             style: TextStyle(
               fontFamily: "Oswald",
               fontWeight: FontWeight.bold,
-              fontSize: 7.sp,
+              fontSize: 8.sp,
               color: Colors.blueAccent,
             ),
           ),

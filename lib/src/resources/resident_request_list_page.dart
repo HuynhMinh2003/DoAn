@@ -78,10 +78,8 @@ class _ResidentRequestListPageState extends State<ResidentRequestListPage> {
           ? 'Yêu cầu dịch vụ "${data['serviceName']}" của bạn đã được chấp nhận.'
           : 'Yêu cầu dịch vụ "${data['serviceName']}" của bạn đã bị từ chối.';
 
-      // Gửi notification đồng thời
-      await Future.wait(
-          tokens.map((token) => _sendNotification(title, body, token.toString()))
-      );
+      // ✅ Gửi 1 lần cho tất cả tokens
+      await _sendNotificationToMany(title, body, tokens.cast<String>());
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -100,24 +98,26 @@ class _ResidentRequestListPageState extends State<ResidentRequestListPage> {
     }
   }
 
-  Future<void> _sendNotification(String title, String body, String token) async {
+  Future<void> _sendNotificationToMany(String title, String body, List<String> tokens) async {
     try {
       final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToOne');
       final result = await callable.call({
         'title': title,
         'body': body,
-        'token': token,
+        'tokens': tokens,
       });
 
-      // Vì server trả về { success: true, messageId: ... }
       final data = result.data as Map<String, dynamic>;
       if (data['success'] == true) {
-        print('Gửi thông báo thành công, messageId: ${data['messageId']}');
+        print('Đã gửi thông báo đến ${tokens.length} thiết bị');
+        if ((data['failedTokens'] as List).isNotEmpty) {
+          print('Các token lỗi: ${data['failedTokens']}');
+        }
       } else {
-        print('Gửi thông báo thất bại, data trả về: $data');
+        print('Gửi thông báo thất bại: $data');
       }
     } catch (e) {
-      print('Lỗi khi gửi thông báo: $e');
+      print('Lỗi khi gửi thông báo đến nhiều tokens: $e');
     }
   }
 
