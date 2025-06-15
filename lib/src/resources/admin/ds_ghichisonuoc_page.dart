@@ -9,17 +9,16 @@ import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-class PaymentPage extends StatefulWidget {
-  const PaymentPage({super.key});
+class ReadCSNPage extends StatefulWidget {
+  const ReadCSNPage({super.key});
 
   @override
-  State<PaymentPage> createState() => _PaymentPageState();
+  State<ReadCSNPage> createState() => _ReadCSNPageState();
 }
 
-class _PaymentPageState extends State<PaymentPage> {
+class _ReadCSNPageState extends State<ReadCSNPage> {
   List<Apartment> allApartments = [];
   List<Apartment> filteredApartments = [];
 
@@ -29,12 +28,6 @@ class _PaymentPageState extends State<PaymentPage> {
   String? selectedContractStatus;
 
   Timer? _debounce;
-
-  String formatCurrency(dynamic amount) {
-    if (amount == null) return "0 đ";
-    final formatter = NumberFormat("#,###", "vi_VN");
-    return "${formatter.format(amount)} đ";
-  }
 
   late ContractNotifier contractNotifier;
 
@@ -217,7 +210,7 @@ class _PaymentPageState extends State<PaymentPage> {
     }
   }
 
-  Future<void> showApartmentContractInfoDialog(
+  Future<void> showWaterReadingDialog(
       BuildContext context,
       Apartment apartment,
       Contract contract,
@@ -256,17 +249,17 @@ class _PaymentPageState extends State<PaymentPage> {
       final contractDoc = contractQuery.docs.first;
       final contract = Contract.fromMap(contractDoc.data(), contractDoc.id, []);
 
-      final paymentsSnap = await FirebaseFirestore.instance
+      final waterSnap = await FirebaseFirestore.instance
           .collection("contracts")
           .doc(contract.contractId)
-          .collection("payments")
-          .orderBy("month", descending: true)
+          .collection("waterReadings")
+          .orderBy("timestamp", descending: true)
           .limit(1)
           .get();
 
-      Map<String, dynamic>? latestPayment;
-      if (paymentsSnap.docs.isNotEmpty) {
-        latestPayment = paymentsSnap.docs.first.data();
+      Map<String, dynamic>? latestReading;
+      if (waterSnap.docs.isNotEmpty) {
+        latestReading = waterSnap.docs.first.data();
       }
 
       showDialog(
@@ -275,12 +268,12 @@ class _PaymentPageState extends State<PaymentPage> {
         builder: (_) => AlertDialog(
           title: Center(
             child: Text(
-              "Hóa đơn hiện tại",
+              "Chỉ số nước mới nhất",
               style: TextStyle(
-                  fontSize: 7.sp,
-                  fontFamily: "Oswald",
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blueAccent
+                fontSize: 7.sp,
+                fontFamily: "Oswald",
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent,
               ),
             ),
           ),
@@ -288,172 +281,69 @@ class _PaymentPageState extends State<PaymentPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (latestPayment != null) ...[
+                if (latestReading != null) ...[
                   Divider(),
-                  Text(
-                    "${contract.building} / Phòng ${contract.apartmentName}",
-                    style: TextStyle(fontSize: 4.sp),
-                  ),
+                  Text("${contract.building} / Phòng ${contract.apartmentName}", style: TextStyle(fontSize: 4.sp)),
                   SizedBox(height: 10.h),
-                  Text(
-                    "Người đại diện: ${contract.representative?['fullName'] ?? 'Không có'}",
-                    style: TextStyle(fontSize: 4.sp),
-                  ),
+                  Text("Người đại diện: ${contract.representative?['fullName'] ?? 'Không có'}", style: TextStyle(fontSize: 4.sp)),
                   SizedBox(height: 10.h),
-                  Text("Tiền quản lý: ${formatCurrency(latestPayment['managementFee'])}",
-                      style: TextStyle(fontSize: 4.sp)),
-                  SizedBox(height: 10.h),
-                  Text("Tiền nước: ${formatCurrency(latestPayment['waterFee'])}",
-                      style: TextStyle(fontSize: 4.sp)),
-                  SizedBox(height: 10.h),
-                  Text("Tiền gửi xe: ${formatCurrency(latestPayment['parkingFee'])}",
-                      style: TextStyle(fontSize: 4.sp)),
 
-                  /// 👇 Hiển thị công nợ nếu > 0
-                  if ((latestPayment['debt'] ?? 0) > 0) ...[
-                    SizedBox(height: 10.h),
-                    Text("Cộng nợ tháng trước: ${formatCurrency(latestPayment['debt'])}",
-                        style: TextStyle(fontSize: 4.sp, color: Colors.orange)),
-                  ],
-
-                  SizedBox(height: 10.h),
-                  Text("Tổng: ${formatCurrency(latestPayment['total'])}",
-                      style: TextStyle(fontSize: 4.sp)),
-                  SizedBox(height: 10.h),
-                  Text("Trạng thái: ${latestPayment['status']}",
-                      style: TextStyle(fontSize: 4.sp)),
-
-                  // 👇 Nếu chưa thanh toán đủ và có debt hiện tại
-                  if (latestPayment['status'] == 'Chưa thanh toán đủ' &&
-                      (latestPayment['debt'] ?? 0) > 0)
-                    Padding(
-                      padding: EdgeInsets.only(top: 10.h),
-                      child: Text(
-                        "Còn thiếu: ${formatCurrency(latestPayment['debt'])}",
-                        style: TextStyle(fontSize: 4.sp, color: Colors.red),
+                  // 👉 Chỉ số + ảnh chia 2 cột
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// Cột bên trái: Chỉ số cũ + ảnh cũ (dọc)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Chỉ số cũ: ${latestReading['oldReading']} m³", style: TextStyle(fontSize: 4.sp)),
+                            SizedBox(height: 5.h),
+                            if (latestReading['oldImageUrl'] != null)
+                              SizedBox(
+                                height: 120,
+                                width: double.infinity,
+                                child: Image.network(
+                                  latestReading['oldImageUrl'],
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                ] else ...[
-                  Padding(
-                    padding: EdgeInsets.only(top: 20.h),
-                    child: Center(
-                      child: Text(
-                        "Chưa có dữ liệu thanh toán",
-                        style: TextStyle(fontSize: 4.sp, color: Colors.white),
+
+                      SizedBox(width: 10.w),
+
+                      /// Cột bên phải: Chỉ số mới + ảnh mới (dọc)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Chỉ số mới: ${latestReading['newReading']} m³", style: TextStyle(fontSize: 4.sp)),
+                            SizedBox(height: 5.h),
+                            if (latestReading['newImageUrl'] != null)
+                              SizedBox(
+                                height: 120,
+                                width: double.infinity,
+                                child: Image.network(
+                                  latestReading['newImageUrl'],
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ] else
+                  Text("Chưa có dữ liệu chỉ số nước", style: TextStyle(fontSize: 4.sp, color: Colors.grey)),
               ],
             ),
           ),
-
           actions: [
-            if (latestPayment != null) ...[
-              TextButton(
-                onPressed: () async {
-                  await FirebaseFirestore.instance
-                      .collection("contracts")
-                      .doc(contract.contractId)
-                      .collection("payments")
-                      .doc(paymentsSnap.docs.first.id)
-                      .update({
-                    'status': 'Đã thanh toán',
-                    'debt': 0,
-                  });
-
-                  // 👉 Cập nhật waterReadings isPaid = true tương ứng tháng
-                  await FirebaseFirestore.instance
-                      .collection("contracts")
-                      .doc(contract.contractId)
-                      .collection("waterReadings")
-                      .doc(latestPayment!['month']) // ví dụ: "05-2025"
-                      .update({'isPaid': true});
-
-                  Navigator.pop(context);
-                  Navigator.pop(context); // Đóng dialog chính
-                  onRefresh();
-                },
-                child: Text("Xác nhận đã thanh toán", style: TextStyle(fontSize: 3.5.sp)),
-              ),
-              TextButton(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) {
-                      final debtController = TextEditingController();
-                      return AlertDialog(
-                        title: Center(child: Text("Nhập số tiền còn thiếu", style: TextStyle(fontSize: 5.sp)),),
-                        content: TextField(
-                          controller: debtController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(hintText: "Nhập số tiền nợ"),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp)),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              final text = debtController.text.trim();
-                              final debt = int.tryParse(text);
-
-                              final total = latestPayment!['total'];
-                              if (text.isEmpty || debt == null || debt <= 0 || debt >= total) {
-                                showDialog(
-                                  context: context,
-                                  builder: (_) => AlertDialog(
-                                    title: Center(child: Text("Lỗi", style: TextStyle(fontSize: 5.sp)),),
-                                    content: Text(
-                                      "Vui lòng nhập số tiền nợ hợp lệ (lớn hơn 0 và nhỏ hơn tổng tiền phải thanh toán: $total đ).",
-                                      style: TextStyle(fontSize: 4.sp),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: Text("OK", style: TextStyle(fontSize: 3.5.sp)),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                return;
-                              }
-
-                              await FirebaseFirestore.instance
-                                  .collection("contracts")
-                                  .doc(contract.contractId)
-                                  .collection("payments")
-                                  .doc(paymentsSnap.docs.first.id)
-                                  .update({
-                                'status': 'Chưa thanh toán đủ',
-                                'debt': debt,
-                              });
-
-                              await FirebaseFirestore.instance
-                                  .collection("contracts")
-                                  .doc(contract.contractId)
-                                  .collection("waterReadings")
-                                  .doc(latestPayment!['month']) // ví dụ: "05-2025"
-                                  .update({'isPaid': false});
-
-                              Navigator.pop(context); // Đóng dialog nhập nợ
-                              Navigator.pop(context); // Đóng dialog chính
-                              onRefresh();
-                            },
-                            child: Text("Xác nhận", style: TextStyle(fontSize: 3.5.sp)),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                child: Text("Xác nhận thiếu", style: TextStyle(fontSize: 3.5.sp)),
-              ),
-            ],
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)),
+              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
             ),
           ],
         ),
@@ -464,8 +354,7 @@ class _PaymentPageState extends State<PaymentPage> {
         context: context,
         builder: (_) => AlertDialog(
           title: Text("Lỗi", style: TextStyle(fontSize: 6.sp)),
-          content: Text("Không thể lấy thông tin hợp đồng.",
-              style: TextStyle(fontSize: 4.sp)),
+          content: Text("Không thể lấy thông tin hợp đồng.", style: TextStyle(fontSize: 4.sp)),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -476,64 +365,31 @@ class _PaymentPageState extends State<PaymentPage> {
     }
   }
 
-  Future<void> triggerBillCalculation(String contractId) async {
-    try {
-      final result = await FirebaseFunctions.instance
-          .httpsCallable('generatePaymentNow')
-          .call({"contractId": contractId});
-      print(result.data['message']);
-    } catch (e) {
-      print('❌ Lỗi khi gọi hàm tạo bill: $e');
-    }
-  }
-
-  Future<void> showPaymentHistoryDialog(
+  Future<void> showPreviousWaterReadingsDialog(
       BuildContext context,
       String contractId,
-      DateTime startDate,
-      DateTime endDate,
       ) async {
     try {
-      final paymentsSnap = await FirebaseFirestore.instance
+      final waterReadingsSnap = await FirebaseFirestore.instance
           .collection("contracts")
           .doc(contractId)
-          .collection("payments")
-          .orderBy("month", descending: true)
+          .collection("waterReadings")
+          .orderBy("timestamp", descending: true)
           .get();
 
-      final allPayments = paymentsSnap.docs
-          .map((doc) => doc.data())
-          .where((data) {
-        final monthStr = data['month'];
-        try {
-          final parts = monthStr.split("/");
-          final month = int.parse(parts[0]);
-          final year = int.parse(parts[1]);
-          final date = DateTime(year, month);
-          return date.isAfter(startDate.subtract(const Duration(days: 1))) &&
-              date.isBefore(endDate.add(const Duration(days: 1)));
-        } catch (e) {
-          return false;
-        }
-      })
-          .toList();
+      // Bỏ qua dữ liệu mới nhất (thứ đầu tiên)
+      final previousReadings = waterReadingsSnap.docs.skip(1).toList();
 
-      if (allPayments.isEmpty) {
+      if (previousReadings.isEmpty) {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: Center(child:Text("Lịch sử thanh toán",style: TextStyle(
-                fontSize: 7.sp,
-                fontFamily: "Oswald",
-                fontWeight: FontWeight.bold,
-                color: Colors.blueAccent
-            ),),),
-            content: Text("Không có dữ liệu thanh toán trong khoảng thời gian này.",
-                style: TextStyle(fontSize: 4.sp)),
+            title: Center(child: Text("Lịch sử ghi chỉ số", style: TextStyle(color:Colors.blueAccent,fontSize: 6.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald")),),
+            content: Text("Không có dữ liệu các tháng trước.", style: TextStyle(fontSize: 4.sp)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)),
+                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
               ),
             ],
           ),
@@ -544,55 +400,52 @@ class _PaymentPageState extends State<PaymentPage> {
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: Text("Lịch sử thanh toán", style: TextStyle(
-              fontSize: 7.sp,
-              fontFamily: "Oswald",
-              fontWeight: FontWeight.bold,
-              color: Colors.blueAccent
-          ),),
+          title: Center(
+            child: Text("Chỉ số nước các tháng trước",
+                style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold, color: Colors.blue)),
+          ),
           content: SizedBox(
             width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Column(
-                children: allPayments.map((payment) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Divider(),
-                      Text("Tháng ${payment['month']}", style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
-                      Text("  ▸ Tiền quản lý: ${payment['managementFee']} đ", style: TextStyle(fontSize: 3.5.sp)),
-                      Text("  ▸ Tiền nước: ${payment['waterFee']} đ", style: TextStyle(fontSize: 3.5.sp)),
-                      Text("  ▸ Tiền gửi xe: ${payment['parkingFee']} đ", style: TextStyle(fontSize: 3.5.sp)),
-                      Text("  ▸ Tổng: ${payment['total']} đ", style: TextStyle(fontSize: 3.5.sp)),
-                      Text("  ▸ Trạng thái: ${payment['status']}", style: TextStyle(fontSize: 3.5.sp)),
-                      if (payment['status'] == 'Chưa thanh toán đủ' && payment['debt'] != null)
-                        Text("  ▸ Còn thiếu: ${payment['debt']} đ", style: TextStyle(fontSize: 3.5.sp, color: Colors.red)),
-                    ],
-                  );
-                }).toList(),
-              ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: previousReadings.length,
+              separatorBuilder: (_, __) => Divider(),
+              itemBuilder: (_, index) {
+                final data = previousReadings[index].data();
+                final month = data['month'] ?? 'Không rõ';
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Tháng: $month", style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 5.h),
+                    Text("Chỉ số cũ: ${data['oldReading']} m³", style: TextStyle(fontSize: 4.sp)),
+                    Text("Chỉ số mới: ${data['newReading']} m³", style: TextStyle(fontSize: 4.sp)),
+                    Text("Trạng thái thanh toán: ${data['isPaid'] == true ? 'Đã thanh toán' : 'Chưa thanh toán'}",
+                        style: TextStyle(fontSize: 4.sp, color: data['isPaid'] == true ? Colors.green : Colors.red)),
+                  ],
+                );
+              },
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)),
+              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
             ),
           ],
         ),
       );
     } catch (e) {
-      print("❌ Lỗi khi lấy lịch sử thanh toán: $e");
+      print("❌ Lỗi khi lấy dữ liệu các tháng trước: $e");
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: Text("Lỗi", style: TextStyle(fontSize: 5.sp)),
-          content: Text("Không thể lấy lịch sử thanh toán.", style: TextStyle(fontSize: 4.sp)),
+          title: Text("Lỗi", style: TextStyle(fontSize: 6.sp)),
+          content: Text("Không thể lấy dữ liệu các tháng trước.", style: TextStyle(fontSize: 4.sp)),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
-            ),
+                onPressed: () => Navigator.pop(context),
+                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)))
           ],
         ),
       );
@@ -692,7 +545,7 @@ class _PaymentPageState extends State<PaymentPage> {
                             Flexible(
                               flex: 1,
                               child: Text(
-                                "Quản lý thanh toán",
+                                "Danh sách chỉ số nước",
                                 style: TextStyle(
                                   fontFamily: "Oswald",
                                   fontWeight: FontWeight.w700,
@@ -719,39 +572,7 @@ class _PaymentPageState extends State<PaymentPage> {
                                 onChanged: _onSearchChanged,
                               ),
                             ),
-                            Flexible(
-                              flex: 1,
-                              child: SizedBox(
-                                height: 55.h,
-                                width: 40.w,
-                                child: ElevatedButton(
-                                  onPressed: () => triggerBillCalculation("hSBmglQ4wkpD7OKXjE0J"),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                    secondaryColor,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                      BorderRadius.circular(30.r),
-                                    ),
-                                    elevation: 4,
-                                    shadowColor: Colors.black45,
-                                    alignment: Alignment.center,
-                                    padding: EdgeInsets.zero,
-                                  ),
-                                  child: Text(
-                                    'Tính hóa đơn',
-                                    style: TextStyle(
-                                        fontSize: 4.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 5.w,
-                            )
+                            SizedBox(width:5.w)
                           ],
                         ),
                         SizedBox(height: 20.h),
@@ -903,8 +724,9 @@ class _PaymentPageState extends State<PaymentPage> {
                                                 DataCell(
                                                   Row(
                                                     children: [
+                                                      /// Nút xem thông tin hợp đồng
                                                       IconButton(
-                                                        tooltip: 'Thông tin hợp đồng',
+                                                        tooltip: 'Thông tin chỉ số nước',
                                                         icon: Icon(
                                                           Icons.info_outline,
                                                           color: (isRented && hasContract) ? Colors.white : Colors.grey,
@@ -929,7 +751,7 @@ class _PaymentPageState extends State<PaymentPage> {
                                                               [],
                                                             );
 
-                                                            await showApartmentContractInfoDialog(
+                                                            await showWaterReadingDialog(
                                                               context,
                                                               apartment,
                                                               contract,
@@ -943,16 +765,16 @@ class _PaymentPageState extends State<PaymentPage> {
                                                         }
                                                             : null,
                                                       ),
+
+                                                      /// Nút xem lịch sử chỉ số nước
                                                       IconButton(
-                                                        tooltip: 'Lịch sử thanh toán',
+                                                        tooltip: 'Lịch sử nước',
                                                         icon: Icon(
                                                           Icons.history,
                                                           color: (isRented && hasContract) ? Colors.white : Colors.grey,
                                                         ),
                                                         onPressed: (isRented && hasContract)
                                                             ? () async {
-                                                          if (_isDialogShowing) return;
-                                                          _isDialogShowing = true;
                                                           try {
                                                             final query = await FirebaseFirestore.instance
                                                                 .collection('contracts')
@@ -963,22 +785,11 @@ class _PaymentPageState extends State<PaymentPage> {
 
                                                             if (query.docs.isEmpty) return;
 
-                                                            final contract = Contract.fromMap(
-                                                              query.docs.first.data(),
-                                                              query.docs.first.id,
-                                                              [],
-                                                            );
+                                                            final contractId = query.docs.first.id;
 
-                                                            await showPaymentHistoryDialog(
-                                                              context,
-                                                              contract.contractId!,
-                                                              contract.startDate,
-                                                              contract.endDate!,
-                                                            );
+                                                            await showPreviousWaterReadingsDialog(context, contractId);
                                                           } catch (e) {
-                                                            print('❌ Lỗi show history: $e');
-                                                          } finally {
-                                                            _isDialogShowing = false;
+                                                            print('❌ Lỗi xem lịch sử nước: $e');
                                                           }
                                                         }
                                                             : null,

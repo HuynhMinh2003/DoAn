@@ -1,5 +1,4 @@
 import 'package:do_an/custom_paginated_table.dart';
-import 'package:do_an/src/models/company_info.dart';
 import 'package:do_an/src/models/information.dart';
 import 'package:flutter/foundation.dart';
 import 'package:do_an/src/blocs/auth_bloc.dart';
@@ -39,9 +38,8 @@ class _InfoListPageState extends State<InfoListPage> {
   List<Information> paginatedInfos = [];
   List<int> pageNumbers = [];
 
-  bool _isEditCompanyDialogShowing = false;
-  bool _isDeleteCompanyDialogShowing = false;
-  bool _isViewCompanyDialogShowing = false;
+  bool _isEditInfoDialogShowing = false;
+  bool _isDeleteInfoDialogShowing = false;
 
   void updatePaginatedCompanies() {
     setState(() {
@@ -261,151 +259,86 @@ class _InfoListPageState extends State<InfoListPage> {
     );
   }
 
-  Future<void> showDeleteCompanyDialog(BuildContext context, CompanyInfo company, VoidCallback onRefresh) async {
+  Future<void> showDeleteIncidentDialog(BuildContext context, Information info, VoidCallback onRefresh) async {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Xác nhận xóa", style: TextStyle(fontSize: 7.sp,fontFamily: "Oswald",fontWeight: FontWeight.bold),),
-          content: Text("Bạn có chắc chắn muốn xóa công ty \"${company.name}\" không?", style: TextStyle(fontSize: 4.sp)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context), // Đóng hộp thoại
-              child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
-            ),
-            TextButton(
-              onPressed: () async {
-                LoadingDialog.showLoadingDialog(context, "Đang tải ...");
-                try {
-                  await FirebaseFirestore.instance.collection('companies').doc(company.companyId).update({
-                    'isExit': true,
-                    'leaveAt': Timestamp.now(),
-                  });
-
-                  Navigator.pop(context);
-                  onRefresh();
-                } catch (e) {
-                  print("Error during deletion: $e");
-                  LoadingDialog.hideLoadingDialog(context); // Đóng loading dialog nếu xảy ra lỗi
-                }
-              },
-              child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> showViewCompanyDialog(BuildContext context, CompanyInfo company, VoidCallback onRefresh) async{
-    showDialog(
-      context: context,
-      barrierDismissible: true,
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           title: Text(
-            "Thông tin công ty",
+            "Xác nhận xóa thông báo",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: "Oswald",
               fontWeight: FontWeight.bold,
               fontSize: 7.sp,
-              color: Colors.blueAccent,
+              color: Colors.redAccent,
             ),
           ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Container(
-                      width: 140.r,
-                      height: 140.r,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300, width: 0.5.w),
-                      ),
-                      child: company.imageUrl.isNotEmpty
-                          ? Image.network(
-                        company.imageUrl,
-                        fit: BoxFit.cover,
-                      )
-                          : Image.asset(
-                        'assets/default_avatar.png',
-                        fit: BoxFit.cover,
-                      ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (info.imageUrl != null && info.imageUrl!.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Container(
+                    width: 140.r,
+                    height: 140.r,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300, width: 0.5.w),
                     ),
+                    child: Image.network(info.imageUrl!, fit: BoxFit.cover),
                   ),
                 ),
-                SizedBox(height: 20.h),
-                Text(
-                  "Tên công ty: ${company.name}",
-                  style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  "Email: ${company.email}",
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  "Số điện thoại: ${company.phone}",
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  "Địa chỉ: ${company.address}",
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  "Loại dịch vụ: ${company.type}",
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  "Mô tả: ${company.description}",
-                  style: TextStyle(fontSize: 3.5.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  'Ngày nghỉ công việc: ${company.leaveAt != null ? DateFormat('dd/MM/yyyy – HH:mm').format(company.leaveAt!.toDate()) : "Chưa có"}',
-                ),
-
-              ],
-            ),
-          ),
-          actions: [
-            if (company.isExit)
-              TextButton(
-                onPressed: () async {
-                  LoadingDialog.showLoadingDialog(context, "Đang tải...");
-                  try {
-                    await FirebaseFirestore.instance.collection('companies').doc(company.companyId).update({
-                      'isExit': false,
-                      'leaveAt': null,
-                      'lastUpdated': Timestamp.now(),
-                    });
-                    LoadingDialog.hideLoadingDialog(context);
-                    Navigator.pop(context);
-                    onRefresh(); // Cập nhật lại UI
-                  } catch (e) {
-                    LoadingDialog.hideLoadingDialog(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Lỗi khi khôi phục tài khoản.", style: TextStyle(fontSize: 4.sp))),
-                    );
-                  }
-                },
-                child: Text("Khôi phục tài khoản", style: TextStyle(fontSize: 4.sp, color: Colors.green)),
-              ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "Đóng",
+              SizedBox(height: 15.h),
+              Text(
+                "Bạn có chắc chắn muốn xóa thông báo này không?",
+                textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 4.sp),
               ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), // Đóng dialog
+              child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
+            ),
+            TextButton(
+              onPressed: () async {
+                LoadingDialog.showLoadingDialog(context, "Đang xóa...");
+                try {
+                  final collections = [
+                    "information_residents",
+                    "information_staffs",
+                    "information_companies",
+                  ];
+
+                  bool deleted = false;
+
+                  for (final collection in collections) {
+                    final docRef = FirebaseFirestore.instance.collection(collection).doc(info.id);
+                    final docSnap = await docRef.get();
+
+                    if (docSnap.exists) {
+                      await docRef.delete();
+                      deleted = true;
+                      break;
+                    }
+                  }
+
+                  if (!deleted) {
+                    print("❗ Không tìm thấy tài liệu để xóa.");
+                  }
+
+                  Navigator.pop(context); // Đóng dialog xác nhận
+                  onRefresh(); // Làm mới lại danh sách
+                } catch (e) {
+                  print("❌ Lỗi khi xóa thông báo: $e");
+                } finally {
+                  LoadingDialog.hideLoadingDialog(context); // Đóng loading dialog
+                }
+              },
+              child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
             ),
           ],
         );
@@ -430,7 +363,7 @@ class _InfoListPageState extends State<InfoListPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Flexible(flex:2,child:  Text(
+                            Flexible(flex:4,child:  Text(
                               'Danh sách thông báo',
                               style: TextStyle(
                                 fontFamily: "Oswald",
@@ -438,6 +371,7 @@ class _InfoListPageState extends State<InfoListPage> {
                                 fontSize: 7.sp,
                               ),
                             ),),
+                            SizedBox(width: 5.w,),
                             Flexible(flex:1,child: SizedBox(height: 55.h,width: 40.w,child: ElevatedButton(
                               onPressed: () => exportInfoToExcel(_infoList),
                               style: ElevatedButton.styleFrom(
@@ -461,7 +395,9 @@ class _InfoListPageState extends State<InfoListPage> {
                                 ],
                               ),
                             )),),
-                            SizedBox(width:5.w)
+
+                            SizedBox(width: 1.w,),
+
                           ],),
                         SizedBox(height: 10.h),
                         Row(
@@ -542,24 +478,24 @@ class _InfoListPageState extends State<InfoListPage> {
                                                       IconButton(
                                                         icon: Icon(Icons.edit, color: Colors.blue),
                                                         onPressed: () async {
-                                                          if (_isEditCompanyDialogShowing) return;
-                                                          _isEditCompanyDialogShowing = true;
+                                                          if (_isEditInfoDialogShowing) return;
+                                                          _isEditInfoDialogShowing = true;
                                                           try {
                                                             await showEditIncidentDialog(context, info, _fetchInfo);
                                                           } finally {
-                                                            _isEditCompanyDialogShowing = false;
+                                                            _isEditInfoDialogShowing = false;
                                                           }
                                                         },
                                                       ),
                                                       IconButton(
                                                         icon: Icon(Icons.delete, color: Colors.red),
                                                         onPressed: () async {
-                                                          if (_isDeleteCompanyDialogShowing) return;
-                                                          _isDeleteCompanyDialogShowing = true;
+                                                          if (_isDeleteInfoDialogShowing) return;
+                                                          _isDeleteInfoDialogShowing = true;
                                                           try {
-                                                            // await showDeleteCompanyDialog(context, company, _fetchInfo);
+                                                            await showDeleteIncidentDialog(context, info, _fetchInfo);
                                                           } finally {
-                                                            _isDeleteCompanyDialogShowing = false;
+                                                            _isDeleteInfoDialogShowing = false;
                                                           }
                                                         },
                                                       ),
