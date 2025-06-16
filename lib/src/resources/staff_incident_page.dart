@@ -215,7 +215,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                     }
                   },
                   icon: const Icon(Icons.image),
-                  label: Text("Chọn ảnh minh chứng",style: TextStyle(fontSize: 15.sp),),
+                  label: Text("Chọn ảnh minh chứng",style: TextStyle(fontSize: 15.sp,color: Colors.black),),
                 ),
                 if (_proofImageFile != null)
                   Padding(
@@ -235,7 +235,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                 Navigator.pop(context);
                 _proofImageFile = null;
               },
-              child: Text("Hủy",style: TextStyle(fontSize: 15.sp)),
+              child: Text("Hủy",style: TextStyle(fontSize: 15.sp,color: Colors.black)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -251,7 +251,10 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                 Navigator.pop(context);
                 await _rejectIncident(incident);
               },
-              child: Text("Từ chối",style: TextStyle(fontSize: 15.sp)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              child: Text("Từ chối",style: TextStyle(fontSize: 15.sp,color: Colors.white)),
             ),
           ],
         ),
@@ -282,7 +285,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                     }
                   },
                   icon: const Icon(Icons.upload),
-                  label: Text("Chọn ảnh minh chứng",style: TextStyle(fontSize: 15.sp)),
+                  label: Text("Chọn ảnh minh chứng",style: TextStyle(fontSize: 15.sp,color: Colors.black)),
                 ),
                 if (selectedImage != null)
                   Padding(
@@ -294,7 +297,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Hủy",style: TextStyle(fontSize: 15.sp)),
+                child: Text("Hủy",style: TextStyle(fontSize: 15.sp,color: Colors.black)),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -312,7 +315,10 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                   Navigator.pop(context);
                   await _handleIncident(incident);
                 },
-                child: Text("Xác nhận",style: TextStyle(fontSize: 15.sp)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                ),
+                child: Text("Xác nhận",style: TextStyle(fontSize: 15.sp, color: Colors.white)),
               ),
             ],
           ),
@@ -408,7 +414,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.bold,
-                              fontFamily: "Oswald",
+                              color: Colors.black
                             ),
                           ),
                         ),
@@ -426,7 +432,6 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                               color: Colors.white,
                               fontSize: 13.sp,
                               fontWeight: FontWeight.bold,
-                              fontFamily: "Oswald",
                             ),
                           ),
                         ),

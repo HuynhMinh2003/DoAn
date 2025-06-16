@@ -77,7 +77,7 @@ class ServiceUpdateListPage extends StatelessWidget {
           Builder(
             builder: (dialogContext) => ElevatedButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: Text('Đóng', style: TextStyle(fontSize: 15.sp)),
+              child: Text('Đóng', style: TextStyle(fontSize: 15.sp,color: Colors.black)),
             ),
           ),
         ],

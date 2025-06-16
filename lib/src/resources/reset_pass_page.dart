@@ -145,7 +145,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldMessengerKey,
-      appBar: AppBar(title: Text('      Đổi mật khẩu', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: bgColor,),
+      appBar: AppBar(title: Text('Đổi mật khẩu', style: TextStyle(color:Colors.white,fontSize: 25.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),            backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
 
       body: Padding(
         padding: EdgeInsets.symmetric(vertical: 10.h,horizontal: 20.w),
@@ -159,7 +160,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               decoration: InputDecoration(
                 labelText: 'Mật khẩu cũ',
                 labelStyle: TextStyle(
-                    fontSize: 5.sp,color: Colors.white),
+                    fontSize: 15.sp,color: Colors.black87),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -170,7 +171,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               decoration: InputDecoration(
                 labelText: 'Mật khẩu mới',
                 labelStyle: TextStyle(
-                    fontSize: 5.sp,color: Colors.white),
+                    fontSize: 15.sp,color: Colors.black87),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -181,19 +182,17 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               decoration: InputDecoration(
                 labelText: 'Xác nhận mật khẩu mới',
                 labelStyle: TextStyle(
-                    fontSize: 5.sp,color: Colors.white),
+                    fontSize: 15.sp,color: Colors.black87),
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 80.h),
+            SizedBox(height: 40.h),
             SizedBox(
-              width: 70.w,
-              height: 60.h,
+              width: 140.w,
+              height: 40.h,
               child: ElevatedButton(
                 onPressed: _changePassword,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  secondaryColor,
                   shape: RoundedRectangleBorder(
                     borderRadius:
                     BorderRadius.circular(30.r),
@@ -204,7 +203,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   padding: EdgeInsets.zero,
                 ),
                 child: Text('Đổi mật khẩu',style: TextStyle(
-                    fontSize: 5.sp,color: Colors.white),),
+                    fontSize: 15.sp),),
               ),
             )
           ],

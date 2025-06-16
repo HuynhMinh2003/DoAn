@@ -311,8 +311,7 @@ class _CSNInfoPageState extends BaseStaffInfoScreen<CSNInfoPage> {
                                   child: Text(
                                     "Đổi mật khẩu",
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15.sp),
+                                        fontSize: 15.sp,color: Colors.black),
                                   ),
                                 ),
                                 ElevatedButton(
@@ -322,8 +321,7 @@ class _CSNInfoPageState extends BaseStaffInfoScreen<CSNInfoPage> {
                                   child: Text(
                                     "Sửa thông tin",
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15.sp),
+                                        fontSize: 15.sp,color: Colors.black),
                                   ),
                                 ),
                                 SizedBox(
