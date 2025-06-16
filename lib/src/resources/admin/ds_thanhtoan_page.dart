@@ -309,13 +309,6 @@ class _PaymentPageState extends State<PaymentPage> {
                   Text("Tiền gửi xe: ${formatCurrency(latestPayment['parkingFee'])}",
                       style: TextStyle(fontSize: 4.sp)),
 
-                  /// 👇 Hiển thị công nợ nếu > 0
-                  if ((latestPayment['debt'] ?? 0) > 0) ...[
-                    SizedBox(height: 10.h),
-                    Text("Cộng nợ tháng trước: ${formatCurrency(latestPayment['debt'])}",
-                        style: TextStyle(fontSize: 4.sp, color: Colors.orange)),
-                  ],
-
                   SizedBox(height: 10.h),
                   Text("Tổng: ${formatCurrency(latestPayment['total'])}",
                       style: TextStyle(fontSize: 4.sp)),
@@ -323,16 +316,22 @@ class _PaymentPageState extends State<PaymentPage> {
                   Text("Trạng thái: ${latestPayment['status']}",
                       style: TextStyle(fontSize: 4.sp)),
 
-                  // 👇 Nếu chưa thanh toán đủ và có debt hiện tại
-                  if (latestPayment['status'] == 'Chưa thanh toán đủ' &&
-                      (latestPayment['debt'] ?? 0) > 0)
+                  if ((latestPayment['status'] == 'Chưa thanh toán' && (latestPayment['debt'] ?? 0) > 0))
+                    Padding(
+                      padding: EdgeInsets.only(top: 10.h),
+                      child: Text(
+                        "Công nợ: ${formatCurrency(latestPayment['debt'])}",
+                        style: TextStyle(fontSize: 4.sp, color: Colors.red),
+                      ),
+                    )
+                  else if ((latestPayment['status'] == 'Chưa thanh toán đủ' && (latestPayment['debt'] ?? 0) > 0))
                     Padding(
                       padding: EdgeInsets.only(top: 10.h),
                       child: Text(
                         "Còn thiếu: ${formatCurrency(latestPayment['debt'])}",
                         style: TextStyle(fontSize: 4.sp, color: Colors.red),
                       ),
-                    ),
+                    )
                 ] else ...[
                   Padding(
                     padding: EdgeInsets.only(top: 20.h),
@@ -352,27 +351,48 @@ class _PaymentPageState extends State<PaymentPage> {
             if (latestPayment != null) ...[
               TextButton(
                 onPressed: () async {
-                  await FirebaseFirestore.instance
-                      .collection("contracts")
-                      .doc(contract.contractId)
-                      .collection("payments")
-                      .doc(paymentsSnap.docs.first.id)
-                      .update({
-                    'status': 'Đã thanh toán',
-                    'debt': 0,
-                  });
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: Center(child: Text("Xác nhận", style: TextStyle(fontSize: 7.sp,fontWeight: FontWeight.bold,color: Colors.blueAccent,fontFamily: "Oswald"))),
+                      content: Text(
+                        "Bạn có chắc chắn muốn xác nhận đã thanh toán đầy đủ?",
+                        style: TextStyle(fontSize: 4.sp),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp)),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text("Xác nhận", style: TextStyle(fontSize: 3.5.sp)),
+                        ),
+                      ],
+                    ),
+                  );
 
-                  // 👉 Cập nhật waterReadings isPaid = true tương ứng tháng
-                  await FirebaseFirestore.instance
-                      .collection("contracts")
-                      .doc(contract.contractId)
-                      .collection("waterReadings")
-                      .doc(latestPayment!['month']) // ví dụ: "05-2025"
-                      .update({'isPaid': true});
+                  if (confirm == true) {
+                    await FirebaseFirestore.instance
+                        .collection("contracts")
+                        .doc(contract.contractId)
+                        .collection("payments")
+                        .doc(paymentsSnap.docs.first.id)
+                        .update({
+                      'status': 'Đã thanh toán',
+                      'debt': 0,
+                    });
 
-                  Navigator.pop(context);
-                  Navigator.pop(context); // Đóng dialog chính
-                  onRefresh();
+                    await FirebaseFirestore.instance
+                        .collection("contracts")
+                        .doc(contract.contractId)
+                        .collection("waterReadings")
+                        .doc(latestPayment!['month']) // ví dụ: "05-2025"
+                        .update({'isPaid': true});
+
+                    Navigator.pop(context); // Đóng dialog chính
+                    await showApartmentContractInfoDialog(context, apartment, contract, onRefresh);
+                  }
                 },
                 child: Text("Xác nhận đã thanh toán", style: TextStyle(fontSize: 3.5.sp)),
               ),
@@ -383,7 +403,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     builder: (_) {
                       final debtController = TextEditingController();
                       return AlertDialog(
-                        title: Center(child: Text("Nhập số tiền còn thiếu", style: TextStyle(fontSize: 5.sp)),),
+                        title: Center(child: Text("Nhập số tiền còn thiếu", style: TextStyle(fontSize: 5.sp,fontWeight: FontWeight.bold,color: Colors.blueAccent,fontFamily: "Oswald")),),
                         content: TextField(
                           controller: debtController,
                           keyboardType: TextInputType.number,
@@ -439,7 +459,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
                               Navigator.pop(context); // Đóng dialog nhập nợ
                               Navigator.pop(context); // Đóng dialog chính
-                              onRefresh();
+                              await showApartmentContractInfoDialog(context, apartment, contract, onRefresh);
                             },
                             child: Text("Xác nhận", style: TextStyle(fontSize: 3.5.sp)),
                           ),

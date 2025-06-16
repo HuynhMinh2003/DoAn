@@ -298,8 +298,7 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
                                   child: Text(
                                     "Đổi mật khẩu",
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15.sp),
+                                        fontSize: 15.sp,color: Colors.black),
                                   ),
                                 ),
                                 ElevatedButton(
@@ -309,8 +308,7 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
                                   child: Text(
                                     "Sửa thông tin",
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15.sp),
+                                        fontSize: 15.sp,color: Colors.black),
                                   ),
                                 ),
                                 SizedBox(
@@ -375,7 +373,7 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
                     const SizedBox(height: 10),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.image),
-                      label: Text('Đổi ảnh đại diện', style: TextStyle(fontSize: 15.sp)),
+                      label: Text('Đổi ảnh đại diện', style: TextStyle(fontSize: 15.sp,color: Colors.black)),
                       onPressed: () async => await imageProvider.pickImage(),
                     ),
                     const SizedBox(height: 15),
@@ -422,8 +420,8 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
                     imageProvider.deleteImage();
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Hủy'),
-                ),
+                  child: Text('Hủy', style: TextStyle(fontSize: 15.sp, color: Colors.black),
+                ),),
                 ElevatedButton(
                   onPressed: () async {
                     final phoneError = bloc.validatePhone(phoneController.text);
