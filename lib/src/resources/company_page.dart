@@ -91,7 +91,7 @@ class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Hủy', style: TextStyle(fontSize: 14.sp)),
+              child: Text('Hủy', style: TextStyle(fontSize: 14.sp,color: Colors.black)),
             ),
             ElevatedButton(
               onPressed: () async {

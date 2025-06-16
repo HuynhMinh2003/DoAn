@@ -316,8 +316,8 @@ class _KTVInfoPageState extends BaseStaffInfoScreen<KTVInfoPage> {
                                   child: Text(
                                     "Đổi mật khẩu",
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15.sp),
+                                        fontSize: 15.sp,color: Colors.black
+                                    ),
                                   ),
                                 ),
                                 ElevatedButton(
@@ -327,8 +327,7 @@ class _KTVInfoPageState extends BaseStaffInfoScreen<KTVInfoPage> {
                                   child: Text(
                                     "Sửa thông tin",
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15.sp),
+                                        fontSize: 15.sp,color: Colors.black),
                                   ),
                                 ),
                                 SizedBox(
@@ -398,7 +397,7 @@ class _KTVInfoPageState extends BaseStaffInfoScreen<KTVInfoPage> {
                     ElevatedButton.icon(
                       icon: const Icon(Icons.image),
                       label: Text('Đổi ảnh đại diện',
-                          style: TextStyle(fontSize: 15.sp)),
+                          style: TextStyle(fontSize: 15.sp,color: Colors.black)),
                       onPressed: () async => await imageProvider.pickImage(),
                     ),
                     const SizedBox(height: 15),
@@ -446,7 +445,7 @@ class _KTVInfoPageState extends BaseStaffInfoScreen<KTVInfoPage> {
                     imageProvider.deleteImage();
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Hủy'),
+                  child: const Text('Hủy',style: TextStyle(color: Colors.black),),
                 ),
                 ElevatedButton(
                   onPressed: () async {
