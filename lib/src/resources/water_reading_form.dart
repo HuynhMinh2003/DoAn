@@ -372,7 +372,7 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
                   alignment: Alignment.centerRight,
                   child: ElevatedButton.icon(
                     onPressed: _saveReading,
-                    label: Text("Lưu", style: TextStyle(fontSize: 15.sp)),
+                    label: Text("Lưu", style: TextStyle(fontSize: 15.sp,color: Colors.black)),
                   ),
                 ),
               SizedBox(height: MediaQuery.of(context).viewInsets.bottom),

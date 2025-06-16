@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/resources/base_resident_info.dart';
+import 'package:do_an/src/resources/csn_screen_page.dart';
 import 'package:do_an/src/resources/login_page.dart';
 import 'package:do_an/src/resources/payment_summary_screen_page.dart';
 import 'package:do_an/src/resources/pdf_Viewer_Screen_page.dart';
@@ -335,8 +336,20 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                                 svgPath: 'assets/images/water.svg',
                                 label: 'Chỉ số nước',
                                 onTap: isEffective ? () {
-                                  // Thêm hành động nếu cần
-                                } : null,
+                                  final contractId = residentInfo?.contractId;
+                                  if (contractId != null && contractId.isNotEmpty) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) => CSNScreen(contractId: contractId)),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Không tìm thấy hợp đồng. Vui lòng liên hệ ban quản lý.")),
+                                    );
+                                  }
+                                }
+                                    : null,
                               ),
                             ],
                           ),
@@ -519,61 +532,64 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
         required String label,
         required VoidCallback? onTap, // cho phép null
       }) {
+    final bool isEnabled = onTap != null;
+
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 100),
       tween: Tween(begin: 1.0, end: 1.0),
       builder: (context, scale, child) {
-        return GestureDetector(
-          onTapDown: (_) {
-            (context as Element).markNeedsBuild();
-          },
-          onTapUp: (_) {
-            // Không cần xử lý ở đây nữa vì đã xử lý trong InkWell.onTap
-          },
-          child: Material(
-            color: onTap == null ? Colors.grey[300] : Colors.white,
-            elevation: 3,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              onTap: () {
-                if (onTap != null) {
-                  onTap();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Tính năng này chưa có hiệu lực."),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                }
-              },
+        return Opacity(
+          opacity: isEnabled ? 1.0 : 0.95, // ✅ Mờ rất nhẹ nếu không khả dụng
+          child: GestureDetector(
+            onTapDown: (_) {
+              (context as Element).markNeedsBuild();
+            },
+            onTapUp: (_) {
+              // Không cần xử lý ở đây nữa vì đã xử lý trong InkWell.onTap
+            },
+            child: Material(
+              color: onTap == null ? Colors.grey[300] : Colors.white,
+              elevation: 3,
               borderRadius: BorderRadius.circular(12),
-              splashColor:
-              onTap == null ? Colors.transparent : Colors.blue.withOpacity(0.2),
-              highlightColor:
-              onTap == null ? Colors.transparent : Colors.blue.withOpacity(0.1),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      svgPath,
-                      width: 50,
-                      height: 50,
-                      color: onTap == null ? Colors.grey : null,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.sp,
+              child: InkWell(
+                onTap: () {
+                  if (onTap != null) {
+                    onTap();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Tính năng này chưa có hiệu lực."),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                splashColor: onTap == null ? Colors.transparent : Colors.blue.withOpacity(0.2),
+                highlightColor: onTap == null ? Colors.transparent : Colors.blue.withOpacity(0.1),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SvgPicture.asset(
+                        svgPath,
+                        width: 50,
+                        height: 50,
                         color: onTap == null ? Colors.grey : null,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.sp,
+                          color: onTap == null ? Colors.grey : null,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -583,44 +599,52 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
     );
   }
 
-
-
   Widget buildServiceCard1(
       BuildContext context, {
         required String imagePath,
         required String label,
-        required VoidCallback? onTap, // Cho phép null
+        required VoidCallback? onTap,
       }) {
+    final bool isEnabled = onTap != null;
+
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 100),
       tween: Tween(begin: 1.0, end: 1.0),
       builder: (context, scale, child) {
-        return GestureDetector(
-          onTapDown: (_) => (context as Element).markNeedsBuild(),
-          child: Material(
-            color: onTap == null ? Colors.grey[300] : Colors.white,
-            elevation: 3,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              onTap: () {
-                if (onTap != null) {
-                  onTap();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Tính năng này chưa có hiệu lực."),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                }
-              },
+        return Opacity(
+          opacity: isEnabled ? 1.0 : 0.95, // Mờ rất nhẹ nếu disable
+          child: GestureDetector(
+            onTapDown: (_) => (context as Element).markNeedsBuild(),
+            child: Material(
+              color: Colors.white, // Luôn là màu trắng
+              elevation: 3,
               borderRadius: BorderRadius.circular(12),
-              splashColor: onTap == null ? Colors.transparent : Colors.blue.withOpacity(0.2),
-              highlightColor: onTap == null ? Colors.transparent : Colors.blue.withOpacity(0.1),
-              child: SizedBox(
-                width: 110,
-                height: 110,
-                child: Padding(
+              child: InkWell(
+                onTap: () {
+                  if (isEnabled) {
+                    onTap!();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Tính năng này chưa có hiệu lực."),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                splashColor: isEnabled ? Colors.blue.withOpacity(0.2) : Colors.transparent,
+                highlightColor: isEnabled ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+                child: Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isEnabled ? Colors.transparent : Colors.grey.withOpacity(0.2),
+                      width: 1.2,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -632,8 +656,8 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,
-                          color: onTap == null ? Colors.grey : null,
-                          colorBlendMode: onTap == null ? BlendMode.saturation : null,
+                          color: null,
+                          colorBlendMode: null,
                           errorBuilder: (context, error, stackTrace) {
                             return const Icon(Icons.broken_image, size: 50);
                           },
@@ -647,13 +671,13 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                           },
                         ),
                       ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: 6.h),
                       Text(
                         label,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12.sp,
-                          color: onTap == null ? Colors.grey : null,
+                          color: Colors.black, // Luôn rõ ràng
                         ),
                         textAlign: TextAlign.center,
                         maxLines: 1,
@@ -669,7 +693,5 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
       },
     );
   }
-
-
 
 }
