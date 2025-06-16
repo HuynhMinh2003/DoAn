@@ -351,7 +351,6 @@ class _ReportPageState extends BaseResidentInfoScreen<ReportPage> {
                                       Text("Hình ảnh:", style: TextStyle(fontSize: 15.sp)),
                                       SizedBox(height: 10.h),
                                       ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
                                         child: Image.network(
                                           imageUrl,
                                           width: double.infinity,
