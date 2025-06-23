@@ -110,7 +110,7 @@ async function generatePaymentForContract(contractId, targetDate) {
       managementFee,
       waterFee,
       parkingFee: parkingTotal,
-      debt, // 👈 Thêm để lưu rõ công nợ tháng trước
+      debt,
       total,
       month: mmYYYY,
       waitingForWater,
