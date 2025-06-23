@@ -237,6 +237,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                         itemBuilder: (context, index) {
                           final incident = _pendingIncidents[index];
                           return Card(
+                            color: secondaryColor, // ← màu nền
                             margin: const EdgeInsets.all(10),
                             child: Padding(
                               padding: const EdgeInsets.all(12),
@@ -292,7 +293,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                                               onPressed: () => _openAssignDialog(incident),
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor:
-                                                secondaryColor,
+                                                bgColor,
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
                                                   BorderRadius.circular(30.r),
