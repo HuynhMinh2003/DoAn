@@ -320,7 +320,7 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
                   return TextField(
                     controller: oldController,
                     decoration: InputDecoration(
-                      labelText: "Chỉ số cũ",
+                      labelText: "Chỉ số cũ (m3)",
                       labelStyle: TextStyle(fontSize: 15.sp),
                       errorText: snapshot.data,
                     ),
@@ -343,7 +343,7 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
                   return TextField(
                     controller: newController,
                     decoration: InputDecoration(
-                      labelText: "Chỉ số mới",
+                      labelText: "Chỉ số mới (m3)",
                       labelStyle: TextStyle(fontSize: 15.sp),
                       errorText: snapshot.data,
                     ),

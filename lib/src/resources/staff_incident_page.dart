@@ -356,8 +356,20 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
         itemCount: _assignedIncidents.length,
         itemBuilder: (context, index) {
           final incident = _assignedIncidents[index];
-          return Card(
-            margin: const EdgeInsets.all(10),
+          return Container(
+            margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: Colors.white, // nền trong card
+              borderRadius: BorderRadius.circular(12.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,      // màu bóng
+                  blurRadius: 8,             // độ mờ – càng cao thì bóng càng rộng
+                  spreadRadius: 1,            // độ lan – tạo cảm giác bóng bao quanh
+                  offset: Offset(0, 0),       // offset 0 để bóng đều các phía
+                ),
+              ],
+            ),
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -408,13 +420,16 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                     children: [
                       ElevatedButton(
                         onPressed: () => _showHandleDialog(incident),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                        ),
                         child: Center(
                           child: Text(
                             "Xác nhận xử lý",
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black
+                              color: Colors.white
                             ),
                           ),
                         ),
