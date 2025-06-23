@@ -74,7 +74,7 @@ class DashboardScreen extends StatelessWidget {
                       MyFiles(),
                       SizedBox(height: defaultPadding),
                       SizedBox(
-                        height: 430.h,
+                        height: 460.h,
                         child: RecentFiles(),
                       ),
                       if (Responsive.isMobile(context))

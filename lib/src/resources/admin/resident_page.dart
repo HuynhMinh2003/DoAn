@@ -177,7 +177,7 @@ class _ResidentPageState extends State<ResidentPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Center(child: Text(
-          "Lịch sử hợp đồng",
+          "Lịch sử thuê",
           style: TextStyle(
             fontFamily: "Oswald",
             fontWeight: FontWeight.bold,
@@ -199,7 +199,6 @@ class _ResidentPageState extends State<ResidentPage> {
                   children: [
                     Divider(),
                     buildInfoRow("Tên căn hộ:", history['apartmentName']),
-                    buildInfoRow("Mã hợp đồng:", history['contractId']),
                     buildInfoRow(
                       "Ngày vào:",
                       history['joinedAt'] != null
@@ -1216,8 +1215,8 @@ class _ResidentPageState extends State<ResidentPage> {
                                                   },
                                                 ),
                                                 IconButton(
-                                                  icon: const Icon(Icons.insert_drive_file, color: Colors.green),
-                                                  tooltip: 'Xem lịch sử hợp đồng',
+                                                  icon: const Icon(Icons.access_time, color: Colors.green),
+                                                  tooltip: 'Xem lịch sử thuê ',
                                                   onPressed: () async {
                                                     if (_isHistoryDialogShowing) return;
                                                     _isHistoryDialogShowing = true;
