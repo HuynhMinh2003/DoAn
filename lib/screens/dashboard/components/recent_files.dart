@@ -41,21 +41,36 @@ class _RecentFilesState extends State<RecentFiles> {
           ),
           SizedBox(height: 16.h),
 
-          CupertinoSlidingSegmentedControl<String>(
-            groupValue: selectedTable,
-            children: {
-              'resident': _buildSegmentItem("Thông báo cư dân"),
-              'staff': _buildSegmentItem("Thông báo nhân viên"),
-              'company': _buildSegmentItem("Thông báo công ty"),
-              'parking': _buildSegmentItem("Thông báo đăng ký xe"),
-            },
-            onValueChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  selectedTable = value;
-                });
-              }
-            },
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black38,
+                  blurRadius: 6,
+                  spreadRadius: -2, // giảm lan ra mọi hướng
+                  offset: Offset(0, 1), // chỉ đổ bóng xuống
+                ),
+              ],
+            ),
+            child: CupertinoSlidingSegmentedControl<String>(
+              backgroundColor: bgColor, // màu nền control
+              thumbColor: secondaryColor,             // màu tab được chọn
+              groupValue: selectedTable,
+              children: {
+                'resident': _buildSegmentItem("Thông báo cư dân"),
+                'staff': _buildSegmentItem("Thông báo nhân viên"),
+                'company': _buildSegmentItem("Thông báo công ty"),
+                'parking': _buildSegmentItem("Thông báo đăng ký xe"),
+              },
+              onValueChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    selectedTable = value;
+                  });
+                }
+              },
+            ),
           ),
 
           SizedBox(height: 16.h),
