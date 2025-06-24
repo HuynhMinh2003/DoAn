@@ -218,10 +218,19 @@ class _ResidentPageState extends State<ResidentPage> {
           ),
         ),
         actions: [
-          TextButton(
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Colors.white),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              minimumSize: Size(80, 40),
+            ),
             onPressed: () => Navigator.pop(context),
-            child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+            child: Text(
+              "Đóng",
+              style: TextStyle(fontSize: 3.5.sp, color: Colors.white),
+            ),
           ),
+
         ],
       ),
     );
@@ -264,7 +273,7 @@ class _ResidentPageState extends State<ResidentPage> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: Text(
+          title: Center(child: Text(
             "Thông tin cư dân",
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -273,7 +282,7 @@ class _ResidentPageState extends State<ResidentPage> {
               fontSize: 7.sp,
               color: Colors.blueAccent,
             ),
-          ),
+          ),),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.max,
@@ -311,6 +320,9 @@ class _ResidentPageState extends State<ResidentPage> {
                       ? DateFormat('dd/MM/yyyy').format(resident.birthDate!)
                       : "Chưa cập nhật",
                 ),
+                buildInfoRow("CCCD:", resident.cccd),
+                buildInfoRow("Địa chỉ:", resident.address),
+                buildInfoRow("Số điện thoại:", resident.phone),
                 buildInfoRow(
                   "Lần sửa thông tin gần nhất: ",
                   resident.lastUpdated != null
@@ -318,9 +330,6 @@ class _ResidentPageState extends State<ResidentPage> {
                       .format(resident.lastUpdated!)
                       : "Chưa có",
                 ),
-                buildInfoRow("CCCD:", resident.cccd),
-                buildInfoRow("Địa chỉ:", resident.address),
-                buildInfoRow("Số điện thoại:", resident.phone),
                 if (resident.isExit)
                   buildInfoRow(
                     "Ngày rời căn hộ:",
@@ -333,10 +342,19 @@ class _ResidentPageState extends State<ResidentPage> {
             ),
           ),
           actions: [
-            TextButton(
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                minimumSize: Size(80, 40),
+              ),
               onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+              child: Text(
+                "Đóng",
+                style: TextStyle(fontSize: 3.5.sp, color: Colors.white),
+              ),
             ),
+
           ],
         );
       },
@@ -734,7 +752,12 @@ class _ResidentPageState extends State<ResidentPage> {
                       ),
                     ),
                     actions: [
-                      TextButton(
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          minimumSize: Size(90, 40),
+                        ),
                         onPressed: () async {
                           if (isEditing) {
                             validateFields();
@@ -746,80 +769,51 @@ class _ResidentPageState extends State<ResidentPage> {
                                 phoneHasError ||
                                 addressHasError) return;
 
-                            LoadingDialog.showLoadingDialog(
-                                context, "Đang tải...");
+                            LoadingDialog.showLoadingDialog(context, "Đang tải...");
                             try {
                               String? newImageUrl;
 
-                              // Xử lý cập nhật ảnh đại diện
                               if (imageProvider.webImageBytes != null) {
-                                if (resident.imageUrl != null &&
-                                    resident.imageUrl!.isNotEmpty) {
-                                  final storageRef = FirebaseStorage.instance
-                                      .refFromURL(resident.imageUrl!);
+                                if (resident.imageUrl != null && resident.imageUrl!.isNotEmpty) {
+                                  final storageRef =
+                                  FirebaseStorage.instance.refFromURL(resident.imageUrl!);
                                   await storageRef.delete();
                                 }
 
                                 final uniqueFileName =
                                     "${DateTime.now().millisecondsSinceEpoch}_avatar.jpg";
-                                newImageUrl = await imageProvider
-                                    .uploadSelectedImageAndGetUrl(
-                                        resident.residentId!, uniqueFileName);
+                                newImageUrl = await imageProvider.uploadSelectedImageAndGetUrl(
+                                    resident.residentId!, uniqueFileName);
                               }
 
                               final updatedFields = <String, String>{};
                               final updatedFieldLabels = <String, String>{};
 
-                              void compareAndAdd(String key, String label,
-                                  String newValue, String oldValue) {
+                              void compareAndAdd(String key, String label, String newValue, String oldValue) {
                                 if (newValue != oldValue) {
                                   updatedFields[key] = newValue;
                                   updatedFieldLabels[label] = newValue;
                                 }
                               }
 
-                              compareAndAdd(
-                                  "fullName",
-                                  "Họ và tên",
-                                  nameController.text.trim(),
-                                  resident.fullName);
-                              compareAndAdd("email", "Email",
-                                  emailController.text.trim(), resident.email);
-                              compareAndAdd("cccd", "CCCD",
-                                  cccdController.text.trim(), resident.cccd);
-                              compareAndAdd(
-                                  "birthDate",
-                                  "Ngày sinh",
-                                  birthDateController.text.trim(),
-                                  resident.birthDate != null
-                                      ? DateFormat('dd/MM/yyyy')
-                                          .format(resident.birthDate!)
-                                      : "");
-                              compareAndAdd("phone", "Số điện thoại",
-                                  phoneController.text.trim(), resident.phone);
-                              compareAndAdd(
-                                  "address",
-                                  "Địa chỉ",
-                                  addressController.text.trim(),
-                                  resident.address);
-                              compareAndAdd("gender", "Giới tính",
-                                  selectedGender.trim(), resident.gender);
+                              compareAndAdd("fullName", "Họ và tên", nameController.text.trim(), resident.fullName);
+                              compareAndAdd("email", "Email", emailController.text.trim(), resident.email);
+                              compareAndAdd("cccd", "CCCD", cccdController.text.trim(), resident.cccd);
+                              compareAndAdd("birthDate", "Ngày sinh", birthDateController.text.trim(),
+                                  resident.birthDate != null ? DateFormat('dd/MM/yyyy').format(resident.birthDate!) : "");
+                              compareAndAdd("phone", "Số điện thoại", phoneController.text.trim(), resident.phone);
+                              compareAndAdd("address", "Địa chỉ", addressController.text.trim(), resident.address);
+                              compareAndAdd("gender", "Giới tính", selectedGender.trim(), resident.gender);
 
-                              // Nếu có ảnh mới → thêm vào cập nhật và gửi email
-                              if (newImageUrl != null &&
-                                  newImageUrl != resident.imageUrl) {
+                              if (newImageUrl != null && newImageUrl != resident.imageUrl) {
                                 updatedFields['imageUrl'] = newImageUrl;
-                                updatedFieldLabels['Ảnh đại diện'] =
-                                    '[Đã cập nhật ảnh mới]';
+                                updatedFieldLabels['Ảnh đại diện'] = '[Đã cập nhật ảnh mới]';
                               }
 
-                              // Tạo dữ liệu cập nhật cho Firestore
                               final updateData = {
                                 'fullName': nameController.text.trim(),
                                 'cccd': cccdController.text.trim(),
-                                'birthDate': DateFormat('dd/MM/yyyy')
-                                    .parseStrict(
-                                        birthDateController.text.trim()),
+                                'birthDate': DateFormat('dd/MM/yyyy').parseStrict(birthDateController.text.trim()),
                                 'email': emailController.text.trim(),
                                 'phone': phoneController.text.trim(),
                                 'address': addressController.text.trim(),
@@ -831,20 +825,17 @@ class _ResidentPageState extends State<ResidentPage> {
                                 updateData['imageUrl'] = newImageUrl;
                               }
 
-                              // Nếu có trường thay đổi thì mới cập nhật Firestore
                               if (updatedFields.isNotEmpty) {
                                 await FirebaseFirestore.instance
                                     .collection('residents')
                                     .doc(resident.residentId)
                                     .update(updateData);
 
-                                // Gửi email thông báo thay đổi
                                 await sendUpdatedDetailEmailFromFlutter(
                                   uid: resident.residentId!,
                                   oldEmail: resident.email,
                                   newEmail: emailController.text.trim(),
-                                  updatedFields:
-                                      updatedFieldLabels, // gửi bản tiếng Việt
+                                  updatedFields: updatedFieldLabels,
                                 );
                               }
 
@@ -852,8 +843,7 @@ class _ResidentPageState extends State<ResidentPage> {
                               refresh();
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text('Cập nhật thất bại: $e')),
+                                SnackBar(content: Text('Cập nhật thất bại: $e')),
                               );
                             } finally {
                               LoadingDialog.hideLoadingDialog(context);
@@ -866,12 +856,18 @@ class _ResidentPageState extends State<ResidentPage> {
                         },
                         child: Text(
                           isEditing ? 'Lưu' : 'Sửa',
-                          style: TextStyle(fontSize: 4.sp),
+                          style: TextStyle(fontSize: 3.5.sp, color: Colors.white),
                         ),
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop() ,
-                        child: Text('Đóng', style: TextStyle(fontSize: 4.sp)),
+
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          minimumSize: Size(90, 40),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text('Đóng', style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
                       ),
                     ],
                   );
@@ -1092,7 +1088,7 @@ class _ResidentPageState extends State<ResidentPage> {
                           Expanded(
                             child: buildFilterDropdown1<String>(
                               label: 'Trạng thái cư dân',
-                              items: ['Tất cả','Đang ở', 'Đã rời'],
+                              items: ['Tất cả','Đang ở','Đã rời'],
                               selectedValue: selectedStatus,
                               onChanged: (val) {
                                 setState(() {
@@ -1188,10 +1184,13 @@ class _ResidentPageState extends State<ResidentPage> {
                                                     TextStyle(fontSize: 4.sp))),
                                             DataCell(
                                               Row(children: [
+                                                // Nút SỬA - vô hiệu hóa nếu isExit = true
                                                 IconButton(
                                                   icon: const Icon(Icons.edit, color: Colors.blueAccent),
-                                                  tooltip: 'Sửa thông tin',
-                                                  onPressed: () async {
+                                                  tooltip: resident.isExit ? 'Không thể sửa cư dân đã rời' : 'Sửa thông tin',
+                                                  onPressed: resident.isExit
+                                                      ? null // Vô hiệu hóa
+                                                      : () async {
                                                     if (_isEditDialogShowing) return;
                                                     _isEditDialogShowing = true;
                                                     try {
@@ -1201,6 +1200,23 @@ class _ResidentPageState extends State<ResidentPage> {
                                                     }
                                                   },
                                                 ),
+
+                                                // Nút XEM LỊCH SỬ thuê – vẫn cho phép xem
+                                                IconButton(
+                                                  icon: const Icon(Icons.access_time, color: Colors.green),
+                                                  tooltip: 'Xem lịch sử thuê',
+                                                  onPressed: () async {
+                                                    if (_isHistoryDialogShowing) return;
+                                                    _isHistoryDialogShowing = true;
+                                                    try {
+                                                      await showContractHistoryDialog(context, resident.residentId!);
+                                                    } finally {
+                                                      _isHistoryDialogShowing = false;
+                                                    }
+                                                  },
+                                                ),
+
+                                                // Nút XEM CHI TIẾT – vẫn cho phép xem
                                                 IconButton(
                                                   icon: const Icon(Icons.info_outline, color: Colors.white),
                                                   tooltip: 'Xem chi tiết',
@@ -1214,21 +1230,9 @@ class _ResidentPageState extends State<ResidentPage> {
                                                     }
                                                   },
                                                 ),
-                                                IconButton(
-                                                  icon: const Icon(Icons.access_time, color: Colors.green),
-                                                  tooltip: 'Xem lịch sử thuê ',
-                                                  onPressed: () async {
-                                                    if (_isHistoryDialogShowing) return;
-                                                    _isHistoryDialogShowing = true;
-                                                    try {
-                                                      await showContractHistoryDialog(context, resident.residentId!);
-                                                    } finally {
-                                                      _isHistoryDialogShowing = false;
-                                                    }
-                                                  },
-                                                ),
                                               ]),
                                             ),
+
                                           ],
                                         );
                                       }).toList(),
