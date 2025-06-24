@@ -121,7 +121,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                       ),
                       DrawerListTile(
                         title: "Danh sách chỉ số nước",
-                        svgSrc: "assets/icons/parking.svg",
+                        svgSrc: "assets/icons/water.svg",
                         press: () {
                           widget.onMenuItemPressed(ReadCSNPage()); // Chuyển sang Dashboard
                         },
