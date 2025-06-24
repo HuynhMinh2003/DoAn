@@ -121,7 +121,7 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('OK'),
+              child: Text('Đồng ý',style: TextStyle(fontSize: 3.5.sp,color: Colors.white),),
             ),
           ],
         ),
@@ -136,14 +136,24 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
         title: Center(child: Text('Xác nhận xóa', style: TextStyle(fontSize: 7.sp,fontFamily: "Oswald",fontWeight: FontWeight.bold),),),
         content: Text('Bạn có chắc muốn xóa căn hộ này không?', style: TextStyle(fontSize: 4.sp)),
         actions: [
-          TextButton(
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Colors.white), // Màu viền
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), // Bo góc
+            ),
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Hủy', style: TextStyle(fontSize: 4.sp)),
+            child: Text('Hủy', style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
           ),
-          TextButton(
+
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Colors.redAccent),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Xóa', style: TextStyle(fontSize: 4.sp)),
+            child: Text('Xóa', style: TextStyle(fontSize: 3.5.sp, color: Colors.redAccent)),
           ),
+
         ],
       ),
     );
@@ -260,7 +270,12 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                 ),
               ),
               actions: [
-                TextButton(
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    minimumSize: Size(100, 40), // Tuỳ chỉnh kích thước nút
+                  ),
                   onPressed: () async {
                     if (isEditing) {
                       print("Attempting to save data...");
@@ -295,54 +310,24 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
                       });
                     }
                   },
-                  child: Text(isEditing ? "Lưu" : "Sửa", style: TextStyle(fontSize: 4.sp)),
+                  child: Text(
+                    isEditing ? "Lưu" : "Sửa",
+                    style: TextStyle(fontSize: 4.sp, color: Colors.white),
+                  ),
                 ),
-                TextButton(
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white), // Màu viền
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), // Bo góc
+                  ),
                   onPressed: () => Navigator.pop(context),
-                  child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                  child: Text('Đóng', style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
                 ),
               ],
             );
           },
         );
       },
-    );
-  }
-
-  Future<void> showApartmentDialog(BuildContext context, Apartment apartment) async {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text("Phòng ${apartment.apartmentName}", textAlign: TextAlign.center, style: TextStyle(fontFamily: "Oswald", fontWeight: FontWeight.bold, fontSize: 8.sp,                        color: Colors.blueAccent,
-        ),),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 10.h,),
-            Text('${apartment.building}', style: TextStyle(fontSize: 4.sp),),
-            SizedBox(height: 30.h,),
-            Text('Diện tích: ${apartment.area} m²', style: TextStyle(fontSize: 4.sp),),
-            SizedBox(height: 30.h,),
-            Text(apartment.description, style: TextStyle(fontSize: 4.sp)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ContractFormRentPage(
-                      apartmentId: apartment.id, // 👈 truyền ID
-                    ),
-                  ));
-            },
-            child: Text("Thuê", style: TextStyle(fontSize: 3.5.sp),),
-          ),
-        ],
-      ),
     );
   }
 

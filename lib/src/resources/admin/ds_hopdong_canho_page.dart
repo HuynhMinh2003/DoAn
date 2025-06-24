@@ -167,7 +167,7 @@ class _ContractListPageState extends State<ContractListPage> {
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         title: Text(
-          "Phòng ${apartment.apartmentName}",
+          "Phòng ${apartment.apartmentName} / ${apartment.building}",
           textAlign: TextAlign.center,
           style: TextStyle(
               fontFamily: "Oswald",
@@ -199,7 +199,7 @@ class _ContractListPageState extends State<ContractListPage> {
           ],
         ),
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.push(
@@ -210,14 +210,22 @@ class _ContractListPageState extends State<ContractListPage> {
                     ),
                   ));
             },
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Colors.white),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
             child: Text(
               "Thuê",
-              style: TextStyle(fontSize: 3.5.sp),
+              style: TextStyle(fontSize: 3.5.sp,color: Colors.white),
             ),
           ),
-          TextButton(
+          OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)))
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)))
         ],
       ),
     );
@@ -304,8 +312,12 @@ class _ContractListPageState extends State<ContractListPage> {
             content: Text("Căn hộ này không có hợp đồng còn hiệu lực.",
                 style: TextStyle(fontSize: 3.5.sp)),
             actions: [
-              TextButton(
+              OutlinedButton(
                 onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
                 child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)),
               ),
             ],
@@ -331,7 +343,7 @@ class _ContractListPageState extends State<ContractListPage> {
         builder: (_) => AlertDialog(
           title: Center(
             child: Text(
-              "Phòng ${contract.apartmentName}",
+              "Phòng ${contract.apartmentName} / ${contract.building}",
               style: TextStyle(
                   fontSize: 7.sp,
                   fontFamily: "Oswald",
@@ -368,14 +380,14 @@ class _ContractListPageState extends State<ContractListPage> {
             ],
           ),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () async {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (_) => AlertDialog(
                     title: Center(
                       child: Text(
-                        "Xác nhận xóa",
+                        "Xác nhận chấm dứt hợp đồng",
                         style: TextStyle(
                             fontSize: 7.sp,
                             fontFamily: "Oswald",
@@ -383,19 +395,27 @@ class _ContractListPageState extends State<ContractListPage> {
                       ),
                     ),
                     content: Text(
-                      "Bạn có chắc chắn muốn xóa hợp đồng và hóa đơn nước của căn hộ này không?",
+                      "Bạn có chắc chắn muốn kết thúc hợp đồng của căn hộ này không?",
                       style: TextStyle(fontSize: 4.sp),
                     ),
                     actions: [
-                      TextButton(
+                      OutlinedButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
                       ),
-                      TextButton(
+                      OutlinedButton(
                         onPressed: () => Navigator.pop(context, true),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.red),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
                         child: Text(
                           "Xóa",
-                          style: TextStyle(color: Colors.red, fontSize: 4.sp),
+                          style: TextStyle(color: Colors.red, fontSize: 3.5.sp),
                         ),
                       ),
                     ],
@@ -471,38 +491,54 @@ class _ContractListPageState extends State<ContractListPage> {
                   showDialog(
                     context: context,
                     builder: (_) => AlertDialog(
-                      title: Text("Lỗi",
+                      title: Center(child: Text("Lỗi",
                           style:
-                          TextStyle(fontSize: 5.sp, fontWeight: FontWeight.bold)),
+                          TextStyle(fontSize: 7.sp, fontWeight: FontWeight.bold)),),
                       content: Text("Đã xảy ra lỗi: $e",
                           style: TextStyle(fontSize: 4.sp)),
                       actions: [
-                        TextButton(
+                        OutlinedButton(
                           onPressed: () => Navigator.pop(context),
-                          child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.white),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
                         ),
                       ],
                     ),
                   );
                 }
               },
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
               child: Text(
                 "Kết thúc hợp đồng",
                 style: TextStyle(color: Colors.red, fontSize: 3.sp),
               ),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () => showUpdateResidentsDialog(
                   context, apartment, contract, onRefresh),
-              child: Text("Cập nhật cư dân", style: TextStyle(fontSize: 3.sp)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Cập nhật cư dân", style: TextStyle(fontSize: 3.sp,color: Colors.white)),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () =>
                   _showUpdateHistoryDialog(context, updateHistoryCollectionRef),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
               child: Text("Xem lịch sử thay đổi",
-                  style: TextStyle(fontSize: 3.sp)),
+                  style: TextStyle(fontSize: 3.sp,color: Colors.white)),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () async {
                 // 1. Chọn ngày mới
                 final newEndDate = await showDatePicker(
@@ -579,11 +615,19 @@ class _ContractListPageState extends State<ContractListPage> {
                   );
                 }
               },
-              child: Text("Gia hạn hợp đồng", style: TextStyle(fontSize: 3.sp)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Gia hạn hợp đồng", style: TextStyle(fontSize: 3.sp,color: Colors.white)),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 3.sp)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.sp,color: Colors.white)),
             ),
           ],
         ),
@@ -626,7 +670,7 @@ class _ContractListPageState extends State<ContractListPage> {
                 showAddResidentsFlow(context, apartment, contract, onRefresh);
               },
               child:
-                  Text("Thêm thành viên", style: TextStyle(fontSize: 3.5.sp)),
+                  Text("Thêm thành viên", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
             ),
             SizedBox(
               height: 10.h,
@@ -637,7 +681,7 @@ class _ContractListPageState extends State<ContractListPage> {
                 showRemoveResidentsDialog(
                     context, apartment, contract, onRefresh);
               },
-              child: Text("Xóa thành viên", style: TextStyle(fontSize: 3.5.sp)),
+              child: Text("Xóa thành viên", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
             ),
           ],
         ),
@@ -677,7 +721,7 @@ class _ContractListPageState extends State<ContractListPage> {
                       value: e,
                       child: Text(
                         '$e người',
-                        style: TextStyle(fontSize: 4.sp),
+                        style: TextStyle(fontSize: 3.5.sp, color: Colors.white),
                       ),
                     );
                   }).toList(),
@@ -715,13 +759,21 @@ class _ContractListPageState extends State<ContractListPage> {
                 ),
               ),
               actions: [
-                TextButton(
+                OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp))),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.white),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp,color: Colors.white))),
                 if (numberToAdd != null)
-                  TextButton(
+                  OutlinedButton(
                     onPressed: () => Navigator.pop(context, numberToAdd),
-                    child: Text("Tiếp tục", style: TextStyle(fontSize: 3.5.sp)),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.white),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text("Tiếp tục", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
                   ),
               ],
             );
@@ -832,184 +884,103 @@ class _ContractListPageState extends State<ContractListPage> {
                   }).toList(),
                 ),
                 actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp))),
-                  TextButton(
+                  OutlinedButton(
                     onPressed: selectedIdToRemove == null
                         ? null
                         : () async {
-                            Navigator.pop(context);
+                      Navigator.pop(context);
 
-                            if (selectedIdToRemove == null) {
-                              return;
-                            }
+                      if (selectedIdToRemove == null) {
+                        return;
+                      }
 
-                            // LoadingDialog.showLoadingDialog(context, "Đang tải ...");
+                      // LoadingDialog.showLoadingDialog(context, "Đang tải ...");
 
-                            try {
-                              final removedResident = residentList.firstWhere(
-                                  (r) => r["id"] == selectedIdToRemove);
-                              final isRepresentative =
-                                  removedResident["isRepresentative"];
-                              final removedName = removedResident["fullName"];
+                      try {
+                        final removedResident = residentList.firstWhere(
+                                (r) => r["id"] == selectedIdToRemove);
+                        final isRepresentative =
+                        removedResident["isRepresentative"];
+                        final removedName = removedResident["fullName"];
 
-                              if (isRepresentative) {
-                                final others = residentList
-                                    .where((r) => r["id"] != selectedIdToRemove)
-                                    .toList();
+                        if (isRepresentative) {
+                          final others = residentList
+                              .where((r) => r["id"] != selectedIdToRemove)
+                              .toList();
 
-                                if (others.isEmpty) {
-                                  // Navigator.pop(context); // Đóng Dialog Loading
-                                  MsgDialog.showMsgDialog(
-                                      context,
-                                      "Không thể xóa",
-                                      "Đây là người đại diện duy nhất và cũng là cư dân cuối cùng trong căn hộ. "
-                                          "\nVui lòng xóa hợp đồng từ giao diện chính nếu muốn xóa toàn bộ.");
-                                  return;
-                                } else {
-                                  String? newRepId;
-                                  await showDialog(
-                                    context: context,
-                                    builder: (_) {
-                                      return StatefulBuilder(
-                                        builder: (context, setState) {
-                                          return AlertDialog(
-                                            title: Center(
-                                                child: Text(
-                                                    "Chọn người đại diện mới",
-                                                    style: TextStyle(
-                                                        fontFamily: "Oswald",
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 6.sp))),
-                                            content: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: others.map((r) {
-                                                return RadioListTile<String>(
-                                                  title: Text(r["fullName"],
-                                                      style: TextStyle(
-                                                          fontSize: 3.5.sp)),
-                                                  value: r["id"],
-                                                  groupValue: newRepId,
-                                                  onChanged: (value) =>
-                                                      setState(() =>
-                                                          newRepId = value),
-                                                );
-                                              }).toList(),
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(context),
-                                                  child: Text("Hủy",
-                                                      style: TextStyle(
-                                                          fontSize: 3.5.sp))),
-                                              TextButton(
-                                                onPressed: newRepId == null
-                                                    ? null
-                                                    : () => Navigator.pop(
-                                                        context, newRepId),
-                                                child: Text("Xác nhận",
-                                                    style: TextStyle(
-                                                        fontSize: 3.5.sp)),
-                                              ),
-                                            ],
+                          if (others.isEmpty) {
+                            // Navigator.pop(context); // Đóng Dialog Loading
+                            MsgDialog.showMsgDialog(
+                                context,
+                                "Không thể xóa",
+                                "Đây là người đại diện duy nhất và cũng là cư dân cuối cùng trong căn hộ. "
+                                    "\nVui lòng xóa hợp đồng từ giao diện chính nếu muốn xóa toàn bộ.");
+                            return;
+                          } else {
+                            String? newRepId;
+                            await showDialog(
+                              context: context,
+                              builder: (_) {
+                                return StatefulBuilder(
+                                  builder: (context, setState) {
+                                    return AlertDialog(
+                                      title: Center(
+                                          child: Text(
+                                              "Chọn người đại diện mới",
+                                              style: TextStyle(
+                                                  fontFamily: "Oswald",
+                                                  fontWeight:
+                                                  FontWeight.bold,
+                                                  fontSize: 6.sp))),
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: others.map((r) {
+                                          return RadioListTile<String>(
+                                            title: Text(r["fullName"],
+                                                style: TextStyle(
+                                                    fontSize: 3.5.sp)),
+                                            value: r["id"],
+                                            groupValue: newRepId,
+                                            onChanged: (value) =>
+                                                setState(() =>
+                                                newRepId = value),
                                           );
-                                        },
-                                      );
-                                    },
-                                  ).then((newId) async {
-                                    if (newId != null) {
-                                      final newRepName = others.firstWhere(
-                                          (r) => r["id"] == newId)["fullName"];
-                                      final batch =
-                                          FirebaseFirestore.instance.batch();
-                                      batch.update(contractDocRef, {
-                                        "representative": {
-                                          "id": newId,
-                                          "fullName": newRepName
-                                        },
-                                        "numberOfResidents":
-                                            FieldValue.increment(-1),
-                                      });
-                                      batch.update(
-                                        FirebaseFirestore.instance
-                                            .collection("residents")
-                                            .doc(selectedIdToRemove),
-                                        {
-                                          'isExit': true,
-                                          'leaveAt': Timestamp.now(),
-                                        },
-                                      );
-                                      // 1. Tạo reference tới subcollection contractHistory của resident
-                                      final residentHistoryRef = FirebaseFirestore.instance
-                                          .collection("residents")
-                                          .doc(selectedIdToRemove)
-                                          .collection("contractHistory");
-
-                                      // 2. Query: lọc theo contractId, sắp xếp joinedAt mới nhất trước, limit 1
-                                      final residentHistorySnapshot = await residentHistoryRef
-                                          .where("contractId", isEqualTo: currentContractId)
-                                          .orderBy("joinedAt", descending: true)  // mới nhất → cũ nhất
-                                          .limit(1)                                // chỉ 1 bản ghi
-                                          .get();
-
-                                      // 3. Nếu có, cập nhật leftAt cho bản mới nhất đó
-                                      if (residentHistorySnapshot.docs.isNotEmpty) {
-                                        final latestDocRef = residentHistorySnapshot.docs.first.reference;
-                                        await latestDocRef.update({
-                                          "leftAt": Timestamp.now(),
-                                        });
-                                      }
-
-
-                                      final removedResidentSummary = {
-                                        'id': removedResident["id"],
-                                        'fullName': removedResident["fullName"],
-                                      };
-
-                                      batch.update(
-                                          FirebaseFirestore.instance
-                                              .collection("apartments")
-                                              .doc(apartment.id),
-                                          {
-                                            "residents": FieldValue.arrayRemove(
-                                                [removedResidentSummary]),
-                                          });
-
-                                      batch.set(
-                                        FirebaseFirestore.instance
-                                            .collection("contracts")
-                                            .doc(contract.contractId)
-                                            .collection("contractHistory")
-                                            .doc(),
-                                        {
-                                          "action":
-                                              "Xóa cư dân & cập nhật người đại diện",
-                                          "performedBy": "Admin",
-                                          "residentNames": [removedName],
-                                          "newRepresentative": {
-                                            "id": newId,
-                                            "fullName": newRepName
-                                          },
-                                          "timestamp":
-                                              FieldValue.serverTimestamp(),
-                                        },
-                                      );
-
-                                      // await deleteResidentAccount1(selectedIdToRemove!);
-                                      await batch.commit();
-                                      onRefresh();
-                                      Navigator.pop(context);
-                                    }
-                                  });
-                                }
-                              } else {
+                                        }).toList(),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            child: Text("Hủy",
+                                                style: TextStyle(
+                                                    fontSize: 3.5.sp))),
+                                        TextButton(
+                                          onPressed: newRepId == null
+                                              ? null
+                                              : () => Navigator.pop(
+                                              context, newRepId),
+                                          child: Text("Xác nhận",
+                                              style: TextStyle(
+                                                  fontSize: 3.5.sp)),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ).then((newId) async {
+                              if (newId != null) {
+                                final newRepName = others.firstWhere(
+                                        (r) => r["id"] == newId)["fullName"];
                                 final batch =
-                                    FirebaseFirestore.instance.batch();
+                                FirebaseFirestore.instance.batch();
                                 batch.update(contractDocRef, {
-                                  "numberOfResidents": FieldValue.increment(-1),
+                                  "representative": {
+                                    "id": newId,
+                                    "fullName": newRepName
+                                  },
+                                  "numberOfResidents":
+                                  FieldValue.increment(-1),
                                 });
                                 batch.update(
                                   FirebaseFirestore.instance
@@ -1020,27 +991,27 @@ class _ContractListPageState extends State<ContractListPage> {
                                     'leaveAt': Timestamp.now(),
                                   },
                                 );
-                                // Cập nhật leftAt trong contractHistory của resident (nếu tồn tại entry có contractId khớp)
-                                final residentHistoryRef = FirebaseFirestore
-                                    .instance
+                                // 1. Tạo reference tới subcollection contractHistory của resident
+                                final residentHistoryRef = FirebaseFirestore.instance
                                     .collection("residents")
                                     .doc(selectedIdToRemove)
                                     .collection("contractHistory");
 
-                                final residentHistorySnapshot =
-                                    await residentHistoryRef
-                                        .where("contractId",
-                                            isEqualTo: currentContractId)
-                                        .limit(1)
-                                        .get();
+                                // 2. Query: lọc theo contractId, sắp xếp joinedAt mới nhất trước, limit 1
+                                final residentHistorySnapshot = await residentHistoryRef
+                                    .where("contractId", isEqualTo: currentContractId)
+                                    .orderBy("joinedAt", descending: true)  // mới nhất → cũ nhất
+                                    .limit(1)                                // chỉ 1 bản ghi
+                                    .get();
 
+                                // 3. Nếu có, cập nhật leftAt cho bản mới nhất đó
                                 if (residentHistorySnapshot.docs.isNotEmpty) {
-                                  final docId =
-                                      residentHistorySnapshot.docs.first.id;
-                                  batch.update(residentHistoryRef.doc(docId), {
+                                  final latestDocRef = residentHistorySnapshot.docs.first.reference;
+                                  await latestDocRef.update({
                                     "leftAt": Timestamp.now(),
                                   });
                                 }
+
 
                                 final removedResidentSummary = {
                                   'id': removedResident["id"],
@@ -1063,29 +1034,118 @@ class _ContractListPageState extends State<ContractListPage> {
                                       .collection("contractHistory")
                                       .doc(),
                                   {
-                                    "action": "Xóa cư dân",
+                                    "action":
+                                    "Xóa cư dân & cập nhật người đại diện",
                                     "performedBy": "Admin",
                                     "residentNames": [removedName],
-                                    "timestamp": FieldValue.serverTimestamp(),
+                                    "newRepresentative": {
+                                      "id": newId,
+                                      "fullName": newRepName
+                                    },
+                                    "timestamp":
+                                    FieldValue.serverTimestamp(),
                                   },
                                 );
 
+                                // await deleteResidentAccount1(selectedIdToRemove!);
                                 await batch.commit();
                                 onRefresh();
                                 Navigator.pop(context);
                               }
+                            });
+                          }
+                        } else {
+                          final batch =
+                          FirebaseFirestore.instance.batch();
+                          batch.update(contractDocRef, {
+                            "numberOfResidents": FieldValue.increment(-1),
+                          });
+                          batch.update(
+                            FirebaseFirestore.instance
+                                .collection("residents")
+                                .doc(selectedIdToRemove),
+                            {
+                              'isExit': true,
+                              'leaveAt': Timestamp.now(),
+                            },
+                          );
+                          // Cập nhật leftAt trong contractHistory của resident (nếu tồn tại entry có contractId khớp)
+                          final residentHistoryRef = FirebaseFirestore
+                              .instance
+                              .collection("residents")
+                              .doc(selectedIdToRemove)
+                              .collection("contractHistory");
 
-                              // Hiển thị thông báo thành công
-                              MsgDialog.showMsgDialog(context, "Thành công",
-                                  "Cư dân đã được xóa thành công!");
-                            } catch (e) {
-                              // Hiển thị thông báo lỗi
-                              MsgDialog.showMsgDialog(context, "Lỗi",
-                                  "Có lỗi xảy ra khi xóa cư dân. Vui lòng thử lại.");
-                            }
-                          },
-                    child: Text("Xóa"),
+                          final residentHistorySnapshot =
+                          await residentHistoryRef
+                              .where("contractId",
+                              isEqualTo: currentContractId)
+                              .limit(1)
+                              .get();
+
+                          if (residentHistorySnapshot.docs.isNotEmpty) {
+                            final docId =
+                                residentHistorySnapshot.docs.first.id;
+                            batch.update(residentHistoryRef.doc(docId), {
+                              "leftAt": Timestamp.now(),
+                            });
+                          }
+
+                          final removedResidentSummary = {
+                            'id': removedResident["id"],
+                            'fullName': removedResident["fullName"],
+                          };
+
+                          batch.update(
+                              FirebaseFirestore.instance
+                                  .collection("apartments")
+                                  .doc(apartment.id),
+                              {
+                                "residents": FieldValue.arrayRemove(
+                                    [removedResidentSummary]),
+                              });
+
+                          batch.set(
+                            FirebaseFirestore.instance
+                                .collection("contracts")
+                                .doc(contract.contractId)
+                                .collection("contractHistory")
+                                .doc(),
+                            {
+                              "action": "Xóa cư dân",
+                              "performedBy": "Admin",
+                              "residentNames": [removedName],
+                              "timestamp": FieldValue.serverTimestamp(),
+                            },
+                          );
+
+                          await batch.commit();
+                          onRefresh();
+                          Navigator.pop(context);
+                        }
+
+                        // Hiển thị thông báo thành công
+                        MsgDialog.showMsgDialog(context, "Thành công",
+                            "Cư dân đã được xóa thành công!");
+                      } catch (e) {
+                        // Hiển thị thông báo lỗi
+                        MsgDialog.showMsgDialog(context, "Lỗi",
+                            "Có lỗi xảy ra khi xóa cư dân. Vui lòng thử lại.");
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text("Xóa", style: TextStyle(fontSize: 3.5.sp,color: Colors.red)),
                   ),
+                  OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.white),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp,color: Colors.white))),
                 ],
               );
             },
@@ -1109,14 +1169,18 @@ class _ContractListPageState extends State<ContractListPage> {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: Text("Lịch sử thay đổi",
-                style: TextStyle(fontFamily: "Oswald", fontSize: 6.sp, fontWeight: FontWeight.bold,color: Colors.blueAccent)),
+            title: Center(child:Text("Lịch sử thay đổi",
+                style: TextStyle(fontFamily: "Oswald", fontSize: 6.sp, fontWeight: FontWeight.bold,color: Colors.blueAccent))),
             content:
                 Text("Chưa có gì thay đổi.", style: TextStyle(fontSize: 4.sp)),
             actions: [
-              TextButton(
+              OutlinedButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.red),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)),
               ),
             ],
           ),
@@ -1131,7 +1195,7 @@ class _ContractListPageState extends State<ContractListPage> {
           title: Center(
               child: Text(
             "Lịch sử thay đổi",
-            style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold,color: Colors.blueAccent),
+            style: TextStyle(fontFamily: "Oswald",fontSize: 7.sp, fontWeight: FontWeight.bold,color: Colors.blueAccent),
           )),
           content: SizedBox(
             width: 80.w,
@@ -1189,9 +1253,13 @@ class _ContractListPageState extends State<ContractListPage> {
                 }),
           ),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
             ),
           ],
         ),
@@ -1205,9 +1273,13 @@ class _ContractListPageState extends State<ContractListPage> {
           content: Text("Không thể tải lịch sử thay đổi.",
               style: TextStyle(fontSize: 4.sp)),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
             ),
           ],
         ),
