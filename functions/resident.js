@@ -21,38 +21,32 @@ const createResidentAccount = onRequest(
   },
   (req, res) => {
     corsHandler(req, res, async () => {
-      const { email, fullName, cccd, address, gender, phone, birthDate, apartmentId, contractId } = req.body;
+      const {
+        email,
+        fullName,
+        cccd,
+        address,
+        gender,
+        phone,
+        birthDate,
+        apartmentId,
+        contractId,
+        residentId,      // ✅ thêm
+        imageUrl = "",   // ✅ thêm
+      } = req.body;
 
       console.log("📦 Dữ liệu nhận được từ body:", req.body);
 
-      if (!email || !fullName || !cccd || !address || !gender || !phone || !birthDate || !apartmentId || !contractId) {
+      if (
+        !email || !fullName || !cccd || !address ||
+        !gender || !phone || !birthDate || !apartmentId || !contractId
+      ) {
         return res.status(400).send("Thiếu thông tin.");
       }
 
       try {
-        // ⚠️ Truy vấn nếu có resident nào trùng cccd HOẶC email (chỉ cần 1 trùng)
-        const residentQuery = await admin
-          .firestore()
-          .collection("residents")
-          .where("isExit", "==", true)
-          .where("cccd", "in", [cccd])
-          .get();
-
-        const emailQuery = await admin
-          .firestore()
-          .collection("residents")
-          .where("isExit", "==", true)
-          .where("email", "in", [email])
-          .get();
-
-        const combinedDocs = [...residentQuery.docs, ...emailQuery.docs];
-        const uniqueDocs = Array.from(new Map(combinedDocs.map(doc => [doc.id, doc])).values());
-
-        if (uniqueDocs.length > 0) {
-          const residentDoc = uniqueDocs[0];
-          const residentId = residentDoc.id;
-
-          // ✅ Cập nhật lại trạng thái
+        if (residentId) {
+          // ✅ Trường hợp KHÔI PHỤC tài khoản với residentId có sẵn → KHÔNG reset imageUrl
           await admin.firestore().collection("residents").doc(residentId).update({
             isExit: false,
             leaveAt: null,
@@ -60,7 +54,6 @@ const createResidentAccount = onRequest(
             apartmentId,
           });
 
-          // ✅ Ghi nhận lại hợp đồng mới
           await admin
             .firestore()
             .collection("residents")
@@ -73,7 +66,6 @@ const createResidentAccount = onRequest(
               leftAt: null,
             });
 
-          // ✅ Gửi email khôi phục
           const oAuth2Client = new google.auth.OAuth2(
             await CLIENT_ID.value(),
             await CLIENT_SECRET.value(),
@@ -111,7 +103,7 @@ const createResidentAccount = onRequest(
           });
         }
 
-        // 🔒 Nếu không trùng CCCD hoặc Email nào từng thoát → tạo mới
+        // ✅ Nếu không truyền residentId → xử lý tạo mới
         const password = generateRandomPassword();
 
         const userRecord = await admin.auth().createUser({
@@ -133,7 +125,7 @@ const createResidentAccount = onRequest(
           isExit: false,
           leaveAt: null,
           fcmTokens: [],
-          imageUrl: "",
+          imageUrl: imageUrl, // ✅ dùng imageUrl nếu được truyền
           lastUpdated: null,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });

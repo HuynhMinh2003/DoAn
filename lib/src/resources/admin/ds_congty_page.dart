@@ -285,7 +285,12 @@ class _CompanyListPageState extends State<CompanyListPage> {
                       ),
                     ),
                     actions: [
-                      TextButton(
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          minimumSize: Size(100, 40),
+                        ),
                         onPressed: () async {
                           if (isEditing) {
                             final isValid = _authBloc.isValidCompanySignUp(
@@ -314,7 +319,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
                               }
 
                               final updateData = <String, dynamic>{};
-                              final updatedFields = <String, String>{}; // Initialize with an empty map
+                              final updatedFields = <String, String>{};
 
                               void compareAndAdd(String key, String newValue, String oldValue) {
                                 if (newValue != oldValue) {
@@ -332,7 +337,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
 
                               if (newImageUrl != null) {
                                 updateData['imageUrl'] = newImageUrl;
-                                updatedFields['imageUrl'] = 'Đã cập nhật ảnh'; // Add 'Đã cập nhật ảnh' to updatedFields
+                                updatedFields['imageUrl'] = 'Đã cập nhật ảnh';
                               }
 
                               if (updateData.isNotEmpty) {
@@ -362,13 +367,20 @@ class _CompanyListPageState extends State<CompanyListPage> {
                         },
                         child: Text(
                           isEditing ? "Lưu" : "Sửa",
-                          style: TextStyle(fontSize: 4.sp),
+                          style: TextStyle(fontSize: 3.5.sp, color: Colors.white),
                         ),
                       ),
-                      TextButton(
+
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          minimumSize: Size(100, 40),
+                        ),
                         onPressed: () => Navigator.pop(context),
-                        child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                        child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
                       ),
+
                     ],
                   );
                 },
@@ -385,14 +397,15 @@ class _CompanyListPageState extends State<CompanyListPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Xác nhận xóa", style: TextStyle(fontSize: 7.sp,fontFamily: "Oswald",fontWeight: FontWeight.bold),),
+          title: Center(child: Text("Xác nhận xóa", style: TextStyle(fontSize: 7.sp,fontFamily: "Oswald",fontWeight: FontWeight.bold),),),
           content: Text("Bạn có chắc chắn muốn xóa công ty \"${company.name}\" không?", style: TextStyle(fontSize: 4.sp)),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context), // Đóng hộp thoại
-              child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
-            ),
-            TextButton(
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                minimumSize: Size(80, 40),
+              ),
               onPressed: () async {
                 LoadingDialog.showLoadingDialog(context, "Đang tải ...");
                 try {
@@ -408,7 +421,16 @@ class _CompanyListPageState extends State<CompanyListPage> {
                   LoadingDialog.hideLoadingDialog(context); // Đóng loading dialog nếu xảy ra lỗi
                 }
               },
-              child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
+              child: Text("Xóa", style: TextStyle(fontSize: 3.5.sp, color: Colors.red)),
+            ),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                minimumSize: Size(80, 40),
+              ),
+              onPressed: () => Navigator.pop(context), // Đóng hộp thoại
+              child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
             ),
           ],
         );
@@ -588,6 +610,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
                             fontSize: 7.sp,
                           ),
                         ),),
+                        SizedBox(width: 10.w,),
                         Flexible(flex:1,child:SizedBox(
                           height: 55.h,width: 40.w,
                           child:  ElevatedButton(
