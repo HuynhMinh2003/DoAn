@@ -245,7 +245,10 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
         .get();
 
     if (query.docs.isNotEmpty) {
-      return query.docs.first.data();
+      return {
+        'residentId': query.docs.first.id,
+        ...query.docs.first.data(),
+      };
     }
 
     final queryByEmail = await FirebaseFirestore.instance
@@ -255,7 +258,10 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
         .get();
 
     if (queryByEmail.docs.isNotEmpty) {
-      return queryByEmail.docs.first.data();
+      return {
+        'residentId': queryByEmail.docs.first.id, // ✅ Thêm dòng này
+        ...queryByEmail.docs.first.data(),
+      };
     }
 
     return null;
@@ -615,10 +621,14 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         String apartmentId = widget.apartmentId;
                         String purpose = purposeController.text;
 
+                        if (representativeIndex == null || representativeIndex! >= residents.length) {
+                          throw Exception("Vui lòng chọn người đại diện hợp lệ.");
+                        }
+
                         final pool = Pool(3); // Giới hạn 3 request đồng thời
 
                         // === 1. Tạo hợp đồng trước để lấy contractId ===
-                        Map<String, dynamic> contractData = {
+                        final contractRef = await _firestore.collection('contracts').add({
                           "apartmentDocId": apartmentId,
                           'apartmentName': apartmentName,
                           'building': building,
@@ -626,15 +636,13 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           'purpose': purpose,
                           'startDate': Timestamp.fromDate(startDate!),
                           'endDate': Timestamp.fromDate(endDate!),
-                          "numberOfResidents": residents.length,
                           "createdAt": Timestamp.now(),
                           "isActive": true,
-                        };
-
-                        DocumentReference contractRef = await _firestore.collection('contracts').add(contractData);
+                        });
                         String contractId = contractRef.id;
 
                         List<ResidentInfo> failedResidents = [];
+                        List<ResidentInfo> successfulResidents = [];
 
                         for (final resident in residents) {
                           await pool.withResource(() async {
@@ -655,13 +663,21 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                         style: TextStyle(fontSize: 4.sp),
                                       ),
                                       actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.of(context).pop(false), // Hủy
-                                          child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
+                                        OutlinedButton(
+                                          onPressed: () => Navigator.of(context).pop(false),
+                                          style: OutlinedButton.styleFrom(
+                                            side: BorderSide(color: Colors.white),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                          ),
+                                          child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp)),
                                         ),
-                                        TextButton(
+                                        OutlinedButton(
                                           onPressed: () => Navigator.of(context).pop(true), // Khôi phục
-                                          child: Text("Khôi phục", style: TextStyle(fontSize: 4.sp)),
+                                          style: OutlinedButton.styleFrom(
+                                            side: BorderSide(color: Colors.green),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                          ),
+                                          child: Text("Khôi phục", style: TextStyle(fontSize: 3.5.sp,color: Colors.green)),
                                         ),
                                       ],
                                     );
@@ -691,12 +707,15 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                   'birthDate': resident.birthDate?.toIso8601String(),
                                   'apartmentId': apartmentId,
                                   'contractId': contractId,
+                                  'residentId': existingData!['residentId'],
+                                  'imageUrl': existingData['imageUrl'],
                                 }),
                               );
 
                               if (response.statusCode == 200) {
                                 final data = json.decode(response.body);
                                 resident.residentId = data['residentId'];
+                                successfulResidents.add(resident);
                                 print("✅ Tạo ${resident.fullName} OK");
                               } else {
                                 print("❌ Lỗi response: ${response.body}");
@@ -709,8 +728,21 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           });
                         }
 
-                        // === 3. Cập nhật representative ===
+                        if (successfulResidents.isEmpty) {
+                          await contractRef.delete(); // ✅ Xóa hợp đồng chưa dùng
+                          throw Exception("❌ Không có cư dân nào được tạo thành công. Hợp đồng đã bị hủy.");
+                        }
+
+                        await contractRef.update({
+                          "numberOfResidents": successfulResidents.length,
+                        });
+
+                        // === Kiểm tra người đại diện có còn không
                         final representative = residents[representativeIndex!];
+                        if (!successfulResidents.contains(representative)) {
+                          throw Exception("❌ Người đại diện đã bị loại bỏ — vui lòng chọn lại.");
+                        }
+
                         await contractRef.update({
                           'representative': {
                             'id': representative.residentId,
@@ -719,7 +751,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         });
 
                         // === 4. Cập nhật residents vào apartments ===
-                        final residentObjects = residents.map((r) => {
+                        final residentObjects = successfulResidents.map((r) => {
                           'fullName': r.fullName,
                           'id': r.residentId,
                         }).toList();
@@ -731,16 +763,15 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           "currentContractId": contractId
                         });
 
-                        final residentNames = residents.map((r) => r.fullName).toList();
+                        final residentNames = successfulResidents.map((r) => r.fullName).toList();
 
-                      final contractHistoryRef = contractRef.collection("contractHistory").doc();
-                      await contractHistoryRef.set({
-                        "action": "Kí hợp đồng mới ",
-                        "performedBy": "Admin",
-                        "residents": residentNames,
-                        "representativeName": representative.fullName,
-                        "timestamp": FieldValue.serverTimestamp(),
-                      });
+                        await contractRef.collection("contractHistory").add({
+                          "action": "Kí hợp đồng mới",
+                          "performedBy": "Admin",
+                          "residents": residentNames,
+                          "representativeName": representative.fullName,
+                          "timestamp": FieldValue.serverTimestamp(),
+                        });
 
                         // === 6. Tạo file hợp đồng DOCX ===
                         final templateData = await rootBundle.load('assets/templates/hd_dichvu.docx');
@@ -774,13 +805,13 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         // === Danh sách cư dân ===
                         final residentsList = <PlainContent>[];
 
-                        for (final r in List<ResidentInfo>.from(residents)) {
+                        for (final r in successfulResidents) {
                           final residentContent = PlainContent("residents")
                             ..add(TextContent("resident_name", "Họ và tên: " + r.fullName))
                             ..add(TextContent("resident_cccd", "Số CCCD: " + r.cccd))
-                            ..add(TextContent("resident_gender", "Giới tính: " + r.cccd))
-                            ..add(TextContent("resident_birthdate", "Ngày sinh: " + r.cccd))
-                            ..add(TextContent("resident_address", "Địa chỉ: " + r.cccd))
+                            ..add(TextContent("resident_gender", "Giới tính: " + r.gender))
+                            ..add(TextContent("resident_birthdate", "Ngày sinh: " + formatCustomBirthDate(r.birthDate!)))
+                            ..add(TextContent("resident_address", "Địa chỉ: " + r.address))
                             ..add(TextContent("resident_phone", "Số điện thoại: " + r.phone))
                             ..add(TextContent("resident_email", "Email: " + r.email));
 

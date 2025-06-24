@@ -236,9 +236,13 @@ class _ReadCSNPageState extends State<ReadCSNPage> {
             content: Text("Căn hộ này không có hợp đồng còn hiệu lực.",
                 style: TextStyle(fontSize: 3.5.sp)),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context), // Đóng dialog
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.grey),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
               ),
             ],
           ),
@@ -341,9 +345,13 @@ class _ReadCSNPageState extends State<ReadCSNPage> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context), // Đóng dialog
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.grey),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
             ),
           ],
         ),
@@ -356,9 +364,14 @@ class _ReadCSNPageState extends State<ReadCSNPage> {
           title: Text("Lỗi", style: TextStyle(fontSize: 6.sp)),
           content: Text("Không thể lấy thông tin hợp đồng.", style: TextStyle(fontSize: 4.sp)),
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)))
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context), // Đóng dialog
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.grey),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
+            ),
           ],
         ),
       );
@@ -387,9 +400,13 @@ class _ReadCSNPageState extends State<ReadCSNPage> {
             title: Center(child: Text("Lịch sử ghi chỉ số", style: TextStyle(color:Colors.blueAccent,fontSize: 6.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald")),),
             content: Text("Không có dữ liệu các tháng trước.", style: TextStyle(fontSize: 4.sp)),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context), // Đóng dialog
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.grey),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
               ),
             ],
           ),
@@ -428,9 +445,13 @@ class _ReadCSNPageState extends State<ReadCSNPage> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context), // Đóng dialog
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.grey),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
             ),
           ],
         ),

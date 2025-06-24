@@ -165,7 +165,7 @@ class _StaffListPageState extends State<StaffListPage> {
             style: TextStyle(
               fontFamily: "Oswald",
               fontWeight: FontWeight.bold,
-              fontSize: 7.sp,
+              fontSize: 8.sp,
               color: Colors.blueAccent,
             ),
           ),
@@ -175,11 +175,38 @@ class _StaffListPageState extends State<StaffListPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Center(
-                  child: CircleAvatar(
-                    radius: 70.r,
-                    backgroundImage: staff.imageUrl.isNotEmpty
-                        ? NetworkImage(staff.imageUrl)
-                        : const AssetImage('assets/default_avatar.png') as ImageProvider,
+                  child: Container(
+                    width: 140.r,
+                    height: 140.r,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white, // Nền trắng trong khi loading
+                    ),
+                    child: ClipOval(
+                      child: Builder(
+                        builder: (_) {
+                          if (staff.imageUrl.isNotEmpty) {
+                            return Image.network(
+                              staff.imageUrl,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(child: CircularProgressIndicator());
+                              },
+                              errorBuilder: (_, __, ___) => Image.asset(
+                                'assets/default_avatar.png',
+                                fit: BoxFit.cover,
+                              ),
+                            );
+                          } else {
+                            return Image.asset(
+                              'assets/default_avatar.png',
+                              fit: BoxFit.cover,
+                            );
+                          }
+                        },
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(height: 20.h),
@@ -209,7 +236,12 @@ class _StaffListPageState extends State<StaffListPage> {
           actions: [
             // Hiện nút "Khôi phục tài khoản" nếu nhân viên đã nghỉ
             if (staff.isExit)
-              TextButton(
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.green),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  minimumSize: Size(120, 40),
+                ),
                 onPressed: () async {
                   LoadingDialog.showLoadingDialog(context, "Đang tải...");
                   try {
@@ -217,6 +249,7 @@ class _StaffListPageState extends State<StaffListPage> {
                       'isExit': false,
                       'leaveAt': null,
                       'lastUpdated': Timestamp.now(),
+                      'createdAt': Timestamp.now(),
                     });
                     LoadingDialog.hideLoadingDialog(context);
                     Navigator.pop(context);
@@ -228,12 +261,19 @@ class _StaffListPageState extends State<StaffListPage> {
                     );
                   }
                 },
-                child: Text("Khôi phục tài khoản", style: TextStyle(fontSize: 4.sp, color: Colors.green)),
+                child: Text("Khôi phục tài khoản", style: TextStyle(fontSize: 3.5.sp, color: Colors.green)),
               ),
-            TextButton(
+
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                minimumSize: Size(100, 40),
+              ),
               onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
             ),
+
           ],
         );
       },
@@ -294,7 +334,7 @@ class _StaffListPageState extends State<StaffListPage> {
                       style: TextStyle(
                         fontFamily: "Oswald",
                         fontWeight: FontWeight.bold,
-                        fontSize: 9.sp ,
+                        fontSize: 8.sp ,
                         color: Colors.blueAccent,
                       ),
                     ),
@@ -308,15 +348,62 @@ class _StaffListPageState extends State<StaffListPage> {
                             Stack(
                               alignment: Alignment.bottomRight,
                               children: [
-                                CircleAvatar(
-                                  radius: 80.r,
-                                  backgroundImage: imageProvider.webImageBytes != null
-                                      ? MemoryImage(imageProvider.webImageBytes!)
-                                      : imageProvider.selectedImageFile != null
-                                      ? FileImage(imageProvider.selectedImageFile!)
-                                      : (staff.imageUrl.isNotEmpty
-                                      ? NetworkImage(staff.imageUrl)
-                                      : const AssetImage('assets/default_avatar.png') as ImageProvider),
+                                Container(
+                                  width: 160.r,
+                                  height: 160.r,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white, // Nền trắng khi loading
+                                  ),
+                                  child: ClipOval(
+                                    child: Builder(
+                                      builder: (context) {
+                                        if (imageProvider.webImageBytes != null) {
+                                          return Image.memory(
+                                            imageProvider.webImageBytes!,
+                                            fit: BoxFit.cover,
+                                            width: 160.r,
+                                            height: 160.r,
+                                          );
+                                        } else if (imageProvider.selectedImageFile != null) {
+                                          return Image.file(
+                                            imageProvider.selectedImageFile!,
+                                            fit: BoxFit.cover,
+                                            width: 160.r,
+                                            height: 160.r,
+                                          );
+                                        } else if (staff.imageUrl.isNotEmpty) {
+                                          return Image.network(
+                                            staff.imageUrl,
+                                            fit: BoxFit.cover,
+                                            width: 160.r,
+                                            height: 160.r,
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) return child;
+                                              return Container(
+                                                color: Colors.white,
+                                                alignment: Alignment.center,
+                                                child: const CircularProgressIndicator(),
+                                              );
+                                            },
+                                            errorBuilder: (context, error, stackTrace) => Image.asset(
+                                              'assets/default_avatar.png',
+                                              fit: BoxFit.cover,
+                                              width: 160.r,
+                                              height: 160.r,
+                                            ),
+                                          );
+                                        } else {
+                                          return Image.asset(
+                                            'assets/default_avatar.png',
+                                            fit: BoxFit.cover,
+                                            width: 160.r,
+                                            height: 160.r,
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ),
                                 ),
                                 if (isEditing)
                                   Positioned(
@@ -479,7 +566,12 @@ class _StaffListPageState extends State<StaffListPage> {
 
                     ),
                     actions: [
-                      TextButton(
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          minimumSize: Size(100, 40),
+                        ),
                         onPressed: () async {
                           if (isEditing) {
                             final isValid = _authBloc.isValidStaffUpdate(
@@ -490,7 +582,7 @@ class _StaffListPageState extends State<StaffListPage> {
                               emailController.text.trim(),
                               phoneController.text.trim(),
                               positionController.text.trim(),
-                              birthDateController.text.trim(), // Kiểm tra ngày sinh
+                              birthDateController.text.trim(),
                             );
 
                             if (!isValid) return;
@@ -499,20 +591,18 @@ class _StaffListPageState extends State<StaffListPage> {
                             try {
                               String? newImageUrl;
 
-                              // Xử lý cập nhật ảnh đại diện
+                              // Upload ảnh nếu có
                               if (imageProvider.webImageBytes != null) {
                                 if (staff.imageUrl.isNotEmpty) {
                                   final storageRef = FirebaseStorage.instance.refFromURL(staff.imageUrl);
                                   await storageRef.delete();
                                 }
-
                                 final uniqueFileName = "${DateTime.now().millisecondsSinceEpoch}_avatar.jpg";
                                 newImageUrl = await imageProvider.uploadSelectedImageAndGetUrl(staff.uid, uniqueFileName);
                               }
 
                               final updateData = <String, dynamic>{};
-                              final updatedFields = <String, String>{}; // Lưu giá trị mới dưới dạng chuỗi
-
+                              final updatedFields = <String, String>{};
                               final Map<String, String> fieldLabels = {
                                 'email': 'Email',
                                 'fullName': 'Họ và tên',
@@ -522,13 +612,13 @@ class _StaffListPageState extends State<StaffListPage> {
                                 'address': 'Địa chỉ',
                                 'gender': 'Giới tính',
                                 'birthDate': 'Ngày sinh',
-                                'imageUrl': 'Ảnh đại diện'
+                                'imageUrl': 'Ảnh đại diện',
                               };
 
                               void compareAndAdd(String key, dynamic newValue, dynamic oldValue) {
                                 if (newValue != oldValue) {
                                   updateData[key] = newValue;
-                                  updatedFields[key] = newValue.toString(); // Lưu giá trị mới dưới dạng chuỗi
+                                  updatedFields[key] = newValue.toString();
                                 }
                               }
 
@@ -543,14 +633,13 @@ class _StaffListPageState extends State<StaffListPage> {
                               final DateTime? newBirthDate = birthDateController.text.trim().isNotEmpty
                                   ? DateFormat('dd/MM/yyyy').parse(birthDateController.text.trim())
                                   : null;
-
                               compareAndAdd('birthDate', newBirthDate, staff.birthDate != null
                                   ? DateFormat('dd/MM/yyyy').format(staff.birthDate!)
                                   : null);
 
                               if (newImageUrl != null) {
                                 updateData['imageUrl'] = newImageUrl;
-                                updatedFields['imageUrl'] = 'Đã cập nhật ảnh'; // Add 'Đã cập nhật ảnh' to updatedFields
+                                updatedFields['imageUrl'] = 'Đã cập nhật ảnh';
                               }
 
                               if (updateData.isNotEmpty) {
@@ -560,7 +649,7 @@ class _StaffListPageState extends State<StaffListPage> {
 
                               if (updatedFields.isNotEmpty) {
                                 final vietnameseUpdatedFields = updatedFields.map((key, value) {
-                                  return MapEntry(fieldLabels[key] ?? key, value); // Sử dụng chú thích tiếng Việt nếu có
+                                  return MapEntry(fieldLabels[key] ?? key, value);
                                 });
 
                                 await sendUpdatedDetailEmailFromFlutter(
@@ -584,12 +673,18 @@ class _StaffListPageState extends State<StaffListPage> {
                         },
                         child: Text(
                           isEditing ? "Lưu" : "Sửa",
-                          style: TextStyle(fontSize: 4.sp),
+                          style: TextStyle(fontSize: 3.5.sp, color: Colors.white),
                         ),
                       ),
-                      TextButton(
+
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          minimumSize: Size(80, 40),
+                        ),
                         onPressed: () => Navigator.pop(context),
-                        child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                        child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
                       ),
                     ],
                   );
@@ -611,11 +706,12 @@ class _StaffListPageState extends State<StaffListPage> {
           title: Center(child: Text("Xác nhận xóa", style: TextStyle(fontSize: 7.sp,fontFamily: "Oswald",fontWeight: FontWeight.bold),),),
           content: Text("Bạn có chắc chắn muốn xóa nhân viên \"${staff.fullName}\" không?", style: TextStyle(fontSize: 4.sp)),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context), // Đóng hộp thoại
-              child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
-            ),
-            TextButton(
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                minimumSize: Size(80, 40),
+              ),
               onPressed: () async {
                 LoadingDialog.showLoadingDialog(context, "Đang tải ...");
                 try {
@@ -631,7 +727,16 @@ class _StaffListPageState extends State<StaffListPage> {
                   LoadingDialog.hideLoadingDialog(context); // Đóng loading dialog nếu xảy ra lỗi
                 }
               },
-              child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
+              child: Text("Xóa", style: TextStyle(fontSize: 3.5.sp, color: Colors.red)),
+            ),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                minimumSize: Size(80, 40),
+              ),
+              onPressed: () => Navigator.pop(context), // Đóng hộp thoại
+              child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
             ),
           ],
         );
@@ -815,9 +920,7 @@ class _StaffListPageState extends State<StaffListPage> {
                                         columns: [
                                           DataColumn(label: Text("Họ và tên", style: TextStyle(fontSize: 4.sp))),
                                           DataColumn(label: Text("Email", style: TextStyle(fontSize: 4.sp))),
-                                          DataColumn(label: Text("Giới tính", style: TextStyle(fontSize: 4.sp))),
                                           DataColumn(label: Text("Số điện thoại", style: TextStyle(fontSize: 4.sp))),
-                                          DataColumn(label: Text("Địa chỉ", style: TextStyle(fontSize: 4.sp))),
                                           DataColumn(label: Text("Vị trí", style: TextStyle(fontSize: 4.sp))),
                                           DataColumn(label: Text("Thao tác", style: TextStyle(fontSize: 4.sp))),
                                         ],
@@ -825,64 +928,68 @@ class _StaffListPageState extends State<StaffListPage> {
                                           return DataRow(cells: [
                                             DataCell(Text(staff.fullName, style: TextStyle(fontSize: 4.sp))),
                                             DataCell(Text(staff.email, style: TextStyle(fontSize: 4.sp))),
-                                            DataCell(Text(staff.gender, style: TextStyle(fontSize: 4.sp))),
                                             DataCell(Text(staff.phone, style: TextStyle(fontSize: 4.sp))),
-                                            DataCell(Text(staff.address, style: TextStyle(fontSize: 4.sp))),
                                             DataCell(Text(staff.position, style: TextStyle(fontSize: 4.sp))),
                                             DataCell(
                                               Row(
                                                 children: [
-                                                  if (!staff.isExit) ...[
-                                                    IconButton(
-                                                      icon: Icon(Icons.edit, color: Colors.blue),
-                                                      onPressed: () async {
-                                                        if (_isEditDialogShowing) return;
-                                                        _isEditDialogShowing = true;
-                                                        try {
-                                                          await showEditDialog(context, staff, _fetchStaff);
-                                                        } finally {
-                                                          _isEditDialogShowing = false;
-                                                        }
-                                                      },
+                                                  /// Nút sửa
+                                                  IconButton(
+                                                    tooltip: staff.isExit ? 'Nhân viên đã nghỉ – không thể chỉnh sửa' : 'Chỉnh sửa thông tin',
+                                                    icon: Icon(
+                                                      Icons.edit,
+                                                      color: staff.isExit ? Colors.grey[350] : Colors.blue,
                                                     ),
-                                                    IconButton(
-                                                      icon: Icon(Icons.delete, color: Colors.red),
-                                                      onPressed: () async {
-                                                        if (_isDeleteDialogShowing) return;
-                                                        _isDeleteDialogShowing = true;
-                                                        try {
-                                                          await showDeleteStaffDialog(context, staff, _fetchStaff);
-                                                        } finally {
-                                                          _isDeleteDialogShowing = false;
-                                                        }
-                                                      },
+                                                    onPressed: staff.isExit
+                                                        ? null
+                                                        : () async {
+                                                      if (_isEditDialogShowing) return;
+                                                      _isEditDialogShowing = true;
+                                                      try {
+                                                        await showEditDialog(context, staff, _fetchStaff);
+                                                      } finally {
+                                                        _isEditDialogShowing = false;
+                                                      }
+                                                    },
+                                                  ),
+
+                                                  /// Nút xóa
+                                                  IconButton(
+                                                    tooltip: staff.isExit ? 'Nhân viên đã nghỉ – không thể xóa' : 'Xóa nhân viên',
+                                                    icon: Icon(
+                                                      Icons.delete,
+                                                      color: staff.isExit ? Colors.grey[350] : Colors.red,
                                                     ),
-                                                    IconButton(
-                                                      icon: Icon(Icons.info_outline, color: Colors.white),
-                                                      onPressed: () async {
-                                                        if (_isViewDialogShowing) return;
-                                                        _isViewDialogShowing = true;
-                                                        try {
-                                                          await showViewStaffDialog(context, staff, _fetchStaff);
-                                                        } finally {
-                                                          _isViewDialogShowing = false;
-                                                        }
-                                                      },
+                                                    onPressed: staff.isExit
+                                                        ? null
+                                                        : () async {
+                                                      if (_isDeleteDialogShowing) return;
+                                                      _isDeleteDialogShowing = true;
+                                                      try {
+                                                        await showDeleteStaffDialog(context, staff, _fetchStaff);
+                                                      } finally {
+                                                        _isDeleteDialogShowing = false;
+                                                      }
+                                                    },
+                                                  ),
+
+                                                  /// Nút xem thông tin
+                                                  IconButton(
+                                                    tooltip: 'Xem thông tin nhân viên',
+                                                    icon: Icon(
+                                                      Icons.info_outline,
+                                                      color: Colors.white,
                                                     ),
-                                                  ],
-                                                  if (staff.isExit)
-                                                    IconButton(
-                                                      icon: Icon(Icons.info_outline, color: Colors.white),
-                                                      onPressed: () async {
-                                                        if (_isViewDialogShowing) return;
-                                                        _isViewDialogShowing = true;
-                                                        try {
-                                                          await showViewStaffDialog(context, staff, _fetchStaff);
-                                                        } finally {
-                                                          _isViewDialogShowing = false;
-                                                        }
-                                                      },
-                                                    ),
+                                                    onPressed: () async {
+                                                      if (_isViewDialogShowing) return;
+                                                      _isViewDialogShowing = true;
+                                                      try {
+                                                        await showViewStaffDialog(context, staff, _fetchStaff);
+                                                      } finally {
+                                                        _isViewDialogShowing = false;
+                                                      }
+                                                    },
+                                                  ),
                                                 ],
                                               ),
                                             ),

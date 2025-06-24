@@ -192,7 +192,7 @@ class _InfoListPageState extends State<InfoListPage> {
                 ),
               ),
               actions: [
-                TextButton(
+                OutlinedButton(
                   onPressed: () async {
                     if (isEditing) {
                       final isValid = _authBloc.isValidInformation(
@@ -210,7 +210,6 @@ class _InfoListPageState extends State<InfoListPage> {
                           "lastEdited": FieldValue.serverTimestamp(),
                         };
 
-                        // Danh sách các collection cần kiểm tra
                         final collections = [
                           "information_residents",
                           "information_staffs",
@@ -220,13 +219,14 @@ class _InfoListPageState extends State<InfoListPage> {
                         bool updated = false;
 
                         for (final collection in collections) {
-                          final docRef = FirebaseFirestore.instance.collection(collection).doc(info.id);
+                          final docRef =
+                          FirebaseFirestore.instance.collection(collection).doc(info.id);
                           final docSnap = await docRef.get();
 
                           if (docSnap.exists) {
                             await docRef.update(updatedData);
                             updated = true;
-                            break; // chỉ cập nhật ở collection đầu tiên tìm thấy
+                            break;
                           }
                         }
 
@@ -245,12 +245,25 @@ class _InfoListPageState extends State<InfoListPage> {
                       setState(() => isEditing = true);
                     }
                   },
-                  child: Text(isEditing ? "Lưu" : "Sửa", style: TextStyle(fontSize: 4.sp)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text(
+                    isEditing ? "Lưu" : "Sửa",
+                    style: TextStyle(fontSize: 3.5.sp, color: Colors.white),
+                  ),
                 ),
-                TextButton(
+                OutlinedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
                 ),
+
+
               ],
             );
           },
@@ -265,45 +278,31 @@ class _InfoListPageState extends State<InfoListPage> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: Text(
+          title: Center(child: Text(
             "Xác nhận xóa thông báo",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: "Oswald",
               fontWeight: FontWeight.bold,
               fontSize: 7.sp,
-              color: Colors.redAccent,
+              color: Colors.white,
             ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (info.imageUrl != null && info.imageUrl!.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12.r),
-                  child: Container(
-                    width: 140.r,
-                    height: 140.r,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300, width: 0.5.w),
-                    ),
-                    child: Image.network(info.imageUrl!, fit: BoxFit.cover),
-                  ),
-                ),
-              SizedBox(height: 15.h),
-              Text(
-                "Bạn có chắc chắn muốn xóa thông báo này không?",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 4.sp),
-              ),
-            ],
+          ),),
+          content: Text(
+            "Bạn có chắc chắn muốn xóa thông báo này không?",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 4.sp),
           ),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context), // Đóng dialog
-              child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.grey),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () async {
                 LoadingDialog.showLoadingDialog(context, "Đang xóa...");
                 try {
@@ -338,8 +337,13 @@ class _InfoListPageState extends State<InfoListPage> {
                   LoadingDialog.hideLoadingDialog(context); // Đóng loading dialog
                 }
               },
-              child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: 4.sp)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Xóa", style: TextStyle(color: Colors.red, fontSize: 3.5.sp)),
             ),
+
           ],
         );
       },
