@@ -3,8 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../constants.dart';
-
 class ChangePasswordPage extends StatefulWidget {
   @override
   _ChangePasswordPageState createState() => _ChangePasswordPageState();
@@ -148,65 +146,62 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       appBar: AppBar(title: Text('Đổi mật khẩu', style: TextStyle(color:Colors.white,fontSize: 25.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),            backgroundColor: Theme.of(context).colorScheme.primary,
       ),
 
-      body: Padding(
-        padding: EdgeInsets.symmetric(vertical: 10.h,horizontal: 20.w),
-        child: Column(
-          children: [
-            SizedBox(height: 20.h),
-
-            TextField(
-              controller: _oldPasswordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Mật khẩu cũ',
-                labelStyle: TextStyle(
-                    fontSize: 15.sp,color: Colors.black87),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 40.h),
-            TextField(
-              controller: _newPasswordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Mật khẩu mới',
-                labelStyle: TextStyle(
-                    fontSize: 15.sp,color: Colors.black87),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 40.h),
-            TextField(
-              controller: _confirmPasswordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Xác nhận mật khẩu mới',
-                labelStyle: TextStyle(
-                    fontSize: 15.sp,color: Colors.black87),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 40.h),
-            SizedBox(
-              width: 140.w,
-              height: 40.h,
-              child: ElevatedButton(
-                onPressed: _changePassword,
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(30.r),
-                  ),
-                  elevation: 4,
-                  shadowColor: Colors.black45,
-                  alignment: Alignment.center,
-                  padding: EdgeInsets.zero,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(), // 🔐 Bỏ focus khi nhấn ngoài
+        child: SingleChildScrollView( // 👈 optional: giúp tránh tràn khi bàn phím hiện
+          padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 20.w),
+          child: Column(
+            children: [
+              SizedBox(height: 20.h),
+              TextField(
+                controller: _oldPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Mật khẩu cũ',
+                  labelStyle: TextStyle(fontSize: 15.sp, color: Colors.black87),
+                  border: OutlineInputBorder(),
                 ),
-                child: Text('Đổi mật khẩu',style: TextStyle(
-                    fontSize: 15.sp),),
               ),
-            )
-          ],
+              SizedBox(height: 40.h),
+              TextField(
+                controller: _newPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Mật khẩu mới',
+                  labelStyle: TextStyle(fontSize: 15.sp, color: Colors.black87),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 40.h),
+              TextField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Xác nhận mật khẩu mới',
+                  labelStyle: TextStyle(fontSize: 15.sp, color: Colors.black87),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 40.h),
+              SizedBox(
+                width: 140.w,
+                height: 40.h,
+                child: ElevatedButton(
+                  onPressed: _changePassword,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.r),
+                    ),
+                    elevation: 4,
+                    shadowColor: Colors.black45,
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.zero,
+                  ),
+                  child: Text('Đổi mật khẩu', style: TextStyle(fontSize: 15.sp)),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );

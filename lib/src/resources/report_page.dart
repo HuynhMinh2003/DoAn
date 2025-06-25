@@ -107,30 +107,29 @@ class _ReportPageState extends BaseResidentInfoScreen<ReportPage> {
     }
   }
 
-  Widget _buildTabButton(BuildContext context,String text, int index, bool isSelected) {
+  Widget _buildTabButton(BuildContext context, String label, int index, bool isSelected) {
     return Expanded(
-      child: GestureDetector(
-        onTap: () {
+      child: ElevatedButton(
+        onPressed: () {
           setState(() {
             selectedIndex = index;
           });
         },
-        child: Container(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Colors.grey.shade200,
+          foregroundColor: isSelected ? Colors.white : Colors.black,
           padding: EdgeInsets.symmetric(vertical: 12.h),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : Colors.grey.shade200,
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          alignment: Alignment.center,
-          child: Text(
-            text,
-            style: TextStyle(
-                color: isSelected ? Colors.white : Colors.black87,
-                fontWeight: FontWeight.w600,
-                fontSize: 15.sp
-            ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -238,7 +237,7 @@ class _ReportPageState extends BaseResidentInfoScreen<ReportPage> {
                       onPressed: () => _submitIncident(context),
                       child: Text(
                         'Gửi sự cố',
-                        style: TextStyle(fontWeight: FontWeight.bold,fontSize: 15.sp),
+                        style: TextStyle(fontSize: 15.sp, color: Colors.black),
                       ),
                     ),)],
                   )
@@ -366,7 +365,7 @@ class _ReportPageState extends BaseResidentInfoScreen<ReportPage> {
                         ),
                         actions: [
                           ElevatedButton(
-                            child: Text('Đóng', style: TextStyle(fontSize: 15.sp)),
+                            child: Text('Đóng', style: TextStyle(fontSize: 15.sp, color: Colors.black)),
                             onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
                           ),
                         ],

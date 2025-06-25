@@ -267,27 +267,27 @@ class CompanyDetailPage extends StatelessWidget {
               ),
             SizedBox(height: 30.h),
             Text('Tên công ty: ${company.name}',
-                style: TextStyle(fontSize: 15.h)),
+                style: TextStyle(fontSize: 15.sp)),
             SizedBox(height: 30.h),
             Text('Loại dịch vụ: ${company.type}',
-                style: TextStyle(fontSize: 15.h)),
+                style: TextStyle(fontSize: 15.sp)),
             SizedBox(height: 30.h),
             Text('Mô tả: ${company.description}',
-                style: TextStyle(fontSize: 15.h)),
+                style: TextStyle(fontSize: 15.sp)),
             SizedBox(height: 30.h),
             Text('Số điện thoại: ${company.phone}',
-                style: TextStyle(fontSize: 15.h)),
+                style: TextStyle(fontSize: 15.sp)),
             SizedBox(height: 30.h),
             Text('Địa chỉ: ${company.address}',
-                style: TextStyle(fontSize: 15.h)),
+                style: TextStyle(fontSize: 15.sp)),
             SizedBox(height: 30.h),
-            Text('Giá dịch vụ: $price', style: TextStyle(fontSize: 15.h)),
+            Text('Giá dịch vụ: $price', style: TextStyle(fontSize: 15.sp)),
             SizedBox(height: 20.h),
             if (fileLink.isNotEmpty)
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Text("Trang dịch vụ: ", style: TextStyle(fontSize: 15.h)),
+                  Text("Trang dịch vụ: ", style: TextStyle(fontSize: 15.sp)),
                   TextButton(
                       onPressed: () {
                         _openFile(context, fileLink);
@@ -296,7 +296,7 @@ class CompanyDetailPage extends StatelessWidget {
                         'Xem chi tiết',
                         style: TextStyle(
                             decoration: TextDecoration.underline,
-                            fontSize: 15.h,
+                            fontSize: 15.sp,
                             fontStyle: FontStyle.italic),
                       )),
                 ],
@@ -307,12 +307,12 @@ class CompanyDetailPage extends StatelessWidget {
               children: [
               ElevatedButton(
                 onPressed: () => _showBookingDialog(context),
-                child: Text('Đặt dịch vụ', style: TextStyle(fontSize: 15.h)),
+                child: Text('Đặt dịch vụ', style: TextStyle(fontSize: 15.sp,color: Colors.black)),
               ),
               SizedBox(height: 10.h),
               ElevatedButton(
                 onPressed: () => _showServiceHistoryDialog(context),
-                child: Text('Xem lịch sử đặt dịch vụ', style: TextStyle(fontSize: 15.h)),
+                child: Text('Xem lịch sử đặt dịch vụ', style: TextStyle(fontSize: 15.sp,color: Colors.black)),
               ),
 
             ],)

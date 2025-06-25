@@ -6,6 +6,7 @@ import 'package:do_an/src/resources/payment_summary_screen_page.dart';
 import 'package:do_an/src/resources/pdf_Viewer_Screen_page.dart';
 import 'package:do_an/src/resources/provider/resident_image_provider.dart';
 import 'package:do_an/src/resources/report_page.dart';
+import 'package:do_an/src/resources/resident_contract_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -369,40 +370,90 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                                 context,
                                 svgPath: 'assets/images/contract.svg',
                                 label: 'Xem hợp đồng',
-                                onTap: () async {
-                                  final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-                                  if (currentUserId == null) return;
+                                  onTap: () async {
+                                    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                                    if (currentUserId == null) return;
 
-                                  final residentSnapshot = await FirebaseFirestore.instance
-                                      .collection('residents')
-                                      .doc(currentUserId)
-                                      .get();
+                                    final residentSnapshot = await FirebaseFirestore.instance
+                                        .collection('residents')
+                                        .doc(currentUserId)
+                                        .get();
 
-                                  final apartmentId = residentSnapshot.data()?['apartmentId'];
-                                  if (apartmentId == null) return;
+                                    final apartmentId = residentSnapshot.data()?['apartmentId'];
+                                    if (apartmentId == null) return;
 
-                                  final contractsSnapshot = await FirebaseFirestore.instance
-                                      .collection('contracts')
-                                      .where('apartmentDocId', isEqualTo: apartmentId)
-                                      .where('isActive', isEqualTo: true)
-                                      .limit(1)
-                                      .get();
+                                    final contractsSnapshot = await FirebaseFirestore.instance
+                                        .collection('contracts')
+                                        .where('apartmentDocId', isEqualTo: apartmentId)
+                                        .where('isActive', isEqualTo: true)
+                                        .limit(1)
+                                        .get();
 
-                                  if (contractsSnapshot.docs.isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Không tìm thấy hợp đồng đang hoạt động')),
+                                    if (contractsSnapshot.docs.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Không tìm thấy hợp đồng đang hoạt động')),
+                                      );
+                                      return;
+                                    }
+
+                                    final contractDoc = contractsSnapshot.docs.first;
+                                    final contractData = contractDoc.data();
+                                    final contractId = contractDoc.id;
+                                    final representativeId = contractData['representative']?['id'];
+                                    final contractUrl = contractData['pdfUrl'];
+
+                                    if (currentUserId == representativeId) {
+                                      // ✅ Là người đại diện → xem bản đầy đủ
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => PdfViewerScreen(pdfUrl: contractUrl)),
+                                      );
+                                      return;
+                                    }
+
+                                    // 🔍 Kiểm tra người dùng có nằm trong contractHistory không
+                                    final contractHistorySnap = await FirebaseFirestore.instance
+                                        .collection('residents')
+                                        .doc(currentUserId)
+                                        .collection('contractHistory')
+                                        .where('contractId', isEqualTo: contractId)
+                                        .orderBy('joinedAt', descending: true)
+                                        .limit(1)
+                                        .get();
+
+                                    if (contractHistorySnap.docs.isEmpty) {
+                                      // ❌ Không có lịch sử hợp đồng → không được phép xem
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => AlertDialog(
+                                          title: const Text("Không có quyền xem"),
+                                          content: const Text("Bạn không thuộc hợp đồng này."),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context),
+                                              child: const Text("Đóng"),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // ✅ Là cư dân trong hợp đồng → xem bản tóm tắt
+                                    final historyData = contractHistorySnap.docs.first.data();
+
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ResidentContractSummaryScreen(
+                                          contractData: contractData,
+                                          joinedAt: historyData['joinedAt']?.toDate(),
+                                          leftAt: historyData['leftAt']?.toDate(),
+                                        ),
+                                      ),
                                     );
-                                    return;
                                   }
 
-                                  final contractData = contractsSnapshot.docs.first.data();
-                                  final contractUrl = contractData['pdfUrl'];
-
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => PdfViewerScreen(pdfUrl: contractUrl)),
-                                  );
-                                },
                               ),
                               buildServiceCard(
                                 context,

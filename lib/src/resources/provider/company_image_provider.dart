@@ -26,10 +26,10 @@ class CompanyImageProvider extends ChangeNotifier {
   Uint8List? get webImageBytes => _webImageBytes;
 
   CompanyImageProvider() {
-    _fetchAvatar();
+    fetchAvatar();
   }
 
-  void _fetchAvatar() {
+  void fetchAvatar() {
     String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
