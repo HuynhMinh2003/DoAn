@@ -29,15 +29,12 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
   void initState() {
     super.initState();
 
-    final residentId =
-        FirebaseAuth.instance.currentUser?.uid; // UID người dùng đăng nhập
+    final residentId = FirebaseAuth.instance.currentUser?.uid;
     if (residentId != null) {
       Future.microtask(() {
-        // Tải ảnh người dùng (nếu có)
-        Provider.of<ResidentImageProvider>(context, listen: false)
-            .loadImageByResidentId(residentId);
+        // ✅ Gọi đúng hàm lắng nghe realtime thay vì load 1 lần
+        Provider.of<ResidentImageProvider>(context, listen: false).fetchAvatar();
 
-        // Lấy thông tin cư dân + apartmentName luôn
         getResidentInfo(residentId);
       });
     }
@@ -183,7 +180,7 @@ class _ResidentInfoPageState extends BaseResidentInfoScreen<ResidentInfoPage> {
                       alignment: Alignment.topCenter,
                       child: SingleChildScrollView(
                         child: Padding(
-                          padding: EdgeInsets.only(top: 20.h),
+                          padding: EdgeInsets.only(top: 10.h),
                           child: Padding(
                             padding: EdgeInsets.only(
                                 left: 20.w, right: 10.w, top: 10.h),

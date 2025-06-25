@@ -100,7 +100,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         });
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: isActive ? Theme.of(context).colorScheme.primary : Colors.grey[300],
+        backgroundColor: isActive ? Theme.of(context).colorScheme.primary : Colors.grey.shade200,
         foregroundColor: isActive ? Colors.white : Colors.black,
       ),
       child: Text(label, style: TextStyle(fontSize: 15.sp)),
@@ -200,7 +200,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   SnackBar(content: Text("Đã cập nhật trạng thái thanh toán, vui lòng chờ kiểm tra"), backgroundColor: Colors.green),
                 );
               },
-              child: Text('Xác nhận thanh toán', style: TextStyle(fontSize: 15.sp)),
+              child: Text('Xác nhận thanh toán', style: TextStyle(fontSize: 15.sp,color:Colors.black)),
             ),
           ),
         ],
