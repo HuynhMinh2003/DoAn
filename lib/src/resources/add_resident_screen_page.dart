@@ -264,7 +264,7 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
           batch.set(logRef, {
             'action': 'Thêm cư dân',
             'performedBy': 'Admin',
-            'residentNames': newResidentNames,
+            'residents': newResidentNames,
             'timestamp': Timestamp.now(),
           });
 
@@ -333,7 +333,8 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(title: Text('      Nhập thông tin cư dân', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: bgColor,),
-      body:SafeArea(child: Stack(
+      body:SafeArea(
+          child: Stack(
         children: [
           Padding(
               padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 20.h),
@@ -386,7 +387,6 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
                                 },
                               ),
                             ),
-
                             // Giới tính
                             Padding(
                               padding: EdgeInsets.symmetric(vertical: 10.h),
@@ -395,7 +395,7 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
                                 builder: (context, snapshot) => Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Giới tính", style: TextStyle(fontSize: 5.sp, fontWeight: FontWeight.bold)),
+                                    Text("Giới tính", style: TextStyle(fontSize: 5.sp)),
                                     Row(
                                       children: [
                                         Radio<String>(
@@ -459,7 +459,6 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
                                 },
                               ),
                             ),
-
                             // Email
                             StreamBuilder<String>(
                               stream: _authBloc[index].emailResidentStream,
@@ -475,7 +474,6 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
                                 },
                               ),
                             ),
-
                             // SĐT
                             StreamBuilder<String>(
                               stream: _authBloc[index].phoneResidentStream,

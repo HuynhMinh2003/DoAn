@@ -34,7 +34,7 @@ class _CSNInfoPageState extends BaseStaffInfoScreen<CSNInfoPage> {
       Future.microtask(() {
         // Tải ảnh người dùng (nếu có)
         Provider.of<StaffImageProvider>(context, listen: false)
-            .loadImageByStaffId(staffId);
+            .fetchAvatar();
 
         // Lấy thông tin cư dân + apartmentName luôn
         getStaffInfo(staffId);
