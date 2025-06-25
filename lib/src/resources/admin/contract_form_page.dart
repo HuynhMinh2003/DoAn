@@ -588,7 +588,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
 
                             ),
                           ],
-
                         ),
 
                       ],
@@ -844,13 +843,17 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                               title: Center(child: Text("Thành công", style: TextStyle(fontSize: 5.sp))),
                               content: Text("Hợp đồng đã được tạo thành công!", style: TextStyle(fontSize: 4.sp)),
                               actions: [
-                                TextButton(
+                                OutlinedButton(
                                   onPressed: () {
                                     Provider.of<ContractNotifier>(context, listen: false).markAsCreated();
                                     Navigator.pop(context); // Đóng dialog
                                     Navigator.pop(context); // Quay lại trang trước
                                   },
-                                  child: Text("Đồng ý", style: TextStyle(fontSize: 4.sp)),
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(color: Colors.white),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  child: Text("Đồng ý", style: TextStyle(fontSize: 3.5.sp)),
                                 ),
                               ],
                             );
@@ -866,11 +869,15 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                               title: Center(child: Text("Thất bại", style: TextStyle(fontSize: 5.sp))),
                               content: Text("Hợp đồng tạo thất bại!", style: TextStyle(fontSize: 4.sp)),
                               actions: [
-                                TextButton(
+                                OutlinedButton(
                                   onPressed: () {
                                     Navigator.pop(context); // Đóng dialog
                                     Navigator.pop(context); // Quay lại trang trước
                                   },
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(color: Colors.white),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
                                   child: Text("Đồng ý", style: TextStyle(fontSize: 4.sp)),
                                 ),
                               ],
