@@ -574,16 +574,20 @@ class _ContractListPageState extends State<ContractListPage> {
                   await showDialog(
                     context: context,
                     builder: (_) => AlertDialog(
-                      title: Text("Thành công",
-                          style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold)),
+                      title: Center(child: Text("Thành công",
+                          style: TextStyle(fontSize: 7.sp, fontWeight: FontWeight.bold)),),
                       content: Text(
                         "Hợp đồng đã được gia hạn đến ${DateFormat('dd/MM/yyyy').format(newEndDate)}.",
                         style: TextStyle(fontSize: 4.sp),
                       ),
                       actions: [
-                        TextButton(
+                        OutlinedButton(
                           onPressed: () => Navigator.pop(context),
-                          child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.white),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)),
                         ),
                       ],
                     ),
@@ -601,14 +605,18 @@ class _ContractListPageState extends State<ContractListPage> {
                   showDialog(
                     context: context,
                     builder: (_) => AlertDialog(
-                      title: Text("Lỗi",
-                          style: TextStyle(fontSize: 5.sp, fontWeight: FontWeight.bold)),
+                      title: Center(child: Text("Lỗi",
+                          style: TextStyle(fontSize: 7.sp, fontWeight: FontWeight.bold)),),
                       content: Text("Không thể gia hạn hợp đồng: $e",
                           style: TextStyle(fontSize: 4.sp)),
                       actions: [
-                        TextButton(
+                        OutlinedButton(
                           onPressed: () => Navigator.pop(context),
-                          child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.white),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)),
                         ),
                       ],
                     ),
@@ -637,13 +645,17 @@ class _ContractListPageState extends State<ContractListPage> {
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: Text("Lỗi", style: TextStyle(fontSize: 6.sp)),
+          title: Center(child: Text("Lỗi", style: TextStyle(fontSize: 7.sp)),),
           content: Text("Không thể thực hiện thao tác xóa hợp đồng.",
               style: TextStyle(fontSize: 4.sp)),
           actions: [
-            TextButton(
+            OutlinedButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)))
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)))
           ],
         ),
       );
@@ -699,11 +711,11 @@ class _ContractListPageState extends State<ContractListPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text("Chọn số người cần thêm",
+              title: Center(child: Text("Chọn số người cần thêm",
                   style: TextStyle(
                       fontSize: 6.sp,
                       fontFamily: "Oswald",
-                      fontWeight: FontWeight.bold,color: Colors.blueAccent)),
+                      fontWeight: FontWeight.bold,color: Colors.blueAccent)),),
               content: DropdownButtonHideUnderline(
                 child: DropdownButton2<int>(
                   isExpanded: true,

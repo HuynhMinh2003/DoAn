@@ -63,11 +63,9 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
   }
 
   Future<Map<String, dynamic>?> checkExistingResident(String cccd, String email) async {
-    // Query theo cccd + isExit = true
     final query = await FirebaseFirestore.instance
-        .collection('residents')
-        .where('cccd', isEqualTo: cccd)
-        .where('isExit', isEqualTo: true)
+        .collection("residents")
+        .where("cccd", isEqualTo: cccd)
         .limit(1)
         .get();
 
@@ -78,18 +76,16 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
       };
     }
 
-    // Query theo email + isExit = true
-    final emailQuery = await FirebaseFirestore.instance
-        .collection('residents')
-        .where('email', isEqualTo: email)
-        .where('isExit', isEqualTo: true)
+    final queryByEmail = await FirebaseFirestore.instance
+        .collection("residents")
+        .where("email", isEqualTo: email)
         .limit(1)
         .get();
 
-    if (emailQuery.docs.isNotEmpty) {
+    if (queryByEmail.docs.isNotEmpty) {
       return {
-        'residentId': emailQuery.docs.first.id,
-        ...emailQuery.docs.first.data(),
+        'residentId': queryByEmail.docs.first.id, // ✅ Thêm dòng này
+        ...queryByEmail.docs.first.data(),
       };
     }
 
@@ -132,15 +128,14 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
 
     List<Map<String, dynamic>> newResidentObjects = [];
     List<String> newResidentNames = [];
+    List<ResidentInfo> failedResidents = [];
+    List<ResidentInfo> successfulResidents = [];
 
     try {
       final apartmentSnapshot = await apartmentRef.get();
-
       final existingResidents = List<Map<String, dynamic>>.from(apartmentSnapshot.data()?['residents'] ?? []);
 
-      final pool = Pool(3); // Giới hạn 3 request đồng thời
-
-      List<ResidentInfo> failedResidents = [];
+      final pool = Pool(3);
 
       for (final resident in residents) {
         await pool.withResource(() async {
@@ -150,7 +145,6 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
 
           while (retryCount < maxRetries && !success) {
             try {
-              // === 1. Kiểm tra cư dân đã tồn tại ===
               final existingData = await checkExistingResident(resident.cccd, resident.email);
 
               if (existingData != null) {
@@ -164,13 +158,21 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
                         style: TextStyle(fontSize: 4.sp),
                       ),
                       actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false), // Hủy
-                          child: Text("Hủy", style: TextStyle(fontSize: 4.sp)),
+                        OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.white),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
                         ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(true), // Khôi phục
-                          child: Text("Khôi phục", style: TextStyle(fontSize: 4.sp)),
+                        OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.green),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Text("Khôi phục", style: TextStyle(fontSize: 3.5.sp, color: Colors.green)),
                         ),
                       ],
                     );
@@ -179,49 +181,58 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
 
                 if (shouldProceed != true) {
                   failedResidents.add(resident);
-                  print("⛔ Bỏ qua ${resident.fullName} vì người dùng chọn Hủy.");
                   return;
                 }
-
-                print("🔁 Người dùng chọn khôi phục — vẫn tạo mới tài khoản cho ${resident.fullName}");
               }
 
-              // === 2. Tạo tài khoản cư dân mới ===
-              final uid = await _createResidentAccount(
-                resident.email,
-                resident.fullName,
-                resident.cccd,
-                resident.address,
-                resident.gender,
-                resident.phone,
-                resident.birthDate,
+              final response = await http.post(
+                Uri.parse('https://createresidentaccount-ttrkrlo35a-uc.a.run.app'),
+                headers: {'Content-Type': 'application/json'},
+                body: json.encode({
+                  'email': resident.email,
+                  'fullName': resident.fullName,
+                  'cccd': resident.cccd,
+                  'address': resident.address,
+                  'gender': resident.gender,
+                  'phone': resident.phone,
+                  'birthDate': resident.birthDate?.toIso8601String(),
+                  'apartmentId': widget.apartment.id,
+                  'contractId': widget.contract.contractId,
+                  if (existingData != null) ...{
+                    'residentId': existingData['residentId'],
+                    'imageUrl': existingData['imageUrl'],
+                  },
+                }),
               );
 
-              if (uid == null) {
-                throw Exception("Không thể tạo tài khoản cho ${resident.fullName}");
-              }
+              if (response.statusCode == 200) {
+                final data = json.decode(response.body);
+                final newResidentId = data['residentId'];
 
-              final docRef = residentCollection.doc(uid);
-              batch.set(
-                docRef,
-                resident.copyWith(residentId: uid, apartmentId: widget.apartment.id).toMap(),
-                SetOptions(merge: true), // ✅ merge với dữ liệu cũ
-              );
+                final docRef = residentCollection.doc(newResidentId);
 
-              newResidentObjects.add({'id': uid, 'fullName': resident.fullName});
-              newResidentNames.add(resident.fullName);
-              print("✅ Tạo mới thành công: ${resident.fullName}");
-              success = true; // kết thúc vòng while
+                batch.set(
+                  docRef,
+                  resident.copyWith(
+                    residentId: newResidentId,
+                    apartmentId: widget.apartment.id,
+                  ).toMap(),
+                  SetOptions(merge: true),
+                );
 
-            } catch (e) {
-              retryCount++;
-              if (retryCount >= maxRetries) {
-                print("❌ Thất bại sau $maxRetries lần: ${resident.fullName} - Lỗi: $e");
+                newResidentObjects.add({'id': newResidentId, 'fullName': resident.fullName});
+                newResidentNames.add(resident.fullName);
+                successfulResidents.add(resident);
+                success = true;
+              } else {
                 failedResidents.add(resident);
                 break;
-              } else {
-                print("⚠️ Thử lại ${resident.fullName} lần $retryCount sau lỗi: $e");
-                await Future.delayed(Duration(seconds: 2));
+              }
+            } catch (e) {
+              print("❌ Lỗi xử lý ${resident.fullName}: $e");
+              retryCount++;
+              if (retryCount >= maxRetries) {
+                failedResidents.add(resident);
               }
             }
           }
@@ -237,24 +248,18 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
           }
         }
 
-        // Cập nhật cư dân cho căn hộ
         batch.update(apartmentRef, {
           'residents': updatedResidents,
         });
 
-        final apartmentDoc = await FirebaseFirestore.instance
-            .collection("apartments")
-            .doc(widget.apartment.id)
-            .get();
-
+        final apartmentDoc = await apartmentRef.get();
         final currentContractId = apartmentDoc.data()?['currentContractId'];
 
         if (currentContractId != null) {
-          final contractRef = FirebaseFirestore.instance
-              .collection("contracts")
-              .doc(currentContractId);
+          final contractRef = FirebaseFirestore.instance.collection("contracts").doc(currentContractId);
+          final contractSnap = await contractRef.get();
+          final currentCount = contractSnap.data()?['numberOfResidents'] ?? 0;
 
-          // Ghi lịch sử cập nhật
           final logRef = contractRef.collection("contractHistory").doc();
           batch.set(logRef, {
             'action': 'Thêm cư dân',
@@ -264,7 +269,7 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
           });
 
           batch.update(contractRef, {
-            'numberOfResidents': widget.contract.numberOfResidents + newResidentObjects.length,
+            'numberOfResidents': currentCount + successfulResidents.length,
           });
         }
       }
@@ -280,12 +285,16 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Center(child: Text("Thành công")),
-              content: const Text("Cư dân cập nhật thành công!"),
+              content: Text(
+                failedResidents.isEmpty
+                    ? "Cư dân cập nhật thành công!"
+                    : "Một số cư dân đã bị bỏ qua:\n${failedResidents.map((r) => r.fullName).join(', ')}",
+              ),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context); // Close dialog
-                    Navigator.pop(context); // Back to previous screen
+                    Navigator.pop(context); // Back
                     Navigator.pop(context);
                   },
                   child: const Text("Đồng ý"),
@@ -308,7 +317,7 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Close dialog
+                    Navigator.pop(context);
                   },
                   child: const Text("Đồng ý"),
                 ),
@@ -317,40 +326,6 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
           },
         );
       }
-    }
-  }
-
-// Hàm gọi Firebase Function để tạo tài khoản cư dân
-  Future<String?> _createResidentAccount(String email, String fullName, String cccd, String address, String gender, String phone, DateTime? birthDate) async {
-    final url = 'https://createresidentaccount-ttrkrlo35a-uc.a.run.app'; // Thay thế với URL Firebase function của bạn
-    final headers = {'Content-Type': 'application/json'};
-
-    // Chuyển birthDate thành chuỗi ISO 8601 nếu có
-    String birthDateString = birthDate?.toIso8601String() ?? '';
-
-    final body = json.encode({
-      'email': email,
-      'fullName': fullName,
-      'cccd': cccd,
-      'address': address,
-      'gender': gender,
-      'phone': phone,
-      'birthDate': birthDateString, // Gửi birthDate dưới dạng chuỗi
-      'apartmentId': widget.apartment.id,
-      'contractId': widget.contract.contractId,
-    });
-
-    try {
-      final response = await http.post(Uri.parse(url), headers: headers, body: body);
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        print('✅ Tạo tài khoản cư dân thành công.');
-        return responseData['residentId'];
-      } else {
-        throw Exception('Tạo tài khoản cư dân thất bại: ${response.body}');
-      }
-    } catch (e) {
-      print('Lỗi khi gọi Firebase function: $e');
     }
   }
 
