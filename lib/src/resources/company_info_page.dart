@@ -11,7 +11,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -38,7 +37,7 @@ class _CompanyInfoPageState extends BaseCompanyInfoScreen<CompanyInfoPage> {
       Future.microtask(() {
         // Tải ảnh người dùng (nếu có)
         Provider.of<CompanyImageProvider>(context, listen: false)
-            .loadImageByCompanyId(companyId);
+            .fetchAvatar();
 
         // Lấy thông tin cư dân + apartmentName luôn
         getCompanyInfo(companyId);

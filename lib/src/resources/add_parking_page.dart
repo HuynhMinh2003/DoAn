@@ -27,7 +27,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
   void showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message,style: TextStyle(fontSize: 15.sp),),
+        content: Text(message,style: TextStyle(fontSize: 15.sp,color: Colors.black),),
         backgroundColor: Colors.green,  // Màu nền xanh
       ),
     );
@@ -161,7 +161,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
             title: Center(
                 child: Text(
                   "Chỉnh sửa thông tin xe",
-                  style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 23.sp, fontWeight: FontWeight.bold),
                 )),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -213,7 +213,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                   _errorController.close();
                   Navigator.of(context, rootNavigator: true).pop();
                 },
-                child: Text("Hủy", style: TextStyle(fontSize: 15.sp)),
+                child: Text("Hủy", style: TextStyle(fontSize: 15.sp,color: Colors.black)),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -240,7 +240,8 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                     _errorController.add("Lỗi khi cập nhật: $e");
                   }
                 },
-                child: Text("Lưu", style: TextStyle(fontSize: 15.sp)),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                child: Text("Lưu", style: TextStyle(fontSize: 15.sp,color: Colors.white)),
               ),
             ],
           );
@@ -401,7 +402,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                                   child: Text(
                                     "Xác nhận hủy",
                                     style: TextStyle(
-                                        fontSize: 30.sp, fontWeight: FontWeight.bold),
+                                        fontSize: 23.sp, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 content: Text(
@@ -411,7 +412,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-                                    child: Text("Không", style: TextStyle(fontSize: 15.sp)),
+                                    child: Text("Không", style: TextStyle(fontSize: 15.sp,color: Colors.black)),
                                   ),
                                   ElevatedButton(
                                     onPressed: () {
@@ -464,12 +465,12 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                     ),
                     hint: Text('Chọn loại phương tiện', style: TextStyle(fontSize: 15.sp)),
                     items: const [
-                      DropdownMenuItem(value: 'motorbike_roofed', child: Text('Xe máy (có mái)')),
-                      DropdownMenuItem(value: 'motorbike_unroofed', child: Text('Xe máy (không mái)')),
-                      DropdownMenuItem(value: 'car_roofed', child: Text('Ô tô (có mái)')),
-                      DropdownMenuItem(value: 'car_unroofed', child: Text('Ô tô (không mái)')),
-                      DropdownMenuItem(value: 'bike_roofed', child: Text('Xe đạp (có mái)')),
-                      DropdownMenuItem(value: 'bike_unroofed', child: Text('Xe đạp (không mái)')),
+                      DropdownMenuItem(value: 'motorbike_roofed', child: Text('Xe máy (có mái che)')),
+                      DropdownMenuItem(value: 'motorbike_unroofed', child: Text('Xe máy (không mái che)')),
+                      DropdownMenuItem(value: 'car_roofed', child: Text('Ô tô (có mái che)')),
+                      DropdownMenuItem(value: 'car_unroofed', child: Text('Ô tô (không mái che)')),
+                      DropdownMenuItem(value: 'bike_roofed', child: Text('Xe đạp (có mái che)')),
+                      DropdownMenuItem(value: 'bike_unroofed', child: Text('Xe đạp (không mái che)')),
                     ],
                     onChanged: (value) {
                       _vehicleType = value;
@@ -517,7 +518,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                       _vehicleTypeController.sink.add(null);
                       _licensePlateController.sink.add(null);
                     },
-                    child: Text("Hủy", style: TextStyle(fontSize: 15.sp)),
+                    child: Text("Hủy", style: TextStyle(fontSize: 15.sp, color: Colors.black)),
                   ),),
                   SizedBox(width: 8.w),
                   Expanded(child: ElevatedButton(
@@ -550,30 +551,29 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
     );
   }
 
-  Widget _buildTabButton(BuildContext context,String text, int index, bool isSelected) {
+  Widget _buildTabButton(BuildContext context, String label, int index, bool isSelected) {
     return Expanded(
-      child: GestureDetector(
-        onTap: () {
+      child: ElevatedButton(
+        onPressed: () {
           setState(() {
             _selectedTab = index;
           });
         },
-        child: Container(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Colors.grey.shade200,
+          foregroundColor: isSelected ? Colors.white : Colors.black,
           padding: EdgeInsets.symmetric(vertical: 12.h),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : Colors.grey.shade200,
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          alignment: Alignment.center,
-          child: Text(
-            text,
-            style: TextStyle(
-                color: isSelected ? Colors.white : Colors.black87,
-                fontWeight: FontWeight.w600,
-                fontSize: 15.sp
-            ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),

@@ -59,7 +59,7 @@ class _CSNScreenState extends State<CSNScreen> {
         });
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: isActive ? Theme.of(context).colorScheme.primary : Colors.grey[300],
+        backgroundColor: isActive ? Theme.of(context).colorScheme.primary : Colors.grey.shade200,
         foregroundColor: isActive ? Colors.white : Colors.black,
       ),
       child: Text(label, style: TextStyle(fontSize: 15.sp)),
@@ -164,8 +164,8 @@ class _CSNScreenState extends State<CSNScreen> {
         ),),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
-      body: SafeArea(child:
-      Column(
+      body: SafeArea(
+          child: Column(
         children: [
           Padding(
             padding: EdgeInsets.only(right: 16.w, left: 16.w, top: 20.h, bottom: 5.h),
