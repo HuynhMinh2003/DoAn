@@ -112,11 +112,15 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                 ),
               ),
               actions: [
-                TextButton(
+                OutlinedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Hủy', style: TextStyle(fontSize: 4.sp, color: Colors.white)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text('Hủy', style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
                 ),
-                ElevatedButton(
+                OutlinedButton(
                   onPressed: selectedStaff == null
                       ? null
                       : () async {
@@ -128,8 +132,11 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                       selectedPriority ?? 'Trung bình',
                     );
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                  child: Text('Xác nhận giao', style: TextStyle(fontSize: 4.sp, color: Colors.white)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text('Xác nhận giao', style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
                 ),
               ],
             );
@@ -289,21 +296,14 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.end,
                                           children: [
-                                            SizedBox(width: 30.w, child: ElevatedButton(
+                                            SizedBox(width: 30.w,
+                                              child: OutlinedButton(
                                               onPressed: () => _openAssignDialog(incident),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                bgColor,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(30.r),
+                                                style: OutlinedButton.styleFrom(
+                                                  side: BorderSide(color: Colors.white),
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                                 ),
-                                                elevation: 4,
-                                                shadowColor: Colors.black45,
-                                                alignment: Alignment.center,
-                                                padding: EdgeInsets.zero,
-                                              ),
-                                              child: Text("Giao xử lý", style: TextStyle(fontSize: 4.sp,color: Colors.white)),
+                                              child: Text("Giao xử lý", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
                                             ),),
                                             SizedBox(width: 10.w,)
                                           ],

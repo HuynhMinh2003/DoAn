@@ -143,7 +143,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldMessengerKey,
-      appBar: AppBar(title: Text('Đổi mật khẩu', style: TextStyle(color:Colors.white,fontSize: 25.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),            backgroundColor: Theme.of(context).colorScheme.primary,
+      appBar: AppBar(title: Text('Đổi mật khẩu', style: TextStyle(color:Colors.white,fontSize: 25.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
 
       body: GestureDetector(
@@ -197,7 +198,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     alignment: Alignment.center,
                     padding: EdgeInsets.zero,
                   ),
-                  child: Text('Đổi mật khẩu', style: TextStyle(fontSize: 15.sp)),
+                  child: Text('Đổi mật khẩu', style: TextStyle(fontSize: 15.sp,color:Colors.black)),
                 ),
               )
             ],

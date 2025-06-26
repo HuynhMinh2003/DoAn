@@ -42,15 +42,15 @@ class ResidentContractSummaryScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Text(
+        child:Text(
           '''
-Bạn đang thuê hợp đồng thuê dịch vụ đi kèm tại căn hộ $apartmentName / ${building[0].toLowerCase()}${building.substring(1)} có hiệu lực từ ngày ${formatDate(startDate)} đến ${formatDate(endDate)}:
+📄 Bạn đang thuê hợp đồng thuê dịch vụ đi kèm tại căn hộ $apartmentName / ${building[0].toLowerCase()}${building.substring(1)} có hiệu lực từ ngày ${formatDate(startDate)} đến ${formatDate(endDate)}:
 
--  Người đại diện hiện tại: ${representative['fullName'] ?? 'Không rõ'}
+- 🧑🏻‍ 💼 Người đại diện hiện tại: ${representative['fullName'] ?? 'Không rõ'}
 
--  Bạn được thêm vào danh sách cư dân vào ngày ${formatDate(joinedAt)}
+- 📅 Bạn được thêm vào danh sách cư dân vào ngày ${formatDate(joinedAt)}
 
-📌 Lưu ý: Bạn không phải là người ký hợp đồng gốc. Mọi thông tin pháp lý được thực hiện qua người đại diện.
+📌 Lưu ý: Bạn không phải là người ký hợp đồng gốc. Mọi thông tin pháp lý được thực hiện qua người đại diện. Thông tin chi tiết hợp đồng gốc vui lòng liên hệ người đại diện.
 ''',
           style: TextStyle(fontSize: 15.sp, height: 1.6),
         ),

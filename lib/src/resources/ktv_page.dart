@@ -207,7 +207,7 @@ class _KTVPageState extends BaseStaffInfoScreen<KTVPage> {
                           SizedBox(height: 20.h),
                           Text(
                             "${staffInfo?.fullName ??
-                                "kỹ thuật viên"}",
+                                "Kỹ thuật viên"}",
                             style: TextStyle(
                               fontFamily: "Oswald",
                               fontSize: 25.sp,
