@@ -59,7 +59,7 @@ class WaterReadingHistoryScreen extends StatelessWidget {
               final newReading = data['newReading'] ?? 0;
               final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
               final formattedTime = timestamp != null
-                  ? DateFormat('dd/MM/yyyy HH:mm').format(timestamp)
+                  ? DateFormat('dd/MM/yyyy - HH:mm').format(timestamp)
                   : 'Không rõ thời gian';
 
               return Card(

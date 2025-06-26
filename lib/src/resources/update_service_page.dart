@@ -354,7 +354,7 @@ class _UpdateServicePageState extends State<UpdateServicePage> {
                     width: 200.w,
                     child: ElevatedButton(
                       onPressed: _submitUpdate,
-                      child: Text('Cập nhật', style: TextStyle(fontSize: 16.sp)),
+                      child: Text('Cập nhật', style: TextStyle(fontSize: 16.sp,color: Colors.black)),
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(

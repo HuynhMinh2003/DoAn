@@ -247,21 +247,25 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      ElevatedButton.icon(
+                      OutlinedButton.icon(
                         onPressed: () =>
                             _approveService(service['companyId'], service['id']),
                         icon: const Icon(Icons.check, color: Colors.white),
-                        label: Text("Phê duyệt", style: TextStyle(fontSize: 4.sp)),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                      ),
+                        label: Text("Phê duyệt", style: TextStyle(fontSize: 3.5.sp,color: Colors.green)),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.green),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),                      ),
                       SizedBox(width: 10.w),
                       ElevatedButton.icon(
                         onPressed: () =>
                             _rejectService(service['companyId'], service['id']),
                         icon: const Icon(Icons.close, color: Colors.white),
-                        label: Text("Từ chối", style: TextStyle(fontSize: 4.sp)),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      ),
+                        label: Text("Từ chối", style: TextStyle(fontSize: 3.5.sp,color: Colors.red)),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.red),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),                       ),
                     ],
                   ),
                 ],
