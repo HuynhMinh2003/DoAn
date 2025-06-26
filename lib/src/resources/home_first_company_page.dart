@@ -9,7 +9,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'company_info_page.dart';
-import 'notification_list_resident_page.dart';
 
 class HomeFirstCompanyPage extends StatelessWidget {
   const HomeFirstCompanyPage({super.key});
@@ -18,7 +17,9 @@ class HomeFirstCompanyPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.red
+        colorScheme: const ColorScheme.light(
+          primary: Colors.red,
+          onPrimary: Colors.white,
         ),
         useMaterial3: true,
       ),

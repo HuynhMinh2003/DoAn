@@ -17,6 +17,7 @@ class WaterReadingForm extends StatefulWidget {
   final String staffId;
   final String staffName;
   final String selectedMonth; // Example: "2025-05"
+  final VoidCallback? onSaved;
 
   const WaterReadingForm({
     required this.contractId,
@@ -25,6 +26,7 @@ class WaterReadingForm extends StatefulWidget {
     required this.staffId,
     required this.staffName,
     required this.selectedMonth,
+    this.onSaved,
     super.key,
   });
 
@@ -275,6 +277,8 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
       // ✅ Tắt loading
       Navigator.of(context, rootNavigator: true).pop();
       Navigator.of(context).pop();
+
+      widget.onSaved?.call();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lưu thành công'), backgroundColor: Colors.green),

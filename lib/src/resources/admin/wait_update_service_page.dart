@@ -186,7 +186,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Center(child: Text('Thông tin chi tiết dịch vụ',style: TextStyle(fontSize: 7.sp,fontFamily: "Oswald"),),),
+          title: Center(child: Text('Thông tin chi tiết dịch vụ',style: TextStyle(fontWeight:FontWeight.bold,color:Colors.blueAccent,fontSize: 7.sp,fontFamily: "Oswald"),),),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,9 +224,13 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
             ),
           ),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Đóng',style: TextStyle(fontSize: 4.sp)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text('Đóng',style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
             ),
           ],
         );

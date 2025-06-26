@@ -207,7 +207,7 @@ class _CompanyPageState extends BaseCompanyInfoScreen<CompanyPage> {
                           ),
                           SizedBox(height: 20.h),
                           Text(
-                            "${companyInfo?.name ?? "công ty"}",
+                            "${companyInfo?.name ?? "Công ty"}",
                             style: TextStyle(
                               fontFamily: "Oswald",
                               fontSize: 25.sp,
