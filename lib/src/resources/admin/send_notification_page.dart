@@ -374,7 +374,7 @@ class _InfoPageState extends State<InfoPage> {
               controller: _titleController,
               onChanged: (value) => _titleStream.sink.add(value),
               decoration: InputDecoration(
-                labelText: "Thông báo",
+                labelText: "   Thông báo",
                 hintText: "Nhập tiêu đề thông báo...",
                 labelStyle: TextStyle(fontSize: 4.sp),
                 hintStyle: TextStyle(fontSize: 4.sp),
@@ -395,7 +395,7 @@ class _InfoPageState extends State<InfoPage> {
               maxLines: 10,
               onChanged: (value) => _messageStream.sink.add(value),
               decoration: InputDecoration(
-                labelText: "Nội dung thông báo",
+                labelText: "   Nội dung thông báo",
                 hintText: "Nhập chi tiết thông báo...",
                 labelStyle: TextStyle(fontSize: 4.sp),
                 hintStyle: TextStyle(fontSize: 4.sp),

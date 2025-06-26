@@ -304,6 +304,9 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
                                     staffId: widget.staffId,
                                     staffName: widget.staffName,
                                     selectedMonth: selectedMonth,
+                                    onSaved: () {
+                                      setState(() {}); // cập nhật lại icon hiển thị
+                                    },
                                   ),
                                 ),
                               ),

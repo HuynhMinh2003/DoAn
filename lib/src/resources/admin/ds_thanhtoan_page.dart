@@ -349,7 +349,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
           actions: [
             if (latestPayment != null) ...[
-              TextButton(
+              OutlinedButton(
                 onPressed: () async {
                   final confirm = await showDialog<bool>(
                     context: context,
@@ -394,9 +394,13 @@ class _PaymentPageState extends State<PaymentPage> {
                     await showApartmentContractInfoDialog(context, apartment, contract, onRefresh);
                   }
                 },
-                child: Text("Xác nhận đã thanh toán", style: TextStyle(fontSize: 3.5.sp)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Xác nhận đã thanh toán", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
               ),
-              TextButton(
+              OutlinedButton(
                 onPressed: () {
                   showDialog(
                     context: context,
@@ -468,12 +472,20 @@ class _PaymentPageState extends State<PaymentPage> {
                     },
                   );
                 },
-                child: Text("Xác nhận thiếu", style: TextStyle(fontSize: 3.5.sp)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Xác nhận thiếu", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
               ),
             ],
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
             ),
           ],
         ),
@@ -487,9 +499,13 @@ class _PaymentPageState extends State<PaymentPage> {
           content: Text("Không thể lấy thông tin hợp đồng.",
               style: TextStyle(fontSize: 4.sp)),
           actions: [
-            TextButton(
+            OutlinedButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)))
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)))
           ],
         ),
       );
@@ -551,9 +567,13 @@ class _PaymentPageState extends State<PaymentPage> {
             content: Text("Không có dữ liệu thanh toán trong khoảng thời gian này.",
                 style: TextStyle(fontSize: 4.sp)),
             actions: [
-              TextButton(
+              OutlinedButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
               ),
             ],
           ),
