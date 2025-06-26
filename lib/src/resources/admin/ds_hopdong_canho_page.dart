@@ -1257,7 +1257,7 @@ class _ContractListPageState extends State<ContractListPage> {
                           thickness: 0.1,
                           indent: 10.0,
                           endIndent: 10.0,
-                          color: Colors.black54,
+                          color: Colors.grey,
                         ),
                       ],
                     ),

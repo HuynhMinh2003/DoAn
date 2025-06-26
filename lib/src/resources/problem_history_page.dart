@@ -44,8 +44,8 @@ class ProblemHistoryScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                             child: Image.network(
                               incident.imageUrl!,
-                              height: 120,
-                              width: 100,
+                              height: 200,
+                              width: double.infinity,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => const Text("Không tải được ảnh."),
                             ),
@@ -55,21 +55,21 @@ class ProblemHistoryScreen extends StatelessWidget {
                       _infoRow("Tòa nhà", incident.building),
                       _infoRow("Căn hộ", incident.apartmentAddress),
                       _infoRow("Người báo cáo", incident.reporterName),
+                      _infoRow("Mô tả", incident.description),
                       _infoRow("Ghi chú quản lý", incident.managerNote),
                       _infoRow("Mức độ ưu tiên", incident.priority),
                       if (incident.createdAt != null)
-                        _infoRow("Ngày báo", DateFormat('dd/MM/yyyy HH:mm').format(incident.createdAt!.toDate())),
+                        _infoRow("Thời gian báo", DateFormat('dd/MM/yyyy - HH:mm').format(incident.createdAt!.toDate())),
                       if (incident.handledAt != null)
-                        _infoRow("Ngày xử lý", DateFormat('dd/MM/yyyy HH:mm').format(incident.handledAt!.toDate())),
+                        _infoRow("Thời gian tiếp nhận xử lý", DateFormat('dd/MM/yyyy - HH:mm').format(incident.handledAt!.toDate())),
                       _infoRow("Trạng thái", incident.status),
-                      _infoRow("Mô tả", incident.description),
                     ],
                   ),
                 ),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    child: Text("Đóng", style: TextStyle(fontSize: 13.sp)),
+                    child: Text("Đóng", style: TextStyle(fontSize: 15.sp,color: Colors.black)),
                     onPressed: () => Navigator.pop(context),
                   ),
                 )
@@ -164,9 +164,10 @@ class ProblemHistoryScreen extends StatelessWidget {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
+                                  SizedBox(height: 8.h),
                                   if (problemHistory.responseTime != null)
                                     Text(
-                                      "Thời gian phản hồi: ${DateFormat('dd/MM/yyyy HH:mm').format(problemHistory.responseTime!)}",
+                                      "Thời gian phản hồi: ${DateFormat('dd/MM/yyyy - HH:mm').format(problemHistory.responseTime!)}",
                                       style: TextStyle(fontSize: 12.sp),
                                     )                             ,
                                   SizedBox(height: 8.h),
@@ -202,7 +203,7 @@ class ProblemHistoryScreen extends StatelessWidget {
 
   Widget _infoRow(String label, String? value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: EdgeInsets.only(bottom: 10.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

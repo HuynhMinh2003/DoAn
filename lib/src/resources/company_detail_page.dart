@@ -90,11 +90,11 @@ class CompanyDetailPage extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              child: Text('Hủy', style: TextStyle(fontSize: 15.sp)),
+              child: Text('Hủy', style: TextStyle(fontSize: 15.sp,color:Colors.black)),
               onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             ElevatedButton(
-              child: Text('Gửi yêu cầu', style: TextStyle(fontSize: 15.sp)),
+              child: Text('Gửi yêu cầu', style: TextStyle(fontSize: 15.sp,color:Colors.black)),
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
                   final user = FirebaseAuth.instance.currentUser;
@@ -180,7 +180,7 @@ class CompanyDetailPage extends StatelessWidget {
           title: Center(
             child: Text(
               'Lịch sử đặt dịch vụ',
-              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
+              style: TextStyle(fontSize: 25.sp, fontWeight: FontWeight.bold, fontFamily: "Oswald"),
             ),
           ),
           content: Padding(
@@ -230,7 +230,7 @@ class CompanyDetailPage extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text('Đóng', style: TextStyle(fontSize: 15.sp)),
+              child: Text('Đóng', style: TextStyle(fontSize: 15.sp,color:Colors.black)),
             ),
           ],
         );
@@ -263,7 +263,19 @@ class CompanyDetailPage extends StatelessWidget {
           children: [
             if (imageServiceUrl.isNotEmpty)
               Center(
-                child: Image.network(imageServiceUrl, height: 200),
+                child: Container(
+                  height: 200,
+                  width: double.infinity,
+                  clipBehavior: Clip.hardEdge,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8), // tuỳ chọn
+                  ),
+                  child: Image.network(
+                    imageServiceUrl,
+                    fit: BoxFit.cover, // hoặc BoxFit.contain nếu muốn không cắt ảnh
+                    alignment: Alignment.center,
+                  ),
+                ),
               ),
             SizedBox(height: 30.h),
             Text('Tên công ty: ${company.name}',

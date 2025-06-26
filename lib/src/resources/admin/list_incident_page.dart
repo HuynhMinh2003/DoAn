@@ -1,10 +1,7 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:do_an/constants.dart';
 import 'package:do_an/custom_paginated_table.dart';
-import 'package:do_an/src/resources/dialog/msg_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:do_an/src/models/staffs.dart';
-import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -259,41 +256,61 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
           ),
           actions: [
             if (incident.status == "Đang chờ xử lý") ...[
-              // TextButton(
-              //   onPressed: () => _openAssignDialog(incident),
-              //   child: Text("Chọn nhân viên xử lý", style: TextStyle(fontSize: 4.sp)),
-              // ),
-              TextButton(
+              OutlinedButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
               ),
             ] else if (incident.status == "Đang xử lý") ...[
-              TextButton(
+              OutlinedButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
               ),
             ]
             else if (incident.status == "Đã xử lý") ...[
-              TextButton(
+                OutlinedButton(
                 onPressed: () => _showHandledHistoryDialog(context, incident.id),
-                child: Text("Xem lịch sử xử lý", style: TextStyle(fontSize: 4.sp)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                child: Text("Xem lịch sử xử lý", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
               ),
-              TextButton(
+                OutlinedButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
               ),
             ] else if (incident.status == "Đang chờ xử lý (Trả lại)") ...[
               // TextButton(
               //   onPressed: () => _openAssignDialog(incident),
               //   child: Text("Chọn nhân viên xử lý", style: TextStyle(fontSize: 4.sp)),
               // ),
-                TextButton(
+                OutlinedButton(
                   onPressed: () => _showHandledHistoryDialog(context, incident.id),
-                  child: Text("Xem lịch sử xử lý", style: TextStyle(fontSize: 4.sp)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text("Xem lịch sử xử lý", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
                 ),
-              TextButton(
+                OutlinedButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
               ),
             ]
           ],
@@ -301,165 +318,6 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
         );
       },
     );
-  }
-
-  Future<void> _openAssignDialog(Incident incident) async{
-    showDialog(
-      context: context,
-      builder: (_) {
-        final _noteController = TextEditingController();
-        Staff? selectedStaff = null;
-        String? selectedPriority = incident.priority ?? 'Trung bình';
-
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Giao sự cố cho nhân viên'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DropdownButtonFormField<String>(
-                      value: selectedPriority,
-                      decoration:
-                      const InputDecoration(labelText: 'Mức độ ưu tiên'),
-                      items: ['Cao', 'Trung bình', 'Thấp']
-                          .map((level) => DropdownMenuItem<String>(
-                        value: level,
-                        child: Text(level),
-                      ))
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedPriority = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<Staff>(
-                      value: selectedStaff,
-                      decoration:
-                      const InputDecoration(labelText: 'Chọn nhân viên'),
-                      items: _allStaffs.map((staff) {
-                        return DropdownMenuItem<Staff>(
-                          value: staff,
-                          enabled: staff.isFree,
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.circle,
-                                size: 12,
-                                color: staff.isFree ? Colors.green : Colors.red,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(staff.fullName),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (staff) {
-                        if (staff?.isFree == true) {
-                          setState(() {
-                            selectedStaff = staff;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _noteController,
-                      decoration: const InputDecoration(
-                          labelText: 'Ghi chú cho nhân viên (nếu có)'),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Hủy'),
-                ),
-                ElevatedButton(
-                  onPressed: selectedStaff == null
-                      ? null
-                      : () async {
-                    Navigator.pop(context);
-                    await _assignToStaff(
-                      incident,
-                      _noteController.text.trim(),
-                      selectedStaff!,
-                      selectedPriority ?? 'Trung bình',
-                    );
-                    _fetchIncident();
-                  },
-                  child: const Text('Xác nhận giao'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-  }
-
-  Future<void> _assignToStaff(
-      Incident incident,
-      String managerNote,
-      Staff staff,
-      String priority,
-      ) async {
-    try {
-      LoadingDialog.showLoadingDialog(context, "Đang tải ...");
-
-      final batch = FirebaseFirestore.instance.batch();
-
-      final incidentRef =
-      FirebaseFirestore.instance.collection('incidents').doc(incident.id);
-      batch.update(incidentRef, {
-        'assignedStaffId': staff.uid,
-        'assignedStaffName': staff.fullName,
-        'status': 'Đang xử lý',
-        'priority': priority,
-        'managerNote': managerNote,
-      });
-
-      final staffRef =
-      FirebaseFirestore.instance.collection('staffs').doc(staff.uid);
-      batch.update(staffRef, {'isFree': false});
-
-      await batch.commit();
-      // Lấy fcmTokens
-      final staffDoc = await FirebaseFirestore.instance
-          .collection('staffs')
-          .doc(staff.uid)
-          .get();
-      final List<dynamic>? fcmTokens = staffDoc.data()?['fcmTokens'];
-
-      if (fcmTokens != null && fcmTokens.isNotEmpty) {
-        try {
-          final callable = FirebaseFunctions.instance.httpsCallable('sendIncidentNotification');
-          await callable.call({
-            'fcmTokens': fcmTokens,
-            'title': "Giao sự cố: ${incident.title}",
-            'body': "Mức độ ưu tiên: $priority. Kiểm tra và xử lý ngay.",
-          });
-        } catch (e) {
-          print("❌ Gửi thông báo lỗi: $e");
-        }
-      }
-
-      Navigator.of(context).pop();
-      Navigator.of(context).pop();
-
-      MsgDialog.showMsgDialog(context, "Xử lý sự cố", "Điều phối sự cố cho nhân viên thành công");
-
-      _loadStaffs();
-    } catch (e) {
-      Navigator.of(context).pop(); // 👉 Đóng loading nếu lỗi
-      MsgDialog.showMsgDialog(context, "Xử lý sự cố", "Điều phối sự cố cho nhân viên thất bại");
-
-    }
   }
 
   Future<void> _showHandledHistoryDialog(BuildContext context, String incidentId) async {
@@ -477,7 +335,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
           backgroundColor: bgColor,
           title: Center(child: Text(
             "Lịch sử xử lý",
-            style: TextStyle(fontSize: 6.sp, fontWeight: FontWeight.bold, color: Colors.blue),
+            style: TextStyle(fontFamily:"Oswald",fontSize: 7.sp, fontWeight: FontWeight.bold, color: Colors.blue),
           ),),
           content: historySnapshot.docs.isEmpty
               ? Text("Không có dữ liệu lịch sử xử lý.")
@@ -543,15 +401,20 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
             ),
           ),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Đóng", style: TextStyle(fontSize: 4.sp)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
             ),
           ],
         );
       },
     );
   }
+
   IconData _getStatusIcon(String? status) {
     switch (status) {
       case 'Đang chờ xử lý':
@@ -581,7 +444,6 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
         return Colors.grey;
     }
   }
-
 
   /// Hàm hỗ trợ để hiển thị thông tin dưới dạng hàng
   Widget buildInfoRow(String label, String value) {
