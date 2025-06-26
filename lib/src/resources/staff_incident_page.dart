@@ -376,6 +376,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         flex: 4,
@@ -385,8 +386,8 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                             child: (incident.imageUrl != null && incident.imageUrl!.isNotEmpty)
                                 ? Image.network(
                               incident.imageUrl!,
-                              width: 100,
-                              height: 120,
+                              width: 120,
+                              height: 140,
                               fit: BoxFit.cover,
                             )
                                 : Image.asset(
@@ -398,7 +399,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                           ),
                         ),
                       ),
-                      SizedBox(width: 2.w),
+                      SizedBox(width: 3.w),
                       Expanded(
                         flex: 6,
                         child: Column(
@@ -408,7 +409,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                             _infoRow("Mô tả", incident.description),
                             if (incident.managerNote != null && incident.managerNote!.isNotEmpty)
                               _infoRow("Ghi chú từ quản lý", incident.managerNote!),
-                            _infoRow("Ngày báo", DateFormat('dd/MM/yyyy HH:mm').format(incident.createdAt!.toDate())),
+                            _infoRow("Ngày báo", DateFormat('dd/MM/yyyy - HH:mm').format(incident.createdAt!.toDate())),
                           ],
                         ),
                       ),
@@ -418,6 +419,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      SizedBox(width: 0.2.w),
                       ElevatedButton(
                         onPressed: () => _showHandleDialog(incident),
                         style: ElevatedButton.styleFrom(
@@ -434,7 +436,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10.w),
                       ElevatedButton(
                         onPressed: () => _showRejectDialog(incident),
                         style: ElevatedButton.styleFrom(
@@ -451,6 +453,7 @@ class _StaffIncidentPageState extends State<StaffIncidentPage> {
                           ),
                         ),
                       ),
+                      SizedBox(width: 1.w),
                     ],
                   ),
                 ],

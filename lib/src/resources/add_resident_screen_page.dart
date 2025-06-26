@@ -559,32 +559,36 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
 
               SizedBox(height: 20.h,),
 
-              ElevatedButton(
-                onPressed:() async {
-                  await _submit();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  secondaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(30.r),
+              SizedBox(
+                height: 50.h,
+                width: 50.w,
+                child: ElevatedButton(
+                  onPressed:() async {
+                    await _submit();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                    secondaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                      BorderRadius.circular(30.r),
+                    ),
+                    elevation: 4,
+                    shadowColor: Colors.black45,
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.zero,
                   ),
-                  elevation: 4,
-                  shadowColor: Colors.black45,
-                  alignment: Alignment.center,
-                  padding: EdgeInsets.zero,
-                ),
-                child: Text(
-                  "Xác nhận thêm",
-                  style: TextStyle(
-                    fontFamily: "Oswald",
-                    fontWeight: FontWeight.w700,
-                    fontSize: 7.sp,
-                    color: Colors.white,
-                    height: 1.h,
+                  child: Text(
+                    "Xác nhận thêm",
+                    style: TextStyle(
+                      fontFamily: "Oswald",
+                      fontWeight: FontWeight.w700,
+                      fontSize: 7.sp,
+                      color: Colors.white,
+                      height: 1.h,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
 
