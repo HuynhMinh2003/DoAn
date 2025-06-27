@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../constants.dart';
 import '../../../custom_paginated_table.dart';
 import 'package:do_an/src/resources/wait_update_service_mobile_page.dart' if (dart.library.html) 'wait_update_service_web_page.dart';
 
@@ -186,41 +187,66 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Center(child: Text('Thông tin chi tiết dịch vụ',style: TextStyle(fontWeight:FontWeight.bold,color:Colors.blueAccent,fontSize: 7.sp,fontFamily: "Oswald"),),),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (service['imageServiceUrl'] != null)
-                  Center(child: Image.network(service['imageServiceUrl'], height: 150),),
-                SizedBox(height: 30.h),
-                Text("Thời gian cập nhật: ${_formatTimestamp(service['timestamp'])}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-                Text("Tên công ty: ${service['companyName'] ?? ''}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-                Text("Loại dịch vụ: ${service['companyType'] ?? ''}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-                Text("Mô tả: ${service['companyDescription'] ?? ''}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-                Text("Giá: ${service['price'] ?? ''}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-                if (service['fileLink'] != null)
-                  Row(
-                    children: [
-                      Text('Thông tin chi tiết: ',style: TextStyle(fontSize: 4.sp)),
-                      InkWell(
-                        onTap: () => launchUrl(Uri.parse(service['fileLink'])),
-                        child: Text(
-                          'Xem tài liệu đính kèm',
-                          style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline,fontSize: 4.sp,fontStyle: FontStyle.italic),
-                        ),
+          title: Center(
+            child: Text(
+              'Thông tin chi tiết dịch vụ',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent,
+                fontSize: 7.sp,
+                fontFamily: "Oswald",
+              ),
+            ),
+          ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 80.w), // Giới hạn chiều ngang tối đa
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (service['imageServiceUrl'] != null)
+                    Container(
+                      width: double.infinity, // Kéo full chiều ngang dialog
+                      height: 200.h,
+                      child: Image.network(
+                        service['imageServiceUrl'],
+                        fit: BoxFit.cover, // hoặc BoxFit.contain nếu bạn muốn ảnh không bị cắt
                       ),
-                    ],
-                  ),
-                SizedBox(height: 10.h),
-                Text("Trạng thái: ${service['status'] ?? ''}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-              ],
+                    ),
+                  SizedBox(height: 30.h),
+                  Text("Thời gian cập nhật: ${_formatTimestamp(service['timestamp'])}", style: TextStyle(fontSize: 4.sp)),
+                  SizedBox(height: 10.h),
+                  Text("Tên công ty: ${service['companyName'] ?? ''}", style: TextStyle(fontSize: 4.sp)),
+                  SizedBox(height: 10.h),
+                  Text("Loại dịch vụ: ${service['companyType'] ?? ''}", style: TextStyle(fontSize: 4.sp)),
+                  SizedBox(height: 10.h),
+                  Text("Mô tả: ${service['companyDescription'] ?? ''}", style: TextStyle(fontSize: 4.sp)),
+                  SizedBox(height: 10.h),
+                  Text("Giá: ${service['price'] ?? ''}", style: TextStyle(fontSize: 4.sp)),
+                  SizedBox(height: 10.h),
+                  if (service['fileLink'] != null)
+                    Row(
+                      children: [
+                        Text('Thông tin chi tiết: ', style: TextStyle(fontSize: 4.sp)),
+                        InkWell(
+                          onTap: () => launchUrl(Uri.parse(service['fileLink'])),
+                          child: Text(
+                            'Xem tài liệu đính kèm',
+                            style: TextStyle(
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                              fontSize: 4.sp,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  SizedBox(height: 10.h),
+                  Text("Trạng thái: ${service['status'] ?? ''}", style: TextStyle(fontSize: 4.sp)),
+                  SizedBox(height: 10.h),
+                ],
+              ),
             ),
           ),
           actions: [
@@ -230,7 +256,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                 side: BorderSide(color: Colors.white),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: Text('Đóng',style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
+              child: Text('Đóng', style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
             ),
           ],
         );
@@ -309,17 +335,34 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                             ),
                           ),
                           Flexible(
-                            flex:1,child: ElevatedButton(
-                            onPressed: () => exportServicesToExcel(_filteredServices),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.upload),
-                                SizedBox(width: 5.w,),
-                                Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.white),)
-                              ],
+                              flex:1,child: SizedBox(
+                            height: 55.h,
+                            width: 40.w,
+                            child: ElevatedButton(
+                              onPressed: ()
+                              => exportServicesToExcel(_filteredServices),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                secondaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                  BorderRadius.circular(30.r),
+                                ),
+                                elevation: 4,
+                                shadowColor: Colors.black45,
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.zero,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.upload),
+                                  SizedBox(width: 5.w,),
+                                  Text('Xuất file', style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold, color: Colors.white),)
+                                ],
+                              ),
                             ),
-                          ),),
+                          )),
                           SizedBox(width:5.w),
 
                         ],
