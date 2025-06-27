@@ -138,22 +138,20 @@ class _ApartmentListPageState extends State<ApartmentListPage> {
         actions: [
           OutlinedButton(
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: Colors.white), // Màu viền
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), // Bo góc
-            ),
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Hủy', style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
-          ),
-
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
               side: BorderSide(color: Colors.redAccent),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Xóa', style: TextStyle(fontSize: 3.5.sp, color: Colors.redAccent)),
           ),
-
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Colors.white), // Màu viền
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), // Bo góc
+            ),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Hủy', style: TextStyle(fontSize: 3.5.sp, color: Colors.white)),
+          ),
         ],
       ),
     );

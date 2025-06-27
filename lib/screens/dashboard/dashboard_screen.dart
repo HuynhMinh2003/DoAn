@@ -69,43 +69,17 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 Expanded(
                   flex: 7,
-                  child: Column(
-                    children: [
-                      MyFiles(),
-                      SizedBox(height: defaultPadding),
-                      SizedBox(
-                        height: 460.h,
-                        child: RecentFiles(),
-                      ),
-                      if (Responsive.isMobile(context))
+                  child: SizedBox(
+                    height: 725.h,
+                    child: Column(
+                      children: [
+                        MyFiles(),
                         SizedBox(height: defaultPadding),
-                      if (Responsive.isMobile(context))
-                        FutureBuilder<Map<String, int>>(
-                          future: fetchContractAndApartmentStats(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState
-                                .waiting) {
-                              return const Center(
-                                  child: CircularProgressIndicator());
-                            } else if (snapshot.hasError) {
-                              return Center(
-                                  child: Text("Error: ${snapshot.error}"));
-                            } else if (snapshot.hasData) {
-                                final data = snapshot.data!;
-                                return StorageDetails(
-                                  totalApartments: data['totalApartments'] ?? 0,
-                                  activeContracts: data['activeContracts']??0,
-                                  expiredContracts: data['expiredContracts']??0,
-                                  apartmentsWithContract: data['apartmentsWithContract'] ?? 0,
-                                  apartmentsWithoutContract: data['apartmentsWithoutContract'] ?? 0,
-                                );
-                            } else {
-                              return const Center(
-                                  child: Text("No data available"));
-                            }
-                          },
+                        Expanded(
+                          child: RecentFiles(),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 if (!Responsive.isMobile(context))
