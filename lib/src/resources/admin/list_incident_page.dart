@@ -169,6 +169,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: secondaryColor,
           title: Text(
             "Thông tin sự cố",
             textAlign: TextAlign.center,
@@ -183,6 +184,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                SizedBox(width: 5.w),
                 Expanded(
                   flex: 4,
                   child: Center(
@@ -192,7 +194,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                           ? Image.network(
                         incident.imageUrl!,
                         width: 300,
-                        height: 360,
+                        height: 400,
                         fit: BoxFit.cover,
                       )
                           : Image.asset(
@@ -210,43 +212,27 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(child: buildInfoRow("Tên căn hộ:", incident.apartmentAddress)),
-                          SizedBox(width: 10.w),
-                          Text("/", style: TextStyle(fontSize: 4.sp)),
-                          SizedBox(width: 10.w),
-                          Expanded(child: buildInfoRow("", incident.building)),
-                        ],
-                      ),
+                      SizedBox(height: 10.h,),
+                      Text(incident.building,style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),),
+                      SizedBox(height: 10.h,),
+                      buildInfoRow("Tên căn hộ:", incident.apartmentAddress),
                       buildInfoRow("Người báo:", incident.reporterName),
                       buildInfoRow("Tiêu đề:", incident.title),
+                      buildInfoRow("Ghi chú của quản lý:", incident.managerNote ?? "Không có"),
                       buildInfoRow("Mô tả:", incident.description),
                       buildInfoRow("Nhân viên xử lý:", incident.assignedStaffName ?? "Chưa cập nhật"),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: buildInfoRow(
-                              "Gửi vào:",
-                              incident.createdAt != null
-                                  ? DateFormat('dd/MM/yyyy HH:mm').format(incident.createdAt!.toDate())
-                                  : "Chưa cập nhật",
-                            ),
-                          ),
-                          SizedBox(width: 10.w),
-                          Text("/", style: TextStyle(fontSize: 4.sp)),
-                          SizedBox(width: 10.w),
-                          Expanded(
-                            child: buildInfoRow(
-                              "Đã xử lý vào:",
-                              incident.handledAt != null
-                                  ? DateFormat('dd/MM/yyyy HH:mm').format(incident.handledAt!.toDate())
-                                  : "Chưa cập nhật",
-                            ),
-                          ),
-                        ],
+                      buildInfoRow(
+                        "Thời gian tiếp nhận:",
+                        incident.createdAt != null
+                            ? DateFormat('dd/MM/yyyy HH:mm').format(incident.createdAt!.toDate())
+                            : "Chưa cập nhật",
                       ),
-                      buildInfoRow("Ghi chú của quản lý:", incident.managerNote ?? "Không có"),
+                      buildInfoRow(
+                        "Thời gian xử lý:",
+                        incident.handledAt != null
+                            ? DateFormat('dd/MM/yyyy HH:mm').format(incident.handledAt!.toDate())
+                            : "Chưa cập nhật",
+                      ),
                       buildInfoRow("Trạng thái:", incident.status),
                     ],
                   ),
@@ -460,6 +446,9 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
             child: Text(
               value,
               style: TextStyle(fontSize: 4.sp),
+              softWrap: true, // ← cho phép xuống dòng
+              overflow: TextOverflow.visible, // ← tránh bị cắt
+              maxLines: null, // ← không giới hạn số dòng
             ),
           ),
         ],

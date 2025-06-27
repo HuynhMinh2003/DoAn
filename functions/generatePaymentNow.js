@@ -121,15 +121,29 @@ async function generatePaymentForContract(contractId, targetDate) {
 // ✅ Cloud Function HTTPS callable
 exports.generatePaymentNow = onCall(async (request) => {
   const contractId = request.data?.contractId;
-  if (!contractId) {
-    throw new Error("Thiếu contractId");
+  const now = new Date();
+
+  if (contractId) {
+    // 🔁 Trường hợp truyền contractId → chỉ tính 1 hợp đồng
+    await generatePaymentForContract(contractId, now);
+    return {
+      success: true,
+      message: `✅ Đã tính lại hóa đơn cho hợp đồng ${contractId}`,
+    };
   }
 
-  const now = new Date();
-  await generatePaymentForContract(contractId, now);
+  // 🧾 Không truyền contractId → tính tất cả các hợp đồng isActive = true
+  const activeContracts = await db.collection("contracts")
+    .where("isActive", "==", true)
+    .get();
+
+  for (const doc of activeContracts.docs) {
+    await generatePaymentForContract(doc.id, now);
+  }
 
   return {
     success: true,
-    message: `✅ Đã tính lại hóa đơn cho hợp đồng ${contractId}`,
+    message: `✅ Đã tính hóa đơn cho tất cả hợp đồng đang hoạt động (${activeContracts.size} hợp đồng)`,
   };
 });
+
