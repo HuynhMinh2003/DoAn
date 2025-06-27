@@ -130,8 +130,12 @@ const generateMonthlyBill = onSchedule(
     timeZone: "Asia/Ho_Chi_Minh",
   },
   async () => {
-    const contracts = await db.collection("contracts").get();
+    const contracts = await db.collection("contracts")
+      .where("isActive", "==", true)
+      .get();
+
     const now = new Date();
+
     for (const contract of contracts.docs) {
       await generatePaymentForContract(contract.id, now);
     }

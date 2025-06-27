@@ -483,7 +483,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
                 SizedBox(height: 20.h),
                 Text(
                   "Tên công ty: ${company.name}",
-                  style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 3.5.sp),
                 ),
                 SizedBox(height: 10.h),
                 Text(
@@ -512,7 +512,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
                 ),
                 SizedBox(height: 10.h),
                 Text(
-                  'Ngày nghỉ công việc: ${company.leaveAt != null ? DateFormat('dd/MM/yyyy – HH:mm').format(company.leaveAt!.toDate()) : "Chưa có"}',
+                  'Ngày thôi hợp tác: ${company.leaveAt != null ? DateFormat('dd/MM/yyyy – HH:mm').format(company.leaveAt!.toDate()) : "Chưa có"}',
                 ),
 
               ],
@@ -734,45 +734,67 @@ class _CompanyListPageState extends State<CompanyListPage> {
                                                 DataCell(
                                                   Row(
                                                     children: [
-                                                      if (!company.isExit) ...[
-                                                        IconButton(
-                                                          icon: Icon(Icons.edit, color: Colors.blue),
-                                                          onPressed: () async {
-                                                            if (_isEditCompanyDialogShowing) return;
-                                                            _isEditCompanyDialogShowing = true;
-                                                            try {
-                                                              await showEditCompanyDialog(context, company, _fetchCompany);
-                                                            } finally {
-                                                              _isEditCompanyDialogShowing = false;
-                                                            }
-                                                          },
+                                                      /// Nút sửa
+                                                      IconButton(
+                                                        tooltip: company.isExit
+                                                            ? 'Công ty đã ngừng hoạt động – không thể chỉnh sửa'
+                                                            : 'Chỉnh sửa thông tin công ty',
+                                                        icon: Icon(
+                                                          Icons.edit,
+                                                          color: company.isExit ? Colors.grey[350] : Colors.blue,
                                                         ),
-                                                        IconButton(
-                                                          icon: Icon(Icons.delete, color: Colors.red),
-                                                          onPressed: () async {
-                                                            if (_isDeleteCompanyDialogShowing) return;
-                                                            _isDeleteCompanyDialogShowing = true;
-                                                            try {
-                                                              await showDeleteCompanyDialog(context, company, _fetchCompany);
-                                                            } finally {
-                                                              _isDeleteCompanyDialogShowing = false;
-                                                            }
-                                                          },
+                                                        onPressed: company.isExit
+                                                            ? null
+                                                            : () async {
+                                                          if (_isEditCompanyDialogShowing) return;
+                                                          _isEditCompanyDialogShowing = true;
+                                                          try {
+                                                            await showEditCompanyDialog(context, company, _fetchCompany);
+                                                          } finally {
+                                                            _isEditCompanyDialogShowing = false;
+                                                          }
+                                                        },
+                                                      ),
+
+                                                      /// Nút xóa
+                                                      IconButton(
+                                                        tooltip: company.isExit
+                                                            ? 'Công ty đã ngừng hoạt động – không thể xóa'
+                                                            : 'Xóa công ty',
+                                                        icon: Icon(
+                                                          Icons.delete,
+                                                          color: company.isExit ? Colors.grey[350] : Colors.red,
                                                         ),
-                                                      ],
-                                                      if (company.isExit)
-                                                        IconButton(
-                                                          icon: Icon(Icons.info_outline, color: Colors.white),
-                                                          onPressed: () async {
-                                                            if (_isViewCompanyDialogShowing) return;
-                                                            _isViewCompanyDialogShowing = true;
-                                                            try {
-                                                              await showViewCompanyDialog(context, company, _fetchCompany);
-                                                            } finally {
-                                                              _isViewCompanyDialogShowing = false;
-                                                            }
-                                                          },
+                                                        onPressed: company.isExit
+                                                            ? null
+                                                            : () async {
+                                                          if (_isDeleteCompanyDialogShowing) return;
+                                                          _isDeleteCompanyDialogShowing = true;
+                                                          try {
+                                                            await showDeleteCompanyDialog(context, company, _fetchCompany);
+                                                          } finally {
+                                                            _isDeleteCompanyDialogShowing = false;
+                                                          }
+                                                        },
+                                                      ),
+
+                                                      /// Nút xem thông tin
+                                                      IconButton(
+                                                        tooltip: 'Xem thông tin công ty',
+                                                        icon: Icon(
+                                                          Icons.info_outline,
+                                                          color: Colors.white,
                                                         ),
+                                                        onPressed: () async {
+                                                          if (_isViewCompanyDialogShowing) return;
+                                                          _isViewCompanyDialogShowing = true;
+                                                          try {
+                                                            await showViewCompanyDialog(context, company, _fetchCompany);
+                                                          } finally {
+                                                            _isViewCompanyDialogShowing = false;
+                                                          }
+                                                        },
+                                                      ),
                                                     ],
                                                   ),
                                                 ),
