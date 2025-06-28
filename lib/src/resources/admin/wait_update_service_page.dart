@@ -17,7 +17,7 @@ class WaitUpdateServicePage extends StatefulWidget {
 }
 
 class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
-  String? _selectedServiceType;
+  String? _selectedServiceType = "Tất cả"; // ✅ ban đầu đã có giá trị
   String _searchCompanyName = "";
   String? _selectedStatus = "Tất cả";
 
@@ -92,7 +92,6 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
 
       setState(() {
         _allServices = allServices;
-        _filteredServices = allServices;
 
         _serviceTypeOptions = ["Tất cả"];
         _serviceTypeOptions.addAll({
@@ -100,10 +99,8 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
             c['type']
         }.whereType<String>().toSet());
 
-        print("Danh sách loại dịch vụ: $_serviceTypeOptions");
-
-        currentPage = 1;
-        _updatePaginatedServices();
+        _selectedServiceType ??= "Tất cả"; // ✅ đảm bảo luôn có giá trị ban đầu
+        _filterServices(); // ✅ gọi lọc ngay để áp dụng cả "Tất cả"
       });
     } catch (e) {
       print("Lỗi khi load services hoặc companies: $e");
@@ -375,7 +372,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                             child: buildFilterDropdown<String>(
                               label: "Chọn loại dịch vụ",
                               items: _serviceTypeOptions,
-                              selectedValue: _selectedServiceType == "Tất cả" ? null : _selectedServiceType,
+                              selectedValue: _selectedServiceType, // ✅ Sửa ở đây
                               onChanged: (value) {
                                 setState(() {
                                   _selectedServiceType = value ?? "Tất cả";
@@ -389,7 +386,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                             child: buildFilterDropdown<String>(
                               label: "Chọn trạng thái",
                               items: _statusOptions,
-                              selectedValue: _selectedStatus == "Tất cả" ? null : _selectedStatus,
+                              selectedValue: _selectedStatus, // ✅ Sửa ở đây
                               onChanged: (value) {
                                 setState(() {
                                   _selectedStatus = value ?? "Tất cả";
