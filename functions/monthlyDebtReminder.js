@@ -20,7 +20,11 @@ const monthlyDebtReminder = onSchedule(
   async () => {
     console.log("🚀 Bắt đầu kiểm tra hợp đồng có nợ công...");
 
-    const contractsSnap = await db.collection("contracts").get();
+    const contractsSnap = await db
+    .collection("contracts")
+    .where("isActive", "==", true)
+    .get();
+
     const oAuth2Client = new google.auth.OAuth2(
       CLIENT_ID.value(),
       CLIENT_SECRET.value(),
@@ -52,7 +56,7 @@ const monthlyDebtReminder = onSchedule(
         .collection("contracts")
         .doc(contractId)
         .collection("payments")
-        .where("status", "==", "Chưa thanh toán đủ")
+        .where("status", "in", ["Chưa thanh toán", "Chưa thanh toán đủ"])
         .get();
 
       if (paymentsSnap.size >= 3) {
