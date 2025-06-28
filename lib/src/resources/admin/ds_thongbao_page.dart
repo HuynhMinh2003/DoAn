@@ -30,7 +30,7 @@ class _InfoListPageState extends State<InfoListPage> {
 
   String _searchQueryName = ""; // Biến lưu trữ giá trị tìm kiếm
 
-  final dateFormatter = DateFormat('dd/MM/yyyy HH:mm');
+  final dateFormatter = DateFormat('dd/MM/yyyy - HH:mm');
 
   int itemsPerPage = 10;
   int currentPage = 1;

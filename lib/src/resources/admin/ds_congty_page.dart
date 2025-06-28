@@ -520,7 +520,7 @@ class _CompanyListPageState extends State<CompanyListPage> {
           ),
           actions: [
             if (company.isExit)
-              TextButton(
+              OutlinedButton(
                 onPressed: () async {
                   LoadingDialog.showLoadingDialog(context, "Đang tải...");
                   try {
@@ -539,13 +539,21 @@ class _CompanyListPageState extends State<CompanyListPage> {
                     );
                   }
                 },
-                child: Text("Khôi phục tài khoản", style: TextStyle(fontSize: 4.sp, color: Colors.green)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Khôi phục tài khoản", style: TextStyle(fontSize: 3.5.sp, color: Colors.green)),
               ),
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
               child: Text(
                 "Đóng",
-                style: TextStyle(fontSize: 4.sp),
+                style: TextStyle(fontSize: 3.5.sp),
               ),
             ),
           ],
