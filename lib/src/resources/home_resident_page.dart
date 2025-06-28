@@ -146,9 +146,13 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
 
     final contractData = contractsSnapshot.docs.first.data();
     final Timestamp startTimestamp = contractData['startDate'];
-    final startDate = startTimestamp.toDate();
+    final Timestamp endTimestamp = contractData['endDate'];
 
-    return DateTime.now().isAfter(startDate);
+    final now = DateTime.now();
+    final startDate = startTimestamp.toDate();
+    final endDate = endTimestamp.toDate();
+
+    return now.isAfter(startDate) && now.isBefore(endDate.add(const Duration(days: 1)));
   }
 
   void _logout() {
@@ -609,7 +613,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("Tính năng này chưa có hiệu lực."),
+                        content: Text("Tính năng này không có hiệu lực."),
                         duration: Duration(seconds: 2),
                       ),
                     );
@@ -677,7 +681,7 @@ class _ResidentPageState extends BaseResidentInfoScreen<ResidentPage> {
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("Tính năng này chưa có hiệu lực."),
+                        content: Text("Tính năng này không có hiệu lực."),
                         duration: Duration(seconds: 2),
                       ),
                     );

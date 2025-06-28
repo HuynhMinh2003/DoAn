@@ -550,16 +550,6 @@ class _ResidentPageState extends State<ResidentPage> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // ✅ Tên căn hộ căn giữa
-                                Center(
-                                  child: Text(
-                                    "Căn hộ: $apartmentName",
-                                    style: TextStyle(fontSize: 4.sp, fontWeight: FontWeight.bold),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                SizedBox(height: 20.h),
-
                                 // ✅ Row: Họ tên + Email
                                 Row(
                                   children: [

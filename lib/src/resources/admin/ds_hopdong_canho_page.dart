@@ -272,7 +272,7 @@ class _ContractListPageState extends State<ContractListPage> {
 
     // ✅ Lọc theo trạng thái hợp đồng (hỗ trợ "all", "contract", "empty")
     if (selectedContractStatus == "contract") {
-      result = result.where((a) => a.status == 'Đang cho thuê').toList();
+      result = result.where((a) => a.status == 'Đang thuê').toList();
     } else if (selectedContractStatus == "empty") {
       result = result.where((a) => a.status == 'Trống').toList();
     }
@@ -1479,7 +1479,7 @@ class _ContractListPageState extends State<ContractListPage> {
                             },
                             itemLabelBuilder: (item) {
                               if (item == "all") return "Tất cả";
-                              if (item == "contract") return "Đang cho thuê";
+                              if (item == "contract") return "Đang thuê";
                               if (item == "empty") return "Trống";
                               return item;
                             },
