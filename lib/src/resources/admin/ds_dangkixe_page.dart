@@ -51,7 +51,7 @@ class _RegistrationListPageState extends State<RegistrationListPage> {
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp is Timestamp) {
       final date = timestamp.toDate();
-      return DateFormat('dd/MM/yyyy HH:mm').format(date);
+      return DateFormat('dd/MM/yyyy - HH:mm').format(date);
     }
     return '';
   }
@@ -66,6 +66,7 @@ class _RegistrationListPageState extends State<RegistrationListPage> {
     try {
       final contractsSnapshot = await FirebaseFirestore.instance
           .collection('contracts')
+          .where('isActive', isEqualTo: true)
           .get();
 
       List<Map<String, dynamic>> allRegistrations = [];
@@ -180,80 +181,6 @@ class _RegistrationListPageState extends State<RegistrationListPage> {
       }
       return -1;
     }).where((page) => page != -1).toList();
-  }
-
-  Future<void> _showServiceDetailDialog(BuildContext context, Map<String, dynamic> service) async{
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Center(child: Text('Thông tin chi tiết dịch vụ',style: TextStyle(fontSize: 7.sp,fontFamily: "Oswald"),),),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (service['imageServiceUrl'] != null)
-                  Center(child: Image.network(service['imageServiceUrl'], height: 150),),
-                SizedBox(height: 30.h),
-                Text("Thời gian cập nhật: ${_formatTimestamp(service['timestamp'])}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-                Text("Tên công ty: ${service['companyName'] ?? ''}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-                Text("Loại dịch vụ: ${service['companyType'] ?? ''}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-                Text("Mô tả: ${service['companyDescription'] ?? ''}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-                Text("Giá: ${service['price'] ?? ''}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-                if (service['fileLink'] != null)
-                  Row(
-                    children: [
-                      Text('Thông tin chi tiết: ',style: TextStyle(fontSize: 4.sp)),
-                      InkWell(
-                        onTap: () => launchUrl(Uri.parse(service['fileLink'])),
-                        child: Text(
-                          'Xem tài liệu đính kèm',
-                          style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline,fontSize: 4.sp,fontStyle: FontStyle.italic),
-                        ),
-                      ),
-                    ],
-                  ),
-                SizedBox(height: 10.h),
-                Text("Trạng thái: ${service['status'] ?? ''}",style: TextStyle(fontSize: 4.sp),),
-                SizedBox(height: 10.h),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Đóng',style: TextStyle(fontSize: 4.sp)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _updateServiceStatus(String serviceId, String newStatus) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('companies')
-          .doc(serviceId)
-          .update({'status': newStatus});
-
-      setState(() {
-        _loadParkingRegistrations(); // Hoặc bạn gọi lại hàm load danh sách
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cập nhật trạng thái thành công')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cập nhật thất bại: $e')),
-      );
-    }
   }
 
   /// Hàm hỗ trợ để hiển thị thông tin dưới dạng hàng
@@ -590,7 +517,6 @@ class _RegistrationListPageState extends State<RegistrationListPage> {
       ),
     );
   }
-
 }
 
 class CustomDropdownField extends StatelessWidget {
