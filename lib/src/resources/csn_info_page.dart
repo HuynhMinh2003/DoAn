@@ -391,7 +391,7 @@ class _CSNInfoPageState extends BaseStaffInfoScreen<CSNInfoPage> {
                     ElevatedButton.icon(
                       icon: const Icon(Icons.image),
                       label: Text('Đổi ảnh đại diện',
-                          style: TextStyle(fontSize: 15.sp)),
+                          style: TextStyle(fontSize: 15.sp, color:Colors.black)),
                       onPressed: () async => await imageProvider.pickImage(),
                     ),
                     const SizedBox(height: 15),
@@ -439,7 +439,7 @@ class _CSNInfoPageState extends BaseStaffInfoScreen<CSNInfoPage> {
                     imageProvider.deleteImage();
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Hủy'),
+                  child: Text('Hủy',style: TextStyle(fontSize: 15.sp,color: Colors.black)),
                 ),
                 ElevatedButton(
                   onPressed: () async {

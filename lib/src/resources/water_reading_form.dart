@@ -45,6 +45,9 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
   bool isPaid = false;
   bool loading = false;
 
+  bool canEdit = false;
+  String? editRestrictionMessage;
+
   late TextEditingController oldController;
   late TextEditingController newController;
 
@@ -58,7 +61,7 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
     newController = TextEditingController();
     _oldReadingErrorController = StreamController<String?>.broadcast();
     _newReadingErrorController = StreamController<String?>.broadcast();
-    _loadExistingData();
+    _loadExistingData(); // <-- xử lý canEdit ở đây
   }
 
   @override
@@ -80,31 +83,31 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
 
     if (doc.exists) {
       final data = doc.data()!;
-      setState(() {
-        oldReading = data['oldReading'];
-        newReading = data['newReading'];
-        isPaid = data['isPaid'] ?? false;
-        oldImageUrl = data['oldImageUrl'];
-        newImageUrl = data['newImageUrl'];
-        oldController.text = oldReading?.toString() ?? '';
-        newController.text = newReading?.toString() ?? '';
-      });
+      oldReading = data['oldReading'];
+      newReading = data['newReading'];
+      isPaid = data['isPaid'] ?? false;
+      oldImageUrl = data['oldImageUrl'];
+      newImageUrl = data['newImageUrl'];
+      oldController.text = oldReading?.toString() ?? '';
+      newController.text = newReading?.toString() ?? '';
     }
-  }
 
-  bool get canEdit {
-    final parts = widget.selectedMonth.split('-'); // ["MM", "yyyy"]
-    final selectedDate = DateTime(int.parse(parts[1]), int.parse(parts[0]));
+    // Sau khi isPaid đã có giá trị → kiểm tra edit logic
     final now = DateTime.now();
+    final isAfter10 = now.day >= 10;
 
-    // Chỉ cho ghi nếu:
-    // - Tháng chọn là tháng hiện tại hoặc trước
-    // - Chưa thanh toán
-    // - Ngày hiện tại >= 25
-    final isCurrentOrPastMonth = selectedDate.isBefore(DateTime(now.year, now.month + 1));
-    final isAfter25 = now.day >= 10;
+    if (isPaid) {
+      canEdit = false;
+      editRestrictionMessage = "Hóa đơn đã thanh toán, không thể chỉnh sửa.";
+    } else if (!isAfter10) {
+      canEdit = false;
+      editRestrictionMessage = "Chưa đến ngày 10 của tháng, chưa thể nhập chỉ số.";
+    } else {
+      canEdit = true;
+      editRestrictionMessage = null;
+    }
 
-    return isCurrentOrPastMonth && !isPaid && isAfter25;
+    setState(() {});
   }
 
   Future<void> _pickImage(bool isOld) async {
@@ -215,11 +218,13 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Hủy', style: TextStyle(fontSize: 14.sp)),
+              child: Text('Hủy', style: TextStyle(fontSize: 15.sp,color: Colors.black)),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Đồng ý', style: TextStyle(fontSize: 14.sp)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green),
+              child: Text('Đồng ý', style: TextStyle(fontSize: 15.sp,color: Colors.white)),
             ),
           ],
         ),
@@ -364,12 +369,14 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
                 onPick: canEdit ? () => _pickImage(false) : null,
               ),
               SizedBox(height: 10.h),
-              canEdit
-                  ? SizedBox.shrink() // không hiển thị gì cả
-                  : Center(child: Text(
-                "Đã thanh toán - không thể chỉnh sửa",
-                style: TextStyle(fontSize: 15.sp, color: Colors.grey),
-              ),),
+              if (!canEdit && editRestrictionMessage != null)
+                Center(
+                  child: Text(
+                    editRestrictionMessage!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 15.sp, color: Colors.grey),
+                  ),
+                ),
 
               if (canEdit)
                 Align(
