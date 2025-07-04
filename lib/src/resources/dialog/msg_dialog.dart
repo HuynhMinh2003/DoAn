@@ -18,13 +18,13 @@ class MsgDialog {
             style: TextStyle(
               fontFamily: "Oswald",
               fontWeight: FontWeight.w700,
-              fontSize: isLandscape? 7.sp: 20.sp,
+              fontSize: isLandscape? 7.sp: 25.sp,
             ),
           ),
         ),
         content: Text(
           msg,
-          style: TextStyle(fontSize: isLandscape? 4.sp: 15.sp),
+          style: TextStyle(fontSize: isLandscape? 4.sp: 13.sp),
           textAlign: TextAlign.center,
         ),
         actions: <Widget>[
@@ -34,7 +34,7 @@ class MsgDialog {
             },
             child: Text(
               "Đồng ý",
-              style: TextStyle(fontSize: isLandscape? 3.sp:15.sp),
+              style: TextStyle(fontSize: isLandscape? 3.5.sp:14.sp, color: Colors.black),
             ),
           ),
         ],
