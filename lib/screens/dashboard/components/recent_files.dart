@@ -85,14 +85,42 @@ class _RecentFilesState extends State<RecentFiles> {
     );
   }
 
+  Future<List<QueryDocumentSnapshot>> _fetchActiveParkingRegistrations() async {
+    final contractsSnapshot = await FirebaseFirestore.instance
+        .collection('contracts')
+        .where('isActive', isEqualTo: true)
+        .get();
+
+    List<QueryDocumentSnapshot> parkingDocs = [];
+
+    for (var contract in contractsSnapshot.docs) {
+      final contractId = contract.id;
+
+      final parkingSnapshot = await FirebaseFirestore.instance
+          .collection('contracts')
+          .doc(contractId)
+          .collection('parkingRegistrations')
+          .orderBy('registeredAt', descending: true)
+          .limit(4)
+          .get();
+
+      parkingDocs.addAll(parkingSnapshot.docs);
+    }
+
+    // Sắp xếp toàn bộ theo thời gian sau khi gộp
+    parkingDocs.sort((a, b) {
+      final aTime = (a.data() as Map)['registeredAt'] as Timestamp?;
+      final bTime = (b.data() as Map)['registeredAt'] as Timestamp?;
+      return (bTime?.compareTo(aTime ?? Timestamp(0, 0))) ?? 0;
+    });
+
+    return parkingDocs.take(4).toList(); // Giới hạn tổng 4 bản ghi mới nhất
+  }
+
   Widget _buildTableByType(String type) {
     if (type == 'parking') {
-      return StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collectionGroup('parkingRegistrations')
-            .orderBy('registeredAt', descending: true)
-            .limit(4)
-            .snapshots(),
+      return FutureBuilder<List<QueryDocumentSnapshot>>(
+        future: _fetchActiveParkingRegistrations(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Text('Lỗi: ${snapshot.error}');
@@ -104,7 +132,7 @@ class _RecentFilesState extends State<RecentFiles> {
             );
           }
 
-          final docs = snapshot.data!.docs;
+          final docs = snapshot.data!;
           if (docs.isEmpty) {
             return Center(
               child: Text(
@@ -129,10 +157,8 @@ class _RecentFilesState extends State<RecentFiles> {
                     ],
                     rows: docs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
-                      final licensePlate = data['licensePlate'] is String
-                          ? data['licensePlate'] as String
-                          : '';
-                      final vehicleTypeKey = data['vehicleType'] as String? ?? '';
+                      final licensePlate = data['licensePlate'] ?? '';
+                      final vehicleTypeKey = data['vehicleType'] ?? '';
                       final vehicleType = _vehicleTypeMap[vehicleTypeKey] ?? 'Không xác định';
                       final timestampRaw = data['registeredAt'];
                       final registeredAt = (timestampRaw is Timestamp)
@@ -177,7 +203,14 @@ class _RecentFilesState extends State<RecentFiles> {
           }
 
           final docs = snapshot.data!.docs;
-          if (docs.isEmpty) return Center(child: Text('Chưa có dữ liệu thông báo',style: TextStyle(fontSize: 4.sp),),);
+          if (docs.isEmpty) {
+            return Center(
+              child: Text(
+                'Chưa có dữ liệu thông báo',
+                style: TextStyle(fontSize: 4.sp),
+              ),
+            );
+          }
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -193,8 +226,7 @@ class _RecentFilesState extends State<RecentFiles> {
                     ],
                     rows: docs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
-
-                      final title = data['title'] is String ? data['title'] as String : '';
+                      final title = data['title'] ?? '';
                       final timestampRaw = data['timestamp'];
                       final timeStr = (timestampRaw is Timestamp)
                           ? _formatTimestamp(timestampRaw)

@@ -602,7 +602,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
               ),
               dropdownStyleData: DropdownStyleData(
                 maxHeight: 200.h,
-                width: 70.w,
+                width: 75.w,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30.r),
                 ),

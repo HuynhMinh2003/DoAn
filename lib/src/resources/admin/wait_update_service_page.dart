@@ -17,9 +17,9 @@ class WaitUpdateServicePage extends StatefulWidget {
 }
 
 class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
-  String? _selectedServiceType = "Tất cả"; // ✅ ban đầu đã có giá trị
+  String? _selectedServiceType; // ✅ ban đầu đã có giá trị
   String _searchCompanyName = "";
-  String? _selectedStatus = "Tất cả";
+  String? _selectedStatus;
 
   final List<String> _statusOptions = [
     'Tất cả',
@@ -147,23 +147,22 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
   }
 
   void _updatePaginatedServices() {
-    int startIndex = (currentPage - 1) * itemsPerPage;
-    int endIndex = startIndex + itemsPerPage;
-    if (endIndex > _filteredServices.length) {
-      endIndex = _filteredServices.length;
-    }
+    setState(() {
+      int startIndex = (currentPage - 1) * itemsPerPage;
+      int endIndex = startIndex + itemsPerPage;
+      if (endIndex > _filteredServices.length) {
+        endIndex = _filteredServices.length;
+      }
 
-    paginatedServices = _filteredServices.sublist(startIndex, endIndex);
-    totalPages = (_filteredServices.length / itemsPerPage).ceil();
-    _updatePageNumbers();
-
-    print("Hiển thị dịch vụ từ index $startIndex đến $endIndex");
-    print("Số dịch vụ phân trang: ${paginatedServices.length}");
-    print("Tổng số trang: $totalPages");
-    print("Trang hiện tại: $currentPage");
-    print("Danh sách số trang hiển thị: $pageNumbers");
-
-    setState(() {});
+      paginatedServices = _filteredServices.sublist(startIndex, endIndex);
+      totalPages = (_filteredServices.length / itemsPerPage).ceil();
+      _updatePageNumbers();
+      print("Hiển thị dịch vụ từ index $startIndex đến $endIndex");
+      print("Số dịch vụ phân trang: ${paginatedServices.length}");
+      print("Tổng số trang: $totalPages");
+      print("Trang hiện tại: $currentPage");
+      print("Danh sách số trang hiển thị: $pageNumbers");
+    });
   }
 
   void _updatePageNumbers() {
@@ -375,7 +374,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                               selectedValue: _selectedServiceType, // ✅ Sửa ở đây
                               onChanged: (value) {
                                 setState(() {
-                                  _selectedServiceType = value ?? "Tất cả";
+                                  _selectedServiceType = value;
                                   _filterServices();
                                 });
                               },
@@ -389,7 +388,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                               selectedValue: _selectedStatus, // ✅ Sửa ở đây
                               onChanged: (value) {
                                 setState(() {
-                                  _selectedStatus = value ?? "Tất cả";
+                                  _selectedStatus = value;
                                   _filterServices();
                                 });
                               },
@@ -491,6 +490,8 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                                           setState(() {
                                             itemsPerPage = value ??
                                                 10; // Cập nhật số dòng mỗi trang
+                                            currentPage = 1; // Reset về trang đầu
+                                            _updatePaginatedServices();
                                           });
                                         },
                                       ),
