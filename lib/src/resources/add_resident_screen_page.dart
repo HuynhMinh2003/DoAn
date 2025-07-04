@@ -145,6 +145,15 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
 
           while (retryCount < maxRetries && !success) {
             try {
+              // === Kiểm tra dữ liệu thiết yếu ===
+              if (resident.birthDate == null) {
+                throw Exception("Thiếu ngày sinh của cư dân ${resident.fullName}");
+              }
+
+              if (resident.email.isEmpty || resident.fullName.isEmpty || resident.cccd.isEmpty) {
+                throw Exception("Dữ liệu không đầy đủ cho cư dân ${resident.fullName}");
+              }
+
               final existingData = await checkExistingResident(resident.cccd, resident.email);
 
               if (existingData != null) {
@@ -284,20 +293,26 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Center(child: Text("Thành công")),
+              title: Center(child: Text("Thành công", style: TextStyle(fontFamily: "Oswald",
+                  fontWeight: FontWeight.bold,
+                  fontSize: 6.sp))),
               content: Text(
                 failedResidents.isEmpty
                     ? "Cư dân cập nhật thành công!"
-                    : "Một số cư dân đã bị bỏ qua:\n${failedResidents.map((r) => r.fullName).join(', ')}",
+                    : "Một số cư dân đã bị bỏ qua:\n${failedResidents.map((r) => r.fullName).join(', ')}", style: TextStyle(fontSize: 4.sp)
               ),
               actions: [
-                TextButton(
+                OutlinedButton(
                   onPressed: () {
                     Navigator.pop(context); // Close dialog
                     Navigator.pop(context); // Back
                     Navigator.pop(context);
                   },
-                  child: const Text("Đồng ý"),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text("Đồng ý", style: TextStyle(fontSize: 3.5.sp,color:Colors.white)),
                 ),
               ],
             );
@@ -312,14 +327,21 @@ class _AddResidentsScreenState extends State<AddResidentsScreen> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Center(child: Text("Thất bại")),
-              content: const Text("Cư dân cập nhật thất bại!"),
+              title: Center(child: Text("Thất bại", style: TextStyle(fontFamily: "Oswald",
+                  fontWeight:
+                  FontWeight.bold,
+                  fontSize: 6.sp))),
+              content: Text("Cư dân cập nhật thất bại!", style: TextStyle(fontSize: 4.sp)),
               actions: [
-                TextButton(
+                OutlinedButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text("Đồng ý"),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text("Đồng ý", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
                 ),
               ],
             );

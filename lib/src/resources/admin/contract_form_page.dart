@@ -127,16 +127,27 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
       bool? confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Xác nhận'),
-          content: Text('Bạn đã nhập $count người. Bạn có chắc muốn tiếp tục với số lượng này không?'),
+          title: Center(child: Text('Xác nhận', style: TextStyle(
+              fontSize: 7.sp,
+              fontFamily: "Oswald",
+              fontWeight: FontWeight.bold),),),
+          content: Text('Bạn đã nhập $count người. Bạn có chắc muốn tiếp tục với số lượng này không?',style: TextStyle(fontSize: 4.sp),),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Không'),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text('Không', style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Có'),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text('Có', style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
             ),
           ],
         ),
@@ -303,6 +314,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
     final dateFormat = DateFormat('dd/MM/yyyy');
     final currencyFormat = NumberFormat.decimalPattern('vi');
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(title: Text('      Nhập thông tin hợp đồng', style: TextStyle(fontSize: 8.sp, fontFamily: "Oswald", fontWeight: FontWeight.bold),),backgroundColor: bgColor,),
       body: SingleChildScrollView(
         padding: EdgeInsets.only(left: 30.w, right: 30.w, top: 20.h),
@@ -430,6 +442,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
 
                 return Card(
                   elevation: 2,
+                  color: secondaryColor,
                   margin: EdgeInsets.symmetric(vertical: 6.h),
                   child: Padding(
                     padding: EdgeInsets.all(12.sp),
@@ -646,10 +659,24 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         for (final resident in residents) {
                           await pool.withResource(() async {
                             try {
+                              // === Kiểm tra dữ liệu thiết yếu ===
+                              if (resident.birthDate == null) {
+                                throw Exception("Thiếu ngày sinh của cư dân ${resident.fullName}");
+                              }
+
+                              if (resident.email.isEmpty || resident.fullName.isEmpty || resident.cccd.isEmpty) {
+                                throw Exception("Dữ liệu không đầy đủ cho cư dân ${resident.fullName}");
+                              }
+
                               // === 1. Kiểm tra cư dân đã tồn tại bằng CCCD hoặc Email ===
                               final existingData = await checkExistingResident(resident.cccd, resident.email);
 
                               if (existingData != null) {
+                                // Kiểm tra residentId có trong dữ liệu không
+                                if (existingData['residentId'] == null) {
+                                  throw Exception("Dữ liệu cư dân ${resident.fullName} bị thiếu residentId khi khôi phục.");
+                                }
+
                                 final shouldProceed = await showDialog<bool>(
                                   context: context,
                                   builder: (BuildContext context) {
@@ -671,12 +698,12 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                           child: Text("Hủy", style: TextStyle(fontSize: 3.5.sp)),
                                         ),
                                         OutlinedButton(
-                                          onPressed: () => Navigator.of(context).pop(true), // Khôi phục
+                                          onPressed: () => Navigator.of(context).pop(true),
                                           style: OutlinedButton.styleFrom(
                                             side: BorderSide(color: Colors.green),
                                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                           ),
-                                          child: Text("Khôi phục", style: TextStyle(fontSize: 3.5.sp,color: Colors.green)),
+                                          child: Text("Khôi phục", style: TextStyle(fontSize: 3.5.sp, color: Colors.green)),
                                         ),
                                       ],
                                     );
@@ -703,16 +730,19 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                   'address': resident.address,
                                   'gender': resident.gender,
                                   'phone': resident.phone,
-                                  'birthDate': resident.birthDate?.toIso8601String(),
+                                  'birthDate': resident.birthDate!.toIso8601String(),
                                   'apartmentId': apartmentId,
                                   'contractId': contractId,
-                                  'residentId': existingData!['residentId'],
-                                  'imageUrl': existingData['imageUrl'],
+                                  'residentId': existingData?['residentId'], // chỉ truyền nếu có
+                                  'imageUrl': existingData?['imageUrl'],
                                 }),
                               );
 
                               if (response.statusCode == 200) {
                                 final data = json.decode(response.body);
+                                if (data['residentId'] == null) {
+                                  throw Exception("API không trả về residentId cho cư dân ${resident.fullName}");
+                                }
                                 resident.residentId = data['residentId'];
                                 successfulResidents.add(resident);
                                 print("✅ Tạo ${resident.fullName} OK");
@@ -840,7 +870,9 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: Center(child: Text("Thành công", style: TextStyle(fontSize: 5.sp))),
+                              title: Center(child: Text("Thành công", style: TextStyle(fontFamily: "Oswald",
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 6.sp))),
                               content: Text("Hợp đồng đã được tạo thành công!", style: TextStyle(fontSize: 4.sp)),
                               actions: [
                                 OutlinedButton(
@@ -853,7 +885,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                     side: BorderSide(color: Colors.white),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
-                                  child: Text("Đồng ý", style: TextStyle(fontSize: 3.5.sp)),
+                                  child: Text("Đồng ý", style: TextStyle(fontSize: 3.5.sp,color:Colors.white)),
                                 ),
                               ],
                             );
@@ -866,7 +898,10 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: Center(child: Text("Thất bại", style: TextStyle(fontSize: 5.sp))),
+                              title: Center(child: Text("Thất bại", style: TextStyle(fontFamily: "Oswald",
+                                  fontWeight:
+                                  FontWeight.bold,
+                                  fontSize: 6.sp))),
                               content: Text("Hợp đồng tạo thất bại!", style: TextStyle(fontSize: 4.sp)),
                               actions: [
                                 OutlinedButton(
@@ -878,7 +913,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                     side: BorderSide(color: Colors.white),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
-                                  child: Text("Đồng ý", style: TextStyle(fontSize: 4.sp)),
+                                  child: Text("Đồng ý", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
                                 ),
                               ],
                             );

@@ -112,12 +112,25 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                             items: [
                               DropdownMenuItem(
                                 value: 'managementFee',
-                                child: Text('Phí quản lý vận hành'),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 10.w), // 👈 cùng giá trị với `InputDecoration.contentPadding`
+                                  child: Text(
+                                    'Phí quản lý vận hành',
+                                    style: TextStyle(fontSize: 4.5.sp, color: Colors.white),
+                                  ),
+                                ),
                               ),
                               DropdownMenuItem(
                                 value: 'parking',
-                                child: Text('Phí gửi xe'),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 10.w), // 👈 như trên
+                                  child: Text(
+                                    'Phí gửi xe',
+                                    style: TextStyle(fontSize: 4.5.sp, color: Colors.white),
+                                  ),
+                                ),
                               ),
+
                             ],
                             onChanged: (val) {
                               setState(() {
@@ -172,14 +185,13 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                               final picked = await showDatePicker(
                                 context: context,
                                 initialDate: _selectedDate ?? DateTime.now(),
-                                firstDate: DateTime(2020),
+                                firstDate: DateTime.now(), // Chỉ cho chọn từ hôm nay trở đi
                                 lastDate: DateTime(2100),
                               );
                               if (picked != null) {
                                 setState(() {
                                   _selectedDate = picked;
-                                  _dateController.text =
-                                      DateFormat('dd/MM/yyyy').format(picked);
+                                  _dateController.text = DateFormat('dd/MM/yyyy').format(picked);
                                 });
                               }
                             },
@@ -236,7 +248,7 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(
-        color: Colors.grey,
+        color: Colors.white,
         fontSize: 5.sp,
       ),
       contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),

@@ -93,12 +93,10 @@ class _RegistrationListPageState extends State<RegistrationListPage> {
 
       print("Tổng số đăng ký xe: ${allRegistrations.length}");
 
-      setState(() {
-        _allRegis = allRegistrations;
-        _filteredRegis = allRegistrations;
-        currentPage = 1;
-        _updatePaginatedRegis();
-      });
+      // ✅ Gán dữ liệu và gọi filter để lọc & sắp xếp
+      _allRegis = allRegistrations;
+      _filterRegis();
+
     } catch (e) {
       print("Lỗi khi load parking registrations: $e");
     }
@@ -143,31 +141,40 @@ class _RegistrationListPageState extends State<RegistrationListPage> {
       }
     }
 
-    setState(() {
-      _filteredRegis = filtered;
-      currentPage = 1;
-      _updatePaginatedRegis();
+    // Sắp xếp từ mới nhất đến cũ nhất
+    filtered.sort((a, b) {
+      final Timestamp? timeA = a['registeredAt'];
+      final Timestamp? timeB = b['registeredAt'];
+      if (timeA == null || timeB == null) return 0;
+      return timeB.compareTo(timeA);
     });
+
+    _filteredRegis = filtered;
+    currentPage = 1;
+    _updatePaginatedRegis(); // Không cần setState trong đây nữa
+
+    // Log kiểm tra:
+    print("Sau khi lọc và sắp xếp:");
+    for (var reg in _filteredRegis) {
+      print("${reg['licensePlate']} - ${reg['registeredAt']}");
+    }
+
+    // Gọi setState sau cùng 1 lần
+    setState(() {});
   }
 
   void _updatePaginatedRegis() {
     int startIndex = (currentPage - 1) * itemsPerPage;
-    int endIndex = startIndex + itemsPerPage;
-    if (endIndex > _filteredRegis.length) {
-      endIndex = _filteredRegis.length;
-    }
+    int endIndex = (startIndex + itemsPerPage).clamp(0, _filteredRegis.length);
 
     paginatedRegis = _filteredRegis.sublist(startIndex, endIndex);
     totalPages = (_filteredRegis.length / itemsPerPage).ceil();
     _updatePageNumbers();
 
-    print("Hiển thị dịch vụ từ index $startIndex đến $endIndex");
-    print("Số dịch vụ phân trang: ${paginatedRegis.length}");
-    print("Tổng số trang: $totalPages");
-    print("Trang hiện tại: $currentPage");
-    print("Danh sách số trang hiển thị: $pageNumbers");
-
-    setState(() {});
+    print("Hiển thị từ $startIndex đến $endIndex:");
+    for (var reg in paginatedRegis) {
+      print("${reg['licensePlate']} - ${reg['registeredAt']}");
+    }
   }
 
   void _updatePageNumbers() {
