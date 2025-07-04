@@ -27,7 +27,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
   void showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message,style: TextStyle(fontSize: 15.sp,color: Colors.black),),
+        content: Text(message,style: TextStyle(fontSize: 15.sp,color: Colors.white),),
         backgroundColor: Colors.green,  // Màu nền xanh
       ),
     );
@@ -270,7 +270,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
           return Center(
             child: Text(
               "Chưa có danh sách xe",
-              style: TextStyle(fontSize: 25.sp),
+              style: TextStyle(fontSize: 23.sp),
             ),
           );
         }
@@ -292,7 +292,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
               return Center(
                 child: Text(
                   "Chưa có xe nào được đăng ký",
-                  style: TextStyle(fontSize: 18.sp),
+                  style: TextStyle(fontSize: 15.sp),
                 ),
               );
             }

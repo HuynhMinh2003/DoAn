@@ -340,7 +340,7 @@ class _ReadCSNPageState extends State<ReadCSNPage> {
                     ],
                   ),
                 ] else
-                  Text("Chưa có dữ liệu chỉ số nước", style: TextStyle(fontSize: 4.sp, color: Colors.grey)),
+                  Text("Chưa có dữ liệu chỉ số nước", style: TextStyle(fontSize: 4.sp, color: Colors.white)),
               ],
             ),
           ),
