@@ -127,9 +127,9 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
 
   bool isWaterRecordingPeriod(String selectedMonth) {
     final now = DateTime.now();
-    final currentMonth = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}';
+    final currentMonth = '${now.month.toString().padLeft(2, '0')}-${now.year}'; // "MM-yyyy"
 
-    // Nếu đang xem tháng khác với tháng hiện tại → cho phép ghi
+    // Nếu đang xem tháng khác tháng hiện tại → cho phép ghi
     if (selectedMonth != currentMonth) {
       return true;
     }
@@ -137,6 +137,7 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
     // Nếu là tháng hiện tại → chỉ cho ghi từ ngày 25 trở đi
     return now.day >= 10;
   }
+
 
   @override
   Widget build(BuildContext context) {

@@ -640,7 +640,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Future<int?> getUserRole(String userId) async {
+  Future<Map<String, dynamic>?> getUserInfoWithRole(String userId) async {
     final collections = ['staffs', 'residents', 'companies', 'admins'];
 
     for (final collection in collections) {
@@ -650,11 +650,17 @@ class _LoginPageState extends State<LoginPage> {
           .get();
 
       if (doc.exists && doc.data() != null && doc.data()!.containsKey('role')) {
-        return doc.get('role');
+        final role = doc.get('role');
+        final isExit = doc.data()!.containsKey('isExit') ? doc.get('isExit') == true : false;
+
+        return {
+          'role': role,
+          'isExit': isExit,
+        };
       }
     }
 
-    return null; // Không tìm thấy role
+    return null;
   }
 
   _onLoginClick() async {
@@ -684,7 +690,10 @@ class _LoginPageState extends State<LoginPage> {
               // Lấy FCM token mới
               String? newToken = await FirebaseMessaging.instance.getToken();
 
-              int? role = await getUserRole(userId);
+              // Lấy thông tin role và isExit
+              final userInfo = await getUserInfoWithRole(userId);
+              int? role = userInfo?['role'];
+              bool isExit = userInfo?['isExit'] ?? false;
 
               bool isMobile = !kIsWeb;
 
@@ -695,18 +704,24 @@ class _LoginPageState extends State<LoginPage> {
                     "Thông báo",
                     "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
                   );
-                }
-                else {
+                } else {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (context) => MainScreen()),
                   );
-                  // Lưu FCM token nếu có
                   if (newToken != null) {
                     await _saveTokenAdminToFirestore(newToken);
                   }
                 }
-              }
-              else if (role == 2) {
+              } else if (role == 2) {
+                if (isExit) {
+                  MsgDialog.showMsgDialog(
+                    context,
+                    "Thông báo",
+                    "Tài khoản của bạn hiện không khả dụng",
+                  );
+                  return;
+                }
+
                 if (isMobile) {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (context) => HomeFirstKTVPage()),
@@ -724,8 +739,7 @@ class _LoginPageState extends State<LoginPage> {
               } else if (role == 3) {
                 if (isMobile) {
                   Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) =>
-                        HomeFirstCSNPage()), // <-- Đổi trang cho role 3
+                    MaterialPageRoute(builder: (context) => HomeFirstCSNPage()),
                   );
                   if (newToken != null) {
                     await _saveTokenToFirestore(newToken);
@@ -737,15 +751,20 @@ class _LoginPageState extends State<LoginPage> {
                     "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
                   );
                 }
-              }
-              else if (role == 4) {
-                if (isMobile) {
-                  print('Hello nha');
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                        builder: (context) => HomeFirstResidentPage()),
+              } else if (role == 4) {
+                if (isExit) {
+                  MsgDialog.showMsgDialog(
+                    context,
+                    "Thông báo",
+                    "Tài khoản của bạn hiện không khả dụng",
                   );
-                  // Lưu FCM token nếu có
+                  return;
+                }
+
+                if (isMobile) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => HomeFirstResidentPage()),
+                  );
                   if (newToken != null) {
                     await _saveResidentTokenToFirestore(newToken);
                   }
@@ -757,11 +776,19 @@ class _LoginPageState extends State<LoginPage> {
                   );
                 }
               } else if (role == 5) {
+                if (isExit) {
+                  MsgDialog.showMsgDialog(
+                    context,
+                    "Thông báo",
+                    "Tài khoản của bạn hiện không khả dụng",
+                  );
+                  return;
+                }
+
                 if (isMobile) {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (context) => HomeFirstCompanyPage()),
                   );
-                  // Lưu FCM token nếu có
                   if (newToken != null) {
                     await _saveTokenCompanyToFirestore(newToken);
                   }
@@ -772,17 +799,21 @@ class _LoginPageState extends State<LoginPage> {
                     "Tài khoản của bạn không hỗ trợ đăng nhập trên web",
                   );
                 }
-              }
-              else {
+              } else {
                 MsgDialog.showMsgDialog(
-                    context, "Lỗi", "Không tìm thấy role cho tài khoản này");
+                  context,
+                  "Lỗi",
+                  "Không tìm thấy role cho tài khoản này",
+                );
               }
             } else {
               MsgDialog.showMsgDialog(
-                  context, "Lỗi", "Xác thực người dùng không thành công");
+                context,
+                "Lỗi",
+                "Xác thực người dùng không thành công",
+              );
             }
           },
-
         onSignInError: (msg) {
           LoadingDialog.hideLoadingDialog(context);
           MsgDialog.showMsgDialog(context, "Đăng nhập", msg);

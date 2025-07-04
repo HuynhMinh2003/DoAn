@@ -676,25 +676,56 @@ class _ContractListPageState extends State<ContractListPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                showAddResidentsFlow(context, apartment, contract, onRefresh);
-              },
-              child:
-                  Text("Thêm thành viên", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
+            SizedBox(
+              height: 45.h,
+              width: 40.w,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  showAddResidentsFlow(context, apartment, contract, onRefresh);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                  secondaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                    BorderRadius.circular(30.r),
+                  ),
+                  elevation: 4,
+                  shadowColor: Colors.black45,
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.zero,
+                ),
+                child:
+                Text("Thêm thành viên", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
+              ),
             ),
             SizedBox(
               height: 10.h,
             ),
-            ElevatedButton(
+            SizedBox(
+              height: 45.h,
+              width: 40.w,
+              child: ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
                 showRemoveResidentsDialog(
                     context, apartment, contract, onRefresh);
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                secondaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                  BorderRadius.circular(30.r),
+                ),
+                elevation: 4,
+                shadowColor: Colors.black45,
+                alignment: Alignment.center,
+                padding: EdgeInsets.zero,
+              ),
               child: Text("Xóa thành viên", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
-            ),
+            ),)
           ],
         ),
       ),
