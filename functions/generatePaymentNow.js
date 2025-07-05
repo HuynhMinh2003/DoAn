@@ -64,36 +64,38 @@ async function generatePaymentForContract(contractId, targetDate) {
   let parkingTotal = 0;
   const today = new Date();
 
-  for (const p of parkingSnap.docs) {
-    const data = p.data();
-    const type = data.vehicleType;
-    const registeredAt = data.registeredAt.toDate();
-    const canceledAt = data.canceledAt?.toDate();
+for (const p of parkingSnap.docs) {
+  const data = p.data();
+  const type = data.vehicleType;
+  const registeredAt = data.registeredAt.toDate();
+  const canceledAt = data.canceledAt?.toDate();
 
-    const effectiveStart = registeredAt < startOfMonth ? startOfMonth : registeredAt;
-    const effectiveEnd = !canceledAt || canceledAt > endOfMonth ? endOfMonth : canceledAt;
+  const effectiveStart = registeredAt < startOfMonth ? startOfMonth : registeredAt;
+  const effectiveEnd = !canceledAt || canceledAt > endOfMonth ? endOfMonth : canceledAt;
 
-    if (effectiveEnd < effectiveStart) continue;
+  if (effectiveEnd < effectiveStart) continue;
 
-    const feeData = await getFeeForDate(
-      `services/parking/vehicleTypes/${type}/feeHistory`,
-      effectiveStart
-    );
-    if (!feeData) continue;
+  const feeData = await getFeeForDate(
+    `services/parking/vehicleTypes/${type}/feeHistory`,
+    effectiveStart
+  );
+  if (!feeData) continue;
 
-    const monthlyFee = feeData.fee || 0;
-    const totalDaysInMonth = endOfMonth.getDate();
-    const lastChargeableDay = today < endOfMonth ? today : endOfMonth;
+  const monthlyFee = feeData.fee || 0;
+  const totalDaysInMonth = endOfMonth.getDate();
+  const lastChargeableDay = today < endOfMonth ? today : endOfMonth;
 
-    let activeDays = Math.max(0, (lastChargeableDay - effectiveStart) / (1000 * 60 * 60 * 24) + 1);
+  // ✅ KHÔNG tính ngày đăng ký nếu đăng ký quá trễ trong ngày
+  let activeDays = Math.floor((lastChargeableDay - effectiveStart) / (1000 * 60 * 60 * 24));
 
-    if (today.getDate() === 1) {
-      activeDays = 0;
-    }
-
-    const fee = Math.round((monthlyFee / totalDaysInMonth) * activeDays);
-    parkingTotal += fee;
+  // ✅ Đặc biệt: Nếu hôm nay là ngày 1, không tính luôn
+  if (today.getDate() === 1) {
+    activeDays = 0;
   }
+
+  const fee = Math.round((monthlyFee / totalDaysInMonth) * activeDays);
+  parkingTotal += fee;
+}
 
   // 🧮 TÍNH DEBT THÁNG TRƯỚC
   const prevMonth = new Date(year, month - 1, 1);

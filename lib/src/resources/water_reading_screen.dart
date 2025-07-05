@@ -135,7 +135,7 @@ class _WaterReadingScreenState extends State<WaterReadingScreen> {
     }
 
     // Nếu là tháng hiện tại → chỉ cho ghi từ ngày 25 trở đi
-    return now.day >= 10;
+    return now.day >= 5;
   }
 
 
