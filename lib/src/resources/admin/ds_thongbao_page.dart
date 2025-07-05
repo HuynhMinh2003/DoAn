@@ -445,7 +445,7 @@ class _InfoListPageState extends State<InfoListPage> {
                            ],),
                         SizedBox(height: 20.h,),
                         SizedBox(
-                          height: MediaQuery.of(context).size.height - 360.h ,
+                          height: MediaQuery.of(context).size.height - 150.h ,
                           child:  LayoutBuilder(
                             builder: (context,constraints){
                               return Column(
