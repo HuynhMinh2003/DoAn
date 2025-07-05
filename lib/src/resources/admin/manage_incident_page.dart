@@ -196,15 +196,73 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
 
       Navigator.of(context).pop();
 
-      MsgDialog.showMsgDialog(context, "Xử lý sự cố", "Điều phối sự cố cho nhân viên thành công");
-
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Center(
+              child: Text(
+                'Xử lý sự cố',
+                style: TextStyle(
+                    fontFamily: "Oswald",
+                    fontWeight: FontWeight.bold,
+                    fontSize: 7.sp),
+              ),
+            ),
+            content: Text(
+              'Điều phối sự cố cho nhân viên thành công',
+              style: TextStyle(fontSize: 4.sp),
+            ),
+            actions: [
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  minimumSize: Size(90, 40),
+                ),
+                child: Text('Đồng ý', style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
+              ),
+            ],
+          );
+        },
+      );
       _loadIncidents();
       _loadStaffs();
     }
     catch (e) {
       Navigator.of(context).pop(); // 👉 Đóng loading nếu lỗi
-      MsgDialog.showMsgDialog(context, "Xử lý sự cố", "Điều phối sự cố cho nhân viên thất bại");
-    }
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Center(
+              child: Text(
+                'Xử lý sự cố',
+                style: TextStyle(
+                    fontFamily: "Oswald",
+                    fontWeight: FontWeight.bold,
+                    fontSize: 7.sp),
+              ),
+            ),
+            content: Text(
+              'Điều phối sự cố cho nhân viên thất bại',
+              style: TextStyle(fontSize: 4.sp),
+            ),
+            actions: [
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  minimumSize: Size(90, 40),
+                ),
+                child: Text('Đồng ý', style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
+              ),
+            ],
+          );
+        },
+      );    }
   }
 
   @override

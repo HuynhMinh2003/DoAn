@@ -94,7 +94,7 @@ class _WaterReadingFormState extends State<WaterReadingForm> {
 
     // Sau khi isPaid đã có giá trị → kiểm tra edit logic
     final now = DateTime.now();
-    final isAfter10 = now.day >= 10;
+    final isAfter10 = now.day >= 5;
 
     if (isPaid) {
       canEdit = false;

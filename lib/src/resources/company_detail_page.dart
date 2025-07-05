@@ -124,8 +124,6 @@ class CompanyDetailPage extends StatelessWidget {
 
                     Navigator.of(context, rootNavigator: true).pop();
 
-                    Navigator.of(context).pop();
-
                     // 👉 Hiện SnackBar
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
