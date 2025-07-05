@@ -352,14 +352,36 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
 
                 return Card(
                   elevation: 2,
-                  margin: EdgeInsets.symmetric(horizontal: 10.w),
+                  margin: EdgeInsets.only(left: 10.w, right: 10.w, bottom: 12.h),
                   child: ListTile(
                     title: Text("$emoji $licensePlate"),
-                    subtitle: Text(
-                      "Loại: $readableType\n"
-                          "Ngày đăng ký: $formattedDate"
-                          "${canceled ? '\nNgày hủy: $formattedCanceledDate' : ''}",
+                    subtitle: Text.rich(
+                      TextSpan(
+                        style: TextStyle(fontSize: 14), // hoặc size tuỳ bạn
+                        children: [
+                          TextSpan(
+                            text: "Loại: ",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(text: "$readableType\n"),
+
+                          TextSpan(
+                            text: "Thời gian đăng ký: \n",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(text: "$formattedDate"),
+
+                          if (canceled) ...[
+                            TextSpan(
+                              text: "\nThời gian hủy: \n",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(text: "$formattedCanceledDate"),
+                          ],
+                        ],
+                      ),
                     ),
+
                     isThreeLine: true,
                     trailing: canceled
                         ? Row(
@@ -416,7 +438,7 @@ class _GuiXeScreenState extends State<GuiXeScreen> {
                                   ),
                                   ElevatedButton(
                                     onPressed: () {
-                                      Navigator.pop(context);
+                                      Navigator.of(context, rootNavigator: true).pop();
                                       _cancelRegistration(contractId, doc.id);
                                     },
                                     style: ElevatedButton.styleFrom(

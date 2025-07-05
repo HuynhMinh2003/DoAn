@@ -1095,142 +1095,153 @@ class _ResidentPageState extends State<ResidentPage> {
                       ),
                       SizedBox(height: 10.h,),
                       SizedBox(
-                        height: MediaQuery.of(context).size.height - 360.h,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: matchedResidents.isEmpty
-                                  ? Center(
+                        height: MediaQuery.of(context).size.height - 150.h,
+                        child: LayoutBuilder(
+                          builder: (context, constraints){
+                            return Column(
+                              children: [
+                                if(matchedResidents.isEmpty)
+                                  Expanded(child: Center(
                                       child: Text("Không có cư dân",style: TextStyle(
-                          fontSize: 4.sp, color: Colors.white
-                        ),))
-                                  : CustomPaginatedTable(
-                                      columns: [
-                                        DataColumn(
-                                            label: Text("Họ và tên",
-                                                style:
+                                          fontSize: 4.sp, color: Colors.white
+                                      ),)))
+                                else
+                                  Expanded(child: SingleChildScrollView(
+                                    child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          minWidth: constraints.maxWidth, // Đặt chiều rộng tối thiểu bằng chiều rộng cha
+                                          maxWidth: constraints.maxWidth, // Đặt chiều rộng tối đa bằng chiều rộng cha
+                                        ),
+                                        child: CustomPaginatedTable(
+                                          columns: [
+                                            DataColumn(
+                                                label: Text("Họ và tên",
+                                                    style:
                                                     TextStyle(fontSize: 4.sp))),
-                                        DataColumn(
-                                            label: Text("Email",
-                                                style:
+                                            DataColumn(
+                                                label: Text("Email",
+                                                    style:
                                                     TextStyle(fontSize: 4.sp))),
-                                        DataColumn(
-                                            label: Text("Giới tính",
-                                                style:
+                                            DataColumn(
+                                                label: Text("Giới tính",
+                                                    style:
                                                     TextStyle(fontSize: 4.sp))),
-                                        DataColumn(
-                                            label: Text("Số điện thoại",
-                                                style:
+                                            DataColumn(
+                                                label: Text("Số điện thoại",
+                                                    style:
                                                     TextStyle(fontSize: 4.sp))),
-                                        DataColumn(
-                                            label: Text("Địa chỉ",
-                                                style:
+                                            DataColumn(
+                                                label: Text("Địa chỉ",
+                                                    style:
                                                     TextStyle(fontSize: 4.sp))),
-                                        DataColumn(
-                                            label: Text("Căn hộ",
-                                                style:
+                                            DataColumn(
+                                                label: Text("Căn hộ",
+                                                    style:
                                                     TextStyle(fontSize: 4.sp))),
-                                        DataColumn(
-                                            label: Text("Thao tác",
-                                                style:
+                                            DataColumn(
+                                                label: Text("Thao tác",
+                                                    style:
                                                     TextStyle(fontSize: 4.sp))),
-                                      ],
-                                      rows: matchedResidents.map((resident) {
-                                        final apartment = apartments.firstWhere(
-                                          (apt) =>
-                                              apt.id == resident.apartmentId,
-                                          orElse: () => Apartment(
-                                            id: '',
-                                            apartmentName: '',
-                                            building: '',
-                                            area: 0,
-                                            description: '',
-                                            status: '',
-                                            currentContractId: '',
-                                            residents: [],
-                                          ),
-                                        );
-
-                                        return DataRow(
-                                          cells: [
-                                            DataCell(Text(resident.fullName,
-                                                style:
-                                                    TextStyle(fontSize: 4.sp))),
-                                            DataCell(Text(resident.email,
-                                                style:
-                                                    TextStyle(fontSize: 4.sp))),
-                                            DataCell(Text(resident.gender,
-                                                style:
-                                                    TextStyle(fontSize: 4.sp))),
-                                            DataCell(Text(resident.phone,
-                                                style:
-                                                    TextStyle(fontSize: 4.sp))),
-                                            DataCell(Text(resident.address,
-                                                style:
-                                                    TextStyle(fontSize: 4.sp))),
-                                            DataCell(Text(
-                                                apartment.apartmentName,
-                                                style:
-                                                    TextStyle(fontSize: 4.sp))),
-                                            DataCell(
-                                              Row(children: [
-                                                // Nút SỬA - vô hiệu hóa nếu isExit = true
-                                                IconButton(
-                                                  icon: const Icon(Icons.edit, color: Colors.blueAccent),
-                                                  tooltip: resident.isExit ? 'Không thể sửa cư dân đã rời' : 'Sửa thông tin',
-                                                  onPressed: resident.isExit
-                                                      ? null // Vô hiệu hóa
-                                                      : () async {
-                                                    if (_isEditDialogShowing) return;
-                                                    _isEditDialogShowing = true;
-                                                    try {
-                                                      await showEditResident(context, resident, refresh);
-                                                    } finally {
-                                                      _isEditDialogShowing = false;
-                                                    }
-                                                  },
-                                                ),
-
-                                                // Nút XEM LỊCH SỬ thuê – vẫn cho phép xem
-                                                IconButton(
-                                                  icon: const Icon(Icons.access_time, color: Colors.green),
-                                                  tooltip: 'Xem lịch sử thuê',
-                                                  onPressed: () async {
-                                                    if (_isHistoryDialogShowing) return;
-                                                    _isHistoryDialogShowing = true;
-                                                    try {
-                                                      await showContractHistoryDialog(context, resident.residentId!);
-                                                    } finally {
-                                                      _isHistoryDialogShowing = false;
-                                                    }
-                                                  },
-                                                ),
-
-                                                // Nút XEM CHI TIẾT – vẫn cho phép xem
-                                                IconButton(
-                                                  icon: const Icon(Icons.info_outline, color: Colors.white),
-                                                  tooltip: 'Xem chi tiết',
-                                                  onPressed: () async {
-                                                    if (_isViewDialogShowing) return;
-                                                    _isViewDialogShowing = true;
-                                                    try {
-                                                      await showViewResidentDialog(context, resident, refresh);
-                                                    } finally {
-                                                      _isViewDialogShowing = false;
-                                                    }
-                                                  },
-                                                ),
-                                              ]),
-                                            ),
-
                                           ],
-                                        );
-                                      }).toList(),
-                                      rowsPerPage: 10,
+                                          rows: matchedResidents.map((resident) {
+                                            final apartment = apartments.firstWhere(
+                                                  (apt) =>
+                                              apt.id == resident.apartmentId,
+                                              orElse: () => Apartment(
+                                                id: '',
+                                                apartmentName: '',
+                                                building: '',
+                                                area: 0,
+                                                description: '',
+                                                status: '',
+                                                currentContractId: '',
+                                                residents: [],
+                                              ),
+                                            );
+
+                                            return DataRow(
+                                              cells: [
+                                                DataCell(Text(resident.fullName,
+                                                    style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                                DataCell(Text(resident.email,
+                                                    style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                                DataCell(Text(resident.gender,
+                                                    style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                                DataCell(Text(resident.phone,
+                                                    style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                                DataCell(Text(resident.address,
+                                                    style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                                DataCell(Text(
+                                                    apartment.apartmentName,
+                                                    style:
+                                                    TextStyle(fontSize: 4.sp))),
+                                                DataCell(
+                                                  Row(children: [
+                                                    // Nút SỬA - vô hiệu hóa nếu isExit = true
+                                                    IconButton(
+                                                      icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                                                      tooltip: resident.isExit ? 'Không thể sửa cư dân đã rời' : 'Sửa thông tin',
+                                                      onPressed: resident.isExit
+                                                          ? null // Vô hiệu hóa
+                                                          : () async {
+                                                        if (_isEditDialogShowing) return;
+                                                        _isEditDialogShowing = true;
+                                                        try {
+                                                          await showEditResident(context, resident, refresh);
+                                                        } finally {
+                                                          _isEditDialogShowing = false;
+                                                        }
+                                                      },
+                                                    ),
+
+                                                    // Nút XEM LỊCH SỬ thuê – vẫn cho phép xem
+                                                    IconButton(
+                                                      icon: const Icon(Icons.access_time, color: Colors.green),
+                                                      tooltip: 'Xem lịch sử thuê',
+                                                      onPressed: () async {
+                                                        if (_isHistoryDialogShowing) return;
+                                                        _isHistoryDialogShowing = true;
+                                                        try {
+                                                          await showContractHistoryDialog(context, resident.residentId!);
+                                                        } finally {
+                                                          _isHistoryDialogShowing = false;
+                                                        }
+                                                      },
+                                                    ),
+
+                                                    // Nút XEM CHI TIẾT – vẫn cho phép xem
+                                                    IconButton(
+                                                      icon: const Icon(Icons.info_outline, color: Colors.white),
+                                                      tooltip: 'Xem chi tiết',
+                                                      onPressed: () async {
+                                                        if (_isViewDialogShowing) return;
+                                                        _isViewDialogShowing = true;
+                                                        try {
+                                                          await showViewResidentDialog(context, resident, refresh);
+                                                        } finally {
+                                                          _isViewDialogShowing = false;
+                                                        }
+                                                      },
+                                                    ),
+                                                  ]),
+                                                ),
+
+                                              ],
+                                            );
+                                          }).toList(),
+                                          rowsPerPage: 10,
+                                        )
                                     ),
-                            ),
-                          ],
-                        ),
+                                  ))
+                              ],
+                            );
+                          },
+                        )
                       )
                     ],
                   ),
