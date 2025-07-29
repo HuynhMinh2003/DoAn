@@ -51,6 +51,10 @@ android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 web/firebase-config.js
 
+# Firebase auto-generated configs
+lib/firebase_options.dart
+web/firebase-messaging-sw.js
+
 # Dotenv config
 .env
 
