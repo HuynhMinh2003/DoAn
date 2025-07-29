@@ -49,8 +49,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: 'REDACTED_MESSAGING_SENDER_ID',
     projectId: 'REDACTED_PROJECT_ID',
     authDomain: 'REDACTED_PROJECT_ID.firebaseapp.com',
-    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com',
-    storageBucket: 'REDACTED_PROJECT_ID.firebasestorage.app',
+    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.***REMOVED***',
+    storageBucket: 'REDACTED_PROJECT_ID.***REMOVED***',
     measurementId: 'REDACTED_MEASUREMENT_ID',
   );
 
@@ -59,8 +59,8 @@ class DefaultFirebaseOptions {
     appId: '1:REDACTED_MESSAGING_SENDER_ID:android:c3d980af7c2385fa0771d7',
     messagingSenderId: 'REDACTED_MESSAGING_SENDER_ID',
     projectId: 'REDACTED_PROJECT_ID',
-    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com',
-    storageBucket: 'REDACTED_PROJECT_ID.firebasestorage.app',
+    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.***REMOVED***',
+    storageBucket: 'REDACTED_PROJECT_ID.***REMOVED***',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -68,8 +68,8 @@ class DefaultFirebaseOptions {
     appId: '1:REDACTED_MESSAGING_SENDER_ID:ios:b5d8666013dc32ac0771d7',
     messagingSenderId: 'REDACTED_MESSAGING_SENDER_ID',
     projectId: 'REDACTED_PROJECT_ID',
-    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com',
-    storageBucket: 'REDACTED_PROJECT_ID.firebasestorage.app',
+    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.***REMOVED***',
+    storageBucket: 'REDACTED_PROJECT_ID.***REMOVED***',
     iosBundleId: 'com.example.doAn',
   );
 
@@ -79,8 +79,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: 'REDACTED_MESSAGING_SENDER_ID',
     projectId: 'REDACTED_PROJECT_ID',
     authDomain: 'REDACTED_PROJECT_ID.firebaseapp.com',
-    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com',
-    storageBucket: 'REDACTED_PROJECT_ID.firebasestorage.app',
+    databaseURL: 'https://REDACTED_PROJECT_ID-default-rtdb.***REMOVED***',
+    storageBucket: 'REDACTED_PROJECT_ID.***REMOVED***',
     measurementId: 'G-R6MZQYTGGZ',
   );
 }
