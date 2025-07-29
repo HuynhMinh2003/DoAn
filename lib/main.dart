@@ -25,17 +25,31 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'constants.dart';
 import 'controllers/menu_app_controller.dart';
 
-// Cấu hình Firebase
-const firebaseOptions = FirebaseOptions(
-    apiKey: "REDACTED_FIREBASE_API_KEY_2",
-    authDomain: "REDACTED_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "REDACTED_PROJECT_ID",
-    storageBucket: "REDACTED_PROJECT_ID.firebasestorage.app",
-    messagingSenderId: "REDACTED_MESSAGING_SENDER_ID",
-    appId: "REDACTED_APP_ID",
-    measurementId: "REDACTED_MEASUREMENT_ID"
-);
+FirebaseOptions getFirebaseOptions() {
+  if (kIsWeb) {
+    return const FirebaseOptions(
+      apiKey: "REDACTED_FIREBASE_API_KEY_2",
+      authDomain: "REDACTED_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com",
+      projectId: "REDACTED_PROJECT_ID",
+      storageBucket: "REDACTED_PROJECT_ID.firebasestorage.app",
+      messagingSenderId: "REDACTED_MESSAGING_SENDER_ID",
+      appId: "REDACTED_APP_ID",
+      measurementId: "REDACTED_MEASUREMENT_ID",
+    );
+  } else {
+    return FirebaseOptions(
+      apiKey: dotenv.env['API_KEY']!,
+      authDomain: dotenv.env['AUTH_DOMAIN'],
+      databaseURL: dotenv.env['DATABASE_URL'],
+      projectId: dotenv.env['PROJECT_ID']!,
+      storageBucket: dotenv.env['STORAGE_BUCKET'],
+      messagingSenderId: dotenv.env['MESSAGING_SENDER_ID']!,
+      appId: dotenv.env['APP_ID']!,
+      measurementId: dotenv.env['MEASUREMENT_ID'],
+    );
+  }
+}
 
 // Tạo StreamController để quản lý luồng tin nhắn
 final _messageStreamController = BehaviorSubject<RemoteMessage>();
@@ -74,14 +88,8 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  // Khởi tạo Firebase
-  if (kIsWeb) {
-    await Firebase.initializeApp(options: firebaseOptions);
-  } else {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  }
+
+  await Firebase.initializeApp(options: getFirebaseOptions());
 
   // Đăng ký xử lý tin nhắn trong nền (chỉ mobile)
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -209,11 +217,6 @@ Future<void> _registerWithFCM() async {
   if (kDebugMode) {
     print('Registration Token=$token');
   }
-
-  // // Lưu token vào Firestore
-  // if (token != null) {
-  //   await _saveTokenToFirestore(token);
-  // }
 
   // Gửi mã thông báo lên server (ví dụ minh họa)
   if (token != null) {
