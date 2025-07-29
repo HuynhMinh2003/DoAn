@@ -1,0 +1,2 @@
+D:/AndroidStudioProjects/Do_An/android/app/.cxx/Debug/p6w4r435/x86_64/CMakeFiles/edit_cache.dir
+D:/AndroidStudioProjects/Do_An/android/app/.cxx/Debug/p6w4r435/x86_64/CMakeFiles/rebuild_cache.dir
