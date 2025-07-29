@@ -6,9 +6,9 @@ importScripts("https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-comp
 const firebaseConfig = {
   apiKey: "***REMOVED***Cu8AtVjmtcku_HRp29c6zc164qUysESfs",
   authDomain: "REDACTED_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com",
+  databaseURL: "https://REDACTED_PROJECT_ID-default-rtdb.***REMOVED***",
   projectId: "REDACTED_PROJECT_ID",
-  storageBucket: "REDACTED_PROJECT_ID.firebasestorage.app",
+  storageBucket: "REDACTED_PROJECT_ID.***REMOVED***",
   messagingSenderId: "REDACTED_MESSAGING_SENDER_ID",
   appId: "REDACTED_APP_ID",
   measurementId: "REDACTED_MEASUREMENT_ID"
