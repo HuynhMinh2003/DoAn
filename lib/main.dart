@@ -21,20 +21,21 @@ import 'package:responsive_framework/responsive_framework.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'constants.dart';
 import 'controllers/menu_app_controller.dart';
 
 // Cấu hình Firebase
 const firebaseOptions = FirebaseOptions(
-  apiKey: "***REMOVED***Cu8AtVjmtcku_HRp29c6zc164qUysESfs",
-  authDomain: "REDACTED_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "REDACTED_PROJECT_ID",
-  storageBucket: "REDACTED_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "REDACTED_MESSAGING_SENDER_ID",
-  appId: "REDACTED_APP_ID",
-  measurementId: "REDACTED_MEASUREMENT_ID",
+    apiKey: "REDACTED_FIREBASE_API_KEY_2",
+    authDomain: "REDACTED_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId: "REDACTED_PROJECT_ID",
+    storageBucket: "REDACTED_PROJECT_ID.firebasestorage.app",
+    messagingSenderId: "REDACTED_MESSAGING_SENDER_ID",
+    appId: "REDACTED_APP_ID",
+    measurementId: "REDACTED_MEASUREMENT_ID"
 );
 
 // Tạo StreamController để quản lý luồng tin nhắn
@@ -57,30 +58,36 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  //Đặt màu thanh trạng thái ở đây
+  // Chỉ load .env trên mobile (Web sẽ lỗi vì không có assets/.env)
+  if (!kIsWeb) {
+    await dotenv.load(fileName: ".env");
+  }
+
+  // Đặt màu thanh trạng thái
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // hoặc đặt màu chính bạn muốn
-      statusBarIconBrightness: Brightness.dark, // icon trắng cho nền tối
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
     ),
   );
 
-// Khóa ứng dụng chỉ chạy ở chế độ dọc
+  // Khóa ứng dụng ở chế độ dọc
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
   // Khởi tạo Firebase
   if (kIsWeb) {
     await Firebase.initializeApp(options: firebaseOptions);
   } else {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   }
 
-  // Đăng ký xử lý tin nhắn trong nền
+  // Đăng ký xử lý tin nhắn trong nền (chỉ mobile)
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Yêu cầu quyền nhận thông báo
   await _requestNotificationPermissions();
@@ -95,32 +102,20 @@ void main() async {
 
   String oauthToken = await FirebaseAuthService.getOAuthToken();
   print("OAuth Token: $oauthToken");
-  // sendNotification(
-  //     oauthToken,
-  //     "esHHG4h5TOW5wVYI7z4v7G:APA91bGT4Rl6tU1dUZ_hWyJBio6KU4m1OolVpxYsD8-VvCVV2e3RqffoEOJnHBrbRb9AaPR2kFMy1pc-RH3m71foqOqN9RYAPWFwhISKupgj2nmR8v5gMJ0", // FCM Token của thiết bị nhận
-  //     "Thông báo tiền nước!",
-  //     "Hóa đơn tháng này là 500,000 VND."
-  // );
-
-  // //Thêm lắng nghe sự kiện khi token thay đổi
-  // FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async{
-  //   print("FCM Token refreshed: $newToken");
-  //   await _saveTokenToFirestore(newToken);
-  // });
 
   // Khởi chạy ứng dụng
   runApp(
     ScreenUtilInit(
-      // designSize: const Size(384, 856.1777777777778),
       designSize: const Size(384, 856.1777777777778),
       minTextAdapt: true,
-      splitScreenMode: true, // Hỗ trợ màn hình chia đôi
+      splitScreenMode: true,
       builder: (context, child) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           double screenWidth = MediaQuery.of(context).size.width;
           double screenHeight = MediaQuery.of(context).size.height;
           print("📱 Kích thước màn hình: width = $screenWidth, height = $screenHeight");
         });
+
         return MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (_) => ResidentProvider()),
@@ -143,7 +138,7 @@ void main() async {
                 textTheme: Theme.of(context).textTheme.apply(bodyColor: Colors.white),
                 canvasColor: secondaryColor,
               )
-                  : ThemeData(), // Theme mặc định cho mobile
+                  : ThemeData(),
               builder: (context, child) => MediaQuery(
                 data: MediaQuery.of(context).copyWith(
                   textScaler: const TextScaler.linear(1.0),
@@ -160,7 +155,6 @@ void main() async {
               ),
               home: SplashScreen(),
             ),
-
           ),
         );
       },
