@@ -4,11 +4,11 @@ importScripts("https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-comp
 
 // Thay bằng cấu hình Firebase của bạn từ Firebase Console
 const firebaseConfig = {
-  apiKey: "***REMOVED***Cu8AtVjmtcku_HRp29c6zc164qUysESfs",
+  apiKey: "REDACTED_FIREBASE_API_KEY_1",
   authDomain: "REDACTED_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://REDACTED_PROJECT_ID-default-rtdb.***REMOVED***",
+  databaseURL: "https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com",
   projectId: "REDACTED_PROJECT_ID",
-  storageBucket: "REDACTED_PROJECT_ID.***REMOVED***",
+  storageBucket: "REDACTED_PROJECT_ID.firebasestorage.app",
   messagingSenderId: "REDACTED_MESSAGING_SENDER_ID",
   appId: "REDACTED_APP_ID",
   measurementId: "REDACTED_MEASUREMENT_ID"

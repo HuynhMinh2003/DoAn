@@ -60,11 +60,11 @@ FlutterLocalNotificationsPlugin();
 
 // Trình xử lý tin nhắn nền
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   print('Handling a background message: ${message.messageId}');
-  print('Message data: ${message.data}');
-  print('Message notification: ${message.notification?.title}');
-  print('Message notification: ${message.notification?.body}');
 }
 
 // Hàm chính
@@ -89,7 +89,10 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  await Firebase.initializeApp(options: getFirebaseOptions());
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
 
   // Đăng ký xử lý tin nhắn trong nền (chỉ mobile)
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
