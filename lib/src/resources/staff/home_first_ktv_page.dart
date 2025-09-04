@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/resources/staff/base_staff_info.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:android_intent_plus/android_intent.dart';
 
 import '../notification/notification_list_ktv_page.dart';
 import 'ktv_info_page.dart';
@@ -37,14 +39,14 @@ class HomeFirstKTVPage extends StatelessWidget {
   }
 }
 
-class HomeFirstPage extends StatefulWidget {
+class HomeFirstPage extends StatefulWidget{
   const HomeFirstPage({super.key});
 
   @override
   State<HomeFirstPage> createState() => _HomeFirstPageState();
 }
 
-class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
+class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> with WidgetsBindingObserver{
   String? userId = FirebaseAuth.instance.currentUser?.uid;
   int _selectedIndex = 0;
   int _notificationCount = 0;
@@ -54,9 +56,30 @@ class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
   @override
   void initState(){
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _getNotificationCount();
     syncEmailWithFirestore();
+  }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+  }
+
+  void minimizeApp() {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      final intent = AndroidIntent(
+        action: 'android.intent.action.MAIN',
+        category: 'android.intent.category.HOME',
+      );
+      intent.launch();
+    }
   }
 
   void _getNotificationCount() {
@@ -142,7 +165,13 @@ class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
       KTVInfoPage(),
     ];
 
-    return Scaffold(
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          WidgetsBinding.instance.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+          minimizeApp();
+        },
+        child: Scaffold(
       body: CupertinoTabScaffold(
         tabBar: CupertinoTabBar(
           backgroundColor: Theme.of(context).colorScheme.primary,
@@ -173,6 +202,6 @@ class _HomeFirstPageState extends BaseStaffInfoScreen<HomeFirstPage> {
           return tabs[index];
         },
       ),
-    );
+    ));
   }
 }

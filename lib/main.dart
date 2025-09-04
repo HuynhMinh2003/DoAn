@@ -26,15 +26,15 @@ import 'controllers/menu_app_controller.dart';
 
 FirebaseOptions getFirebaseOptions() {
   if (kIsWeb) {
-    return const FirebaseOptions(
-      apiKey: "REDACTED_FIREBASE_API_KEY_1",
-      authDomain: "REDACTED_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://REDACTED_PROJECT_ID-default-rtdb.firebaseio.com",
-      projectId: "REDACTED_PROJECT_ID",
-      storageBucket: "REDACTED_PROJECT_ID.firebasestorage.app",
-      messagingSenderId: "REDACTED_MESSAGING_SENDER_ID",
-      appId: "REDACTED_APP_ID",
-      measurementId: "REDACTED_MEASUREMENT_ID",
+    return FirebaseOptions(
+      apiKey: dotenv.env['API_KEY']!,
+      authDomain: dotenv.env['AUTH_DOMAIN'],
+      databaseURL: dotenv.env['DATABASE_URL'],
+      projectId: dotenv.env['PROJECT_ID']!,
+      storageBucket: dotenv.env['STORAGE_BUCKET'],
+      messagingSenderId: dotenv.env['MESSAGING_SENDER_ID']!,
+      appId: dotenv.env['APP_ID']!,
+      measurementId: dotenv.env['MEASUREMENT_ID'],
     );
   } else {
     return FirebaseOptions(
@@ -89,6 +89,7 @@ void disposeControllers() {
   _messageStreamController.close();
 }
 
+@pragma('vm:entry-point')
 // Background message handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
@@ -100,7 +101,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> _requestNotificationPermissions() async {
   final messaging = FirebaseMessaging.instance;
 
-  final settings = await messaging.requestPermission(
+  await messaging.requestPermission(
     alert: true,
     announcement: false,
     badge: true,
@@ -127,7 +128,7 @@ Future<void> _registerWithFCM() async {
 }
 
 Future<void> _handleInitialMessage() async {
-  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  await FirebaseMessaging.instance.getInitialMessage();
 }
 
 // Main function
