@@ -114,7 +114,7 @@ Future<void> _requestNotificationPermissions() async {
 
 // Function to register FCM and get token
 Future<void> _registerWithFCM() async {
-  const vapidKey = "REDACTED_VAPID_KEY";
+  const vapidKey = "BFqao9-3LTaHv_pLMEaGANCD1NNsPsyL53XJyRyBU1ssujlXm3ePRul6w2zEU1xItkJCALLQ_ZuvjE_qi-YNy6k";
   final messaging = FirebaseMessaging.instance;
 
   String? token;
