@@ -10,7 +10,7 @@ class ResidentInfo {
   final DateTime? birthDate;
   final String email;
   final String? apartmentId;
-  final String? contractId; // ✅ Thêm trường mới
+  final String? contractId;
   final String? imageUrl;
   final bool isExit;
   final DateTime? lastUpdated;
@@ -28,7 +28,7 @@ class ResidentInfo {
     this.birthDate,
     required this.email,
     this.apartmentId,
-    this.contractId, // ✅ Thêm vào constructor
+    this.contractId,
     this.imageUrl,
     this.isExit = false,
     this.lastUpdated,
@@ -48,7 +48,7 @@ class ResidentInfo {
       birthDate: _parseDate(map['birthDate']),
       email: map['email'] ?? '',
       apartmentId: map['apartmentId'],
-      contractId: map['contractId'], // ✅ Lấy contractId từ map
+      contractId: map['contractId'],
       imageUrl: map['imageUrl'],
       isExit: map['isExit'] ?? false,
       lastUpdated: _parseDate(map['lastUpdated']),
@@ -66,7 +66,7 @@ class ResidentInfo {
   Map<String, dynamic> toMap() {
     final data = <String, dynamic>{
       'apartmentId': apartmentId,
-      'contractId': contractId, // ✅ Lưu contractId vào Firestore nếu cần
+      'contractId': contractId,
       'cccd': cccd,
       'email': email,
       'gender': gender,
@@ -79,10 +79,8 @@ class ResidentInfo {
       'lastUpdated': FieldValue.serverTimestamp(),
     };
 
-    // ngày sinh
     data['birthDate'] = birthDate != null ? Timestamp.fromDate(birthDate!) : null;
 
-    // createdAt chỉ set lần đầu nếu chưa có
     if (createdAt != null) {
       data['createdAt'] = Timestamp.fromDate(createdAt!);
     } else {
@@ -110,7 +108,7 @@ class ResidentInfo {
     DateTime? birthDate,
     String? email,
     String? apartmentId,
-    String? contractId, // ✅ copyWith cho contractId
+    String? contractId,
     String? imageUrl,
     bool? isExit,
     DateTime? lastUpdated,
@@ -146,7 +144,6 @@ class ResidentInfo {
       try {
         return DateTime.parse(date);
       } catch (e) {
-        print("Error parsing date: $e");
         return null;
       }
     }

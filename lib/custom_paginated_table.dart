@@ -43,11 +43,11 @@ class _CustomPaginatedTableState extends State<CustomPaginatedTable> {
       children: [
         // Render Header (DataTable with rounded corners)
         ClipRRect(
-          borderRadius: BorderRadius.circular(16.r), // Bo góc cho DataTable
+          borderRadius: BorderRadius.circular(16.r),
           child: Container(
             width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
-              color: secondaryColor, // Màu nền của DataTable
+              color: secondaryColor,
               borderRadius: BorderRadius.circular(16.r),
             ),
             child: DataTable(
@@ -56,14 +56,14 @@ class _CustomPaginatedTableState extends State<CustomPaginatedTable> {
             ),
           ),
         ),
-        SizedBox(height: 8.h), // Khoảng cách giữa DataTable và Footer
+        SizedBox(height: 8.h),
 
         // Render Footer (Pagination Controls with rounded corners)
         ClipRRect(
-          borderRadius: BorderRadius.circular(16.r), // Bo góc cho Footer
+          borderRadius: BorderRadius.circular(16.r),
           child: Container(
             decoration: BoxDecoration(
-              color: bgColor, // Màu nền footer
+              color: bgColor,
               borderRadius: BorderRadius.circular(16.r),
             ),
             padding: EdgeInsets.all(8.0),

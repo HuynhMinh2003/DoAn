@@ -11,7 +11,7 @@ class ServiceRequest {
   final String phone;
   final String requestTime;
   final Timestamp createdAt;
-  final String companyId;   // Nếu cần dùng để so sánh hoặc lọc thêm
+  final String companyId;
 
   ServiceRequest({
     required this.id,

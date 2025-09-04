@@ -10,7 +10,7 @@ class MsgDialog {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r), // Góc bo tròn
+          borderRadius: BorderRadius.circular(20.r),
         ),
         title: Center(
           child: Text(

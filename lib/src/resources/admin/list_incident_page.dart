@@ -1,6 +1,5 @@
 import 'package:do_an/constants.dart';
 import 'package:do_an/custom_paginated_table.dart';
-import 'package:flutter/foundation.dart';
 import 'package:do_an/src/models/staffs.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -23,7 +22,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
   String? _selectedPriority;
   String? _selectedStatus;
 
-  List<String> _priorityItems = ["Tất cả", "Cao", "Trung bình", "Thấp"]; // Các giá trị trạng thái nhân viên
+  List<String> _priorityItems = ["Tất cả", "Cao", "Trung bình", "Thấp"];
 
   List<String> _statusItems = ["Tất cả", "Đang chờ xử lý", "Đang xử lý", "Đang chờ xử lý (Trả lại)", "Đã xử lý"];
 
@@ -41,16 +40,16 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
 
   bool _isViewDialogShowing = false;
 
-  Future<void> _loadStaffs() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('staffs')
-        .where('role', isEqualTo: 2) // Lọc đúng role
-        .get();
-
-    setState(() {
-      _allStaffs =
-          snapshot.docs.map((doc) => Staff.fromFirestore(doc)).toList();
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadStaffs();
+    _fetchStatus();
+    _fetchPriority();
+    _fetchIncident();
+    _alIncidentList = _incidentList;
+    currentPage = 1;
+    updatePaginatedIncidents();
   }
 
   void updatePaginatedIncidents() {
@@ -80,23 +79,11 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
     }).where((page) => page != -1).toList();
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadStaffs();
-    _fetchStatus();
-    _fetchPriority();
-    _fetchIncident();
-    _alIncidentList = _incidentList;
-    currentPage = 1;
-    updatePaginatedIncidents();
-  }
-
   void _fetchStatus() async {
     final snapshot = await FirebaseDatabase.instance.ref().child("status").get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      if (mounted) { // Kiểm tra widget có còn tồn tại
+      if (mounted) {
         setState(() {
           _statusItems = ["Tất cả"];
           _statusItems.addAll(data.values.map((e) => e.toString()));
@@ -109,7 +96,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
     final snapshot = await FirebaseDatabase.instance.ref().child("priority").get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      if (mounted) { // Kiểm tra widget có còn tồn tại
+      if (mounted) {
         setState(() {
           _priorityItems = ["Tất cả"];
           _priorityItems.addAll(data.values.map((e) => e.toString()));
@@ -119,22 +106,16 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
   }
 
   void _fetchIncident() async {
-    try {
-      final snapshot = await FirebaseFirestore.instance.collection('incidents').get();
-      final incidentList = snapshot.docs.map((doc) => Incident.fromFirestore(doc)).toList();
+    final snapshot = await FirebaseFirestore.instance.collection('incidents').get();
+    final incidentList = snapshot.docs.map((doc) => Incident.fromFirestore(doc)).toList();
 
-      if (mounted) { // Kiểm tra widget có còn tồn tại
-        setState(() {
-          _alIncidentList = incidentList;
-          _incidentList = incidentList;
-          currentPage = 1;
-          updatePaginatedIncidents();
-        });
-      }
-    } catch (e) {
-      if (mounted) { // Chỉ hiển thị lỗi nếu widget còn tồn tại
-        print("Lỗi khi lấy danh sách nhân viên: $e");
-      }
+    if (mounted) {
+      setState(() {
+        _alIncidentList = incidentList;
+        _incidentList = incidentList;
+        currentPage = 1;
+        updatePaginatedIncidents();
+      });
     }
   }
 
@@ -155,7 +136,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
           .toList();
     }
 
-    if (mounted) { // Kiểm tra widget còn trong cây
+    if (mounted) {
       setState(() {
         _incidentList = filteredList;
         updatePaginatedIncidents();
@@ -278,10 +259,6 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                 child: Text("Đóng", style: TextStyle(fontSize: 3.5.sp,color: Colors.white)),
               ),
             ] else if (incident.status == "Đang chờ xử lý (Trả lại)") ...[
-              // TextButton(
-              //   onPressed: () => _openAssignDialog(incident),
-              //   child: Text("Chọn nhân viên xử lý", style: TextStyle(fontSize: 4.sp)),
-              // ),
                 OutlinedButton(
                   onPressed: () => _showHandledHistoryDialog(context, incident.id),
                   style: OutlinedButton.styleFrom(
@@ -401,6 +378,18 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
     );
   }
 
+  Future<void> _loadStaffs() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('staffs')
+        .where('role', isEqualTo: 2)
+        .get();
+
+    setState(() {
+      _allStaffs =
+          snapshot.docs.map((doc) => Staff.fromFirestore(doc)).toList();
+    });
+  }
+
   IconData _getStatusIcon(String? status) {
     switch (status) {
       case 'Đang chờ xử lý':
@@ -431,7 +420,6 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
     }
   }
 
-  /// Hàm hỗ trợ để hiển thị thông tin dưới dạng hàng
   Widget buildInfoRow(String label, String value) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 10.h),
@@ -446,9 +434,9 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
             child: Text(
               value,
               style: TextStyle(fontSize: 4.sp),
-              softWrap: true, // ← cho phép xuống dòng
-              overflow: TextOverflow.visible, // ← tránh bị cắt
-              maxLines: null, // ← không giới hạn số dòng
+              softWrap: true,
+              overflow: TextOverflow.visible,
+              maxLines: null,
             ),
           ),
         ],
@@ -494,7 +482,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                               onChanged: (value) {
                                 setState(() {
                                   _searchQuery = value;
-                                  _filterStaff(); // Lọc danh sách khi nhập
+                                  _filterStaff();
                                 });
                               },
                             ),),
@@ -549,7 +537,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                               ),
                             ),
 
-                            SizedBox(width: 20.w), // Khoảng cách giữa tiêu đề và tìm kiếm
+                            SizedBox(width: 20.w),
 
                             Expanded(child: buildFilterDropdown(
                               label: "Lọc theo trạng thái xử lý",
@@ -584,8 +572,8 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                                       child: SingleChildScrollView(
                                         child: ConstrainedBox(
                                           constraints: BoxConstraints(
-                                            minWidth: constraints.maxWidth, // Đặt chiều rộng tối thiểu bằng chiều rộng cha
-                                            maxWidth: constraints.maxWidth, // Đặt chiều rộng tối đa bằng chiều rộng cha
+                                            minWidth: constraints.maxWidth,
+                                            maxWidth: constraints.maxWidth,
                                           ),
                                           child: CustomPaginatedTable(
                                             columns: [
@@ -656,11 +644,11 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                                               ]);
                                             }).toList(),
                                             rowsPerPage: itemsPerPage,
-                                            availableRowsPerPage: [5, 10, 20, 50], // Các tùy chọn số hàng mỗi trang
+                                            availableRowsPerPage: [5, 10, 20, 50],
                                             onRowsPerPageChanged: (value) {
                                               setState(() {
-                                                itemsPerPage = value ?? 10; // Cập nhật số hàng mỗi trang
-                                                currentPage = 1; // Reset về trang đầu
+                                                itemsPerPage = value ?? 10;
+                                                currentPage = 1;
                                                 updatePaginatedIncidents();
                                               });
                                             },
@@ -683,7 +671,6 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
     );
   }
 
-// Hàm lọc nhân viên theo chức vụ
   Widget buildFilterDropdown<T>({
     required String label,
     required List<T> items,
@@ -706,7 +693,7 @@ class _ListIncidentPageState extends State<ListIncidentPage> {
                 return DropdownMenuItem(
                   value: item,
                   child: Text(
-                    item.toString(), // Ép kiểu thành String cho cả String và int
+                    item.toString(),
                     style: TextStyle(fontSize: 4.sp ),
                   ),
                 );

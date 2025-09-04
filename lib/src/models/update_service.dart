@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class CompanyServiceUpdate {
+class ServiceUpdate {
   final String companyId;
   final String companyName;
   final String companyType;
@@ -10,7 +10,7 @@ class CompanyServiceUpdate {
   final String price;
   final Timestamp timestamp;
 
-  CompanyServiceUpdate({
+  ServiceUpdate({
     required this.companyId,
     required this.companyName,
     required this.companyType,
@@ -21,14 +21,14 @@ class CompanyServiceUpdate {
     required this.timestamp,
   });
 
-  factory CompanyServiceUpdate.fromFirestore({
+  factory ServiceUpdate.fromFirestore({
     required String companyId,
     required String companyName,
     required String companyType,
     required DocumentSnapshot doc,
   }) {
     final data = doc.data() as Map<String, dynamic>;
-    return CompanyServiceUpdate(
+    return ServiceUpdate(
       companyId: companyId,
       companyName: companyName,
       companyType: companyType,

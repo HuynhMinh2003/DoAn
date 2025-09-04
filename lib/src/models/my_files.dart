@@ -9,7 +9,7 @@ class CloudStorageInfo {
   final String labelWorking;
   final String labelResigned;
   final Color? color;
-  final String category;  // thêm trường này
+  final String category;
 
   CloudStorageInfo({
     this.svgSrc,
@@ -18,7 +18,7 @@ class CloudStorageInfo {
     this.labelWorking = "Đang làm",
     this.labelResigned = "Đã nghỉ",
     this.color,
-    required this.category,  // bắt buộc truyền
+    required this.category,
   });
 
   factory CloudStorageInfo.fromFirestore(DocumentSnapshot doc) {

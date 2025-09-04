@@ -50,7 +50,7 @@ class Incident {
       priority: data['priority'],
       status: data['status'] ?? 'Đang chờ xử lý',
       imageUrl: data['imageUrl'],
-      seenBy: List<String>.from(data['seenBy'] ?? []), // ✅ thêm seenBy ở đây
+      seenBy: List<String>.from(data['seenBy'] ?? []),
       createdAt: data['createdAt'],
       assignedStaffId: data['assignedStaffId'],
       assignedStaffName: data['assignedStaffName'],
@@ -70,7 +70,7 @@ class Incident {
       'priority': priority,
       'status': status,
       'imageUrl': imageUrl,
-      'seenBy': seenBy, // ✅ thêm seenBy vào Firestore map
+      'seenBy': seenBy,
       'createdAt': createdAt,
       'assignedStaffId': assignedStaffId,
       'assignedStaffName': assignedStaffName,
@@ -91,7 +91,7 @@ class Incident {
       priority: data['priority'],
       status: data['status'] ?? 'Đang chờ xử lý',
       imageUrl: data['imageUrl'],
-      seenBy: List<String>.from(data['seenBy'] ?? []), // ✅ thêm seenBy ở đây
+      seenBy: List<String>.from(data['seenBy'] ?? []),
       createdAt: data['createdAt'],
       assignedStaffId: data['assignedStaffId'],
       assignedStaffName: data['assignedStaffName'],

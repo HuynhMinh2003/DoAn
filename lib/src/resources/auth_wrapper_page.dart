@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/screens/main/main_screen.dart';
-import 'package:do_an/src/resources/home_first_company_page.dart';
+import 'package:do_an/src/resources/staff/home_first_ktv_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'home_first_csn_page.dart';
-import 'home_first_resident_page.dart';
-import 'home_first_ktv_page.dart';
+import 'staff/home_first_company_page.dart';
+import 'staff/home_first_csn_page.dart';
+import 'resident/home_first_resident_page.dart';
 import 'login_page.dart';
 
 class AuthWrapper extends StatelessWidget {
@@ -27,7 +27,7 @@ class AuthWrapper extends StatelessWidget {
       }
     }
 
-    return null; // Không tìm thấy role
+    return null;
   }
 
   @override
@@ -35,11 +35,9 @@ class AuthWrapper extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      // Chưa đăng nhập, về login page
       return LoginPage();
     }
 
-    // Đã đăng nhập, load role
     return FutureBuilder<int?>(
       future: _getUserRole(),
       builder: (context, snapshot) {
@@ -70,7 +68,6 @@ class AuthWrapper extends StatelessWidget {
         } else if (role == 5) {
           return HomeFirstCompanyPage();
         } else {
-          // Không xác định được role, logout
           FirebaseAuth.instance.signOut();
           return LoginPage();
         }

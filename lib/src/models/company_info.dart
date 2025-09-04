@@ -31,7 +31,7 @@ class CompanyInfo {
     required this.lastUpdated,
   });
 
-  // ✅ From Firestore map
+  // From Firestore map
   factory CompanyInfo.fromMap(Map<String, dynamic> map, [String? docId]) {
     return CompanyInfo(
       companyId: docId,
@@ -50,7 +50,7 @@ class CompanyInfo {
     );
   }
 
-  // ✅ To Firestore map
+  // To Firestore map
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -68,7 +68,7 @@ class CompanyInfo {
     };
   }
 
-  // ✅ Copy with new values
+  // Copy with new values
   CompanyInfo copyWith({
     String? companyId,
     String? name,
@@ -101,7 +101,7 @@ class CompanyInfo {
     );
   }
 
-  // ✅ From Firestore DocumentSnapshot
+  // From Firestore DocumentSnapshot
   factory CompanyInfo.fromFirestore(DocumentSnapshot doc) {
     final json = doc.data() as Map<String, dynamic>;
 

@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'package:do_an/firebase_options.dart';
-import 'package:do_an/src/fire_base/firebase_auth_service.dart';
 import 'package:do_an/src/resources/provider/admin_image_provider.dart';
 import 'package:do_an/src/resources/provider/company_image_provider.dart';
 import 'package:do_an/src/resources/provider/contract_notifier_provider.dart';
 import 'package:do_an/src/resources/provider/resident_image_provider.dart';
 import 'package:do_an/src/resources/provider/staff_image_provider.dart';
-import 'package:do_an/src/resources/provider/user__provider.dart';
+import 'package:do_an/src/resources/provider/user_data_provider.dart';
 import 'package:do_an/src/resources/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -51,32 +50,96 @@ FirebaseOptions getFirebaseOptions() {
   }
 }
 
-// Tạo StreamController để quản lý luồng tin nhắn
+// Create StreamController to manage message flow
 final _messageStreamController = BehaviorSubject<RemoteMessage>();
 
-// ✅ Plugin local notifications
+// Local notifications plugin
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 FlutterLocalNotificationsPlugin();
 
-// Trình xử lý tin nhắn nền
+// GlobalKey to use ScaffoldMessenger in the application
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+void _setupForegroundMessageHandler() {
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    final title = message.notification?.title ?? "Notification";
+    final body = message.notification?.body ?? "";
+
+    flutterLocalNotificationsPlugin.show(
+      0,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'default_channel_id',
+          'System Notifications',
+          channelDescription: 'Notifications displayed when app is open',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+          styleInformation: BigTextStyleInformation(body),
+        ),
+      ),
+    );
+  });
+}
+
+// Close StreamController when app exits
+void disposeControllers() {
+  _messageStreamController.close();
+}
+
+// Background message handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  print('Handling a background message: ${message.messageId}');
 }
 
-// Hàm chính
+// Function to request notification permissions
+Future<void> _requestNotificationPermissions() async {
+  final messaging = FirebaseMessaging.instance;
+
+  final settings = await messaging.requestPermission(
+    alert: true,
+    announcement: false,
+    badge: true,
+    carPlay: false,
+    criticalAlert: false,
+    provisional: false,
+    sound: true,
+  );
+}
+
+// Function to register FCM and get token
+Future<void> _registerWithFCM() async {
+  const vapidKey = "REDACTED_VAPID_KEY";
+  final messaging = FirebaseMessaging.instance;
+
+  String? token;
+
+  // Get token for web with VAPID Key
+  if (DefaultFirebaseOptions.currentPlatform == DefaultFirebaseOptions.web) {
+    token = await messaging.getToken(vapidKey: vapidKey);
+  } else {
+    token = await messaging.getToken();
+  }
+}
+
+Future<void> _handleInitialMessage() async {
+  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+}
+
+// Main function
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Chỉ load .env trên mobile (Web sẽ lỗi vì không có assets/.env)
+  // Only load .env on mobile (Web will error because there's no assets/.env)
   if (!kIsWeb) {
     await dotenv.load(fileName: ".env");
   }
 
-  // Đặt màu thanh trạng thái
+  // Set status bar color
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -94,36 +157,20 @@ void main() async {
   );
 
 
-  // Đăng ký xử lý tin nhắn trong nền (chỉ mobile)
+  // Register background message handler (mobile only)
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Yêu cầu quyền nhận thông báo
+  // Request notification permissions
   await _requestNotificationPermissions();
 
-  // Đăng ký và lấy mã thông báo FCM
+  // Register and get FCM token
   await _registerWithFCM();
 
   await _handleInitialMessage();
 
-  // Đăng ký xử lý tin nhắn foreground
+  // Register foreground message handler
   _setupForegroundMessageHandler();
 
-  String oauthToken = await FirebaseAuthService.getOAuthToken();
-  print("OAuth Token: $oauthToken");
-
-  // sendNotification(
-  //     oauthToken,
-  //     "esHHG4h5TOW5wVYI7z4v7G:APA91bGT4Rl6tU1dUZ_hWyJBio6KU4m1OolVpxYsD8-VvCVV2e3RqffoEOJnHBrbRb9AaPR2kFMy1pc-RH3m71foqOqN9RYAPWFwhISKupgj2nmR8v5gMJ0", // FCM Token của thiết bị nhận
-  //     "Thông báo tiền nước!",
-  //     "Hóa đơn tháng này là 500,000 VND."
-  // );
-
-  // //Thêm lắng nghe sự kiện khi token thay đổi
-  // FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async{
-  //   print("FCM Token refreshed: $newToken");
-  //   await _saveTokenToFirestore(newToken);
-  // });
-  // Khởi chạy ứng dụng
   runApp(
     ScreenUtilInit(
       designSize: const Size(384, 856.1777777777778),
@@ -134,7 +181,6 @@ void main() async {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           double screenWidth = MediaQuery.of(context).size.width;
           double screenHeight = MediaQuery.of(context).size.height;
-          print("📱 Kích thước màn hình: width = $screenWidth, height = $screenHeight");
         });
 
         return MultiProvider(
@@ -145,7 +191,7 @@ void main() async {
             ChangeNotifierProvider(create: (_) => StaffImageProvider()),
             ChangeNotifierProvider(create: (_) => ResidentImageProvider()),
             ChangeNotifierProvider(create: (_) => AdminImageProvider()),
-            ChangeNotifierProvider(create: (_) => ContractNotifier()),
+            ChangeNotifierProvider(create: (_) => ContractNotifierProvider()),
             ChangeNotifierProvider(create: (_) => MenuAppController()),
           ],
           child: MyApp(
@@ -183,85 +229,3 @@ void main() async {
     ),
   );
 }
-
-// Hàm yêu cầu quyền nhận thông báo
-Future<void> _requestNotificationPermissions() async {
-  final messaging = FirebaseMessaging.instance;
-
-  final settings = await messaging.requestPermission(
-    alert: true,
-    announcement: false,
-    badge: true,
-    carPlay: false,
-    criticalAlert: false,
-    provisional: false,
-    sound: true,
-  );
-
-  if (kDebugMode) {
-    print('Permission granted: ${settings.authorizationStatus}');
-  }
-}
-
-// Hàm đăng ký FCM và lấy mã thông báo
-Future<void> _registerWithFCM() async {
-  const vapidKey = "REDACTED_VAPID_KEY";
-  final messaging = FirebaseMessaging.instance;
-
-  String? token;
-
-  // Lấy mã thông báo cho web với VAPID Key
-  if (DefaultFirebaseOptions.currentPlatform == DefaultFirebaseOptions.web) {
-    token = await messaging.getToken(vapidKey: vapidKey);
-  } else {
-    token = await messaging.getToken();
-  }
-
-  if (kDebugMode) {
-    print('Registration Token=$token');
-  }
-
-  // Gửi mã thông báo lên server (ví dụ minh họa)
-  if (token != null) {
-    print("Sending token to server...");
-    // TODO: Thay thế bằng API gọi server của bạn
-  }
-}
-
-Future<void> _handleInitialMessage() async {
-  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-  if (initialMessage != null) {
-    print('Notification caused app to open: ${initialMessage.notification?.title}');
-  }
-}
-
-void _setupForegroundMessageHandler() {
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    final title = message.notification?.title ?? "Thông báo";
-    final body = message.notification?.body ?? "";
-
-    flutterLocalNotificationsPlugin.show(
-      0,
-      title,
-      body,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'default_channel_id',
-          'Thông báo hệ thống',
-          channelDescription: 'Thông báo hiển thị khi app đang mở',
-          importance: Importance.max,
-          priority: Priority.high,
-          styleInformation: BigTextStyleInformation(body),
-        ),
-      ),
-    );
-  });
-}
-
-// Đóng StreamController khi ứng dụng thoát
-void disposeControllers() {
-  _messageStreamController.close();
-}
-
-// GlobalKey để dùng ScaffoldMessenger trong ứng dụng
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();

@@ -6,7 +6,7 @@ Future<void> sendNotification(String oauthToken, String fcmToken, String title, 
 
   final Map<String, dynamic> data = {
     "message": {
-      "token": fcmToken,  // Token của thiết bị nhận thông báo
+      "token": fcmToken,  // Token of the device receiving the notification
       "notification": {
         "title": title,
         "body": body
@@ -22,14 +22,8 @@ Future<void> sendNotification(String oauthToken, String fcmToken, String title, 
     Uri.parse(fcmUrl),
     headers: {
       "Content-Type": "application/json",
-      "Authorization": "Bearer $oauthToken",  // Sử dụng OAuth Token
+      "Authorization": "Bearer $oauthToken",  // Using OAuth Token
     },
     body: jsonEncode(data),
   );
-
-  if (response.statusCode == 200) {
-    print("✅ Gửi thông báo thành công!");
-  } else {
-    print("❌ Lỗi khi gửi thông báo: ${response.body}");
-  }
 }

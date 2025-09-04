@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 class AuthBloc {
   final _firAuth = FirAuth();
 
-  // công ty
+  // company
   final StreamController<String> _nameCompanyController = StreamController<String>.broadcast();
   final StreamController<String> _emailCompanyController = StreamController<String>.broadcast();
   final StreamController<String> _phoneCompanyController = StreamController<String>.broadcast();
@@ -21,7 +21,7 @@ class AuthBloc {
   Stream<String> get addressCompanyStream => _addressCompanyController.stream;
   Stream<String> get describeCompanyStream => _describeCompanyController.stream;
 
-  // nhân viên
+  // staff
   final StreamController<String> _nameStaffController = StreamController<String>.broadcast();
   final StreamController<String> _emailStaffController = StreamController<String>.broadcast();
   final StreamController<String> _phoneStaffController = StreamController<String>.broadcast();
@@ -36,14 +36,16 @@ class AuthBloc {
   Stream<String> get addressStaffStream => _addressStaffController.stream;
   Stream<String> get cccdStaffStream => _cccdStaffController.stream;
 
-  // cư dân
+  // resident
   final StreamController<String>  _nameResidentController = StreamController<String>.broadcast();
   final StreamController<String> _cccdResidentController = StreamController<String>.broadcast();
   final StreamController<String>  _phoneResidentController = StreamController<String>.broadcast();
   final StreamController<String>  _emailResidentController = StreamController<String>.broadcast();
   final StreamController<String>  _addressResidentController = StreamController<String>.broadcast();
   final _birthDateController = StreamController<DateTime?>.broadcast();
+  final _genderResidentController = StreamController<String>();
 
+  Stream<String> get genderResidentStream => _genderResidentController.stream;
   Stream<DateTime?> get birthDateStream => _birthDateController.stream;
   Stream<String> get nameResidentStream => _nameResidentController.stream;
   Stream<String> get cccdResidentStream => _cccdResidentController.stream;
@@ -57,7 +59,7 @@ class AuthBloc {
   Stream<String> get titleIncidentStream => _titleIncidentController.stream;
   Stream<String> get messageIncidentStream => _messageIncidentController.stream;
 
-  // login chung
+  // login
   final StreamController<String> _emailController = StreamController<String>.broadcast();
   final StreamController<String> _passController = StreamController<String>.broadcast();
 
@@ -65,53 +67,48 @@ class AuthBloc {
   Stream<String> get passStream => _passController.stream;
 
 
+
   final _birthDateErrorController = StreamController<String?>.broadcast();
 
-// Luồng để lắng nghe lỗi
   Stream<String?> get birthDateErrorStream => _birthDateErrorController.stream;
   void updateBirthDate(DateTime? birthDate) {
-    _birthDateController.sink.add(birthDate); // Cập nhật giá trị ngày sinh
+    _birthDateController.sink.add(birthDate);
   }
 
-  // Hàm cập nhật lỗi
   void updateBirthDateError(String? error) {
     _birthDateErrorController.sink.add(error);
   }
 
   void clearNameResidentError() {
-    _nameResidentController.sink.add(""); // xóa lỗi bằng cách đẩy lại giá trị trống
+    _nameResidentController.sink.add("");
   }
 
   void clearEmailResidentError() {
-    _emailResidentController.sink.add(""); // xóa lỗi bằng cách đẩy lại giá trị trống
+    _emailResidentController.sink.add("");
   }
 
   void clearPhoneResidentError() {
-    _phoneResidentController.sink.add(""); // xóa lỗi bằng cách đẩy lại giá trị trống
+    _phoneResidentController.sink.add("");
   }
 
   void clearCccdResidentError() {
-    _cccdResidentController.sink.add(""); // xóa lỗi bằng cách đẩy lại giá trị trống
+    _cccdResidentController.sink.add("");
   }
 
   void clearAddressResidentError() {
-    _addressResidentController.sink.add(""); // xóa lỗi bằng cách đẩy lại giá trị trống
+    _addressResidentController.sink.add("");
   }
 
-  // Hàm để thêm dữ liệu vào stream
   void updateBirthDate1(DateTime? birthDate) {
     _birthDateStaffController.sink.add(birthDate);
   }
 
-
-  /// Tạo mật khẩu ngẫu nhiên
   String generateRandomPassword({int length = 10}) {
     const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#\$";
     final rand = Random.secure();
     return List.generate(length, (_) => chars[rand.nextInt(chars.length)]).join();
   }
 
-  /// Kiểm tra dữ liệu hợp lệ (không cần kiểm tra password nếu không nhập từ form)
   bool isValidInformation(
       String titleIncident,
       String messageIncident,
@@ -134,7 +131,6 @@ class AuthBloc {
     return isValid;
   }
 
-  /// Kiểm tra dữ liệu hợp lệ (không cần kiểm tra password nếu không nhập từ form)
   bool isValidCompanySignUp(
       String nameCompany,
       String emailCompany,
@@ -198,7 +194,6 @@ class AuthBloc {
     return isValid;
   }
 
-  /// Đăng ký công ty
   void signUpCompany({
     required String nameCompany,
     required String emailCompany,
@@ -210,7 +205,7 @@ class AuthBloc {
     required Function(String) onRegisterError,
   }) {
     if (isValidCompanySignUp(nameCompany, emailCompany, phoneCompany, typeCompany, addressCompany, describeCompany)) {
-      final randomPassword = generateRandomPassword(); // 👉 tạo mật khẩu tại đây
+      final randomPassword = generateRandomPassword();
 
       _firAuth.signUpCompany(
         nameCompany: nameCompany,
@@ -221,8 +216,6 @@ class AuthBloc {
         describeCompany: describeCompany,
         passwordCompany: randomPassword,
         onSuccess: () {
-          // 👉 Gọi onSuccess() và có thể gửi mật khẩu về Gmail tại đây
-          print('Mật khẩu ngẫu nhiên là: $randomPassword');
           onSuccess();
         },
         onRegisterError: onRegisterError,
@@ -230,7 +223,6 @@ class AuthBloc {
     }
   }
 
-  /// Đăng ký nhân viên
   void signUpStaff({
     required String nameStaff,
     required String addressStaff,
@@ -247,7 +239,6 @@ class AuthBloc {
     if (isValidStaffSignUp(nameStaff, addressStaff, cccdStaff, birthDateStaff, gender, emailStaff, phoneStaff, position)) {
       final randomPassword = generateRandomPassword();
 
-      // Chuyển đổi DateTime sang String với định dạng yyyy-MM-dd
       final birthDateString = "${birthDateStaff.year}-${birthDateStaff.month.toString().padLeft(2, '0')}-${birthDateStaff.day.toString().padLeft(2, '0')}";
 
       _firAuth.signUpStaff(
@@ -262,7 +253,6 @@ class AuthBloc {
         imageUrlStaff: imageUrlStaff,
         passwordStaff: randomPassword,
         onSuccess: () {
-          print('Mật khẩu ngẫu nhiên cho nhân viên là: $randomPassword');
           onSuccess();
         },
         onRegisterError: onRegisterError,
@@ -321,11 +311,9 @@ class AuthBloc {
     }
 
     if (birthDate == null) {
-      // Nếu ngày sinh trống, phát sự kiện lỗi
       _birthDateStaffController.sink.addError("Ngày sinh không được để trống!");
       isValid = false;
     } else {
-      // Nếu có ngày sinh, cập nhật bình thường
       _birthDateStaffController.sink.add(birthDate);
     }
 
@@ -335,7 +323,6 @@ class AuthBloc {
   bool isValidStaffUpdate(String name, String address, String cccd, String gender, String email, String phone, String position, String birthDate) {
     bool isValid = true;
 
-    // Kiểm tra tên nhân viên
     if (name.isEmpty) {
       _nameStaffController.sink.addError("Phải nhập tên nhân viên!");
       isValid = false;
@@ -343,7 +330,6 @@ class AuthBloc {
       _nameStaffController.sink.add("");
     }
 
-    // Kiểm tra địa chỉ
     if (address.isEmpty) {
       _addressStaffController.sink.addError("Phải nhập địa chỉ!");
       isValid = false;
@@ -351,7 +337,6 @@ class AuthBloc {
       _addressStaffController.sink.add("");
     }
 
-    // Kiểm tra số CCCD
     final cccdRegex = RegExp(r'^\d{12}$');
     if (cccd.isEmpty) {
       _cccdStaffController.sink.addError("Phải nhập số CCCD!");
@@ -363,7 +348,6 @@ class AuthBloc {
       _cccdStaffController.sink.add("");
     }
 
-    // Kiểm tra email
     final emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
     if (email.isEmpty) {
       _emailStaffController.sink.addError("Phải nhập email!");
@@ -375,7 +359,6 @@ class AuthBloc {
       _emailStaffController.sink.add("");
     }
 
-    // Kiểm tra số điện thoại
     final phoneRegex = RegExp(r'^\d{10,15}$');
     if (phone.isEmpty) {
       _phoneStaffController.sink.addError("Phải nhập số điện thoại!");
@@ -388,14 +371,13 @@ class AuthBloc {
     }
 
     if (birthDate.isEmpty) {
-      updateBirthDateError("Phải nhập ngày sinh!"); // Gửi lỗi
+      updateBirthDateError("Phải nhập ngày sinh!");
       isValid = false;
     } else {
       try {
-        // Kiểm tra định dạng ngày
         final parsedDate = DateFormat('dd/MM/yyyy').parseStrict(birthDate);
-        updateBirthDateError(null); // Xóa lỗi
-        updateBirthDate(parsedDate); // Cập nhật giá trị hợp lệ
+        updateBirthDateError(null);
+        updateBirthDate(parsedDate);
       } catch (e) {
         updateBirthDateError("Ngày sinh không hợp lệ! Định dạng phải là dd/MM/yyyy.");
         isValid = false;
@@ -464,11 +446,9 @@ class AuthBloc {
     }
 
     if (birthDate == null) {
-      // Nếu ngày sinh trống, phát sự kiện lỗi
       _birthDateController.sink.addError("Ngày sinh không được để trống!");
       isValid = false;
     } else {
-      // Nếu có ngày sinh, cập nhật bình thường
       _birthDateController.sink.add(birthDate);
     }
 
@@ -517,7 +497,7 @@ class AuthBloc {
   }
 
   void changeName(String name) {
-    _nameResidentController.sink.add(name); // Trigger UI update
+    _nameResidentController.sink.add(name);
   }
   void changeEmail(String email) {
     _emailResidentController.sink.add(email);
@@ -541,22 +521,14 @@ class AuthBloc {
     }
   }
 
-  // Controller cho Gender Stream
-  final _genderResidentController = StreamController<String>();
-
-  // Getter cho Stream
-  Stream<String> get genderResidentStream => _genderResidentController.stream;
-
-  // Phương thức để thay đổi giá trị Gender
   void changeGender(String gender) {
     if (_validateGender(gender)) {
-      _genderResidentController.sink.add(gender); // Đẩy giá trị mới vào stream
+      _genderResidentController.sink.add(gender);
     } else {
       _genderResidentController.sink.addError('Vui lòng chọn giới tính hợp lệ');
     }
   }
 
-  // Hàm validate giá trị Gender
   bool _validateGender(String gender) {
     return gender == 'Nam' || gender == 'Nữ' || gender == 'Khác';
   }

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/src/models/resident_info.dart';
 
-class Contract {
+class ContractData {
   final String? contractId;
   final String apartmentName;
   final String building;
@@ -14,9 +14,9 @@ class Contract {
   final Map<String, String>? representative;
   final String? purpose;
   final DateTime createdAt;
-  final bool isActive; // ✅ Thêm thuộc tính isActive
+  final bool isActive;
 
-  Contract({
+  ContractData({
     this.contractId,
     required this.apartmentName,
     required this.building,
@@ -29,10 +29,10 @@ class Contract {
     this.representative,
     this.purpose,
     required this.createdAt,
-    this.isActive = true, // ✅ Mặc định là true
+    this.isActive = true,
   });
 
-  Contract copyWith({
+  ContractData copyWith({
     String? contractId,
     String? apartmentName,
     String? building,
@@ -45,9 +45,9 @@ class Contract {
     Map<String, String>? representative,
     String? purpose,
     DateTime? createdAt,
-    bool? isActive, // ✅ Thêm vào copyWith
+    bool? isActive,
   }) {
-    return Contract(
+    return ContractData(
       contractId: contractId ?? this.contractId,
       apartmentName: apartmentName ?? this.apartmentName,
       building: building ?? this.building,
@@ -60,7 +60,7 @@ class Contract {
       representative: representative ?? this.representative,
       purpose: purpose ?? this.purpose,
       createdAt: createdAt ?? this.createdAt,
-      isActive: isActive ?? this.isActive, // ✅ Copy giá trị isActive
+      isActive: isActive ?? this.isActive,
     );
   }
 
@@ -77,12 +77,12 @@ class Contract {
       "representative": representative,
       "purpose": purpose,
       "createdAt": Timestamp.fromDate(createdAt),
-      "isActive": isActive, // ✅ Thêm vào toMap
+      "isActive": isActive,
     };
   }
 
-  factory Contract.fromMap(Map<String, dynamic> map, String docId, List<ResidentInfo> residents) {
-    return Contract(
+  factory ContractData.fromMap(Map<String, dynamic> map, String docId, List<ResidentInfo> residents) {
+    return ContractData(
       contractId: docId,
       apartmentDocId: map['apartmentDocId'] ?? '',
       apartmentName: map['apartmentName'] ?? '',
@@ -101,7 +101,7 @@ class Contract {
           : null,
       purpose: map['purpose'],
       createdAt: (map['createdAt'] as Timestamp).toDate(),
-      isActive: map['isActive'] ?? true, // ✅ Lấy từ Firestore hoặc mặc định true
+      isActive: map['isActive'] ?? true,
     );
   }
 }

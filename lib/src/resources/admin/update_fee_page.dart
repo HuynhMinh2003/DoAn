@@ -7,12 +7,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
-class UpdateFeeScreen extends StatefulWidget {
+class UpdateFeePage extends StatefulWidget {
   @override
-  _UpdateFeeScreenState createState() => _UpdateFeeScreenState();
+  _UpdateFeePageState createState() => _UpdateFeePageState();
 }
 
-class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
+class _UpdateFeePageState extends State<UpdateFeePage> {
   final _formKey = GlobalKey<FormState>();
   final _feeController = TextEditingController();
   final _dateController = TextEditingController();
@@ -29,6 +29,13 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
     'car_roofed': 'Ô tô có mái che',
     'car_unroofed': 'Ô tô không mái che',
   };
+
+  @override
+  void dispose() {
+    _feeController.dispose();
+    _dateController.dispose();
+    super.dispose();
+  }
 
   Future<void> _saveFee() async {
     if (!_formKey.currentState!.validate()) return;
@@ -75,13 +82,6 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
   }
 
   @override
-  void dispose() {
-    _feeController.dispose();
-    _dateController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
@@ -113,7 +113,7 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                               DropdownMenuItem(
                                 value: 'managementFee',
                                 child: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 10.w), // 👈 cùng giá trị với `InputDecoration.contentPadding`
+                                  padding: EdgeInsets.symmetric(horizontal: 10.w),
                                   child: Text(
                                     'Phí quản lý vận hành',
                                     style: TextStyle(fontSize: 4.5.sp, color: Colors.white),
@@ -123,7 +123,7 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                               DropdownMenuItem(
                                 value: 'parking',
                                 child: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 10.w), // 👈 như trên
+                                  padding: EdgeInsets.symmetric(horizontal: 10.w),
                                   child: Text(
                                     'Phí gửi xe',
                                     style: TextStyle(fontSize: 4.5.sp, color: Colors.white),
@@ -185,7 +185,7 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                               final picked = await showDatePicker(
                                 context: context,
                                 initialDate: _selectedDate ?? DateTime.now(),
-                                firstDate: DateTime.now(), // Chỉ cho chọn từ hôm nay trở đi
+                                firstDate: DateTime.now(),
                                 lastDate: DateTime(2100),
                               );
                               if (picked != null) {
@@ -208,7 +208,7 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                                   _saveFee();
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: secondaryColor, // Màu xanh dương sáng
+                                  backgroundColor: secondaryColor,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30.r),
                                   ),
@@ -223,7 +223,7 @@ class _UpdateFeeScreenState extends State<UpdateFeeScreen> {
                                     fontFamily: "Oswald",
                                     fontWeight: FontWeight.w700,
                                     fontSize: 7.sp,
-                                    color: Colors.white, // Màu chữ trắng
+                                    color: Colors.white,
                                     height: 1.h,
                                   ),
                                   textAlign: TextAlign.center,

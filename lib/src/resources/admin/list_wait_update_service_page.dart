@@ -22,42 +22,38 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
   }
 
   Future<void> _loadServicesWithCompanyInfo() async {
-    try {
-      final companiesSnapshot = await FirebaseFirestore.instance.collection('companies').get();
+    final companiesSnapshot = await FirebaseFirestore.instance.collection('companies').get();
 
-      List<Map<String, dynamic>> allServices = [];
+    List<Map<String, dynamic>> allServices = [];
 
-      for (var companyDoc in companiesSnapshot.docs) {
-        final companyId = companyDoc.id;
-        final companyData = companyDoc.data();
+    for (var companyDoc in companiesSnapshot.docs) {
+      final companyId = companyDoc.id;
+      final companyData = companyDoc.data();
 
-        final servicesSnapshot = await FirebaseFirestore.instance
-            .collection('companies')
-            .doc(companyId)
-            .collection('updateService')
-            .get();
+      final servicesSnapshot = await FirebaseFirestore.instance
+          .collection('companies')
+          .doc(companyId)
+          .collection('updateService')
+          .get();
 
-        for (var serviceDoc in servicesSnapshot.docs) {
-          final serviceData = serviceDoc.data();
-          if (serviceData['status'] == 'Đang chờ duyệt') {
-            allServices.add({
-              'id': serviceDoc.id,
-              ...serviceData,
-              'companyId': companyId,
-              'companyName': companyData['name'] ?? '',
-              'companyType': companyData['type'] ?? '',
-              'companyDescription': companyData['description'] ?? '',
-            });
-          }
+      for (var serviceDoc in servicesSnapshot.docs) {
+        final serviceData = serviceDoc.data();
+        if (serviceData['status'] == 'Đang chờ duyệt') {
+          allServices.add({
+            'id': serviceDoc.id,
+            ...serviceData,
+            'companyId': companyId,
+            'companyName': companyData['name'] ?? '',
+            'companyType': companyData['type'] ?? '',
+            'companyDescription': companyData['description'] ?? '',
+          });
         }
       }
-
-      setState(() {
-        _pendingServiceRequests = allServices;
-      });
-    } catch (e) {
-      print("Lỗi khi load services hoặc companies: $e");
     }
+
+    setState(() {
+      _pendingServiceRequests = allServices;
+    });
   }
 
   Future<void> _approveService(String companyId, String serviceId) async {
@@ -68,7 +64,6 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
         .doc(serviceId)
         .update({'status': 'Đã duyệt'});
 
-    // Lấy fcmTokens
     final companyDoc = await FirebaseFirestore.instance
         .collection('companies')
         .doc(companyId)
@@ -79,16 +74,12 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
     final String? type = data?['type'];
 
     if (fcmTokens != null && fcmTokens.isNotEmpty) {
-      try {
-        final callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToOne');
-        await callable.call({
-          'tokens': fcmTokens, // ✅ đúng key 'tokens'
-          'title': "Yêu cầu cập nhật dịch vụ",
-          'body': "Đã được duyệt: $type.",
-        });
-      } catch (e) {
-        print("❌ Gửi thông báo lỗi: $e");
-      }
+      final callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToOne');
+      await callable.call({
+        'tokens': fcmTokens,
+        'title': "Yêu cầu cập nhật dịch vụ",
+        'body': "Đã được duyệt: $type.",
+      });
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -109,7 +100,6 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
         .doc(serviceId)
         .update({'status': 'Từ chối duyệt'});
 
-    // Lấy fcmTokens
     final companyDoc = await FirebaseFirestore.instance
         .collection('companies')
         .doc(companyId)
@@ -120,16 +110,12 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
     final String? type = data?['type'];
 
     if (fcmTokens != null && fcmTokens.isNotEmpty) {
-      try {
-        final callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToOne');
-        await callable.call({
-          'tokens': fcmTokens,
-          'title': "Yêu cầu cập nhật dịch vụ",
-          'body': "Từ chối duyệt: $type.",
-        });
-      } catch (e) {
-        print("❌ Gửi thông báo lỗi: $e");
-      }
+      final callable = FirebaseFunctions.instance.httpsCallable('sendNotificationToOne');
+      await callable.call({
+        'tokens': fcmTokens,
+        'title': "Yêu cầu cập nhật dịch vụ",
+        'body': "Từ chối duyệt: $type.",
+      });
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -161,7 +147,7 @@ class _ListWaitUpdateServicePageState extends State<ListWaitUpdateServicePage> {
                 ),
               ),
               SizedBox(height: 10.h),
-              Expanded( // 👈 Cái này sẽ chiếm phần còn lại
+              Expanded(
                 child: _pendingServiceRequests.isEmpty
                     ? Center(
                   child: Text(

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProblemHistory {
-  final String id; // doc id
+  final String id;
   final String incidentId;
   final String title;
   final String note;

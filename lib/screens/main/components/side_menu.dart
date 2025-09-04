@@ -1,31 +1,31 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/constants.dart';
 import 'package:do_an/screens/dashboard/dashboard_screen.dart';
-import 'package:do_an/src/resources/admin/ds_canho_page.dart';
-import 'package:do_an/src/resources/admin/ds_congty_page.dart';
-import 'package:do_an/src/resources/admin/ds_dangkixe_page.dart';
-import 'package:do_an/src/resources/admin/ds_hopdong_canho_page.dart';
-import 'package:do_an/src/resources/admin/ds_thongbao_page.dart';
+import 'package:do_an/src/resources/admin/apartment_list_page.dart';
+import 'package:do_an/src/resources/admin/company_list_page.dart';
+import 'package:do_an/src/resources/admin/registration_list_page.dart';
+import 'package:do_an/src/resources/admin/contract_list_page.dart';
+import 'package:do_an/src/resources/admin/info_list_page.dart';
 import 'package:do_an/src/resources/admin/list_incident_page.dart';
 import 'package:do_an/src/resources/admin/list_wait_update_service_page.dart';
 import 'package:do_an/src/resources/admin/manage_incident_page.dart';
 import 'package:do_an/src/resources/admin/resident_page.dart';
 import 'package:do_an/src/resources/admin/send_notification_page.dart';
-import 'package:do_an/src/resources/admin/tao_tk_ctdv_ngoai.dart';
+import 'package:do_an/src/resources/admin/add_account_company_page.dart';
 import 'package:do_an/src/resources/admin/update_fee_page.dart';
 import 'package:do_an/src/resources/admin/wait_update_service_page.dart';
-import 'package:do_an/src/resources/admin/ds_nhanvien_page.dart';
+import 'package:do_an/src/resources/admin/staff_list_page.dart';
 import 'package:do_an/src/resources/admin/tao_tk_nv.dart';
-import 'package:do_an/src/resources/base_admin_screen_page.dart';
+import 'package:do_an/src/resources/admin/base_admin_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../../src/resources/admin/ds_ghichisonuoc_page.dart';
-import '../../../src/resources/admin/ds_thanhtoan_page.dart';
+import '../../../src/resources/admin/read_water_page.dart';
+import '../../../src/resources/admin/payment_page.dart';
 
 class SideMenu extends StatefulWidget {
-  final bool isMenuOpen; // Nhận trạng thái mở/đóng từ MainScreen
-  final Function(Widget) onMenuItemPressed; // Callback để thay đổi màn hình
+  final bool isMenuOpen;
+  final Function(Widget) onMenuItemPressed;
 
   const SideMenu({
     Key? key,
@@ -38,22 +38,22 @@ class SideMenu extends StatefulWidget {
 
 }
 
-class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
+class _SideMenuState extends BaseAdminInfo<SideMenu> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.only(
-        topRight: Radius.circular(16), // Góc bo tròn ở trên bên phải
-        bottomRight: Radius.circular(16), // Góc bo tròn ở dưới bên phải
+        topRight: Radius.circular(16),
+        bottomRight: Radius.circular(16),
       ),
       child: Container(
-        color: secondaryColor, // Màu nền của menu
+        color: secondaryColor,
         child: Column(
           children: [
             DrawerHeader(
               child: widget.isMenuOpen
-                  ? SvgPicture.asset("assets/images/logo.svg") // Hiển thị logo khi mở
-                  : SvgPicture.asset("assets/images/logo.svg"), // Chỉ icon khi đóng
+                  ? SvgPicture.asset("assets/images/logo.svg")
+                  : SvgPicture.asset("assets/images/logo.svg"),
             ),
             Expanded(
               child: ListView(
@@ -62,7 +62,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                     title: "Trang chủ",
                     svgSrc: "assets/icons/menu_dashboard.svg",
                     press: () {
-                      widget.onMenuItemPressed(DashboardScreen()); // Chuyển sang Dashboard
+                      widget.onMenuItemPressed(DashboardScreen());
                     },
                     isMenuOpen: widget.isMenuOpen,
                   ),
@@ -75,7 +75,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                         title: "Danh sách căn hộ",
                         svgSrc: "assets/icons/menu_list_apartment.svg",
                         press: () {
-                          widget.onMenuItemPressed(ApartmentListPage()); // Chuyển sang Dashboard
+                          widget.onMenuItemPressed(ApartmentListPage());
                         },
                         isMenuOpen: widget.isMenuOpen,
                       ),
@@ -83,7 +83,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                         title: "Danh sách nhân viên",
                         svgSrc: "assets/icons/menu_list_staff.svg",
                         press: () {
-                          widget.onMenuItemPressed(StaffListPage()); // Chuyển sang Dashboard
+                          widget.onMenuItemPressed(StaffListPage());
                         },
                         isMenuOpen: widget.isMenuOpen,
                       ),
@@ -99,7 +99,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                         title: "Danh sách cư dân",
                         svgSrc: "assets/icons/person.svg",
                         press: () {
-                          widget.onMenuItemPressed(ResidentPage()); // Chuyển sang Dashboard
+                          widget.onMenuItemPressed(ResidentPage());
                         },
                         isMenuOpen: widget.isMenuOpen,
                       ),
@@ -107,7 +107,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                         title: "Danh sách thông báo",
                         svgSrc: "assets/icons/notification.svg",
                         press: () {
-                          widget.onMenuItemPressed(InfoListPage()); // Chuyển sang Dashboard
+                          widget.onMenuItemPressed(InfoListPage());
                         },
                         isMenuOpen: widget.isMenuOpen,
                       ),
@@ -115,7 +115,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                         title: "Danh sách đăng ký xe",
                         svgSrc: "assets/icons/parking.svg",
                         press: () {
-                          widget.onMenuItemPressed(RegistrationListPage()); // Chuyển sang Dashboard
+                          widget.onMenuItemPressed(RegistrationListPage());
                         },
                         isMenuOpen: widget.isMenuOpen,
                       ),
@@ -123,7 +123,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                         title: "Danh sách chỉ số nước",
                         svgSrc: "assets/icons/water.svg",
                         press: () {
-                          widget.onMenuItemPressed(ReadCSNPage()); // Chuyển sang Dashboard
+                          widget.onMenuItemPressed(ReadWaterPage());
                         },
                         isMenuOpen: widget.isMenuOpen,
                       ),
@@ -138,7 +138,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                         title: "Tạo tài khoản nhân viên",
                         svgSrc: "assets/icons/menu_add_staff.svg",
                         press: () {
-                          widget.onMenuItemPressed(AddAccountStaffPage()); // Chuyển sang Dashboard
+                          widget.onMenuItemPressed(AddAccountStaffPage());
                         },
                         isMenuOpen: widget.isMenuOpen,
                       ),
@@ -156,7 +156,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                     title: "Quản lý hợp đồng dịch vụ",
                     svgSrc: "assets/icons/menu_hd_apartment.svg",
                     press: () {
-                      widget.onMenuItemPressed(ContractListPage()); // Chuyển sang Dashboard
+                      widget.onMenuItemPressed(ContractListPage());
                     },
                     isMenuOpen: widget.isMenuOpen,
                   ),
@@ -164,7 +164,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                     title: "Quản lý thanh toán",
                     svgSrc: "assets/icons/wallet.svg",
                     press: () {
-                    widget.onMenuItemPressed(PaymentPage()); // Chuyển sang Dashboard
+                    widget.onMenuItemPressed(PaymentPage());
                     },
                     isMenuOpen: widget.isMenuOpen,
                   ),
@@ -262,7 +262,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                             title: "Cập nhật giá dịch vụ đi kèm",
                             svgSrc: "assets/icons/edit_fee_service.svg",
                             press: () {
-                              widget.onMenuItemPressed(UpdateFeeScreen());
+                              widget.onMenuItemPressed(UpdateFeePage());
                             },
                             isMenuOpen: widget.isMenuOpen,
                           ),
@@ -274,7 +274,7 @@ class _SideMenuState extends BaseAdminInfoScreen<SideMenu> {
                     title: "Đăng thông báo chung",
                     svgSrc: "assets/icons/post_notification.svg",
                     press: () {
-                      widget.onMenuItemPressed(InfoPage());
+                      widget.onMenuItemPressed(SendNotificationPage());
                     },
                     isMenuOpen: widget.isMenuOpen,
                   ),
@@ -294,7 +294,7 @@ class DrawerListTile extends StatefulWidget {
   final String title, svgSrc;
   final VoidCallback press;
   final bool isMenuOpen;
-  final bool isChild; // để phân biệt item con
+  final bool isChild;
 
   const DrawerListTile({
     Key? key,
@@ -331,7 +331,7 @@ class _DrawerListTileState extends State<DrawerListTile> {
       child: ListTile(
         horizontalTitleGap: widget.isMenuOpen
             ? (widget.isChild ? 8.0 : 16.0)
-            : 0.0, // giảm gap nếu là mục con
+            : 0.0,
         leading: SizedBox(
           width: 24,
           height: 24,
@@ -359,8 +359,8 @@ class DrawerListTile1 extends StatefulWidget {
   final String title, svgSrc;
   final VoidCallback press;
   final bool isMenuOpen;
-  final bool isChild; // để phân biệt item con
-  final int? badgeCount; // thêm trường badgeCount, có thể null
+  final bool isChild;
+  final int? badgeCount;
 
   const DrawerListTile1({
     Key? key,
@@ -369,7 +369,7 @@ class DrawerListTile1 extends StatefulWidget {
     required this.press,
     required this.isMenuOpen,
     this.isChild = false,
-    this.badgeCount,  // thêm tham số vào constructor
+    this.badgeCount,
   }) : super(key: key);
 
   @override
@@ -397,11 +397,11 @@ class _DrawerListTileState1 extends State<DrawerListTile1> {
       highlightColor: Colors.transparent,
       child: ListTile(
         contentPadding: widget.isMenuOpen
-            ? EdgeInsets.symmetric(horizontal: widget.isChild ? 8.0 : 16.0) // giảm padding ngang
+            ? EdgeInsets.symmetric(horizontal: widget.isChild ? 8.0 : 16.0)
             : EdgeInsets.zero,
-        horizontalTitleGap: 16.0, // giảm khoảng cách giữa leading và title (mặc định 16)
-        minLeadingWidth: 24,      // giữ kích thước leading
-        minVerticalPadding: 0,    // giảm khoảng cách dọc nếu cần
+        horizontalTitleGap: 16.0,
+        minLeadingWidth: 24,
+        minVerticalPadding: 0,
         title: widget.isMenuOpen
             ? Text(
           widget.title,
@@ -421,7 +421,7 @@ class _DrawerListTileState1 extends State<DrawerListTile1> {
         ),
         trailing: widget.badgeCount != null && widget.badgeCount! > 0
             ? Padding(
-          padding: const EdgeInsets.only(left: 0), // giảm khoảng cách badge với title
+          padding: const EdgeInsets.only(left: 0),
           child: Container(
             width: 18,
             height: 18,
@@ -449,7 +449,7 @@ class _DrawerListTileState1 extends State<DrawerListTile1> {
 class ExpandableDrawerListTile extends StatefulWidget {
   final String title, svgSrc;
   final bool isMenuOpen;
-  final List<Widget> children;  // <-- Sửa đây
+  final List<Widget> children;
 
   const ExpandableDrawerListTile({
     super.key,

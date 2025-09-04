@@ -8,7 +8,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../constants.dart';
 import '../dialog/loading_dialog.dart';
-import '../dialog/msg_dialog.dart';
 
 
 class ManagerIncidentPage extends StatefulWidget {
@@ -44,7 +43,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
   Future<void> _loadStaffs() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('staffs')
-        .where('role', isEqualTo: 2) // Lọc đúng role
+        .where('role', isEqualTo: 2)
         .get();
 
     setState(() {
@@ -174,7 +173,6 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
 
       await batch.commit();
 
-      // Lấy fcmTokens
       final staffDoc = await FirebaseFirestore.instance
           .collection('staffs')
           .doc(staff.uid)
@@ -182,16 +180,12 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
       final List<dynamic>? fcmTokens = staffDoc.data()?['fcmTokens'];
 
       if (fcmTokens != null && fcmTokens.isNotEmpty) {
-        try {
-          final callable = FirebaseFunctions.instance.httpsCallable('sendIncidentNotification');
-          await callable.call({
-            'fcmTokens': fcmTokens,
-            'title': "Giao sự cố: ${incident.title}",
-            'body': "Mức độ ưu tiên: $priority. Kiểm tra và xử lý ngay.",
-          });
-        } catch (e) {
-          print("❌ Gửi thông báo lỗi: $e");
-        }
+        final callable = FirebaseFunctions.instance.httpsCallable('sendIncidentNotification');
+        await callable.call({
+          'fcmTokens': fcmTokens,
+          'title': "Giao sự cố: ${incident.title}",
+          'body': "Mức độ ưu tiên: $priority. Kiểm tra và xử lý ngay.",
+        });
       }
 
       Navigator.of(context).pop();
@@ -231,7 +225,7 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
       _loadStaffs();
     }
     catch (e) {
-      Navigator.of(context).pop(); // 👉 Đóng loading nếu lỗi
+      Navigator.of(context).pop();
       showDialog(
         context: context,
         builder: (context) {
@@ -302,14 +296,13 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                         itemBuilder: (context, index) {
                           final incident = _pendingIncidents[index];
                           return Card(
-                            color: secondaryColor, // ← màu nền
+                            color: secondaryColor,
                             margin: const EdgeInsets.all(10),
                             child: Padding(
                               padding: const EdgeInsets.all(12),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Hình ảnh bên trái
                                   if (incident.imageUrl != null && incident.imageUrl!.isNotEmpty)
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
@@ -330,12 +323,10 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
 
                                   SizedBox(width: 12.w),
 
-                                  // Nội dung bên phải
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        // Nội dung bên trên
                                         Text(
                                           "Tiêu đề: ${incident.title}",
                                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 4.sp),
@@ -347,10 +338,8 @@ class _ManagerIncidentPageState extends State<ManagerIncidentPage> {
                                         SizedBox(height: 30.h),
                                         Text("Mô tả: ${incident.description}", style: TextStyle(fontSize: 4.sp)),
 
-                                        // Spacer đẩy nút xuống dưới
                                         SizedBox(height:30.h),
 
-                                        // Nút nằm dưới cùng bên phải
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.end,
                                           children: [

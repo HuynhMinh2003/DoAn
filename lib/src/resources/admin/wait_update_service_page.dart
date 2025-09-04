@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../constants.dart';
 import '../../../custom_paginated_table.dart';
-import 'package:do_an/src/resources/wait_update_service_mobile_page.dart' if (dart.library.html) 'wait_update_service_web_page.dart';
+import 'package:do_an/src/resources/admin/wait_update_service_mobile_page.dart' if (dart.library.html) 'wait_update_service_web_page.dart';
 
 class WaitUpdateServicePage extends StatefulWidget {
   const WaitUpdateServicePage({super.key});
@@ -17,7 +16,7 @@ class WaitUpdateServicePage extends StatefulWidget {
 }
 
 class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
-  String? _selectedServiceType; // ✅ ban đầu đã có giá trị
+  String? _selectedServiceType;
   String _searchCompanyName = "";
   String? _selectedStatus;
 
@@ -52,65 +51,9 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
     _loadServicesWithCompanyInfo();
   }
 
-  Future<void> _loadServicesWithCompanyInfo() async {
-    try {
-      final companiesSnapshot = await FirebaseFirestore.instance
-          .collection('companies')
-          .get();
-
-      List<Map<String, dynamic>> allServices = [];
-
-      for (var companyDoc in companiesSnapshot.docs) {
-        final companyId = companyDoc.id;
-        final companyData = companyDoc.data();
-
-        final servicesSnapshot = await FirebaseFirestore.instance
-            .collection('companies')
-            .doc(companyId)
-            .collection('updateService')
-            .get();
-
-        print("Công ty ${companyData['name']} có ${servicesSnapshot.docs.length} dịch vụ");
-
-        for (var serviceDoc in servicesSnapshot.docs) {
-          final serviceData = serviceDoc.data();
-
-          allServices.add({
-            'id': serviceDoc.id,
-            ...serviceData,
-            'companyId': companyId,
-            'companyName': companyData['name'] ?? '',
-            'companyType': companyData['type'] ?? '',
-            'companyDescription': companyData['description'] ?? '',
-            'price': serviceData['price'] ?? '',
-          });
-
-        }
-      }
-
-      print("Tổng số dịch vụ sau khi ghép company info: ${allServices.length}");
-
-      setState(() {
-        _allServices = allServices;
-
-        _serviceTypeOptions = ["Tất cả"];
-        _serviceTypeOptions.addAll({
-          for (var c in companiesSnapshot.docs.map((e) => e.data()))
-            c['type']
-        }.whereType<String>().toSet());
-
-        _selectedServiceType ??= "Tất cả"; // ✅ đảm bảo luôn có giá trị ban đầu
-        _filterServices(); // ✅ gọi lọc ngay để áp dụng cả "Tất cả"
-      });
-    } catch (e) {
-      print("Lỗi khi load services hoặc companies: $e");
-    }
-  }
-
   void _filterServices() {
     List<Map<String, dynamic>> filtered = _allServices;
 
-    // Lọc theo tên công ty
     if (_searchCompanyName.isNotEmpty) {
       filtered = filtered
           .where((service) =>
@@ -121,7 +64,6 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
           .toList();
     }
 
-    // Lọc theo loại dịch vụ
     if (_selectedServiceType != null && _selectedServiceType != "Tất cả") {
       filtered = filtered
           .where((service) =>
@@ -130,7 +72,6 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
           .toList();
     }
 
-    // ✅ Lọc thêm theo trạng thái
     if (_selectedStatus != null && _selectedStatus != "Tất cả") {
       filtered = filtered
           .where((service) =>
@@ -157,11 +98,6 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
       paginatedServices = _filteredServices.sublist(startIndex, endIndex);
       totalPages = (_filteredServices.length / itemsPerPage).ceil();
       _updatePageNumbers();
-      print("Hiển thị dịch vụ từ index $startIndex đến $endIndex");
-      print("Số dịch vụ phân trang: ${paginatedServices.length}");
-      print("Tổng số trang: $totalPages");
-      print("Trang hiện tại: $currentPage");
-      print("Danh sách số trang hiển thị: $pageNumbers");
     });
   }
 
@@ -176,6 +112,53 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
       }
       return -1;
     }).where((page) => page != -1).toList();
+  }
+
+  Future<void> _loadServicesWithCompanyInfo() async {
+    final companiesSnapshot = await FirebaseFirestore.instance
+        .collection('companies')
+        .get();
+
+    List<Map<String, dynamic>> allServices = [];
+
+    for (var companyDoc in companiesSnapshot.docs) {
+      final companyId = companyDoc.id;
+      final companyData = companyDoc.data();
+
+      final servicesSnapshot = await FirebaseFirestore.instance
+          .collection('companies')
+          .doc(companyId)
+          .collection('updateService')
+          .get();
+
+      for (var serviceDoc in servicesSnapshot.docs) {
+        final serviceData = serviceDoc.data();
+
+        allServices.add({
+          'id': serviceDoc.id,
+          ...serviceData,
+          'companyId': companyId,
+          'companyName': companyData['name'] ?? '',
+          'companyType': companyData['type'] ?? '',
+          'companyDescription': companyData['description'] ?? '',
+          'price': serviceData['price'] ?? '',
+        });
+
+      }
+    }
+
+    setState(() {
+      _allServices = allServices;
+
+      _serviceTypeOptions = ["Tất cả"];
+      _serviceTypeOptions.addAll({
+        for (var c in companiesSnapshot.docs.map((e) => e.data()))
+          c['type']
+      }.whereType<String>().toSet());
+
+      _selectedServiceType ??= "Tất cả";
+      _filterServices();
+    });
   }
 
   Future<void> _showServiceDetailDialog(BuildContext context, Map<String, dynamic> service) async{
@@ -195,18 +178,18 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
             ),
           ),
           content: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 80.w), // Giới hạn chiều ngang tối đa
+            constraints: BoxConstraints(maxWidth: 80.w),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (service['imageServiceUrl'] != null)
                     Container(
-                      width: double.infinity, // Kéo full chiều ngang dialog
+                      width: double.infinity,
                       height: 200.h,
                       child: Image.network(
                         service['imageServiceUrl'],
-                        fit: BoxFit.cover, // hoặc BoxFit.contain nếu bạn muốn ảnh không bị cắt
+                        fit: BoxFit.cover,
                       ),
                     ),
                   SizedBox(height: 30.h),
@@ -260,7 +243,6 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
     );
   }
 
-  /// Hàm hỗ trợ để hiển thị thông tin dưới dạng hàng
   Widget buildInfoRow(String label, String value) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 10.h),
@@ -325,7 +307,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                               onChanged: (value) {
                                 setState(() {
                                   _searchCompanyName = value;
-                                  _filterServices(); // Lọc danh sách khi nhập
+                                  _filterServices();
                                 });
                               },
                             ),
@@ -364,14 +346,13 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                         ],
                       ),
                       SizedBox(height: 10.h),
-                      // Dropdown lọc theo loại dịch vụ (service type)
                       Row(
                         children: [
                           Expanded(
                             child: buildFilterDropdown<String>(
                               label: "Chọn loại dịch vụ",
                               items: _serviceTypeOptions,
-                              selectedValue: _selectedServiceType, // ✅ Sửa ở đây
+                              selectedValue: _selectedServiceType,
                               onChanged: (value) {
                                 setState(() {
                                   _selectedServiceType = value;
@@ -385,7 +366,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                             child: buildFilterDropdown<String>(
                               label: "Chọn trạng thái",
                               items: _statusOptions,
-                              selectedValue: _selectedStatus, // ✅ Sửa ở đây
+                              selectedValue: _selectedStatus,
                               onChanged: (value) {
                                 setState(() {
                                   _selectedStatus = value;
@@ -418,8 +399,8 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                                     scrollDirection: Axis.horizontal,
                                     child: ConstrainedBox(
                                       constraints: BoxConstraints(
-                                        minWidth: constraints.maxWidth, // Đặt chiều rộng tối thiểu bằng chiều rộng cha
-                                        maxWidth: constraints.maxWidth, // Đặt chiều rộng tối đa bằng chiều rộng cha
+                                        minWidth: constraints.maxWidth,
+                                        maxWidth: constraints.maxWidth,
                                       ),
                                       child: CustomPaginatedTable(
                                         columns: [
@@ -449,7 +430,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                                                         : service['status'] == 'Từ chối duyệt'
                                                         ? Colors.red
                                                         : Colors.orange,
-                                                    size: 24, // nhỏ gọn hơn, không nên dùng sp cho icon
+                                                    size: 24,
                                                   ),
                                                   SizedBox(width: 1.w),
                                                   Text(
@@ -460,7 +441,7 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                                                           : service['status'] == 'Từ chối duyệt'
                                                           ? Colors.red
                                                           : Colors.orange,
-                                                      fontSize: 4.sp, // hoặc 3.5.sp nếu bạn vẫn muốn theo responsive
+                                                      fontSize: 4.sp,
                                                       fontWeight: FontWeight.w500,
                                                     ),
                                                   ),
@@ -485,12 +466,11 @@ class _WaitUpdateServicePageState extends State<WaitUpdateServicePage> {
                                         }).toList(),
                                         rowsPerPage: itemsPerPage,
                                         availableRowsPerPage: [5, 10, 20, 50],
-                                        // Các tùy chọn số dòng mỗi trang
                                         onRowsPerPageChanged: (value) {
                                           setState(() {
                                             itemsPerPage = value ??
-                                                10; // Cập nhật số dòng mỗi trang
-                                            currentPage = 1; // Reset về trang đầu
+                                                10;
+                                            currentPage = 1;
                                             _updatePaginatedServices();
                                           });
                                         },

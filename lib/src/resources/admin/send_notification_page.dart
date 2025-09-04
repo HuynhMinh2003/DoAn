@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an/constants.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
@@ -12,17 +11,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_functions/cloud_functions.dart'; // THÊM DÒNG NÀY
+import 'package:cloud_functions/cloud_functions.dart';
 import '../dialog/msg_dialog.dart';
 
-class InfoPage extends StatefulWidget {
-  const InfoPage({super.key});
+class SendNotificationPage extends StatefulWidget {
+  const SendNotificationPage({super.key});
 
   @override
-  State<InfoPage> createState() => _InfoPageState();
+  State<SendNotificationPage> createState() => _SendNotificationPageState();
 }
 
-class _InfoPageState extends State<InfoPage> {
+class _SendNotificationPageState extends State<SendNotificationPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _infoController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -34,7 +33,7 @@ class _InfoPageState extends State<InfoPage> {
   final _titleStream = StreamController<String>.broadcast();
   final _messageStream = StreamController<String>.broadcast();
 
-  String _selectedTarget = 'residents'; // default: gửi cho cư dân
+  String _selectedTarget = 'residents';
 
   final Map<String, String> _targetLabels = {
     'residents': 'Cư dân',
@@ -42,6 +41,12 @@ class _InfoPageState extends State<InfoPage> {
     'companies': 'Công ty',
   };
 
+  @override
+  void dispose() {
+    _titleStream.close();
+    _messageStream.close();
+    super.dispose();
+  }
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
@@ -62,7 +67,6 @@ class _InfoPageState extends State<InfoPage> {
   Future<String?> _uploadImage() async {
     try {
       if (_image == null && _webImage == null) {
-        print('Không có ảnh nào được chọn.');
         return null;
       }
 
@@ -79,16 +83,13 @@ class _InfoPageState extends State<InfoPage> {
       } else if (!kIsWeb && _image != null) {
         uploadTask = storageRef.putFile(_image!);
       } else {
-        print("Không có dữ liệu ảnh hợp lệ để upload.");
         return null;
       }
 
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
-      print('Ảnh upload thành công: $downloadUrl');
       return downloadUrl;
     } catch (e) {
-      print('Lỗi khi upload ảnh: $e');
       return null;
     }
   }
@@ -147,7 +148,7 @@ class _InfoPageState extends State<InfoPage> {
 
       final data = result.data;
 
-      Navigator.pop(context); // Đóng loading
+      Navigator.pop(context);
 
       showDialog(
         context: context,
@@ -159,13 +160,12 @@ class _InfoPageState extends State<InfoPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("OK",style: TextStyle(fontSize: 4.sp)),
+              child: Text("Ok",style: TextStyle(fontSize: 4.sp,color: Colors.white)),
             ),
           ],
         ),
       );
 
-      // Reset form sau khi thành công
       _titleController.clear();
       _infoController.clear();
       setState(() {
@@ -174,7 +174,7 @@ class _InfoPageState extends State<InfoPage> {
       });
 
     } catch (e) {
-      Navigator.pop(context); // Đóng loading nếu lỗi
+      Navigator.pop(context);
 
       showDialog(
         context: context,
@@ -190,13 +190,6 @@ class _InfoPageState extends State<InfoPage> {
         ),
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _titleStream.close();
-    _messageStream.close();
-    super.dispose();
   }
 
   @override
@@ -295,7 +288,7 @@ class _InfoPageState extends State<InfoPage> {
       }
     }
 
-    double imageBoxSize = min(300.w, 300.h); // Đảm bảo ảnh không bị quá to
+    double imageBoxSize = min(300.w, 300.h);
 
     return Center(
       child: SizedBox(
@@ -482,7 +475,6 @@ class _InfoPageState extends State<InfoPage> {
           buttonStyleData: ButtonStyleData(
             height: 50.h,
             padding: EdgeInsets.symmetric(horizontal: 1.w),
-            // ✅ KHÔNG dùng `decoration` ở đây
           ),
           iconStyleData: IconStyleData(
             icon: Icon(Icons.arrow_drop_down, size: 5.sp),

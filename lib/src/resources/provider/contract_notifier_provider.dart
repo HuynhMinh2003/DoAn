@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-class ContractNotifier extends ChangeNotifier {
+class ContractNotifierProvider extends ChangeNotifier {
   bool _contractCreated = false;
 
   bool get contractCreated => _contractCreated;
@@ -12,6 +12,6 @@ class ContractNotifier extends ChangeNotifier {
 
   void reset() {
     _contractCreated = false;
-    notifyListeners(); // Gọi notifyListeners() để cập nhật lại UI
+    notifyListeners();
   }
 }

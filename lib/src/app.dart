@@ -51,7 +51,7 @@ class MyAppState extends State<MyApp> {
           context: navigatorKey.currentContext!,
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(20.r),
             ),
             title: Center(
               child: Text(

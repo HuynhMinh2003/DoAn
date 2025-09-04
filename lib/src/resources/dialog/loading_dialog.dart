@@ -11,13 +11,13 @@ class LoadingDialog {
       barrierDismissible: false,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r), // Góc bo tròn
+          borderRadius: BorderRadius.circular(20.r),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20.r), // Thêm ClipRRect để đảm bảo bo tròn
+          borderRadius: BorderRadius.circular(20.r),
           child: Container(
             height: isLandscape ? 200.h:150.h,
-            width: 80.w, // Cố định chiều rộng của dialog để dễ nhìn
+            width: 80.w,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
@@ -26,7 +26,7 @@ class LoadingDialog {
                   padding: EdgeInsets.fromLTRB(0, 50.h, 0, 0),
                   child: Text(
                     msg,
-                    style: TextStyle(fontSize: isLandscape? 5.sp: 20.sp), // Điều chỉnh font size
+                    style: TextStyle(fontSize: isLandscape? 5.sp: 20.sp),
                   ),
                 )
               ],

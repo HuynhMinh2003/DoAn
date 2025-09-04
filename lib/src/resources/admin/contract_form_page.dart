@@ -15,23 +15,23 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:docx_template/docx_template.dart';
 
-class ContractFormRentPage extends StatefulWidget {
+class ContractFormPage extends StatefulWidget {
   final String apartmentId;
 
-  const ContractFormRentPage({super.key, required this.apartmentId});
+  const ContractFormPage({super.key, required this.apartmentId});
 
   @override
-  State<ContractFormRentPage> createState() => _ContractFormRentPageState();
+  State<ContractFormPage> createState() => _ContractFormPageState();
 }
 
-class _ContractFormRentPageState extends State<ContractFormRentPage> {
+class _ContractFormPageState extends State<ContractFormPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   DateTime? startDate;
   DateTime? endDate;
   int residentCount = 0;
 
-  bool isLoading = false; // Trạng thái loading
+  bool isLoading = false;
 
 
   String formatCustomDate(DateTime date) {
@@ -44,13 +44,11 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
 
   List<ResidentInfo> residents = [];
 
-  // Thông tin căn hộ
   String apartmentName = '';
   double area = 0;
   String building = '';
   int rentPrice = 0;
 
-  // // Các controller cho thông tin khác
   final purposeController = TextEditingController();
 
   final residentCountController = TextEditingController();
@@ -60,6 +58,26 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
   void initState() {
     super.initState();
     fetchApartmentData();
+  }
+
+  void handleSubmit() {
+    if (representativeIndex == null) {
+      showDialog(
+        context: context,
+        builder: (context) =>
+            AlertDialog(
+              title: Text('Thiếu thông tin'),
+              content: Text('Vui lòng chọn một người làm đại diện.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+      );
+      return;
+    }
   }
 
   Future<void> fetchApartmentData() async {
@@ -88,7 +106,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
     if (selected != null) {
       setState(() {
         startDate = selected;
-        endDate = null; // reset end date nếu có
+        endDate = null;
       });
     }
   }
@@ -115,7 +133,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
     int? count = int.tryParse(input);
 
     if (count == null || count <= 0) {
-      // Nếu người dùng xóa số hoặc nhập sai
       setState(() {
         residentCount = 0;
         residents.clear();
@@ -165,7 +182,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
     }
 
     setState(() {
-      residentCount = count!;
+      residentCount = count;
       residents = List.generate(
         count,
             (_) => ResidentInfo(
@@ -179,26 +196,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
       );
       representativeIndex = null;
     });
-  }
-
-  void handleSubmit() {
-    if (representativeIndex == null) {
-      showDialog(
-        context: context,
-        builder: (context) =>
-            AlertDialog(
-              title: Text('Thiếu thông tin'),
-              content: Text('Vui lòng chọn một người làm đại diện.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('OK'),
-                ),
-              ],
-            ),
-      );
-      return;
-    }
   }
 
   Future<Map<String, int>> getLatestParkingFees() async {
@@ -240,11 +237,10 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
         final latestFee = feeHistorySnapshot.docs.first.data()['feePerM2'] as int;
         return latestFee;
       } else {
-        return null; // Không có dữ liệu
+        return null;
       }
     } catch (e) {
-      print('Lỗi khi lấy management fee: $e');
-      return null; // Hoặc throw nếu muốn xử lý phía trên
+      return null;
     }
   }
 
@@ -270,7 +266,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
 
     if (queryByEmail.docs.isNotEmpty) {
       return {
-        'residentId': queryByEmail.docs.first.id, // ✅ Thêm dòng này
+        'residentId': queryByEmail.docs.first.id,
         ...queryByEmail.docs.first.data(),
       };
     }
@@ -296,16 +292,12 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
 
       final downloadUrl = await snapshot.ref.getDownloadURL();
 
-      print('File Word đã được upload thành công: $downloadUrl');
-
-      // Cập nhật Firestore document contracts/{contractId} với đường dẫn và URL file Word
       await FirebaseFirestore.instance.collection('contracts').doc(contractId).update({
         'docxStoragePath': filePath,
         'docxUrl': downloadUrl,
       });
     } catch (e) {
-      print('Lỗi upload file Word: $e');
-      rethrow; // hoặc xử lý lỗi tùy ý
+      rethrow;
     }
   }
 
@@ -321,7 +313,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Thông tin căn hộ hiển thị sẵn
             SizedBox(height: 10.h,),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,7 +320,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                 SizedBox(
                   width: 60.w,
                   child: Material(
-                    color: Colors.transparent, // Đảm bảo ripple hiện đúng
+                    color: Colors.transparent,
                     child: InkWell(
                       onTap: pickStartDate,
                       borderRadius: BorderRadius.circular(4),
@@ -363,7 +354,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                 SizedBox(
                   width: 60.w,
                   child: Material(
-                    color: Colors.transparent, // Đảm bảo ripple hiện đúng
+                    color: Colors.transparent,
                     child: InkWell(
                       onTap: pickEndDate,
                       borderRadius: BorderRadius.circular(4),
@@ -404,7 +395,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
             ),
             SizedBox(height: 30.h,),
 
-            // Nhập số người ở
             Row(
               children: [
                 Text(
@@ -484,10 +474,10 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         ),
                         SizedBox(height: 20.h,),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.start, // Căn lề các item theo chiều ngang
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Text('Giới tính',style: TextStyle(fontSize: 4.sp),),
-                            SizedBox(width: 20.w), // Khoảng cách giữa các radio button
+                            SizedBox(width: 20.w),
                             Row(
                               children: [
                                 Radio<String>(
@@ -505,7 +495,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                 ),
                               ],
                             ),
-                            SizedBox(width: 20.w), // Khoảng cách giữa các radio button
+                            SizedBox(width: 20.w),
                             Row(
                               children: [
                                 Radio<String>(
@@ -523,7 +513,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                 ),
                               ],
                             ),
-                            SizedBox(width: 20.w), // Khoảng cách giữa các radio button
+                            SizedBox(width: 20.w),
                             Row(
                               children: [
                                 Radio<String>(
@@ -587,7 +577,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                 if (picked != null) {
                                   setState(() {
                                     residents[index] = resident.copyWith(
-                                      birthDate: picked, // Lưu trữ DateTime
+                                      birthDate: picked,
                                     );
                                   });
                                 }
@@ -602,7 +592,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                             ),
                           ],
                         ),
-
                       ],
                     ),
                   ),
@@ -637,9 +626,9 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           throw Exception("Vui lòng chọn người đại diện hợp lệ.");
                         }
 
-                        final pool = Pool(3); // Giới hạn 3 request đồng thời
+                        final pool = Pool(3);
 
-                        // === 1. Tạo hợp đồng trước để lấy contractId ===
+                        // === Create contract first to get contractId ===
                         final contractRef = await _firestore.collection('contracts').add({
                           "apartmentDocId": apartmentId,
                           'apartmentName': apartmentName,
@@ -659,7 +648,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                         for (final resident in residents) {
                           await pool.withResource(() async {
                             try {
-                              // === Kiểm tra dữ liệu thiết yếu ===
                               if (resident.birthDate == null) {
                                 throw Exception("Thiếu ngày sinh của cư dân ${resident.fullName}");
                               }
@@ -668,11 +656,11 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                 throw Exception("Dữ liệu không đầy đủ cho cư dân ${resident.fullName}");
                               }
 
-                              // === 1. Kiểm tra cư dân đã tồn tại bằng CCCD hoặc Email ===
+                              // === Check if resident exists by CCCD or Email ===
                               final existingData = await checkExistingResident(resident.cccd, resident.email);
 
                               if (existingData != null) {
-                                // Kiểm tra residentId có trong dữ liệu không
+                                // Check if residentId exists in the data
                                 if (existingData['residentId'] == null) {
                                   throw Exception("Dữ liệu cư dân ${resident.fullName} bị thiếu residentId khi khôi phục.");
                                 }
@@ -711,15 +699,12 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                 );
 
                                 if (shouldProceed != true) {
-                                  print("⛔ Người dùng chọn Hủy, bỏ qua ${resident.fullName}");
                                   failedResidents.add(resident);
                                   return;
                                 }
-
-                                print("🔁 Người dùng chọn Khôi phục — tiếp tục tạo mới tài khoản cho ${resident.fullName}");
                               }
 
-                              // === 2. Gọi API tạo cư dân mới ===
+                              // === Call API to create new resident ===
                               final response = await http.post(
                                 Uri.parse('https://createresidentaccount-ttrkrlo35a-uc.a.run.app'),
                                 headers: {'Content-Type': 'application/json'},
@@ -733,7 +718,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                   'birthDate': resident.birthDate!.toIso8601String(),
                                   'apartmentId': apartmentId,
                                   'contractId': contractId,
-                                  'residentId': existingData?['residentId'], // chỉ truyền nếu có
+                                  'residentId': existingData?['residentId'],
                                   'imageUrl': existingData?['imageUrl'],
                                 }),
                               );
@@ -745,31 +730,28 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                                 }
                                 resident.residentId = data['residentId'];
                                 successfulResidents.add(resident);
-                                print("✅ Tạo ${resident.fullName} OK");
                               } else {
-                                print("❌ Lỗi response: ${response.body}");
                                 failedResidents.add(resident);
                               }
                             } catch (e) {
-                              print("❌ Lỗi xử lý ${resident.fullName}: $e");
                               failedResidents.add(resident);
                             }
                           });
                         }
 
                         if (successfulResidents.isEmpty) {
-                          await contractRef.delete(); // ✅ Xóa hợp đồng chưa dùng
-                          throw Exception("❌ Không có cư dân nào được tạo thành công. Hợp đồng đã bị hủy.");
+                          await contractRef.delete();
+                          throw Exception("Không có cư dân nào được tạo thành công. Hợp đồng đã bị hủy.");
                         }
 
                         await contractRef.update({
                           "numberOfResidents": successfulResidents.length,
                         });
 
-                        // === Kiểm tra người đại diện có còn không
+                        // === Check if the representative is still present ===
                         final representative = residents[representativeIndex!];
                         if (!successfulResidents.contains(representative)) {
-                          throw Exception("❌ Người đại diện đã bị loại bỏ — vui lòng chọn lại.");
+                          throw Exception("Người đại diện đã bị loại bỏ — vui lòng chọn lại.");
                         }
 
                         await contractRef.update({
@@ -779,7 +761,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           }
                         });
 
-                        // === 4. Cập nhật residents vào apartments ===
+                        // === Update residents in apartments ===
                         final residentObjects = successfulResidents.map((r) => {
                           'fullName': r.fullName,
                           'id': r.residentId,
@@ -802,7 +784,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           "timestamp": FieldValue.serverTimestamp(),
                         });
 
-                        // === 6. Tạo file hợp đồng DOCX ===
+                        // === Create DOCX contract file ===
                         final templateData = await rootBundle.load('assets/templates/hd_dichvu.docx');
                         final docx = await DocxTemplate.fromBytes(templateData.buffer.asUint8List());
                         final content = Content();
@@ -831,7 +813,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           ..add(TextContent("motorbike_unroofed_fee", currencyFormat.format(latestFeesParking["motorbike_unroofed"] ?? 0)))
                           ..add(TextContent("management_fee", currencyFormat.format(latestFeesManagement ?? 0)));
 
-                        // === Danh sách cư dân ===
+                        // === Residents list ===
                         final residentsList = <PlainContent>[];
 
                         for (final r in successfulResidents) {
@@ -847,7 +829,7 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           residentsList.add(residentContent);
                         }
 
-                        // residents là tag list, resident là mỗi item trong list
+                        // residents is the list tag, resident is each item in the list
                         content.add(ListContent("residents", residentsList));
 
                         final fileBytes = await docx.generate(content);
@@ -857,10 +839,10 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
 
                           final fileName = "Hợp đồng dịch vụ căn hộ ${apartmentName}_${DateTime.now().millisecondsSinceEpoch}.docx";
 
-                          // 1. Upload file Word lên Firebase Storage (đã convert đúng kiểu)
+                          // Upload Word file to Firebase Storage (correctly converted type)
                           await uploadContractDocx(contractId, apartmentName, uint8ListFileBytes);
 
-                          // 2. Tải file về máy (nếu cần)
+                          // Download file to device (if needed)
                           await downloadWordFile(fileName, uint8ListFileBytes);
                         }
 
@@ -877,9 +859,9 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                               actions: [
                                 OutlinedButton(
                                   onPressed: () {
-                                    Provider.of<ContractNotifier>(context, listen: false).markAsCreated();
-                                    Navigator.pop(context); // Đóng dialog
-                                    Navigator.pop(context); // Quay lại trang trước
+                                    Provider.of<ContractNotifierProvider>(context, listen: false).markAsCreated();
+                                    Navigator.pop(context);
+                                    Navigator.pop(context);
                                   },
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(color: Colors.white),
@@ -892,7 +874,6 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                           },
                         );
                       } catch (e) {
-                        print("❌ Lỗi: $e");
                         LoadingDialog.hideLoadingDialog(context);
                         showDialog(
                           context: context,
@@ -906,8 +887,8 @@ class _ContractFormRentPageState extends State<ContractFormRentPage> {
                               actions: [
                                 OutlinedButton(
                                   onPressed: () {
-                                    Navigator.pop(context); // Đóng dialog
-                                    Navigator.pop(context); // Quay lại trang trước
+                                    Navigator.pop(context);
+                                    Navigator.pop(context);
                                   },
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(color: Colors.white),

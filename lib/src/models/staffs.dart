@@ -17,7 +17,7 @@ class Staff {
   final int role;
   final Timestamp createdAt;
   final bool isExit;
-  final Timestamp? leaveAt; // 👉 Thêm leaveAt
+  final Timestamp? leaveAt;
 
   Staff({
     required this.uid,
@@ -36,7 +36,7 @@ class Staff {
     required this.role,
     required this.createdAt,
     required this.isExit,
-    this.leaveAt, // 👉 Constructor
+    this.leaveAt,
   });
 
   factory Staff.fromFirestore(DocumentSnapshot doc) {
@@ -59,7 +59,7 @@ class Staff {
       role: json['role'] ?? 0,
       createdAt: json['createdAt'] != null ? json['createdAt'] as Timestamp : Timestamp.fromMillisecondsSinceEpoch(0),
       isExit: json['isExit'] ?? false,
-      leaveAt: json['leaveAt'] != null ? json['leaveAt'] as Timestamp : null, // 👉
+      leaveAt: json['leaveAt'] != null ? json['leaveAt'] as Timestamp : null,
     );
   }
 
@@ -80,7 +80,7 @@ class Staff {
       'role': role,
       'createdAt': createdAt,
       'isExit': isExit,
-      'leaveAt': leaveAt, // 👉 Thêm vào Firestore
+      'leaveAt': leaveAt,
     };
   }
 }

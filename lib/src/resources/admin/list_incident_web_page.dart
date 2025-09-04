@@ -1,14 +1,12 @@
 import 'dart:html' as html;
 import 'package:excel/excel.dart' as ex;
 import 'package:intl/intl.dart';
-
 import '../../models/incident.dart';
 
 Future<void> exportIncidentsToExcel(List<Incident> incidents) async {
   final excel = ex.Excel.createExcel();
   final sheet = excel['DanhSachSuCo'];
 
-  // Tiêu đề cột
   final headers = [
     ex.TextCellValue('Căn hộ'),
     ex.TextCellValue('Tòa nhà'),
@@ -48,7 +46,6 @@ Future<void> exportIncidentsToExcel(List<Incident> incidents) async {
     sheet.insertRowIterables(row, i + 1);
   }
 
-  // Tạo file Excel và cho phép tải về
   final fileBytes = excel.encode();
   final blob = html.Blob([fileBytes]);
   final url = html.Url.createObjectUrlFromBlob(blob);

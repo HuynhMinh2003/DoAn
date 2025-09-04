@@ -8,7 +8,7 @@ class Information {
   final List<String> seenBy;
   final DateTime timestamp;
   final DateTime? lastEdited;
-  final String source; // Thêm trường này
+  final String source;
 
   Information({
     required this.id,

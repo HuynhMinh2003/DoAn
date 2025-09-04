@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:do_an/custom_paginated_table.dart';
 import 'package:do_an/src/resources/provider/resident_image_provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart';
 import 'package:do_an/src/resources/dialog/loading_dialog.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -38,8 +37,8 @@ class _ResidentPageState extends State<ResidentPage> {
 
   String? selectedStatus;
 
-  String _searchQuery = ""; // Biến lưu trữ giá trị tìm kiếm
-  Timer? _debounce; // Biến debounce
+  String _searchQuery = "";
+  Timer? _debounce;
 
   bool _isEditDialogShowing = false;
   bool _isViewDialogShowing = false;
@@ -90,6 +89,27 @@ class _ResidentPageState extends State<ResidentPage> {
     return residents.where((r) => r.apartmentId == apartmentId).toList();
   }
 
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        _searchQuery = query;
+      });
+    });
+  }
+
   Future<void> loadData() async {
     final results = await Future.wait([
       FirebaseFirestore.instance.collection('apartments').get(),
@@ -108,31 +128,13 @@ class _ResidentPageState extends State<ResidentPage> {
     });
   }
 
-  // Hàm debounce cho tìm kiếm theo tên
-  void _onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      setState(() {
-        _searchQuery = query;
-      });
-    });
-  }
-
-// Hàm refresh để tải lại dữ liệu
   Future<void> refresh() async {
     await loadData();
-    // Reset các lựa chọn liên quan đến tòa nhà, tầng và căn hộ
     setState(() {
       selectedBuilding = null;
       selectedFloor = null;
       selectedApartment = null;
     });
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel(); // Hủy debounce khi widget bị dispose
-    super.dispose();
   }
 
   Future<List<Map<String, dynamic>>> getContractHistoryWithApartmentNames(String residentId) async {
@@ -255,14 +257,11 @@ class _ResidentPageState extends State<ResidentPage> {
       );
 
       if (response.statusCode == 200) {
-        print("✅ Cập nhật & gửi email thông báo thành công.");
         return true;
       } else {
-        print("❌ Lỗi từ server: ${response.body}");
         return false;
       }
     } catch (e) {
-      print("❌ Exception khi gọi Cloud Function: $e");
       return false;
     }
   }
@@ -377,7 +376,6 @@ class _ResidentPageState extends State<ResidentPage> {
       birthDateFormatted = DateFormat('dd/MM/yyyy').format(resident.birthDate!);
     }
 
-    // Controllers for inputs
     final nameController = TextEditingController(text: resident.fullName);
     final cccdController = TextEditingController(text: resident.cccd);
     final emailController = TextEditingController(text: resident.email);
@@ -387,7 +385,6 @@ class _ResidentPageState extends State<ResidentPage> {
     String selectedGender = resident.gender;
     bool isEditing = false;
 
-    // StreamControllers for error handling
     final StreamController<String?> nameErrorController =
         StreamController<String?>();
     final StreamController<String?> cccdErrorController =
@@ -401,7 +398,6 @@ class _ResidentPageState extends State<ResidentPage> {
     final StreamController<String?> addressErrorController =
         StreamController<String?>();
 
-    // Error state variables
     bool nameHasError = false;
     bool cccdHasError = false;
     bool emailHasError = false;
@@ -410,7 +406,6 @@ class _ResidentPageState extends State<ResidentPage> {
     bool addressHasError = false;
 
     void validateFields() {
-      // Name validation
       if (nameController.text.isEmpty) {
         nameErrorController.add('Họ và tên không được để trống.');
         nameHasError = true;
@@ -419,7 +414,6 @@ class _ResidentPageState extends State<ResidentPage> {
         nameHasError = false;
       }
 
-      // CCCD validation
       if (!RegExp(r'^\d{12}$').hasMatch(cccdController.text)) {
         cccdErrorController.add('CCCD phải có đúng 12 số.');
         cccdHasError = true;
@@ -428,7 +422,6 @@ class _ResidentPageState extends State<ResidentPage> {
         cccdHasError = false;
       }
 
-      // Email validation
       if (!EmailValidator.validate(emailController.text)) {
         emailErrorController.add('Email không hợp lệ.');
         emailHasError = true;
@@ -437,7 +430,6 @@ class _ResidentPageState extends State<ResidentPage> {
         emailHasError = false;
       }
 
-      // Birth date validation
       try {
         DateFormat('dd/MM/yyyy').parseStrict(birthDateController.text);
         birthDateErrorController.add(null);
@@ -448,7 +440,6 @@ class _ResidentPageState extends State<ResidentPage> {
         birthDateHasError = true;
       }
 
-      // Phone number validation
       if (!RegExp(r'^\d{10}$').hasMatch(phoneController.text)) {
         phoneErrorController.add('Số điện thoại phải có đúng 10 số.');
         phoneHasError = true;
@@ -457,7 +448,6 @@ class _ResidentPageState extends State<ResidentPage> {
         phoneHasError = false;
       }
 
-      // Address validation
       if (addressController.text.isEmpty) {
         addressErrorController.add('Địa chỉ không được để trống.');
         addressHasError = true;
@@ -520,7 +510,7 @@ class _ResidentPageState extends State<ResidentPage> {
                                         resident.imageUrl!,
                                         fit: BoxFit.cover,
                                       )
-                                          : Center( // ✅ Center default avatar & make it smaller
+                                          : Center(
                                         child: SvgPicture.asset(
                                           'assets/images/default_avatar.svg',
                                           fit: BoxFit.contain,
@@ -550,7 +540,6 @@ class _ResidentPageState extends State<ResidentPage> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // ✅ Row: Họ tên + Email
                                 Row(
                                   children: [
                                     Expanded(
@@ -599,7 +588,6 @@ class _ResidentPageState extends State<ResidentPage> {
                                 ),
                                 SizedBox(height: 15.h),
 
-                                // ✅ Row: Ngày sinh + CCCD
                                 Row(
                                   children: [
                                     Expanded(
@@ -665,7 +653,6 @@ class _ResidentPageState extends State<ResidentPage> {
                                 ),
                                 SizedBox(height: 15.h),
 
-                                // ✅ Row: Giới tính + Số điện thoại
                                 Row(
                                   children: [
                                     Expanded(
@@ -716,7 +703,6 @@ class _ResidentPageState extends State<ResidentPage> {
                                 ),
                                 SizedBox(height: 15.h),
 
-                                // ✅ Địa chỉ (cuối)
                                 StreamBuilder<String?>(
                                   stream: addressErrorController.stream,
                                   builder: (context, snapshot) {
@@ -886,19 +872,13 @@ class _ResidentPageState extends State<ResidentPage> {
               value,
               style: TextStyle(fontSize: 4.sp),
               softWrap: true,
-              overflow: TextOverflow.ellipsis, // Hoặc .fade hoặc .clip nếu thích
-              maxLines: 2, // Giới hạn số dòng nếu cần
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
           ),
         ],
       ),
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    loadData();
   }
 
   @override
@@ -938,7 +918,7 @@ class _ResidentPageState extends State<ResidentPage> {
       } else if (selectedStatus == "Đã rời") {
         matchesStatus = r.isExit == true;
       } else if (selectedStatus == "Tất cả" || selectedStatus == null) {
-        matchesStatus = true; // Không lọc gì cả
+        matchesStatus = true;
       }
 
       return matchesApartment &&
@@ -987,7 +967,7 @@ class _ResidentPageState extends State<ResidentPage> {
                                   ),
                                 ),
                                 onChanged:
-                                    _onSearchChanged, // Gọi hàm debounce khi nhập
+                                    _onSearchChanged,
                               )),
                           Flexible(
                             flex: 2,
@@ -1085,7 +1065,7 @@ class _ResidentPageState extends State<ResidentPage> {
                                   selectedStatus = val;
                                 });
                               },
-                              hintText: 'Chọn trạng thái', // Thêm dòng này nếu bạn custom được
+                              hintText: 'Chọn trạng thái',
                             ),
                           ),
                           SizedBox(width: 20.w),
@@ -1109,8 +1089,8 @@ class _ResidentPageState extends State<ResidentPage> {
                                   Expanded(child: SingleChildScrollView(
                                     child: ConstrainedBox(
                                         constraints: BoxConstraints(
-                                          minWidth: constraints.maxWidth, // Đặt chiều rộng tối thiểu bằng chiều rộng cha
-                                          maxWidth: constraints.maxWidth, // Đặt chiều rộng tối đa bằng chiều rộng cha
+                                          minWidth: constraints.maxWidth,
+                                          maxWidth: constraints.maxWidth,
                                         ),
                                         child: CustomPaginatedTable(
                                           columns: [
@@ -1182,12 +1162,11 @@ class _ResidentPageState extends State<ResidentPage> {
                                                     TextStyle(fontSize: 4.sp))),
                                                 DataCell(
                                                   Row(children: [
-                                                    // Nút SỬA - vô hiệu hóa nếu isExit = true
                                                     IconButton(
                                                       icon: const Icon(Icons.edit, color: Colors.blueAccent),
                                                       tooltip: resident.isExit ? 'Không thể sửa cư dân đã rời' : 'Sửa thông tin',
                                                       onPressed: resident.isExit
-                                                          ? null // Vô hiệu hóa
+                                                          ? null
                                                           : () async {
                                                         if (_isEditDialogShowing) return;
                                                         _isEditDialogShowing = true;
@@ -1199,7 +1178,6 @@ class _ResidentPageState extends State<ResidentPage> {
                                                       },
                                                     ),
 
-                                                    // Nút XEM LỊCH SỬ thuê – vẫn cho phép xem
                                                     IconButton(
                                                       icon: const Icon(Icons.access_time, color: Colors.green),
                                                       tooltip: 'Xem lịch sử thuê',
@@ -1214,7 +1192,6 @@ class _ResidentPageState extends State<ResidentPage> {
                                                       },
                                                     ),
 
-                                                    // Nút XEM CHI TIẾT – vẫn cho phép xem
                                                     IconButton(
                                                       icon: const Icon(Icons.info_outline, color: Colors.white),
                                                       tooltip: 'Xem chi tiết',
@@ -1339,7 +1316,7 @@ class _ResidentPageState extends State<ResidentPage> {
     required T? selectedValue,
     required ValueChanged<T?> onChanged,
     String Function(T)? itemLabelBuilder,
-    String? hintText, // Thêm tham số hintText tùy chọn
+    String? hintText,
   }) {
     return Padding(
       padding: EdgeInsets.fromLTRB(0.w, 30.h, 0.w, 8.h),
@@ -1349,8 +1326,8 @@ class _ResidentPageState extends State<ResidentPage> {
           child: DropdownButton2<T>(
             isExpanded: true,
             hint: Text(
-              hintText ?? label, // Hiển thị hintText nếu có, nếu không thì label
-              style: TextStyle(fontSize: 4.sp, color: Colors.white70), // Màu hơi mờ
+              hintText ?? label,
+              style: TextStyle(fontSize: 4.sp, color: Colors.white70),
             ),
             items: items.map((item) {
               final displayText = itemLabelBuilder != null

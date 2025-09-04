@@ -42,7 +42,6 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
   @override
   void initState() {
     super.initState();
-    // Kiểm tra xem widget có còn mounted không trước khi gọi resetImage
     if (mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
@@ -75,6 +74,138 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
     _addressStaffController.dispose();
     _authBloc.dispose();
     super.dispose();
+  }
+
+  _onSignUpStaffClicked() async {
+    if (_selectedRole == null) {
+      MsgDialog.showMsgDialog(context, "Lỗi", "Vui lòng chọn vai trò");
+      return;
+    }
+    if (selectedGender == null) {
+      MsgDialog.showMsgDialog(context, "Lỗi", "Vui lòng chọn giới tính");
+      return;
+    }
+
+    var isValidStaff = _authBloc.isValidStaffSignUp(
+      _nameStaffController.text,
+      _addressStaffController.text,
+      _cccdStaffController.text,
+      birthDate,
+      selectedGender!,
+      _emailStaffController.text,
+      _phoneStaffController.text,
+      _selectedRole!,
+    );
+
+    if (!isValidStaff) return;
+
+    final imageProvider = Provider.of<StaffImageProvider>(context, listen: false);
+    final hasImage = (kIsWeb && imageProvider.webImageBytes != null) ||
+        (!kIsWeb && imageProvider.selectedImageFile != null);
+
+    if (!hasImage) {
+      MsgDialog.showMsgDialog(context, "Lỗi", "Bạn chưa chọn ảnh. Vui lòng chọn lại");
+      return;
+    }
+
+    LoadingDialog.showLoadingDialog(context, 'Đang tạo tài khoản ...');
+
+    try {
+      // Call Cloud Function to create account first
+      final url = Uri.parse("https://createstaffaccount-ttrkrlo35a-uc.a.run.app");
+
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": _emailStaffController.text.trim(),
+          "fullName": _nameStaffController.text.trim(),
+          "address": _addressStaffController.text.trim(),
+          "birthDate": birthDate != null
+              ? "${birthDate!.year}-${birthDate!.month.toString().padLeft(2, '0')}-${birthDate!.day.toString().padLeft(2, '0')}"
+              : null,
+          "gender": selectedGender!,
+          "cccd": _cccdStaffController.text.trim(),
+          "phone": _phoneStaffController.text.trim(),
+          "position": _selectedRole!,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        LoadingDialog.hideLoadingDialog(context);
+        MsgDialog.showMsgDialog(context, "Thất bại", "Không thể tạo tài khoản: ${response.body}");
+        return;
+      }
+
+      // If successful → get `uid` from response
+      final responseBody = jsonDecode(response.body);
+      final userId = responseBody['uid'];
+      final uniqueFileName = "${DateTime.now().millisecondsSinceEpoch}_avatar.jpg";
+
+      final imageUrl = await imageProvider.uploadSelectedImageAndGetUrl(userId, uniqueFileName);
+
+      _imageUrl = imageUrl;
+
+      // Update Firestore with imageUrl if needed
+      await FirebaseFirestore.instance.collection("staffs").doc(userId).set({
+        "imageUrl": imageUrl,
+        "email": _emailStaffController.text.trim(),
+        "fullName": _nameStaffController.text.trim(),
+        "birthDate": birthDate,
+        "phone": _phoneStaffController.text.trim(),
+        "cccd": _cccdStaffController.text.trim(),
+        "address": _addressStaffController.text.trim(),
+        "position": _selectedRole!,
+        "gender": selectedGender!,
+      }, SetOptions(merge: true));
+
+      LoadingDialog.hideLoadingDialog(context);
+
+      _nameStaffController.clear();
+      _emailStaffController.clear();
+      _phoneStaffController.clear();
+      _emailStaffController.clear();
+      _cccdStaffController.clear();
+      _addressStaffController.clear();
+
+      final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
+      avatarProvider.resetImage();
+
+      setState(() {
+        selectedGender = null;
+      });
+      setState(() {
+        _selectedRole = null;
+      });
+      setState(() {
+        birthDate = null;
+      });
+      _authBloc.updateBirthDate(null);
+      MsgDialog.showMsgDialog(context, "Thành công", "Tạo tài khoản nhân viên thành công.");
+    } catch (e) {
+      LoadingDialog.hideLoadingDialog(context);
+      _nameStaffController.clear();
+      _emailStaffController.clear();
+      _phoneStaffController.clear();
+      _emailStaffController.clear();
+      _cccdStaffController.clear();
+      _addressStaffController.clear();
+
+      final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
+      avatarProvider.resetImage();
+
+      setState(() {
+        selectedGender = null;
+      });
+      setState(() {
+        _selectedRole = null;
+      });
+      setState(() {
+        birthDate = null;
+      });
+      _authBloc.updateBirthDate(null);
+      MsgDialog.showMsgDialog(context, "Lỗi", "Không thể tạo tài khoản: $e");
+    }
   }
 
   @override
@@ -113,7 +244,6 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             SizedBox(width: 25.w,),
-                            // Bên trái: ảnh
                             Center(
                               child: Consumer<StaffImageProvider>(
                                 builder: (context, avatarProvider, child) {
@@ -158,8 +288,8 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                   double avatarSize = min(300.w, 300.h);
 
                                   return SizedBox(
-                                    width: avatarSize, // ➔ Chiều ngang avatar
-                                    height: avatarSize + 40.h, // ➔ Chiều cao avatar + label
+                                    width: avatarSize,
+                                    height: avatarSize + 40.h,
                                     child: Stack(
                                       alignment: Alignment.center,
                                       children: [
@@ -171,12 +301,6 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                                 final provider = Provider.of<StaffImageProvider>(context, listen: false);
                                                 await provider.pickImage();
                                                 await Future.delayed(const Duration(milliseconds: 300));
-
-                                                if (kIsWeb) {
-                                                  print("🧾 Ảnh web đã chọn: ${provider.webImageBytes != null ? "Đã có dữ liệu bytes" : "null"}");
-                                                } else {
-                                                  print("🧾 Ảnh file đã chọn: ${provider.selectedImageFile?.path ?? "null"}");
-                                                }
 
                                                 if (provider.selectedImageFile == null &&
                                                     provider.webImageBytes == null &&
@@ -229,7 +353,6 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                               ),
                             ),
                             SizedBox(width: 30.w,),
-                            // Bên phải: form login
                             Expanded(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -292,9 +415,9 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                         ),
                         SizedBox(height: 50.h,),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Phân bố nút cách đều
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SizedBox(width: 20.w), // Tùy chọn nếu bạn muốn có khoảng cách giữa các nút
+                            SizedBox(width: 20.w),
                             Expanded(
                               child: SizedBox(
                                 height: 60.h,
@@ -303,7 +426,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                     _onSignUpStaffClicked();
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: secondaryColor, // Màu xanh dương sáng
+                                    backgroundColor: secondaryColor,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30.r),
                                     ),
@@ -318,7 +441,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                       fontFamily: "Oswald",
                                       fontWeight: FontWeight.w700,
                                       fontSize: 7.sp,
-                                      color: Colors.white, // Màu chữ trắng
+                                      color: Colors.white,
                                       height: 1.h,
                                     ),
                                     textAlign: TextAlign.center,
@@ -326,13 +449,12 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                 ),
                               ),
                             ),
-                            SizedBox(width: 60.w), // Tùy chọn nếu bạn muốn có khoảng cách giữa các nút
+                            SizedBox(width: 60.w),
                             Expanded(
                               child: SizedBox(
                                 height: 60.h,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    // Xóa tất cả thông tin trong các trường nhập
                                     _nameStaffController.clear();
                                     _emailStaffController.clear();
                                     _phoneStaffController.clear();
@@ -340,24 +462,22 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                     _cccdStaffController.clear();
                                     _addressStaffController.clear();
 
-                                    // Reset ảnh
                                     final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
-                                    avatarProvider.resetImage();  // Reset ảnh
+                                    avatarProvider.resetImage();
 
                                     setState(() {
-                                      selectedGender = null;  // Hoặc giá trị mặc định bạn muốn
-                                    });
-                                    // Reset vai trò nếu cần
-                                    setState(() {
-                                      _selectedRole = null;  // Hoặc giá trị mặc định bạn muốn
+                                      selectedGender = null;
                                     });
                                     setState(() {
-                                      birthDate = null; // Đặt biến `birthDate` về null
+                                      _selectedRole = null;
                                     });
-                                    _authBloc.updateBirthDate(null); // Cập nhật giá trị trong Stream về null
+                                    setState(() {
+                                      birthDate = null;
+                                    });
+                                    _authBloc.updateBirthDate(null);
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: secondaryColor, // Màu xám trung tính
+                                    backgroundColor: secondaryColor,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30.r),
                                     ),
@@ -372,7 +492,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                       fontFamily: "Oswald",
                                       fontWeight: FontWeight.w700,
                                       fontSize: 7.sp,
-                                      color: Colors.white, // Màu chữ trắng
+                                      color: Colors.white,
                                       height: 1.h,
                                     ),
                                     textAlign: TextAlign.center,
@@ -380,7 +500,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                                 ),
                               ),
                             ),
-                            SizedBox(width: 20.w), // Tùy chọn nếu bạn muốn có khoảng cách giữa các nút
+                            SizedBox(width: 20.w),
                           ],
                         )
                       ],
@@ -393,143 +513,6 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
         ),
       ),
     );
-  }
-
-  _onSignUpStaffClicked() async {
-    if (_selectedRole == null) {
-      MsgDialog.showMsgDialog(context, "Lỗi", "Vui lòng chọn vai trò");
-      return;
-    }
-    if (selectedGender == null) {
-      MsgDialog.showMsgDialog(context, "Lỗi", "Vui lòng chọn giới tính");
-      return;
-    }
-
-    var isValidStaff = _authBloc.isValidStaffSignUp(
-      _nameStaffController.text,
-      _addressStaffController.text,
-      _cccdStaffController.text,
-      birthDate,
-      selectedGender!,
-      _emailStaffController.text,
-      _phoneStaffController.text,
-      _selectedRole!,
-    );
-
-    if (!isValidStaff) return;
-
-    final imageProvider = Provider.of<StaffImageProvider>(context, listen: false);
-    final hasImage = (kIsWeb && imageProvider.webImageBytes != null) ||
-        (!kIsWeb && imageProvider.selectedImageFile != null);
-
-    if (!hasImage) {
-      MsgDialog.showMsgDialog(context, "Lỗi", "Bạn chưa chọn ảnh. Vui lòng chọn lại");
-      return;
-    }
-
-    LoadingDialog.showLoadingDialog(context, 'Đang tạo tài khoản ...');
-
-    try {
-      // 1. Gọi Cloud Function tạo tài khoản trước
-      final url = Uri.parse("https://createstaffaccount-ttrkrlo35a-uc.a.run.app");
-
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": _emailStaffController.text.trim(),
-          "fullName": _nameStaffController.text.trim(),
-          "address": _addressStaffController.text.trim(),
-          "birthDate": birthDate != null
-              ? "${birthDate!.year}-${birthDate!.month.toString().padLeft(2, '0')}-${birthDate!.day.toString().padLeft(2, '0')}"
-              : null, // Đảm bảo birthDate không bị null
-          "gender": selectedGender!,
-          "cccd": _cccdStaffController.text.trim(),
-          "phone": _phoneStaffController.text.trim(),
-          "position": _selectedRole!,
-        }),
-      );
-
-      if (response.statusCode != 200) {
-        LoadingDialog.hideLoadingDialog(context);
-        MsgDialog.showMsgDialog(context, "Thất bại", "Không thể tạo tài khoản: ${response.body}");
-        return;
-      }
-
-      // 2. Nếu thành công → lấy `uid` từ phản hồi
-      final responseBody = jsonDecode(response.body);
-      final userId = responseBody['uid']; // Lấy uid từ phản hồi
-      final uniqueFileName = "${DateTime.now().millisecondsSinceEpoch}_avatar.jpg";
-
-      final imageUrl = await imageProvider.uploadSelectedImageAndGetUrl(userId, uniqueFileName);
-
-      _imageUrl = imageUrl;
-
-      // 3. Cập nhật Firestore với imageUrl nếu cần
-      await FirebaseFirestore.instance.collection("staffs").doc(userId).set({
-        "imageUrl": imageUrl,
-        "email": _emailStaffController.text.trim(),
-        "fullName": _nameStaffController.text.trim(),
-        "birthDate": birthDate,
-        "phone": _phoneStaffController.text.trim(),
-        "cccd": _cccdStaffController.text.trim(),
-        "address": _addressStaffController.text.trim(),
-        "position": _selectedRole!,
-        "gender": selectedGender!,
-      }, SetOptions(merge: true));
-
-      LoadingDialog.hideLoadingDialog(context);
-      // Xóa tất cả thông tin trong các trường nhập
-      _nameStaffController.clear();
-      _emailStaffController.clear();
-      _phoneStaffController.clear();
-      _emailStaffController.clear();
-      _cccdStaffController.clear();
-      _addressStaffController.clear();
-
-      // Reset ảnh
-      final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
-      avatarProvider.resetImage();  // Reset ảnh
-
-      setState(() {
-        selectedGender = null;  // Hoặc giá trị mặc định bạn muốn
-      });
-      // Reset vai trò nếu cần
-      setState(() {
-        _selectedRole = null;  // Hoặc giá trị mặc định bạn muốn
-      });
-      setState(() {
-        birthDate = null; // Đặt biến `birthDate` về null
-      });
-      _authBloc.updateBirthDate(null); // Cập nhật giá trị trong Stream về null
-      MsgDialog.showMsgDialog(context, "Thành công", "Tạo tài khoản nhân viên thành công.");
-    } catch (e) {
-      LoadingDialog.hideLoadingDialog(context);
-      // Xóa tất cả thông tin trong các trường nhập
-      _nameStaffController.clear();
-      _emailStaffController.clear();
-      _phoneStaffController.clear();
-      _emailStaffController.clear();
-      _cccdStaffController.clear();
-      _addressStaffController.clear();
-
-      // Reset ảnh
-      final avatarProvider = Provider.of<StaffImageProvider>(context, listen: false);
-      avatarProvider.resetImage();  // Reset ảnh
-
-      setState(() {
-        selectedGender = null;  // Hoặc giá trị mặc định bạn muốn
-      });
-      // Reset vai trò nếu cần
-      setState(() {
-        _selectedRole = null;  // Hoặc giá trị mặc định bạn muốn
-      });
-      setState(() {
-        birthDate = null; // Đặt biến `birthDate` về null
-      });
-      _authBloc.updateBirthDate(null); // Cập nhật giá trị trong Stream về null
-      MsgDialog.showMsgDialog(context, "Lỗi", "Không thể tạo tài khoản: $e");
-    }
   }
 
   Widget _buildTextField({
@@ -628,9 +611,9 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
           final hasError = snapshot.hasError;
 
           return SizedBox(
-            height: 60.h, // đủ chỗ cho cả button + lỗi
+            height: 60.h,
             child: Stack(
-              clipBehavior: Clip.none, // cho lỗi có thể "tràn" ra ngoài
+              clipBehavior: Clip.none,
               children: [
                 SizedBox(
                   height: 50.h,
@@ -651,7 +634,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: bgColor, // Thay đổi màu nền thành màu xám
+                      backgroundColor: bgColor,
                       elevation: 0,
                       alignment: Alignment.centerLeft,
                       shape: RoundedRectangleBorder(
@@ -690,7 +673,7 @@ class _AddAccountStaffPageState extends State<AddAccountStaffPage> {
                 if (hasError)
                   Positioned(
                     left: 10.w,
-                    bottom: -18.h, // tràn ra ngoài một chút
+                    bottom: -18.h,
                     child: Text(
                       snapshot.error as String,
                       style: TextStyle(color: Colors.red, fontSize: 3.sp),

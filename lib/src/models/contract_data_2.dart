@@ -15,12 +15,12 @@ class ContractData2 {
   final int numberOfResidents;
   final List<ResidentInfo> residents;
   final String apartmentDocId;
-  final Map<String, String>? representative; // representative là đối tượng có cả tên và id
-  final String? purpose;  // purpose của hợp đồng
-  final String? devices;  // devices trong hợp đồng
-  final String? limit;    // limit của hợp đồng
-  final int? price;       // giá của hợp đồng
-  final String? timepayattention;  // nghĩa vụ của bên thuê
+  final Map<String, String>? representative;
+  final String? purpose;
+  final String? devices;
+  final String? limit;
+  final int? price;
+  final String? timepayattention;
 
   ContractData2({
     this.contractId,
@@ -101,7 +101,7 @@ class ContractData2 {
       "endDate": endDate,
       "timepay": timepay,
       "numberOfResidents": numberOfResidents,
-      "representative": representative, // Thêm representative vào map
+      "representative": representative,
       "purpose": purpose,
       "devices": devices,
       "limit": limit,

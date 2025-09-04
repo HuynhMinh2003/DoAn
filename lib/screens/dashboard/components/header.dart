@@ -10,8 +10,8 @@ import 'package:provider/provider.dart';
 
 import '../../../constants.dart';
 import '../../../responsive.dart';
-import '../../../src/resources/admin_info_page.dart';
-import '../../../src/resources/base_admin_screen_page.dart';
+import '../../../src/resources/admin/admin_info_page.dart';
+import '../../../src/resources/admin/base_admin_info.dart';
 import '../../../src/resources/dialog/loading_dialog.dart';
 import '../../../src/resources/login_page.dart';
 import '../../../src/resources/provider/admin_image_provider.dart';
@@ -52,7 +52,7 @@ class ProfileCardWithPopup extends StatefulWidget {
   State<ProfileCardWithPopup> createState() => _ProfileCardWithPopupState();
 }
 
-class _ProfileCardWithPopupState extends BaseAdminInfoScreen<ProfileCardWithPopup> {
+class _ProfileCardWithPopupState extends BaseAdminInfo<ProfileCardWithPopup> {
   final GlobalKey _profileKey = GlobalKey();
 
   Future<void> _showPopupMenu() async {

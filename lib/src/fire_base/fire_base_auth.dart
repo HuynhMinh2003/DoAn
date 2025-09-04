@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 class FirAuth {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
-  /// Đăng ký người dùng mới
   void signUpCompany({
     required String nameCompany,
     required String emailCompany,
@@ -41,7 +40,6 @@ class FirAuth {
     });
   }
 
-  /// Lưu thông tin người dùng vào Firebase Realtime Database
   void _createCompany(
       String companyId,
       String nameCompany,
@@ -133,7 +131,7 @@ class FirAuth {
         "role": 2,
         "isFree": true,
         "imageUrl": imageUrlStaff,
-        "fcmTokens": [], // Thêm fcmToken dưới dạng chuỗi rỗng
+        "fcmTokens": [],
         "createdAt": Timestamp.now(),
       };
 
@@ -144,7 +142,6 @@ class FirAuth {
     }
   }
 
-  /// Đăng nhập người dùng
   void signIn({
     required String email,
     required String password,
@@ -165,7 +162,6 @@ class FirAuth {
     });
   }
 
-  /// Xử lý lỗi đăng ký
   void _onSignUpErr(String code, Function(String) onRegisterError) {
     switch (code) {
       case "email-already-in-use":
@@ -192,7 +188,6 @@ class FirAuth {
     }
   }
 
-  /// Xử lý lỗi đăng nhập
   void _onSignInErr(String code, Function(String) onSignInError) {
     switch (code) {
       case "user-not-found":
